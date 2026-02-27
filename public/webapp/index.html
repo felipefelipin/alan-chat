@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+  />
+
+  <title>Alana</title>
+
+  <!-- 🔒 Evita cache agressivo do WebView -->
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, proxy-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
+  <!-- Telegram WebApp precisa disso p/ autoplay funcionar melhor -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div id="app"></div>
+
+  <!-- SDK do Telegram -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- 🔥 cache bust no app.js (evita usar build antigo) -->
+  <script>
+    const s = document.createElement("script");
+    s.src = "./app.js?v=" + Date.now();
+    document.body.appendChild(s);
+  </script>
+</body>
+</html>

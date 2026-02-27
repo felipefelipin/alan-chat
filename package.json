@@ -1,0 +1,28 @@
+{
+  "name": "gisa-v3",
+  "version": "1.0.0",
+  "description": "Telegram bot + webapp + checkout + queue + postgres (V3)",
+  "main": "src/bot.js",
+  "type": "commonjs",
+  "scripts": {
+    "bot": "node src/bot.js",
+    "api": "node src/api.js",
+    "worker": "node src/worker.js",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.0.0",
+    "bullmq": "^5.0.0",
+    "dotenv": "^16.0.0",
+    "express": "^4.19.0",
+    "ioredis": "^5.4.0",
+    "node-telegram-bot-api": "^0.66.0"
+  },
+  "devDependencies": {
+    "prisma": "^6.0.0"
+  }
+}
