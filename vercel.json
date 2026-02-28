@@ -5,9 +5,7 @@
   ],
   "rewrites": [
     { "source": "/webapp", "destination": "/webapp/index.html" },
-    { "source": "/webapp/", "destination": "/webapp/index.html" },
-    { "source": "/webapp/:path*", "destination": "/webapp/:path*" },
-    { "source": "/assets/:path*", "destination": "/assets/:path*" }
+    { "source": "/webapp/", "destination": "/webapp/index.html" }
   ],
   "headers": [
     {
