@@ -6,13 +6,10 @@ if (tg) {
 
 const app = document.getElementById("app");
 
-// ✅ build id para cache-bust consistente nessa sessão
-const BUILD_ID = String(Date.now());
-
+// ✅ Assets servidos do /public/assets (Vercel)
 const ASSETS = {
-  // ✅ Vercel static: /public/assets -> /assets
-  privateIntro: "/assets/private-intro-v1.mp4",
-  privateMusic: "/assets/private-music.mp3",
+  privateIntro: "/assets/private-intro-v1.mp4", // vídeo 10s
+  privateMusic: "/assets/private-music.mp3",   // música do intro
   intro: "/assets/intro.mp4",
   callVideo: "/assets/call.mp4",
   ringtone: "/assets/ringtone.mp3",
@@ -63,19 +60,19 @@ async function preloadMedia() {
   // Preload best-effort (não bloqueia)
   try {
     const v = document.createElement("video");
-    v.src = `${ASSETS.privateIntro}?v=${BUILD_ID}`;
+    v.src = ASSETS.privateIntro;
     v.preload = "auto";
   } catch {}
   try {
     const a = new Audio();
-    a.src = `${ASSETS.privateMusic}?v=${BUILD_ID}`;
+    a.src = ASSETS.privateMusic;
     a.preload = "auto";
   } catch {}
 }
 
-async function fadeVolume(audio, from, to, ms = 600) {
+async function fadeVolume(audio, from, to, ms = 700) {
   if (!audio) return;
-  const steps = Math.max(8, Math.floor(ms / 60));
+  const steps = Math.max(10, Math.floor(ms / 60));
   const stepMs = Math.floor(ms / steps);
   for (let i = 0; i <= steps; i++) {
     const p = i / steps;
@@ -84,23 +81,36 @@ async function fadeVolume(audio, from, to, ms = 600) {
   }
 }
 
+function vibrate(ms = 18) {
+  try {
+    if (navigator.vibrate) navigator.vibrate(ms);
+  } catch {}
+}
+
 // =======================
-// PREMIUM INTRO (V3) - FIX (Vercel + Telegram)
+// PREMIUM INTRO (V4 PRO)
 // =======================
 function mountPremiumIntro() {
+  const cacheBust = `?v=${Date.now()}`;
+
   app.innerHTML = `
     <div class="pIntro">
       <div class="pIntroVideoWrap">
+
         <video
           id="pIntroVid"
           playsinline
           muted
           preload="auto"
-          src="${ASSETS.privateIntro}?v=${BUILD_ID}">
-        </video>
+          src="${ASSETS.privateIntro + cacheBust}"
+        ></video>
+
+        <div class="pIntroTop">
+          <div class="pIntroChip">conversa privada</div>
+          <div class="pIntroTimer"><span id="pT">0:10</span></div>
+        </div>
 
         <div class="pIntroOverlay" id="pOverlay">
-          <div class="pIntroBadge">conversa privada</div>
           <div class="pIntroTitle">acesso exclusivo</div>
           <div class="pIntroSub" id="pSub">toque para ativar o som</div>
 
@@ -109,9 +119,14 @@ function mountPremiumIntro() {
           </div>
         </div>
 
-        <div class="pCtaWrap" id="pCtaWrap" style="display:none;">
+        <div class="pProgress">
+          <div class="pProgBar" id="pProg"></div>
+        </div>
+
+        <div class="pCtaWrap" id="pCtaWrap">
           <button id="pEnterChat" class="pBtnPrimary">entrar em conversa com gisa</button>
         </div>
+
       </div>
     </div>
   `;
@@ -121,66 +136,80 @@ function mountPremiumIntro() {
   const ctaWrap = document.getElementById("pCtaWrap");
   const btnEnter = document.getElementById("pEnterChat");
   const sub = document.getElementById("pSub");
+  const prog = document.getElementById("pProg");
+  const tEl = document.getElementById("pT");
 
   state.introVidEl = vid;
 
-  // 🔥 play mais confiável: tenta no canplay + fallback
-  const tryPlayVid = async () => {
+  // CTA começa escondido, aparece no fim
+  ctaWrap.classList.remove("show");
+  ctaWrap.style.pointerEvents = "none";
+
+  // Autoplay costuma falhar no Telegram. A gente tenta, mas depende de gesto.
+  const tryPlayVideo = async () => {
     try {
-      const p = vid.play();
-      if (p && typeof p.then === "function") await p;
-      return true;
-    } catch (e) {
-      return false;
-    }
-  };
-
-  vid.addEventListener("canplay", () => {
-    // tenta iniciar assim que tiver buffer
-    tryPlayVid();
-  });
-
-  // fallback (autoplay costuma falhar no Telegram)
-  setTimeout(() => {
-    tryPlayVid();
-  }, 140);
-
-  const tryEnableAudio = async () => {
-    if (state.flags.audioEnabled) return true;
-    try {
-      if (!state.music) state.music = new Audio(`${ASSETS.privateMusic}?v=${BUILD_ID}`);
-      state.music.loop = false;
-      state.music.currentTime = 0;
-      state.music.volume = 0;
-      await state.music.play();
-      state.flags.audioEnabled = true;
-      await fadeVolume(state.music, 0, 0.9, 550);
-
-      if (btnAudio) {
-        btnAudio.textContent = "som ativado ✓";
-        btnAudio.disabled = true;
-        btnAudio.style.opacity = "0.65";
-      }
-      if (sub) sub.textContent = "som ativado";
+      await vid.play();
       return true;
     } catch {
       return false;
     }
   };
 
-  btnAudio.onclick = async () => {
-    await tryPlayVid();
-    const ok = await tryEnableAudio();
-    if (!ok && sub) sub.textContent = "toque novamente para ativar";
+  const tryEnableAudio = async () => {
+    if (state.flags.audioEnabled) return true;
+    try {
+      if (!state.music) state.music = new Audio(ASSETS.privateMusic + `?v=${Date.now()}`);
+      state.music.loop = false;
+      state.music.currentTime = 0;
+      state.music.volume = 0;
+      await state.music.play();
+      state.flags.audioEnabled = true;
+
+      await fadeVolume(state.music, 0, 0.9, 750);
+
+      if (btnAudio) {
+        btnAudio.textContent = "som ativado ✓";
+        btnAudio.disabled = true;
+        btnAudio.style.opacity = "0.7";
+      }
+      if (sub) sub.textContent = "perfeito… só 10s.";
+      return true;
+    } catch {
+      if (sub) sub.textContent = "toque novamente para ativar";
+      return false;
+    }
   };
 
+  // Botão “ativar som”
+  btnAudio.onclick = async () => {
+    await tryPlayVideo();
+    await tryEnableAudio();
+  };
+
+  // Clique no vídeo destrava (vídeo + som)
   vid.addEventListener("click", async () => {
-    await tryPlayVid();
+    await tryPlayVideo();
     await tryEnableAudio();
   });
 
+  // Se der erro de mídia, mostra CTA pra não travar a pessoa
+  vid.addEventListener("error", () => {
+    if (sub) sub.textContent = "não consegui carregar o vídeo…";
+    showCta();
+  });
+
+  // Tenta iniciar o vídeo rápido (muted)
+  setTimeout(() => {
+    tryPlayVideo();
+  }, 150);
+
   const stopAt = 10.0;
   let ended = false;
+
+  const showCta = () => {
+    ctaWrap.classList.add("show");
+    ctaWrap.style.pointerEvents = "auto";
+  };
 
   const endIntro = async () => {
     if (ended) return;
@@ -192,25 +221,39 @@ function mountPremiumIntro() {
 
     try {
       if (state.music && state.flags.audioEnabled) {
-        await fadeVolume(state.music, state.music.volume ?? 0.9, 0, 520);
+        await fadeVolume(state.music, state.music.volume ?? 0.9, 0, 650);
         state.music.pause();
         state.music.currentTime = 0;
       }
     } catch {}
 
-    if (ctaWrap) ctaWrap.style.display = "flex";
-
     const overlay = document.getElementById("pOverlay");
     if (overlay) overlay.style.opacity = "0";
+
+    showCta();
+    vibrate(14);
+  };
+
+  const updateTimer = (secLeft) => {
+    const s = Math.max(0, Math.ceil(secLeft));
+    const mm = Math.floor(s / 60);
+    const ss = String(s % 60).padStart(2, "0");
+    if (tEl) tEl.textContent = `${mm}:${ss}`;
   };
 
   const tick = setInterval(() => {
     if (!vid) return;
+
+    const p = Math.max(0, Math.min(1, vid.currentTime / stopAt));
+    if (prog) prog.style.width = `${Math.floor(p * 100)}%`;
+
+    updateTimer(stopAt - vid.currentTime);
+
     if (vid.currentTime >= stopAt) {
       clearInterval(tick);
       endIntro();
     }
-  }, 120);
+  }, 90);
 
   vid.onended = () => {
     clearInterval(tick);
@@ -231,21 +274,25 @@ function mountPremiumIntro() {
       }
     } catch {}
 
-    await runRoutingOverlayV3();
+    await runRoutingOverlayV4();
     mountChat();
     await sleep(220);
     startScript();
   };
 
-  // fallback leve: se não carregar por algum motivo, libera CTA
+  // fallback: se não carregou rápido, libera CTA em ~3s
   setTimeout(() => {
     if (!ended && (!vid || vid.readyState < 2)) {
-      if (ctaWrap) ctaWrap.style.display = "flex";
+      showCta();
+      if (sub) sub.textContent = "toque para continuar";
     }
-  }, 2500);
+  }, 2800);
 }
 
-async function runRoutingOverlayV3() {
+// =======================
+// ROUTING OVERLAY (V4)
+// =======================
+async function runRoutingOverlayV4() {
   if (state.flags.routing) return;
   state.flags.routing = true;
 
@@ -257,32 +304,33 @@ async function runRoutingOverlayV3() {
         <div class="routeTitle">encaminhando para conversa em tempo real</div>
         <div class="routeLoader"></div>
         <div class="routeSteps">
-          <div class="routeStep" id="st1">iniciando conexão…</div>
-          <div class="routeStep" id="st2" style="opacity:.45;">você está na fila</div>
-          <div class="routeStep" id="st3" style="opacity:.45;">pronto</div>
+          <div class="routeStep" id="st1">validando sessão…</div>
+          <div class="routeStep" id="st2" style="opacity:.45;">criptografando canal…</div>
+          <div class="routeStep" id="st3" style="opacity:.45;">sincronizando…</div>
         </div>
       </div>
     </div>
   `
   );
 
-  await sleep(700);
+  await sleep(650);
   const st1 = document.getElementById("st1");
   const st2 = document.getElementById("st2");
   const st3 = document.getElementById("st3");
 
-  if (st1) st1.textContent = "verificando conexão…";
+  if (st1) st1.textContent = "validando sessão…";
   if (st2) st2.style.opacity = "1";
 
-  await sleep(1100);
+  await sleep(950);
   if (st2) st2.innerHTML = `você está na fila <span class="dots">…</span>`;
 
-  await sleep(800);
+  await sleep(850);
   if (st3) {
     st3.style.opacity = "1";
     st3.innerHTML = `pronto <span class="check">✓</span>`;
   }
 
+  vibrate(16);
   await sleep(520);
 
   const overlay = document.getElementById("routeOverlay");
@@ -321,7 +369,7 @@ function mountChat() {
 
       <div class="composer">
         <input id="input" placeholder="Mensagem..." autocomplete="off" />
-        <button class="send" id="send">Enviar</button>
+        <button class="send" id="send" aria-label="Enviar">Enviar</button>
       </div>
 
     </div>
@@ -341,12 +389,10 @@ function mountChat() {
 }
 
 function scrollBottom() {
-  if (!state.chatEl) return;
   state.chatEl.scrollTop = state.chatEl.scrollHeight;
 }
 
 function addTyping() {
-  if (!state.chatEl) return;
   removeTyping();
   const row = document.createElement("div");
   row.className = "row left";
@@ -366,11 +412,10 @@ function removeTyping() {
 }
 
 function addMsg(side, html) {
-  if (!state.chatEl) return;
   const row = document.createElement("div");
   row.className = `row ${side}`;
   row.innerHTML = `
-    <div class="bubble">
+    <div class="bubble popIn">
       ${html}
       <div class="meta">${nowTime()}</div>
     </div>
@@ -381,17 +426,21 @@ function addMsg(side, html) {
 
 function typingDelayFor(text) {
   const len = String(text).length;
-  const base = rand(800, 1400);
-  const per = rand(32, 54);
-  const jitter = rand(260, 1200);
-  return Math.min(6800, base + len * per + jitter);
+  const base = rand(820, 1450);
+  const per = rand(30, 52);
+  const jitter = rand(240, 980);
+  return Math.min(6500, base + len * per + jitter);
 }
 
 async function gisaSay(text, opts = {}) {
-  setStatus("digitando…");
+  // variação “real”
+  const status = Math.random() < 0.18 ? "gravando áudio…" : "digitando…";
+  setStatus(status);
+
   addTyping();
   await sleep(opts.delay ?? typingDelayFor(text));
   removeTyping();
+
   setStatus("online");
   addMsg("left", escapeHtml(text).replace(/\n/g, "<br/>"));
   await sleep(rand(420, 980));
@@ -399,14 +448,12 @@ async function gisaSay(text, opts = {}) {
 
 // --- Video bubble inside chat (respeita X segundos)
 function addVideoBubble(src, seconds = 10) {
-  if (!state.chatEl) return;
-
   const row = document.createElement("div");
   row.className = "row left";
   row.innerHTML = `
-    <div class="bubble">
+    <div class="bubble popIn">
       <div class="videoBubble">
-        <video playsinline muted autoplay preload="auto" src="${src}?v=${BUILD_ID}"></video>
+        <video playsinline muted autoplay preload="auto" src="${src}?v=${Date.now()}"></video>
         <div class="videoHint">vídeo</div>
       </div>
       <div class="meta">${nowTime()}</div>
@@ -424,12 +471,16 @@ function addVideoBubble(src, seconds = 10) {
   const clear = () => {
     if (cleared) return;
     cleared = true;
-    try { clearInterval(t); } catch {}
+    try {
+      clearInterval(t);
+    } catch {}
   };
 
   const t = setInterval(() => {
     if (vid.currentTime >= stopAt) {
-      try { vid.pause(); } catch {}
+      try {
+        vid.pause();
+      } catch {}
       clear();
     }
   }, 120);
@@ -452,7 +503,7 @@ function onSend() {
 }
 
 // =======================
-// SCRIPT (seu fluxo atual)
+// SCRIPT (fluxo atual)
 // =======================
 async function startScript() {
   if (state.flags.startedChat) return;
@@ -508,7 +559,7 @@ async function handleUserText(text) {
 // =======================
 function showIncomingCall() {
   try {
-    state.ring = new Audio(`${ASSETS.ringtone}?v=${BUILD_ID}`);
+    state.ring = new Audio(ASSETS.ringtone + `?v=${Date.now()}`);
     state.ring.loop = true;
     state.ring.play().catch(() => {});
   } catch {}
@@ -538,7 +589,9 @@ function showIncomingCall() {
 
 async function endCall(wasAnswered) {
   if (state.ring) {
-    state.ring.pause();
+    try {
+      state.ring.pause();
+    } catch {}
     state.ring = null;
   }
 

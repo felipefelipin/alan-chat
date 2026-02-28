@@ -1,24 +1,22 @@
 :root{
-  --bg:#0b141a;              /* whatsapp dark base */
-  --panel:#111b21;           /* top bars */
+  --bg:#0b141a;
+  --panel:#111b21;
   --panel2:#0f1a20;
-  --bubbleA:#202c33;         /* left bubble */
-  --bubbleB:#005c4b;         /* right bubble */
+  --bubbleA:#202c33;
+  --bubbleB:#005c4b;
   --text:#e9edef;
   --muted:#8696a0;
   --line:rgba(255,255,255,.08);
-  --accent:#00a884;          /* whatsapp green */
+  --accent:#00a884;
   --accent2:#25d366;
   --shadow:0 10px 30px rgba(0,0,0,.45);
 
-  /* wallpaper tile (coloque o png em public/assets/chat-bg.png) */
+  /* wallpaper tile */
   --wall:url("/assets/chat-bg.png");
 }
 
 *{box-sizing:border-box}
-html,body{
-  height:100%;
-}
+html,body{height:100%}
 body{
   margin:0;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
@@ -39,12 +37,17 @@ body{
 }
 
 /* cinematic entry */
-.fadeIn{
-  animation: fadeIn .22s ease both;
-}
+.fadeIn{ animation: fadeIn .22s ease both; }
 @keyframes fadeIn{
   from{opacity:0; filter:blur(7px); transform:scale(1.01)}
   to{opacity:1; filter:blur(0); transform:scale(1)}
+}
+
+/* micro pop for bubbles */
+.popIn{ animation: popIn .14s ease both; }
+@keyframes popIn{
+  from{opacity:0; transform: translateY(6px)}
+  to{opacity:1; transform: translateY(0)}
 }
 
 /* --- iOS safe area + faux statusbar --- */
@@ -59,7 +62,7 @@ body{
   padding-top: calc(6px + env(safe-area-inset-top));
 }
 #sbTime{
-  font-weight:700;
+  font-weight:800;
   font-size:12px;
   letter-spacing:.02em;
   color:rgba(233,237,239,.92);
@@ -99,7 +102,7 @@ body{
   border-radius:2px;
 }
 
-/* --- top bar (whatsapp style) --- */
+/* --- top bar --- */
 .topbar{
   height:56px;
   display:flex;
@@ -107,7 +110,7 @@ body{
   gap:12px;
   padding:10px 14px;
   background:var(--panel);
-  border-bottom:1px solid rgba(255,255,255,.05);
+  border-bottom:1px solid rgba(255,255,255,.06);
 }
 
 .avatar{
@@ -128,17 +131,14 @@ body{
   flex-direction:column;
   line-height:1.05;
 }
-.name{
-  font-weight:900;
-  font-size:15px;
-}
+.name{ font-weight:900; font-size:15px; }
 .status{
   font-size:12px;
   color:var(--muted);
   margin-top:2px;
 }
 
-/* --- chat background (wallpaper) --- */
+/* --- chat background --- */
 .chat{
   flex:1;
   overflow:auto;
@@ -147,13 +147,22 @@ body{
   background-image: var(--wall);
   background-repeat: repeat;
   background-size: 512px 512px;
-  background-attachment: scroll;
+  position:relative;
+}
+.chat::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: rgba(0,0,0,.18);
+  pointer-events:none;
 }
 
 /* --- message rows --- */
 .row{
   display:flex;
   margin:10px 0;
+  position:relative;
+  z-index:1; /* acima do overlay */
 }
 .row.left{justify-content:flex-start}
 .row.right{justify-content:flex-end}
@@ -162,48 +171,25 @@ body{
   max-width:min(78%, 520px);
   border-radius:16px;
   padding:10px 12px;
-  border:1px solid rgba(255,255,255,.06);
+  border:0;
   background:var(--bubbleA);
-  box-shadow: 0 1px 0 rgba(0,0,0,.25);
+  box-shadow: 0 1px 2px rgba(0,0,0,.25);
   white-space:pre-wrap;
   position:relative;
 }
-
-/* little tails */
-.row.left .bubble:before{
-  content:"";
-  position:absolute;
-  left:-6px;
-  top:10px;
-  width:12px;
-  height:12px;
-  background:var(--bubbleA);
-  border-left:1px solid rgba(255,255,255,.06);
-  border-bottom:1px solid rgba(255,255,255,.06);
-  transform: rotate(45deg);
-}
 .row.right .bubble{
   background:var(--bubbleB);
-  border-color: rgba(0,0,0,.12);
+  box-shadow: 0 1px 2px rgba(0,0,0,.22);
 }
-.row.right .bubble:before{
-  content:"";
-  position:absolute;
-  right:-6px;
-  left:auto;
-  top:10px;
-  width:12px;
-  height:12px;
-  background:var(--bubbleB);
-  border-right:1px solid rgba(0,0,0,.12);
-  border-bottom:1px solid rgba(0,0,0,.12);
-  transform: rotate(-45deg);
-}
+
+/* remove tails (fica mais real) */
+.row.left .bubble:before,
+.row.right .bubble:before{ display:none; }
 
 .meta{
   margin-top:6px;
-  font-size:11px;
-  color:rgba(134,150,160,.95);
+  font-size:10.5px;
+  color:rgba(134,150,160,.92);
   text-align:right;
 }
 
@@ -214,8 +200,8 @@ body{
   align-items:center;
   padding:10px 12px;
   border-radius:16px;
-  border:1px solid rgba(255,255,255,.06);
-  background:rgba(32,44,51,.86);
+  background:rgba(32,44,51,.92);
+  box-shadow: 0 1px 2px rgba(0,0,0,.22);
 }
 .dot{
   width:6px;
@@ -232,7 +218,7 @@ body{
   50%{opacity:.9}
 }
 
-/* --- composer (input + send) --- */
+/* --- composer --- */
 .composer{
   position:fixed;
   left:0;
@@ -241,26 +227,26 @@ body{
   padding:10px 10px calc(10px + env(safe-area-inset-bottom));
   background:rgba(11,20,26,.92);
   backdrop-filter: blur(10px);
-  border-top:1px solid rgba(255,255,255,.05);
+  border-top:1px solid rgba(255,255,255,.06);
   display:flex;
   gap:10px;
   align-items:center;
-  justify-content:center;
 }
 .composer input{
-  width:min(760px, 78vw);
+  flex:1;
   border-radius:22px;
-  border:1px solid rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.08);
   background:rgba(17,27,33,.92);
   color:var(--text);
-  padding:14px 14px;
+  padding:12px 14px;
   outline:none;
+  font-size:15px;
 }
 .send{
   border:0;
-  border-radius:50%;
-  width:46px;
-  height:46px;
+  border-radius:16px;
+  width:56px;
+  height:44px;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -268,7 +254,6 @@ body{
   color:#062213;
   font-weight:900;
   cursor:pointer;
-  box-shadow: 0 6px 16px rgba(0,0,0,.35);
 }
 
 /* --- video bubble --- */
@@ -277,7 +262,7 @@ body{
   aspect-ratio: 16/10;
   border-radius:14px;
   overflow:hidden;
-  border:1px solid rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.08);
   background:#000;
   position:relative;
 }
@@ -298,18 +283,8 @@ body{
   color:rgba(233,237,239,.9);
 }
 
-/* --- cards (unlock etc.) --- */
-.card{
-  background:rgba(17,27,33,.92);
-  border:1px solid rgba(255,255,255,.07);
-  border-radius:18px;
-  padding:16px;
-  width:min(520px, 92vw);
-  box-shadow: var(--shadow);
-}
-
 /* ==========================
-   PREMIUM INTRO (V3)
+   PREMIUM INTRO (V4 PRO)
    ========================== */
 .pIntro{
   position:fixed;
@@ -320,37 +295,66 @@ body{
   position:absolute;
   inset:0;
 }
+
+/* cinematic vignette */
+.pIntroVideoWrap:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: radial-gradient(circle at center, rgba(0,0,0,0) 42%, rgba(0,0,0,.62) 100%);
+  pointer-events:none;
+}
+
 .pIntroVideoWrap video{
   width:100%;
   height:100%;
   object-fit:cover;
-  filter: contrast(1.05) saturate(1.05);
+  filter: contrast(1.06) saturate(1.08);
 }
+
+.pIntroTop{
+  position:absolute;
+  top: calc(14px + env(safe-area-inset-top));
+  left:14px;
+  right:14px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  z-index:2;
+}
+.pIntroChip{
+  padding:8px 12px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(0,0,0,.28);
+  color:#fff;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  font-size:11px;
+}
+.pIntroTimer{
+  padding:8px 12px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.22);
+  color:rgba(255,255,255,.92);
+  font-weight:900;
+  font-size:12px;
+}
+
 .pIntroOverlay{
   position:absolute;
   inset:0;
   display:flex;
   flex-direction:column;
   justify-content:flex-end;
-  padding:24px 16px calc(24px + env(safe-area-inset-bottom));
-  background:linear-gradient(to top, rgba(0,0,0,.82), rgba(0,0,0,.10) 58%, rgba(0,0,0,0));
+  padding:24px 16px calc(74px + env(safe-area-inset-bottom));
+  background:linear-gradient(to top, rgba(0,0,0,.86), rgba(0,0,0,.10) 58%, rgba(0,0,0,0));
   transition: opacity .35s ease;
-}
-.pIntroBadge{
-  display:inline-flex;
-  width:max-content;
-  padding:8px 12px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.18);
-  background:rgba(0,0,0,.35);
-  color:#fff;
-  letter-spacing:.14em;
-  text-transform:uppercase;
-  font-size:11px;
-  margin-bottom:10px;
+  z-index:2;
 }
 .pIntroTitle{
-  font-size:22px;
+  font-size:24px;
   font-weight:1000;
   color:#fff;
   margin-bottom:6px;
@@ -361,30 +365,53 @@ body{
   font-size:13px;
   margin-bottom:14px;
 }
-.pRow{
-  display:flex;
-  gap:10px;
-}
+.pRow{ display:flex; gap:10px; }
 .pBtnGhost{
   border:0;
   width:max-content;
   padding:12px 16px;
   border-radius:14px;
   border:1px solid rgba(255,255,255,.22);
-  background:rgba(0,0,0,.35);
+  background:rgba(0,0,0,.32);
   color:#fff;
   font-weight:900;
   cursor:pointer;
 }
 
+/* progress bar */
+.pProgress{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom: calc(56px + env(safe-area-inset-bottom));
+  height:3px;
+  background: rgba(255,255,255,.10);
+  z-index:2;
+}
+.pProgBar{
+  height:100%;
+  width:0%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius:999px;
+}
+
+/* CTA animation */
 .pCtaWrap{
   position:absolute;
   left:0;
   right:0;
-  bottom: calc(18px + env(safe-area-inset-bottom));
+  bottom: calc(14px + env(safe-area-inset-bottom));
   display:flex;
   justify-content:center;
   padding:0 16px;
+  transform: translateY(14px);
+  opacity:0;
+  transition: all .28s ease;
+  z-index:3;
+}
+.pCtaWrap.show{
+  transform: translateY(0);
+  opacity:1;
 }
 .pBtnPrimary{
   width:min(520px, 92vw);
@@ -399,12 +426,10 @@ body{
   cursor:pointer;
   box-shadow: 0 14px 40px rgba(0,0,0,.45);
 }
-.pBtnPrimary:active{
-  transform: translateY(1px);
-}
+.pBtnPrimary:active{ transform: translateY(1px); }
 
 /* ==========================
-   ROUTING OVERLAY (V3)
+   ROUTING OVERLAY
    ========================== */
 .routeOverlay{
   position:fixed;
@@ -480,9 +505,7 @@ body{
   margin-left:6px;
   font-weight:1000;
 }
-.routeStep .dots{
-  letter-spacing:.24em;
-}
+.routeStep .dots{ letter-spacing:.24em; }
 
 /* ==========================
    CALL SCREEN (simple)
@@ -522,5 +545,4 @@ body{
 .btnRed{background:#ff3b30;color:#fff}
 .btnGreen{background:#34c759;color:#062213}
 
-/* small polish */
 button:disabled{cursor:not-allowed}
