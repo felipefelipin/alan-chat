@@ -1,8 +1,6 @@
 // src/worker.js
 require("dotenv").config();
 
-const path = require("path");
-const fs = require("fs");
 const { Worker } = require("bullmq");
 const TelegramBot = require("node-telegram-bot-api");
 const { PrismaClient } = require("@prisma/client");
@@ -159,50 +157,40 @@ async function sendHuman(chatId, text, extra = {}, opts = {}) {
   }
 }
 
-function assetsPath(file) {
-  // ✅ sua pasta bot-funil/assets (fora do webapp)
-  return path.join(__dirname, "..", "assets", file);
+// ===============================
+// ✅ MÍDIA VIA URL (DEFINITIVO)
+// ===============================
+const ASSETS_BASE =
+  (process.env.PUBLIC_ASSETS_BASE || "").trim().replace(/\/+$/, "") || "https://alana-chat.vercel.app/assets";
+
+function assetUrl(file) {
+  // garante sem barras duplicadas
+  const f = String(file || "").replace(/^\/+/, "");
+  return `${ASSETS_BASE}/${encodeURIComponent(f)}`.replace(/%2F/g, "/");
 }
 
 async function sendPhotoWithAction(chatId, file, caption = "") {
   try {
-    await bot.sendChatAction(chatId, "upload_photo"); // ✅ aparece “enviando foto…”
+    await bot.sendChatAction(chatId, "upload_photo");
   } catch {}
   await sleep(jitter(rand(900, 1700)));
 
-  const p = assetsPath(file);
-  if (!fs.existsSync(p)) {
-    console.error("[SEND_PHOTO] arquivo não existe:", p);
-    return;
-  }
-
-  const stream = fs.createReadStream(p);
-  await bot.sendPhoto(chatId, stream, caption ? { caption } : {}, {
-    filename: file,
-    contentType: "image/jpeg",
-  });
+  const url = assetUrl(file);
+  // Telegram aceita URL direta
+  await bot.sendPhoto(chatId, url, caption ? { caption } : {});
 }
 
 async function sendVideoWithAction(chatId, file, opts = {}) {
   const { caption = "", autoDeleteMs } = opts;
 
   try {
-    await bot.sendChatAction(chatId, "upload_video"); // ✅ aparece “enviando vídeo…”
+    await bot.sendChatAction(chatId, "upload_video");
   } catch {}
   await sleep(jitter(rand(1100, 2100)));
 
-  const p = assetsPath(file);
-  if (!fs.existsSync(p)) {
-    console.error("[SEND_VIDEO] arquivo não existe:", p);
-    return;
-  }
+  const url = assetUrl(file);
 
-  const sent = await bot.sendVideo(
-    chatId,
-    fs.createReadStream(p),
-    caption ? { caption } : {},
-    { filename: file, contentType: "video/mp4" }
-  );
+  const sent = await bot.sendVideo(chatId, url, caption ? { caption } : {});
 
   if (autoDeleteMs) {
     setTimeout(() => {
@@ -242,13 +230,9 @@ const worker = new Worker(
     const { type, chatId, data } = job.data || {};
     if (!type || !chatId) return;
 
-    // ✅ trava por chat pra nunca desordenar
     return withChatLock(chatId, async () => {
       console.log("JOB:", type, chatId);
 
-      // ---------------------------------------
-      // ENVIO PADRÃO (humanizado)
-      // ---------------------------------------
       if (type === "SEND_MESSAGE") {
         const text = data?.text ?? "";
         const extra = data?.extra ?? {};
@@ -264,32 +248,23 @@ const worker = new Worker(
         return;
       }
 
-      // ---------------------------------------
-      // FOTO (com “enviando foto…”)
-      // ---------------------------------------
       if (type === "SEND_PHOTO") {
         const file = data?.file || "intro.jpg";
         const caption = data?.caption || "";
         await sendPhotoWithAction(chatId, file, caption);
-        await logEventSafe(chatId, "SEND_PHOTO", { file });
+        await logEventSafe(chatId, "SEND_PHOTO", { file, via: "url", base: ASSETS_BASE });
         return;
       }
 
-      // ---------------------------------------
-      // VÍDEO (com “enviando vídeo…” + auto-delete)
-      // ---------------------------------------
       if (type === "SEND_VIDEO") {
         const file = data?.file || "intro.mp4";
         const caption = data?.caption || "";
         const autoDeleteMs = data?.autoDeleteMs;
         await sendVideoWithAction(chatId, file, { caption, autoDeleteMs });
-        await logEventSafe(chatId, "SEND_VIDEO", { file, autoDeleteMs });
+        await logEventSafe(chatId, "SEND_VIDEO", { file, autoDeleteMs, via: "url", base: ASSETS_BASE });
         return;
       }
 
-      // ---------------------------------------
-      // MINI-CIÚME (pre nudge)
-      // ---------------------------------------
       if (type === "PRE_NUDGE") {
         const user = await prisma.user.findUnique({ where: { id: String(chatId) } });
         if (!user) return;
@@ -303,9 +278,6 @@ const worker = new Worker(
         return;
       }
 
-      // ---------------------------------------
-      // REMARKETING
-      // ---------------------------------------
       if (type === "REMARKETING") {
         const user = await prisma.user.findUnique({ where: { id: String(chatId) } });
         if (!user) return;
@@ -326,9 +298,6 @@ const worker = new Worker(
         return;
       }
 
-      // ---------------------------------------
-      // PÓS PAGAMENTO
-      // ---------------------------------------
       if (type === "POST_PAYMENT") {
         await prisma.user.update({
           where: { id: String(chatId) },
@@ -347,7 +316,7 @@ const worker = new Worker(
   },
   {
     connection,
-    concurrency: 10, // ✅ pode ser alto: ordem é garantida pelo lock por chat
+    concurrency: 10,
   }
 );
 

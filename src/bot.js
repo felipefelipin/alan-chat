@@ -91,7 +91,8 @@ async function sendStartScript(chatId) {
   let total = 0;
   let idx = 0;
 
-  // ✅ FOTO LOCAL (assets/intro.jpg) ANTES DO “ei…”
+  // ✅ FOTO (via worker -> URL pública)
+  // GARANTA que exista: public/assets/intro.jpg
   total += rand(700, 1400);
   idx += 1;
   await queue.add(
@@ -99,7 +100,7 @@ async function sendStartScript(chatId) {
     {
       type: "SEND_PHOTO",
       chatId: String(chatId),
-      data: { caption: "" },
+      data: { file: "intro.jpg", caption: "" },
     },
     { delay: total, jobId: jid("start", chatId, idx), removeOnComplete: true, removeOnFail: true }
   );
@@ -281,6 +282,7 @@ bot.on("message", async (msg) => {
   );
 
   // 2) vídeo no Telegram (autoDelete em 5s)
+  // GARANTA que exista: public/assets/intro.mp4
   total += rand(1800, 2800);
   idx += 1;
   await queue.add(
@@ -289,6 +291,7 @@ bot.on("message", async (msg) => {
       type: "SEND_VIDEO",
       chatId: String(chatId),
       data: {
+        file: "intro.mp4",
         caption: "", // caption vazio ok
         autoDeleteMs: 5000,
       },
@@ -335,6 +338,7 @@ bot.on("message", async (msg) => {
   );
 
   // 5) botões (✅ texto não-vazio)
+  // ✅ URL do WebApp na raiz (você já corrigiu o env; aqui mantemos cache-bust)
   total += rand(1200, 2000);
   idx += 1;
   await queue.add(
@@ -348,7 +352,12 @@ bot.on("message", async (msg) => {
         extra: {
           reply_markup: {
             inline_keyboard: [
-              [{ text: "ENTRAR NO PRIVADO 🔒", web_app: { url: process.env.WEBAPP_URL + "?v=" + Date.now() } }],
+              [
+                {
+                  text: "ENTRAR NO PRIVADO 🔒",
+                  web_app: { url: process.env.WEBAPP_URL + "?v=" + Date.now() },
+                },
+              ],
               [{ text: "FICAR POR AQUI", callback_data: "webapp:later" }],
             ],
           },
