@@ -1,3 +1,6 @@
+// =======================
+// Telegram WebApp bootstrap
+// =======================
 const tg = window.Telegram?.WebApp;
 if (tg) {
   tg.ready();
@@ -15,12 +18,28 @@ const ASSETS = {
   ringtone: "/assets/ringtone.mp3",
 };
 
+// =======================
+// Persistência (localStorage)
+// =======================
+const PERSIST_KEY = "gisa_webapp_state_v2";
+
+// ✅ URL de checkout (AJUSTE AQUI)
+const CHECKOUT_URL = "/checkout"; // ex: "https://seusite.com/checkout"
+
+function safeJsonParse(s) {
+  try { return JSON.parse(s); } catch { return null; }
+}
+
+// =======================
+// Estado
+// =======================
 const state = {
   step: 0,
   ring: null,
   chatEl: null,
   music: null,
   introVidEl: null,
+  history: [],
   flags: {
     entered: false,
     audioEnabled: false,
@@ -29,6 +48,52 @@ const state = {
   },
 };
 
+function snapshotForSave() {
+  return {
+    step: state.step,
+    flags: {
+      entered: !!state.flags.entered,
+      audioEnabled: !!state.flags.audioEnabled,
+      routing: false,
+      startedChat: !!state.flags.startedChat,
+    },
+    history: Array.isArray(state.history) ? state.history.slice(-80) : [],
+    ui: {
+      statusText: (document.getElementById("status")?.textContent ?? "online"),
+    },
+  };
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(PERSIST_KEY, JSON.stringify(snapshotForSave()));
+  } catch {}
+}
+
+function loadState() {
+  const raw = localStorage.getItem(PERSIST_KEY);
+  if (!raw) return;
+
+  const data = safeJsonParse(raw);
+  if (!data) return;
+
+  if (typeof data.step === "number") state.step = data.step;
+
+  if (data.flags && typeof data.flags === "object") {
+    state.flags.entered = !!data.flags.entered;
+    state.flags.audioEnabled = !!data.flags.audioEnabled;
+    state.flags.startedChat = !!data.flags.startedChat;
+    state.flags.routing = false;
+  }
+
+  if (Array.isArray(data.history)) {
+    state.history = data.history;
+  }
+}
+
+// =======================
+// Utils
+// =======================
 function nowTime() {
   const d = new Date();
   const hh = String(d.getHours()).padStart(2, "0");
@@ -54,10 +119,10 @@ function escapeHtml(s) {
 function setStatus(text) {
   const el = document.getElementById("status");
   if (el) el.textContent = text;
+  saveState();
 }
 
 async function preloadMedia() {
-  // Preload best-effort (não bloqueia)
   try {
     const v = document.createElement("video");
     v.src = ASSETS.privateIntro;
@@ -141,18 +206,11 @@ function mountPremiumIntro() {
 
   state.introVidEl = vid;
 
-  // CTA começa escondido, aparece no fim
   ctaWrap.classList.remove("show");
   ctaWrap.style.pointerEvents = "none";
 
-  // Autoplay costuma falhar no Telegram. A gente tenta, mas depende de gesto.
   const tryPlayVideo = async () => {
-    try {
-      await vid.play();
-      return true;
-    } catch {
-      return false;
-    }
+    try { await vid.play(); return true; } catch { return false; }
   };
 
   const tryEnableAudio = async () => {
@@ -164,6 +222,7 @@ function mountPremiumIntro() {
       state.music.volume = 0;
       await state.music.play();
       state.flags.audioEnabled = true;
+      saveState();
 
       await fadeVolume(state.music, 0, 0.9, 750);
 
@@ -180,28 +239,22 @@ function mountPremiumIntro() {
     }
   };
 
-  // Botão “ativar som”
   btnAudio.onclick = async () => {
     await tryPlayVideo();
     await tryEnableAudio();
   };
 
-  // Clique no vídeo destrava (vídeo + som)
   vid.addEventListener("click", async () => {
     await tryPlayVideo();
     await tryEnableAudio();
   });
 
-  // Se der erro de mídia, mostra CTA pra não travar a pessoa
   vid.addEventListener("error", () => {
     if (sub) sub.textContent = "não consegui carregar o vídeo…";
     showCta();
   });
 
-  // Tenta iniciar o vídeo rápido (muted)
-  setTimeout(() => {
-    tryPlayVideo();
-  }, 150);
+  setTimeout(() => { tryPlayVideo(); }, 150);
 
   const stopAt = 10.0;
   let ended = false;
@@ -215,9 +268,7 @@ function mountPremiumIntro() {
     if (ended) return;
     ended = true;
 
-    try {
-      vid.pause();
-    } catch {}
+    try { vid.pause(); } catch {}
 
     try {
       if (state.music && state.flags.audioEnabled) {
@@ -263,10 +314,9 @@ function mountPremiumIntro() {
   btnEnter.onclick = async () => {
     if (state.flags.entered) return;
     state.flags.entered = true;
+    saveState();
 
-    try {
-      vid.pause();
-    } catch {}
+    try { vid.pause(); } catch {}
     try {
       if (state.music) {
         state.music.pause();
@@ -280,7 +330,6 @@ function mountPremiumIntro() {
     startScript();
   };
 
-  // fallback: se não carregou rápido, libera CTA em ~3s
   setTimeout(() => {
     if (!ended && (!vid || vid.readyState < 2)) {
       showCta();
@@ -314,11 +363,9 @@ async function runRoutingOverlayV4() {
   );
 
   await sleep(650);
-  const st1 = document.getElementById("st1");
   const st2 = document.getElementById("st2");
   const st3 = document.getElementById("st3");
 
-  if (st1) st1.textContent = "validando sessão…";
   if (st2) st2.style.opacity = "1";
 
   await sleep(950);
@@ -381,6 +428,7 @@ function mountChat() {
   });
 
   state.chatEl = document.getElementById("chat");
+  restoreHistory();
 
   setInterval(() => {
     const t = document.getElementById("sbTime");
@@ -389,6 +437,7 @@ function mountChat() {
 }
 
 function scrollBottom() {
+  if (!state.chatEl) return;
   state.chatEl.scrollTop = state.chatEl.scrollHeight;
 }
 
@@ -411,6 +460,50 @@ function removeTyping() {
   if (el) el.remove();
 }
 
+function pushHistory(item) {
+  state.history.push(item);
+  if (state.history.length > 120) state.history = state.history.slice(-120);
+  saveState();
+}
+
+function restoreHistory() {
+  if (!state.chatEl) return;
+  if (!Array.isArray(state.history) || state.history.length === 0) return;
+
+  state.chatEl.innerHTML = "";
+  for (const item of state.history) {
+    if (!item || !item.type) continue;
+
+    if (item.type === "msg") {
+      const row = document.createElement("div");
+      row.className = `row ${item.side}`;
+      row.innerHTML = `
+        <div class="bubble">
+          ${item.html}
+          <div class="meta">${item.time || nowTime()}</div>
+        </div>
+      `;
+      state.chatEl.appendChild(row);
+    }
+
+    if (item.type === "video") {
+      const row = document.createElement("div");
+      row.className = "row left";
+      row.innerHTML = `
+        <div class="bubble">
+          <div class="videoBubble">
+            <video playsinline muted preload="auto" src="${item.src}"></video>
+            <div class="videoHint">vídeo</div>
+          </div>
+          <div class="meta">${item.time || nowTime()}</div>
+        </div>
+      `;
+      state.chatEl.appendChild(row);
+    }
+  }
+  scrollBottom();
+}
+
 function addMsg(side, html) {
   const row = document.createElement("div");
   row.className = `row ${side}`;
@@ -422,6 +515,8 @@ function addMsg(side, html) {
   `;
   state.chatEl.appendChild(row);
   scrollBottom();
+
+  pushHistory({ type: "msg", side, html, time: nowTime() });
 }
 
 function typingDelayFor(text) {
@@ -433,7 +528,6 @@ function typingDelayFor(text) {
 }
 
 async function gisaSay(text, opts = {}) {
-  // variação “real”
   const status = Math.random() < 0.18 ? "gravando áudio…" : "digitando…";
   setStatus(status);
 
@@ -446,14 +540,15 @@ async function gisaSay(text, opts = {}) {
   await sleep(rand(420, 980));
 }
 
-// --- Video bubble inside chat (respeita X segundos)
 function addVideoBubble(src, seconds = 10) {
+  const fullSrc = `${src}?v=${Date.now()}`;
+
   const row = document.createElement("div");
   row.className = "row left";
   row.innerHTML = `
     <div class="bubble popIn">
       <div class="videoBubble">
-        <video playsinline muted autoplay preload="auto" src="${src}?v=${Date.now()}"></video>
+        <video playsinline muted autoplay preload="auto" src="${fullSrc}"></video>
         <div class="videoHint">vídeo</div>
       </div>
       <div class="meta">${nowTime()}</div>
@@ -462,36 +557,22 @@ function addVideoBubble(src, seconds = 10) {
   state.chatEl.appendChild(row);
   scrollBottom();
 
+  pushHistory({ type: "video", src: fullSrc, time: nowTime() });
+
   const vid = row.querySelector("video");
   if (!vid) return;
 
   const stopAt = Number(seconds) > 0 ? Number(seconds) : 10;
-  let cleared = false;
-
-  const clear = () => {
-    if (cleared) return;
-    cleared = true;
-    try {
-      clearInterval(t);
-    } catch {}
-  };
-
   const t = setInterval(() => {
     if (vid.currentTime >= stopAt) {
-      try {
-        vid.pause();
-      } catch {}
-      clear();
+      try { vid.pause(); } catch {}
+      clearInterval(t);
     }
   }, 120);
 
-  vid.onended = () => clear();
-  vid.onpause = () => {
-    if (vid.currentTime >= stopAt - 0.05) clear();
-  };
+  vid.onended = () => clearInterval(t);
 }
 
-// --- User send
 function onSend() {
   const input = document.getElementById("input");
   const text = input.value.trim();
@@ -503,13 +584,14 @@ function onSend() {
 }
 
 // =======================
-// SCRIPT (fluxo atual)
+// FUNIL (seu fluxo intacto)
 // =======================
 async function startScript() {
   if (state.flags.startedChat) return;
   state.flags.startedChat = true;
 
   state.step = 0;
+  saveState();
 
   setStatus("enviando vídeo…");
   await sleep(rand(900, 1600));
@@ -527,11 +609,13 @@ async function startScript() {
   await gisaSay("você é mais curioso…\nou vai até o fim?");
 
   state.step = 1;
+  saveState();
 }
 
 async function handleUserText(text) {
   if (state.step === 1) {
     state.step = 2;
+    saveState();
 
     await gisaSay("hm…");
     await gisaSay("foi o que eu imaginei");
@@ -539,11 +623,13 @@ async function handleUserText(text) {
     await sleep(rand(700, 1200));
     await gisaSay("posso te mostrar rapidinho por chamada?");
     state.step = 3;
+    saveState();
     return;
   }
 
   if (state.step === 3) {
     state.step = 4;
+    saveState();
 
     await gisaSay("ok… espera.");
     await gisaSay("não some.");
@@ -555,7 +641,42 @@ async function handleUserText(text) {
 }
 
 // =======================
-// CALL (simplificada)
+// Checkout CTA (após funil)
+// =======================
+function openCheckout() {
+  try {
+    if (tg?.openLink) tg.openLink(CHECKOUT_URL);
+    else window.location.href = CHECKOUT_URL;
+  } catch {
+    window.location.href = CHECKOUT_URL;
+  }
+}
+
+function showCheckoutCta() {
+  const html = `
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div style="opacity:.92;">se você quer que eu continue… é por aqui.</div>
+      <button id="goCheckoutBtn" class="pBtnPrimary" style="
+        width:100%;
+        max-width:420px;
+        padding:14px 16px;
+        border-radius:16px;
+        letter-spacing:.04em;
+        text-transform:uppercase;
+      ">continuar</button>
+      <div style="font-size:12px; opacity:.6;">abre o checkout em segurança</div>
+    </div>
+  `;
+  addMsg("left", html);
+
+  setTimeout(() => {
+    const btn = document.getElementById("goCheckoutBtn");
+    if (btn) btn.onclick = openCheckout;
+  }, 0);
+}
+
+// =======================
+// CALL (seu fluxo intacto)
 // =======================
 function showIncomingCall() {
   try {
@@ -589,9 +710,7 @@ function showIncomingCall() {
 
 async function endCall(wasAnswered) {
   if (state.ring) {
-    try {
-      state.ring.pause();
-    } catch {}
+    try { state.ring.pause(); } catch {}
     state.ring = null;
   }
 
@@ -612,8 +731,22 @@ async function endCall(wasAnswered) {
   await gisaSay("aqui eu não posso continuar…");
   await gisaSay("isso aqui não é seguro.");
   await gisaSay("eu só mostro pra quem realmente quer.");
+
+  await sleep(rand(450, 900));
+  showCheckoutCta();
+
+  saveState();
 }
 
+// =======================
 // init
+// =======================
 preloadMedia();
-mountPremiumIntro();
+loadState();
+
+if (state.flags.entered) {
+  mountChat();
+  if (!state.flags.startedChat) setTimeout(startScript, 220);
+} else {
+  mountPremiumIntro();
+}

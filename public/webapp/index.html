@@ -2,9 +2,11 @@
 <html lang="pt-br">
 <head>
   <meta charset="utf-8" />
+
+  <!-- iOS safe-area + evita zoom/changing -->
   <meta
     name="viewport"
-    content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+    content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"
   />
 
   <title>Alana</title>
@@ -14,12 +16,15 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
-  <!-- Telegram WebApp precisa disso p/ autoplay funcionar melhor -->
+  <!-- Telegram WebApp / iOS -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="mobile-web-app-capable" content="yes" />
 
-  <link rel="stylesheet" href="./styles.css" />
+  <!-- 🔥 cache bust também no CSS (Telegram cache é chato) -->
+  <link rel="stylesheet" href="./styles.css?v=4" />
 </head>
+
 <body>
   <div id="app"></div>
 
