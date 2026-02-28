@@ -348,7 +348,7 @@ bot.on("message", async (msg) => {
         extra: {
           reply_markup: {
             inline_keyboard: [
-              [{ text: "ENTRAR NO PRIVADO 🔒", web_app: { url: process.env.WEBAPP_URL } }],
+              [{ text: "ENTRAR NO PRIVADO 🔒", web_app: { url: process.env.WEBAPP_URL + "?v=" + Date.now() } }],
               [{ text: "FICAR POR AQUI", callback_data: "webapp:later" }],
             ],
           },
