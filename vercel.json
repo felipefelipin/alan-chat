@@ -3,13 +3,11 @@
   "builds": [
     { "src": "public/**", "use": "@vercel/static" }
   ],
-  "routes": [
-    { "handle": "filesystem" },
-
-    { "src": "^/webapp/?$", "dest": "/webapp/index.html" },
-    { "src": "^/webapp/(.*)$", "dest": "/webapp/$1" },
-
-    { "src": "^/assets/(.*)$", "dest": "/assets/$1" }
+  "rewrites": [
+    { "source": "/webapp", "destination": "/webapp/index.html" },
+    { "source": "/webapp/", "destination": "/webapp/index.html" },
+    { "source": "/webapp/:path*", "destination": "/webapp/:path*" },
+    { "source": "/assets/:path*", "destination": "/assets/:path*" }
   ],
   "headers": [
     {
