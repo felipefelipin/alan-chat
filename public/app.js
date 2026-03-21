@@ -1,6 +1,3 @@
-// =======================
-// Telegram WebApp bootstrap
-// =======================
 const tg = window.Telegram?.WebApp;
 if (tg) {
   tg.ready();
@@ -9,9 +6,6 @@ if (tg) {
 
 const app = document.getElementById("app");
 
-// =======================
-// Assets
-// =======================
 const ASSETS = {
   privateIntro: "/assets/private-intro-v1.mp4",
   privateMusic: "/assets/private-music.mp3",
@@ -19,12 +13,19 @@ const ASSETS = {
   callVideo: "/assets/call.mp4",
   ringtone: "/assets/ringtone.mp3",
   avatar: "/assets/avatar-gisa.jpg",
+  media1: "/assets/grid-1.jpg",
+  media2: "/assets/grid-2.jpg",
+  media3: "/assets/grid-3.jpg",
+  media4: "/assets/grid-4.jpg",
 };
 
-// =======================
-// Persistência
-// =======================
-const PERSIST_KEY = "gisa_webapp_state_v4";
+const CONTACT = {
+  title: "Gisa",
+  subtitle: "online agora",
+  number: "+55 33 99848-1169",
+};
+
+const PERSIST_KEY = "gisa_webapp_state_v5";
 const CHECKOUT_URL = "/checkout";
 
 function safeJsonParse(s) {
@@ -35,9 +36,6 @@ function safeJsonParse(s) {
   }
 }
 
-// =======================
-// Estado
-// =======================
 const state = {
   step: 0,
   ring: null,
@@ -62,9 +60,9 @@ function snapshotForSave() {
       routing: false,
       startedChat: !!state.flags.startedChat,
     },
-    history: Array.isArray(state.history) ? state.history.slice(-160) : [],
+    history: Array.isArray(state.history) ? state.history.slice(-220) : [],
     ui: {
-      statusText: document.getElementById("status")?.textContent ?? "online agora",
+      statusText: document.getElementById("status")?.textContent ?? CONTACT.subtitle,
     },
   };
 }
@@ -98,9 +96,6 @@ function loadState() {
   }
 }
 
-// =======================
-// Utils
-// =======================
 function nowTime() {
   const d = new Date();
   const hh = String(d.getHours()).padStart(2, "0");
@@ -162,14 +157,17 @@ async function fadeVolume(audio, from, to, ms = 700) {
   }
 }
 
-// =======================
-// Cluster / visual grouping
-// =======================
+function getFlowTypes() {
+  return new Set(["msg", "video", "cta", "mediaGrid", "audio"]);
+}
+
 function updatePreviousGroupForNewMessage(side) {
+  const flowTypes = getFlowTypes();
+
   for (let i = state.history.length - 1; i >= 0; i--) {
     const item = state.history[i];
     if (!item || item.side !== side) break;
-    if (item.type !== "msg" && item.type !== "video" && item.type !== "cta") break;
+    if (!flowTypes.has(item.type)) break;
 
     if (item.cluster === "single") item.cluster = "first";
     else if (item.cluster === "last") item.cluster = "middle";
@@ -181,21 +179,24 @@ function updatePreviousGroupForNewMessage(side) {
 }
 
 function getNewCluster(side) {
+  const flowTypes = getFlowTypes();
   const last = state.history[state.history.length - 1];
   if (!last) return "single";
   if (last.side !== side) return "single";
-  if (!["msg", "video", "cta"].includes(last.type)) return "single";
+  if (!flowTypes.has(last.type)) return "single";
   return "last";
 }
 
 function rebuildClusters() {
-  const flowTypes = new Set(["msg", "video", "cta"]);
+  const flowTypes = getFlowTypes();
+
   for (let i = 0; i < state.history.length; i++) {
     const item = state.history[i];
     if (!item || !flowTypes.has(item.type)) continue;
 
     const prev = state.history[i - 1];
     const next = state.history[i + 1];
+
     const samePrev = !!prev && flowTypes.has(prev.type) && prev.side === item.side;
     const sameNext = !!next && flowTypes.has(next.type) && next.side === item.side;
 
@@ -206,9 +207,23 @@ function rebuildClusters() {
   }
 }
 
-// =======================
-// PREMIUM INTRO
-// =======================
+function getDefaultGridItems() {
+  return [
+    { src: ASSETS.media1, duration: "0:08" },
+    { src: ASSETS.media2, duration: "0:12" },
+    { src: ASSETS.media3, duration: "0:21" },
+    { src: ASSETS.media4, duration: "0:27" },
+  ];
+}
+
+function getDefaultWaveBars() {
+  return [
+    18, 30, 42, 37, 28, 24, 32, 48, 26, 20, 14, 12,
+    16, 18, 26, 34, 46, 41, 29, 18, 14, 20, 28, 39,
+    22, 18, 13, 16, 21, 30, 26, 22,
+  ];
+}
+
 function mountPremiumIntro() {
   const cacheBust = `?v=${Date.now()}`;
 
@@ -408,9 +423,6 @@ function mountPremiumIntro() {
   }, 2800);
 }
 
-// =======================
-// ROUTING OVERLAY
-// =======================
 async function runRoutingOverlayV4() {
   if (state.flags.routing) return;
   state.flags.routing = true;
@@ -459,9 +471,6 @@ async function runRoutingOverlayV4() {
   state.flags.routing = false;
 }
 
-// =======================
-// CHAT UI
-// =======================
 function mountChat() {
   app.innerHTML = `
     <div class="full fadeIn">
@@ -474,59 +483,82 @@ function mountChat() {
         </span>
       </div>
 
-      <div class="topbar">
+      <div class="topbar topbar-compact">
         <button class="navBtn" type="button" aria-label="Voltar">
           <span class="navChevron"></span>
         </button>
 
+        <div class="topbarCount">48</div>
+
         <div class="avatarWrap">
-          <div class="avatar avatarImgWrap">
+          <div class="avatar avatarImgWrap topAvatar">
             <img
               src="${ASSETS.avatar}?v=1"
-              alt="Gisa"
+              alt="${CONTACT.title}"
               onerror="this.parentNode.classList.add('avatarFallback')"
             />
-            <span class="avatarFallbackText">G</span>
+            <span class="avatarFallbackText">${CONTACT.title.charAt(0)}</span>
           </div>
         </div>
 
-        <div class="titlebox">
-          <div class="name">Gisa</div>
-          <div class="status" id="status">online agora</div>
+        <div class="titlebox titleboxCompact">
+          <div class="name">${CONTACT.number}</div>
+          <div class="status" id="status">${CONTACT.subtitle}</div>
         </div>
 
-        <div class="topActions">
-          <button class="iconBtn" type="button" aria-hidden="true">
-            <span class="iconDots"></span>
+        <div class="topActions topActionsCompact">
+          <button class="iconBtn iconBtnVideo" type="button" aria-hidden="true">
+            <span class="topIcon topIconVideo"></span>
+          </button>
+          <button class="iconBtn iconBtnPhone" type="button" aria-hidden="true">
+            <span class="topIcon topIconPhone"></span>
           </button>
         </div>
       </div>
 
       <div class="chatShell">
-        <div class="dayDivider">
-          <span>hoje</span>
-        </div>
         <div class="chat" id="chat"></div>
       </div>
 
-      <div class="composer">
-        <button class="composerPlus" type="button" aria-hidden="true">+</button>
+      <div class="composer composerRef">
+        <button class="composerAttach" type="button" aria-hidden="true">
+          <span class="composerPlusMark"></span>
+        </button>
 
-        <div class="composerField">
-          <input id="input" autocomplete="off" placeholder=" " />
-          <span class="composerPlaceholder">Mensagem</span>
+        <div class="composerField composerFieldRef">
+          <input id="input" autocomplete="off" placeholder="Mensagem" />
+          <button class="composerGhostBtn composerGhostSticker" type="button" aria-hidden="true">
+            <span class="iconSticker"></span>
+          </button>
+          <button class="composerGhostBtn composerGhostCamera" type="button" aria-hidden="true">
+            <span class="iconCamera"></span>
+          </button>
         </div>
 
-        <button class="send" id="send" aria-label="Enviar">
+        <button class="composerMic" id="composerMic" type="button" aria-hidden="true">
+          <span class="iconMic"></span>
+        </button>
+
+        <button class="send sendRef is-hidden" id="send" aria-label="Enviar">
           <span class="sendArrow"></span>
         </button>
       </div>
     </div>
   `;
 
-  document.getElementById("send").onclick = onSend;
-  document.getElementById("input").addEventListener("keydown", (e) => {
+  const sendBtn = document.getElementById("send");
+  const input = document.getElementById("input");
+  const micBtn = document.getElementById("composerMic");
+
+  sendBtn.onclick = onSend;
+  input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") onSend();
+  });
+
+  input.addEventListener("input", () => {
+    const hasText = !!input.value.trim();
+    sendBtn.classList.toggle("is-hidden", !hasText);
+    micBtn.classList.toggle("is-hidden", hasText);
   });
 
   state.chatEl = document.getElementById("chat");
@@ -575,7 +607,7 @@ function addTyping() {
 
 function pushHistory(item) {
   state.history.push(item);
-  if (state.history.length > 180) state.history = state.history.slice(-180);
+  if (state.history.length > 260) state.history = state.history.slice(-260);
   saveState();
 }
 
@@ -594,6 +626,68 @@ function renderMeta(item) {
     <div class="meta">
       <span class="metaTime">${item.time || nowTime()}</span>
       ${renderTicks(item)}
+    </div>
+  `;
+}
+
+function renderMediaGrid(item) {
+  const items = Array.isArray(item.items) ? item.items : getDefaultGridItems();
+
+  return `
+    <div class="mediaGrid">
+      ${items
+        .map(
+          (m, index) => `
+          <div class="mediaGridItem" data-index="${index}">
+            <img src="${m.src}" alt="" onerror="this.style.display='none'" />
+            <div class="mediaGridOverlay">
+              <span class="mediaPlay"></span>
+            </div>
+            <div class="mediaDuration">${m.duration || "0:08"}</div>
+          </div>
+        `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function renderAudioBubble(item) {
+  const bars = Array.isArray(item.bars) && item.bars.length ? item.bars : getDefaultWaveBars();
+
+  return `
+    <div class="audioBubbleShell">
+      <button class="audioPlayFake" type="button" aria-hidden="true">
+        <span class="audioPlayTriangle"></span>
+      </button>
+
+      <div class="audioWaveWrap">
+        <div class="audioWave">
+          ${bars
+            .map(
+              (h, i) => `<span class="waveBar ${i < 6 ? "isPlayed" : ""}" style="height:${h}px"></span>`
+            )
+            .join("")}
+        </div>
+
+        <div class="audioMetaRow">
+          <span class="audioStart">${item.start || "0:09"}</span>
+          <span class="audioEnd">${item.end || "10:00"}</span>
+        </div>
+      </div>
+
+      <button class="audioMicFake" type="button" aria-hidden="true">
+        <span class="audioMicIcon"></span>
+      </button>
+
+      <div class="audioAvatarMini avatarImgWrap">
+        <img
+          src="${ASSETS.avatar}?v=1"
+          alt="${CONTACT.title}"
+          onerror="this.parentNode.classList.add('avatarFallback')"
+        />
+        <span class="avatarFallbackText">${CONTACT.title.charAt(0)}</span>
+      </div>
     </div>
   `;
 }
@@ -629,6 +723,28 @@ function renderRowHTML(item, animated = false) {
     `;
   }
 
+  if (item.type === "mediaGrid") {
+    return `
+      <div class="msgRow ${sideClass} ${clusterClass}">
+        <div class="bubble ${bubbleBase} bubble-grid ${anim}">
+          ${renderMediaGrid(item)}
+          ${renderMeta(item)}
+        </div>
+      </div>
+    `;
+  }
+
+  if (item.type === "audio") {
+    return `
+      <div class="msgRow ${sideClass} ${clusterClass}">
+        <div class="bubble ${bubbleBase} bubble-audio ${anim}">
+          ${renderAudioBubble(item)}
+          ${renderMeta(item)}
+        </div>
+      </div>
+    `;
+  }
+
   if (item.type === "cta") {
     return `
       <div class="msgRow ${sideClass} ${clusterClass}">
@@ -647,9 +763,7 @@ function renderItem(item, animated = false) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = renderRowHTML(item, animated).trim();
   const row = wrapper.firstElementChild;
-  if (row) {
-    state.chatEl.appendChild(row);
-  }
+  if (row) state.chatEl.appendChild(row);
   return row;
 }
 
@@ -720,6 +834,38 @@ function addVideoBubble(src, seconds = 10) {
   vid.onended = () => clearInterval(t);
 }
 
+function addMediaGridBubble(items = null) {
+  updatePreviousGroupForNewMessage("left");
+
+  const item = {
+    type: "mediaGrid",
+    side: "left",
+    items: items || getDefaultGridItems(),
+    time: nowTime(),
+    cluster: getNewCluster("left"),
+  };
+
+  pushHistory(item);
+  rerenderHistory();
+}
+
+function addAudioBubble(data = {}) {
+  updatePreviousGroupForNewMessage("left");
+
+  const item = {
+    type: "audio",
+    side: "left",
+    bars: Array.isArray(data.bars) ? data.bars : getDefaultWaveBars(),
+    start: data.start || "0:09",
+    end: data.end || "10:00",
+    time: nowTime(),
+    cluster: getNewCluster("left"),
+  };
+
+  pushHistory(item);
+  rerenderHistory();
+}
+
 function addCtaCard(html) {
   updatePreviousGroupForNewMessage("left");
 
@@ -744,8 +890,7 @@ function typingDelayFor(text) {
 }
 
 async function gisaSay(text, opts = {}) {
-  const status =
-    Math.random() < 0.15 ? "gravando áudio…" : "digitando…";
+  const status = Math.random() < 0.15 ? "gravando áudio…" : "digitando…";
 
   setStatus(status);
   addTyping();
@@ -754,7 +899,7 @@ async function gisaSay(text, opts = {}) {
   removeTyping();
 
   await sleep(rand(90, 220));
-  setStatus("online agora");
+  setStatus(CONTACT.subtitle);
 
   addMsg("left", escapeHtml(text).replace(/\n/g, "<br/>"));
   await sleep(rand(320, 760));
@@ -762,17 +907,20 @@ async function gisaSay(text, opts = {}) {
 
 function onSend() {
   const input = document.getElementById("input");
+  const sendBtn = document.getElementById("send");
+  const micBtn = document.getElementById("composerMic");
+
   const text = input.value.trim();
   if (!text) return;
 
   input.value = "";
+  sendBtn.classList.add("is-hidden");
+  micBtn.classList.remove("is-hidden");
+
   addMsg("right", escapeHtml(text));
   handleUserText(text);
 }
 
-// =======================
-// Funil
-// =======================
 async function startScript() {
   if (state.flags.startedChat) return;
   state.flags.startedChat = true;
@@ -786,11 +934,11 @@ async function startScript() {
   addVideoBubble(ASSETS.intro, 10);
 
   await sleep(rand(700, 1200));
-  setStatus("online agora");
+  setStatus(CONTACT.subtitle);
 
   await gisaSay("tive que te trazer pra cá…");
   await gisaSay("aqui eu consigo fazer tudo com mais privacidade.");
-  await sleep(rand(500, 900));
+  await sleep(rand(400, 800));
   await gisaSay("mas me responde uma coisa rapidinho…");
   await gisaSay("você é mais curioso…\nou vai até o fim?");
 
@@ -823,9 +971,6 @@ async function handleUserText() {
   }
 }
 
-// =======================
-// Checkout CTA
-// =======================
 function openCheckout() {
   try {
     if (tg?.openLink) tg.openLink(CHECKOUT_URL);
@@ -853,9 +998,6 @@ function showCheckoutCta() {
   }, 0);
 }
 
-// =======================
-// CALL
-// =======================
 function showIncomingCall() {
   try {
     state.ring = new Audio(ASSETS.ringtone + `?v=${Date.now()}`);
@@ -873,13 +1015,13 @@ function showIncomingCall() {
         <div class="avatar callAvatar avatarImgWrap">
           <img
             src="${ASSETS.avatar}?v=1"
-            alt="Gisa"
+            alt="${CONTACT.title}"
             onerror="this.parentNode.classList.add('avatarFallback')"
           />
-          <span class="avatarFallbackText">G</span>
+          <span class="avatarFallbackText">${CONTACT.title.charAt(0)}</span>
         </div>
 
-        <div class="callName">Gisa</div>
+        <div class="callName">${CONTACT.title}</div>
         <div class="callSub">chamada de vídeo…</div>
       </div>
 
@@ -923,7 +1065,12 @@ async function endCall(wasAnswered) {
     await gisaSay("isso foi só um pedaço.");
   }
 
-  await sleep(rand(800, 1400));
+  await sleep(rand(650, 1100));
+  addMediaGridBubble();
+  await sleep(rand(320, 650));
+  addAudioBubble();
+
+  await sleep(rand(700, 1200));
   await gisaSay("aqui eu não posso continuar…");
   await gisaSay("isso aqui não é seguro.");
   await gisaSay("eu só mostro pra quem realmente quer.");
@@ -934,9 +1081,6 @@ async function endCall(wasAnswered) {
   saveState();
 }
 
-// =======================
-// init
-// =======================
 preloadMedia();
 loadState();
 
