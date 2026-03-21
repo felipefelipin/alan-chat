@@ -2,13 +2,17 @@
 <html lang="pt-br">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"
+  />
   <title>Alana</title>
 
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, proxy-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
+  <meta name="theme-color" content="#0a0b0d" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -23,20 +27,20 @@
 
   <script>
     async function boot() {
-      let v = Date.now(); // fallback
+      let v = Date.now();
+
       try {
         const res = await fetch("./version.json", { cache: "no-store" });
         const j = await res.json();
         if (j && (j.v || j.v === 0)) v = j.v;
       } catch {}
 
-      // CSS versionado
       const css = document.getElementById("appcss");
       css.href = "./styles.css?v=" + encodeURIComponent(v);
 
-      // JS versionado
       const s = document.createElement("script");
       s.src = "./app.js?v=" + encodeURIComponent(v);
+      s.defer = true;
       document.body.appendChild(s);
     }
 
