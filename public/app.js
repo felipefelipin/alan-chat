@@ -130,6 +130,116 @@ function vibrate(ms = 18) {
   } catch {}
 }
 
+function getInputEl() {
+  return document.getElementById("input");
+}
+
+function blurKeyboard() {
+  const input = getInputEl();
+  if (!input) return;
+  input.blur();
+}
+
+function focusKeyboard() {
+  const input = getInputEl();
+  if (!input) return;
+
+  requestAnimationFrame(() => {
+    try {
+      input.focus({ preventScroll: true });
+    } catch {
+      input.focus();
+    }
+
+    setTimeout(() => {
+      try {
+        input.focus({ preventScroll: true });
+      } catch {
+        input.focus();
+      }
+    }, 60);
+  });
+}
+
+function bindKeyboardUX() {
+  const input = getInputEl();
+  const chat = document.getElementById("chat");
+  const composer = document.querySelector(".composer");
+
+  if (!input || !chat || !composer) return;
+
+  document.body.classList.remove("kb-open");
+
+  input.addEventListener("focus", () => {
+    document.body.classList.add("kb-open");
+    setTimeout(() => scrollBottom(false), 120);
+    setTimeout(() => scrollBottom(false), 260);
+  });
+
+  input.addEventListener("blur", () => {
+    document.body.classList.remove("kb-open");
+  });
+
+  document.addEventListener(
+    "touchstart",
+    (e) => {
+      const target = e.target;
+      if (
+        target instanceof HTMLElement &&
+        !target.closest(".composer") &&
+        !target.closest(".bubble") &&
+        !target.closest(".topbar")
+      ) {
+        blurKeyboard();
+      }
+    },
+    { passive: true }
+  );
+
+  chat.addEventListener(
+    "scroll",
+    () => {
+      if (document.activeElement === input) {
+        blurKeyboard();
+      }
+    },
+    { passive: true }
+  );
+
+  chat.addEventListener(
+    "touchmove",
+    () => {
+      if (document.activeElement === input) {
+        blurKeyboard();
+      }
+    },
+    { passive: true }
+  );
+
+  composer.addEventListener("click", (e) => {
+    const target = e.target;
+    if (
+      target instanceof HTMLElement &&
+      (target.id === "input" || target.closest(".composerField"))
+    ) {
+      focusKeyboard();
+    }
+  });
+
+  if (window.visualViewport) {
+    const syncViewport = () => {
+      document.documentElement.style.setProperty("--vvh", `${window.visualViewport.height}px`);
+      setTimeout(() => scrollBottom(false), 80);
+    };
+
+    window.visualViewport.addEventListener("resize", syncViewport);
+    window.visualViewport.addEventListener("scroll", syncViewport);
+    syncViewport();
+  } else {
+    document.documentElement.style.setProperty("--vvh", `${window.innerHeight}px`);
+  }
+}
+
 async function preloadMedia() {
   try {
     const v = document.createElement("video");
@@ -563,6 +673,7 @@ function mountChat() {
 
   state.chatEl = document.getElementById("chat");
   restoreHistory();
+  bindKeyboardUX();
 
   setInterval(() => {
     const t = document.getElementById("sbTime");
@@ -572,7 +683,7 @@ function mountChat() {
 
 function scrollBottom(smooth = true) {
   if (!state.chatEl) return;
-  const top = state.chatEl.scrollHeight;
+  const top = state.chatEl.scrollHeight + 300;
   if (smooth && "scrollTo" in state.chatEl) {
     state.chatEl.scrollTo({ top, behavior: "smooth" });
   } else {
@@ -914,6 +1025,7 @@ function onSend() {
   if (!text) return;
 
   input.value = "";
+  blurKeyboard();
   sendBtn.classList.add("is-hidden");
   micBtn.classList.remove("is-hidden");
 

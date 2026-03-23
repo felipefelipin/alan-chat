@@ -16,11 +16,14 @@
   --accent2:#d6b07a;
 
   --shadow:0 18px 56px rgba(0,0,0,.52);
-  --wall:url("/assets/chat-bg.png?v=7");
+  --wall:url("/assets/chat-bg.png?v=8");
 }
 
 *{box-sizing:border-box}
 html,body{height:100%}
+html{
+  --vvh:100vh;
+}
 body{
   margin:0;
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,Arial,sans-serif;
@@ -36,7 +39,7 @@ img{display:block;max-width:100%}
 
 .full{
   width:100vw;
-  height:100vh;
+  height:var(--vvh, 100vh);
   display:flex;
   flex-direction:column;
   background:linear-gradient(180deg,var(--bg2),var(--bg));
@@ -337,6 +340,10 @@ img{display:block;max-width:100%}
   -webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
   scroll-behavior:smooth;
+}
+
+body.kb-open .chat{
+  padding-bottom:120px;
 }
 
 /* rows and grouping */
@@ -771,6 +778,11 @@ img{display:block;max-width:100%}
   border-top:.5px solid rgba(255,255,255,.05);
   backdrop-filter:blur(30px) saturate(1.1);
   -webkit-backdrop-filter:blur(30px);
+}
+
+body.kb-open .composer{
+  backdrop-filter:blur(24px) saturate(1.08);
+  -webkit-backdrop-filter:blur(24px) saturate(1.08);
 }
 
 .composerRef{
