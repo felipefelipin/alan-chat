@@ -137,99 +137,92 @@ function getInputEl() {
 function blurKeyboard() {
   const input = getInputEl();
   if (!input) return;
-  input.blur();
+  try {
+    input.blur();
+  } catch {}
 }
 
 function focusKeyboard() {
   const input = getInputEl();
   if (!input) return;
 
-  requestAnimationFrame(() => {
-    try {
-      input.focus({ preventScroll: true });
-    } catch {
-      input.focus();
-    }
-
-    setTimeout(() => {
-      try {
-        input.focus({ preventScroll: true });
-      } catch {
-        input.focus();
-      }
-    }, 60);
-  });
+  try {
+    input.focus({ preventScroll: true });
+  } catch {
+    input.focus();
+  }
 }
 
 function bindKeyboardUX() {
   const input = getInputEl();
   const chat = document.getElementById("chat");
-  const composer = document.querySelector(".composer");
 
-  if (!input || !chat || !composer) return;
+  if (!input || !chat) return;
 
-  document.body.classList.remove("kb-open");
+  let keyboardOpen = false;
+  let touchStartY = 0;
+  let touchMoved = false;
 
   input.addEventListener("focus", () => {
+    keyboardOpen = true;
     document.body.classList.add("kb-open");
     setTimeout(() => scrollBottom(false), 120);
-    setTimeout(() => scrollBottom(false), 260);
   });
 
   input.addEventListener("blur", () => {
+    keyboardOpen = false;
     document.body.classList.remove("kb-open");
   });
+
+  input.addEventListener(
+    "touchstart",
+    (e) => {
+      e.stopPropagation();
+    },
+    { passive: true }
+  );
 
   document.addEventListener(
     "touchstart",
     (e) => {
+      touchMoved = false;
+      touchStartY = e.touches?.[0]?.clientY ?? 0;
+
       const target = e.target;
-      if (
-        target instanceof HTMLElement &&
-        !target.closest(".composer") &&
-        !target.closest(".bubble") &&
-        !target.closest(".topbar")
-      ) {
+      if (!(target instanceof HTMLElement)) return;
+      if (target.closest(".composer")) return;
+
+      if (keyboardOpen) {
         blurKeyboard();
       }
     },
     { passive: true }
   );
 
-  chat.addEventListener(
-    "scroll",
-    () => {
-      if (document.activeElement === input) {
-        blurKeyboard();
-      }
-    },
-    { passive: true }
-  );
-
-  chat.addEventListener(
+  document.addEventListener(
     "touchmove",
-    () => {
-      if (document.activeElement === input) {
-        blurKeyboard();
+    (e) => {
+      const currentY = e.touches?.[0]?.clientY ?? 0;
+      if (Math.abs(currentY - touchStartY) > 10) {
+        touchMoved = true;
       }
     },
     { passive: true }
   );
 
-  composer.addEventListener("click", (e) => {
-    const target = e.target;
-    if (
-      target instanceof HTMLElement &&
-      (target.id === "input" || target.closest(".composerField"))
-    ) {
-      focusKeyboard();
-    }
-  });
+  chat.addEventListener(
+    "touchend",
+    () => {
+      if (keyboardOpen && touchMoved) {
+        blurKeyboard();
+      }
+    },
+    { passive: true }
+  );
 
   if (window.visualViewport) {
     const syncViewport = () => {
       document.documentElement.style.setProperty("--vvh", `${window.visualViewport.height}px`);
-      setTimeout(() => scrollBottom(false), 80);
     };
 
     window.visualViewport.addEventListener("resize", syncViewport);
@@ -1025,7 +1018,6 @@ function onSend() {
   if (!text) return;
 
   input.value = "";
-  blurKeyboard();
   sendBtn.classList.add("is-hidden");
   micBtn.classList.remove("is-hidden");
 
