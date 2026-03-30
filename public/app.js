@@ -2,6 +2,9 @@ const tg = window.Telegram?.WebApp;
 if (tg) {
   tg.ready();
   tg.expand();
+  if (typeof tg.disableVerticalSwipes === "function") {
+    tg.disableVerticalSwipes();
+  }
 }
 
 const app = document.getElementById("app");
@@ -25,7 +28,7 @@ const CONTACT = {
   number: "+55 33 99848-1169",
 };
 
-const PERSIST_KEY = "gisa_webapp_state_v5";
+const PERSIST_KEY = "gisa_webapp_state_v6";
 const CHECKOUT_URL = "/checkout";
 
 function safeJsonParse(s) {
@@ -136,7 +139,8 @@ function getInputEl() {
 
 function bindKeyboardUX() {
   const input = getInputEl();
-  if (!input) return;
+  const chat = document.getElementById("chat");
+  if (!input || !chat) return;
 
   input.addEventListener("focus", () => {
     document.body.classList.add("kb-open");
@@ -146,22 +150,38 @@ function bindKeyboardUX() {
     document.body.classList.remove("kb-open");
   });
 
-  if (window.visualViewport) {
-    let raf = 0;
+  let startY = 0;
+  let moved = false;
 
-    const syncViewport = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        document.documentElement.style.setProperty("--vvh", `${window.visualViewport.height}px`);
-      });
-    };
+  chat.addEventListener(
+    "touchstart",
+    (e) => {
+      startY = e.touches?.[0]?.clientY ?? 0;
+      moved = false;
+    },
+    { passive: true }
+  );
 
-    window.visualViewport.addEventListener("resize", syncViewport);
-    window.visualViewport.addEventListener("scroll", syncViewport);
-    syncViewport();
-  } else {
-    document.documentElement.style.setProperty("--vvh", `${window.innerHeight}px`);
-  }
+  chat.addEventListener(
+    "touchmove",
+    (e) => {
+      const currentY = e.touches?.[0]?.clientY ?? 0;
+      if (Math.abs(currentY - startY) > 10) {
+        moved = true;
+      }
+    },
+    { passive: true }
+  );
+
+  chat.addEventListener(
+    "touchend",
+    () => {
+      if (moved && document.activeElement === input) {
+        input.blur();
+      }
+    },
+    { passive: true }
+  );
 }
 
 async function preloadMedia() {
@@ -517,7 +537,7 @@ function mountChat() {
         </span>
       </div>
 
-      <div class="topbar topbar-compact">
+      <div class="topbar">
         <button class="navBtn" type="button" aria-label="Voltar">
           <span class="navChevron"></span>
         </button>
@@ -525,7 +545,7 @@ function mountChat() {
         <div class="topbarCount">48</div>
 
         <div class="avatarWrap">
-          <div class="avatar avatarImgWrap topAvatar">
+          <div class="avatar avatarImgWrap">
             <img
               src="${ASSETS.avatar}?v=1"
               alt="${CONTACT.title}"
@@ -535,16 +555,16 @@ function mountChat() {
           </div>
         </div>
 
-        <div class="titlebox titleboxCompact">
+        <div class="titlebox">
           <div class="name">${CONTACT.number}</div>
           <div class="status" id="status">${CONTACT.subtitle}</div>
         </div>
 
-        <div class="topActions topActionsCompact">
-          <button class="iconBtn iconBtnVideo" type="button" aria-hidden="true">
+        <div class="topActions">
+          <button class="iconBtn" type="button" aria-hidden="true">
             <span class="topIcon topIconVideo"></span>
           </button>
-          <button class="iconBtn iconBtnPhone" type="button" aria-hidden="true">
+          <button class="iconBtn" type="button" aria-hidden="true">
             <span class="topIcon topIconPhone"></span>
           </button>
         </div>
@@ -561,10 +581,10 @@ function mountChat() {
 
         <div class="composerField composerFieldRef">
           <input id="input" autocomplete="off" placeholder="Mensagem" />
-          <button class="composerGhostBtn composerGhostSticker" type="button" aria-hidden="true">
+          <button class="composerGhostBtn" type="button" aria-hidden="true">
             <span class="iconSticker"></span>
           </button>
-          <button class="composerGhostBtn composerGhostCamera" type="button" aria-hidden="true">
+          <button class="composerGhostBtn" type="button" aria-hidden="true">
             <span class="iconCamera"></span>
           </button>
         </div>
@@ -573,7 +593,7 @@ function mountChat() {
           <span class="iconMic"></span>
         </button>
 
-        <button class="send sendRef is-hidden" id="send" aria-label="Enviar">
+        <button class="send is-hidden" id="send" aria-label="Enviar">
           <span class="sendArrow"></span>
         </button>
       </div>
@@ -670,19 +690,15 @@ function renderMediaGrid(item) {
 
   return `
     <div class="mediaGrid">
-      ${items
-        .map(
-          (m, index) => `
-          <div class="mediaGridItem" data-index="${index}">
-            <img src="${m.src}" alt="" onerror="this.style.display='none'" />
-            <div class="mediaGridOverlay">
-              <span class="mediaPlay"></span>
-            </div>
-            <div class="mediaDuration">${m.duration || "0:08"}</div>
+      ${items.map((m, index) => `
+        <div class="mediaGridItem" data-index="${index}">
+          <img src="${m.src}" alt="" onerror="this.style.display='none'" />
+          <div class="mediaGridOverlay">
+            <span class="mediaPlay"></span>
           </div>
-        `
-        )
-        .join("")}
+          <div class="mediaDuration">${m.duration || "0:08"}</div>
+        </div>
+      `).join("")}
     </div>
   `;
 }
@@ -698,11 +714,7 @@ function renderAudioBubble(item) {
 
       <div class="audioWaveWrap">
         <div class="audioWave">
-          ${bars
-            .map(
-              (h, i) => `<span class="waveBar ${i < 6 ? "isPlayed" : ""}" style="height:${h}px"></span>`
-            )
-            .join("")}
+          ${bars.map((h, i) => `<span class="waveBar ${i < 6 ? "isPlayed" : ""}" style="height:${h}px"></span>`).join("")}
         </div>
 
         <div class="audioMetaRow">
@@ -859,9 +871,7 @@ function addVideoBubble(src, seconds = 10) {
   const stopAt = Number(seconds) > 0 ? Number(seconds) : 10;
   const t = setInterval(() => {
     if (vid.currentTime >= stopAt) {
-      try {
-        vid.pause();
-      } catch {}
+      try { vid.pause(); } catch {}
       clearInterval(t);
     }
   }, 120);

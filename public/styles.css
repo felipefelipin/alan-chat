@@ -1,8 +1,8 @@
 :root{
   --bg:#0a0b0d;
   --bg2:#0f1115;
-  --panel:rgba(18,20,24,.84);
-  --panel2:rgba(18,20,24,.72);
+  --panel:rgba(18,20,24,.96);
+  --panel2:rgba(18,20,24,.96);
 
   --bubbleIn:#17191e;
   --bubbleOut:#1d6d58;
@@ -16,7 +16,7 @@
   --accent2:#d6b07a;
 
   --shadow:0 18px 56px rgba(0,0,0,.52);
-  --wall:url("/assets/chat-bg.png?v=8");
+  --wall:url("/assets/chat-bg.png?v=9");
 }
 
 *{box-sizing:border-box}
@@ -39,7 +39,7 @@ img{display:block;max-width:100%}
 
 .full{
   width:100vw;
-  height:var(--vvh, 100vh);
+  height:var(--tg-viewport-stable-height, 100vh);
   display:flex;
   flex-direction:column;
   background:linear-gradient(180deg,var(--bg2),var(--bg));
@@ -66,10 +66,9 @@ img{display:block;max-width:100%}
   display:flex;
   align-items:flex-end;
   justify-content:space-between;
-  background:linear-gradient(to bottom, rgba(0,0,0,.62), rgba(0,0,0,0));
-  backdrop-filter:blur(18px) saturate(1.15);
-  -webkit-backdrop-filter:blur(18px);
+  background:rgba(10,11,13,.98);
   border-bottom:.5px solid rgba(255,255,255,.05);
+  flex:0 0 auto;
 }
 
 #sbTime{
@@ -130,23 +129,16 @@ img{display:block;max-width:100%}
 
 /* top bar */
 .topbar{
-  height:60px;
+  height:58px;
   display:flex;
   align-items:center;
-  gap:10px;
-  padding:0 10px 0 8px;
-  background:rgba(14,16,20,.82);
-  backdrop-filter:blur(28px) saturate(1.1);
-  -webkit-backdrop-filter:blur(28px);
+  gap:8px;
+  padding:0 8px 0 6px;
+  background:rgba(14,16,20,.98);
   border-bottom:.5px solid var(--line);
   position:relative;
   z-index:3;
-}
-
-.topbar-compact{
-  height:58px;
-  gap:8px;
-  padding:0 8px 0 6px;
+  flex:0 0 auto;
 }
 
 .navBtn,
@@ -183,17 +175,14 @@ img{display:block;max-width:100%}
   margin-left:auto;
   display:flex;
   align-items:center;
-}
-
-.topActionsCompact{
   gap:2px;
 }
 
 .avatarWrap{display:flex;align-items:center}
 
 .avatar{
-  width:38px;
-  height:38px;
+  width:34px;
+  height:34px;
   border-radius:50%;
   background:#3a3d46;
   display:flex;
@@ -204,11 +193,6 @@ img{display:block;max-width:100%}
   box-shadow:0 4px 14px rgba(0,0,0,.34);
   position:relative;
   overflow:hidden;
-}
-
-.topAvatar{
-  width:34px;
-  height:34px;
 }
 
 .avatarImgWrap img{
@@ -237,9 +221,6 @@ img{display:block;max-width:100%}
   flex-direction:column;
   line-height:1.05;
   min-width:0;
-}
-
-.titleboxCompact{
   gap:2px;
 }
 
@@ -311,7 +292,8 @@ img{display:block;max-width:100%}
 
 /* chat area */
 .chatShell{
-  flex:1;
+  flex:1 1 auto;
+  min-height:0;
   position:relative;
   overflow:hidden;
   background-color:var(--bg);
@@ -336,14 +318,14 @@ img{display:block;max-width:100%}
   z-index:1;
   height:100%;
   overflow:auto;
-  padding:8px 8px 92px;
+  padding:8px 8px 10px;
   -webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
   scroll-behavior:smooth;
 }
 
 body.kb-open .chat{
-  padding-bottom:120px;
+  padding-bottom:10px;
 }
 
 /* rows and grouping */
@@ -379,8 +361,6 @@ body.kb-open .chat{
   white-space:pre-wrap;
   box-shadow:none;
   border:1px solid rgba(255,255,255,.045);
-  backdrop-filter:blur(8px);
-  -webkit-backdrop-filter:blur(8px);
 }
 
 .msg-right .bubble{
@@ -410,7 +390,6 @@ body.kb-open .chat{
   border-bottom-right-radius:18px;
 }
 
-/* agrupamento lado esquerdo */
 .msg-left.is-first .bubble-in{
   border-top-left-radius:7px;
   border-bottom-left-radius:9px;
@@ -426,7 +405,6 @@ body.kb-open .chat{
   border-bottom-left-radius:18px;
 }
 
-/* agrupamento lado direito */
 .msg-right.is-first .bubble-out{
   border-top-right-radius:7px;
   border-bottom-right-radius:9px;
@@ -442,7 +420,6 @@ body.kb-open .chat{
   border-bottom-right-radius:18px;
 }
 
-/* tails */
 .msg-left.is-single .bubble-in::after,
 .msg-left.is-last .bubble-in::after{
   content:"";
@@ -625,8 +602,6 @@ body.kb-open .chat{
   background:rgba(0,0,0,.36);
   border:1px solid rgba(255,255,255,.14);
   position:relative;
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
 }
 .mediaPlay::before{
   content:"";
@@ -763,26 +738,20 @@ body.kb-open .chat{
   background:#3a3d46;
 }
 
-/* composer */
+/* composer - sem fixed */
 .composer{
-  position:fixed;
-  left:0;
-  right:0;
-  bottom:0;
+  position:relative;
+  left:auto;
+  right:auto;
+  bottom:auto;
   z-index:4;
   display:flex;
   align-items:center;
   gap:8px;
   padding:8px 10px calc(10px + env(safe-area-inset-bottom));
-  background:rgba(13,15,19,.84);
+  background:rgba(13,15,19,.96);
   border-top:.5px solid rgba(255,255,255,.05);
-  backdrop-filter:blur(30px) saturate(1.1);
-  -webkit-backdrop-filter:blur(30px);
-}
-
-body.kb-open .composer{
-  backdrop-filter:blur(24px) saturate(1.08);
-  -webkit-backdrop-filter:blur(24px) saturate(1.08);
+  flex:0 0 auto;
 }
 
 .composerRef{
@@ -844,14 +813,6 @@ body.kb-open .composer{
 .composerFieldRef{
   gap:8px;
   padding:0 10px 0 14px;
-}
-
-.composerPlaceholder{
-  position:absolute;
-  left:14px;
-  color:rgba(255,255,255,.34);
-  pointer-events:none;
-  transition:opacity .12s ease;
 }
 
 .composer input{
@@ -1075,8 +1036,6 @@ body.kb-open .composer{
   border-radius:999px;
   border:1px solid rgba(255,255,255,.14);
   background:rgba(18,20,24,.22);
-  backdrop-filter:blur(18px);
-  -webkit-backdrop-filter:blur(18px);
   color:#fff;
 }
 .pIntroChip{
@@ -1119,8 +1078,6 @@ body.kb-open .composer{
   border-radius:14px;
   border:1px solid rgba(255,255,255,.20);
   background:rgba(18,20,24,.22);
-  backdrop-filter:blur(18px);
-  -webkit-backdrop-filter:blur(18px);
   color:#fff;
   font-weight:800;
   transition:transform .18s ease, filter .18s ease;
@@ -1195,9 +1152,7 @@ body.kb-open .composer{
   width:min(520px,92vw);
   border-radius:20px;
   border:1px solid rgba(255,255,255,.12);
-  background:rgba(18,20,24,.72);
-  backdrop-filter:blur(26px) saturate(1.08);
-  -webkit-backdrop-filter:blur(26px);
+  background:rgba(18,20,24,.92);
   padding:18px 16px;
   box-shadow:var(--shadow);
   color:#fff;
