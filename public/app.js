@@ -151,37 +151,32 @@ function bindKeyboardUX() {
   });
 
   let startY = 0;
-  let moved = false;
+  let currentY = 0;
+  let isDragging = false;
 
-  chat.addEventListener(
-    "touchstart",
-    (e) => {
-      startY = e.touches?.[0]?.clientY ?? 0;
-      moved = false;
-    },
-    { passive: true }
-  );
+  chat.addEventListener("touchstart", (e) => {
+    startY = e.touches?.[0]?.clientY || 0;
+    currentY = startY;
+    isDragging = true;
+  }, { passive: true });
 
-  chat.addEventListener(
-    "touchmove",
-    (e) => {
-      const currentY = e.touches?.[0]?.clientY ?? 0;
-      if (Math.abs(currentY - startY) > 10) {
-        moved = true;
-      }
-    },
-    { passive: true }
-  );
+  chat.addEventListener("touchmove", (e) => {
+    if (!isDragging) return;
+    currentY = e.touches?.[0]?.clientY || 0;
+  }, { passive: true });
 
-  chat.addEventListener(
-    "touchend",
-    () => {
-      if (moved && document.activeElement === input) {
-        input.blur();
-      }
-    },
-    { passive: true }
-  );
+  chat.addEventListener("touchend", () => {
+    if (!isDragging) return;
+    isDragging = false;
+
+    const delta = currentY - startY;
+
+    const isScrollDown = delta < -10;
+
+    if (document.activeElement === input && isScrollDown) {
+      input.blur();
+    }
+  }, { passive: true });
 }
 
 async function preloadMedia() {
@@ -615,9 +610,11 @@ function mountChat() {
     micBtn.classList.toggle("is-hidden", hasText);
   });
 
-  state.chatEl = document.getElementById("chat");
-  restoreHistory();
-  bindKeyboardUX();
+ state.chatEl = document.getElementById("chat");
+
+restoreHistory();
+bindKeyboardUX();
+handleScrollDetection();
 
   setInterval(() => {
     const t = document.getElementById("sbTime");
@@ -627,9 +624,16 @@ function mountChat() {
 
 function scrollBottom(smooth = true) {
   if (!state.chatEl) return;
-  const top = state.chatEl.scrollHeight + 300;
-  if (smooth && "scrollTo" in state.chatEl) {
-    state.chatEl.scrollTo({ top, behavior: "smooth" });
+
+  if (userIsReading) return;
+
+  const top = state.chatEl.scrollHeight + 200;
+
+  if (smooth) {
+    state.chatEl.scrollTo({
+      top,
+      behavior: "smooth",
+    });
   } else {
     state.chatEl.scrollTop = top;
   }
@@ -638,6 +642,22 @@ function scrollBottom(smooth = true) {
 function removeTyping() {
   const el = document.getElementById("typingRow");
   if (el) el.remove();
+}
+
+let userIsReading = false;
+
+function handleScrollDetection() {
+  const chat = state.chatEl;
+  if (!chat) return;
+
+  chat.addEventListener("scroll", () => {
+    const threshold = 120;
+
+    const isNearBottom =
+      chat.scrollHeight - chat.scrollTop - chat.clientHeight < threshold;
+
+    userIsReading = !isNearBottom;
+  });
 }
 
 function addTyping() {
