@@ -142,42 +142,57 @@ function bindKeyboardUX() {
   const chat = document.getElementById("chat");
   if (!input || !chat) return;
 
+  let lastY = 0;
+  let direction = null;
+
   input.addEventListener("focus", () => {
     document.body.classList.add("kb-open");
+    isKeyboardOpen = true;
+
+    setTimeout(() => {
+      scrollBottom(true);
+    }, 120);
   });
 
   input.addEventListener("blur", () => {
     document.body.classList.remove("kb-open");
+    isKeyboardOpen = false;
   });
 
-  let startY = 0;
-  let currentY = 0;
-  let isDragging = false;
-
   chat.addEventListener("touchstart", (e) => {
-    startY = e.touches?.[0]?.clientY || 0;
-    currentY = startY;
-    isDragging = true;
+    lastY = e.touches[0].clientY;
   }, { passive: true });
 
   chat.addEventListener("touchmove", (e) => {
-    if (!isDragging) return;
-    currentY = e.touches?.[0]?.clientY || 0;
+    const currentY = e.touches[0].clientY;
+    const delta = currentY - lastY;
+
+    if (Math.abs(delta) > 4) {
+      direction = delta > 0 ? "down" : "up";
+    }
+
+    lastY = currentY;
   }, { passive: true });
 
   chat.addEventListener("touchend", () => {
-    if (!isDragging) return;
-    isDragging = false;
+    if (!isKeyboardOpen) return;
 
-    const delta = currentY - startY;
-
-    const isScrollDown = delta < -10;
-
-    if (document.activeElement === input && isScrollDown) {
-      input.blur();
-    }
-  }, { passive: true });
+    // 👉 fecha teclado só com gesto intencional pra cima
+if (direction === "up") {
+  input.blur();
 }
+
+    direction = null;
+  });
+}
+
+function fixViewportHeight() {
+  const vh = window.innerHeight;
+  document.documentElement.style.setProperty('--vvh', `${vh}px`);
+}
+
+window.addEventListener('resize', fixViewportHeight);
+fixViewportHeight();
 
 async function preloadMedia() {
   try {
@@ -622,21 +637,15 @@ handleScrollDetection();
   }, 30000);
 }
 
-function scrollBottom(smooth = true) {
+function scrollBottom(force = false) {
   if (!state.chatEl) return;
 
-  if (userIsReading) return;
+  if (!force && !isUserNearBottom) return;
 
-  const top = state.chatEl.scrollHeight + 200;
-
-  if (smooth) {
-    state.chatEl.scrollTo({
-      top,
-      behavior: "smooth",
-    });
-  } else {
-    state.chatEl.scrollTop = top;
-  }
+requestAnimationFrame(() => {
+  const el = state.chatEl;
+  el.scrollTop = el.scrollHeight - el.clientHeight;
+});
 }
 
 function removeTyping() {
@@ -644,20 +653,22 @@ function removeTyping() {
   if (el) el.remove();
 }
 
-let userIsReading = false;
+let isUserNearBottom = true;
+let isKeyboardOpen = false;
 
 function handleScrollDetection() {
   const chat = state.chatEl;
   if (!chat) return;
 
   chat.addEventListener("scroll", () => {
-    const threshold = 120;
+    const threshold = 80;
 
-    const isNearBottom =
-      chat.scrollHeight - chat.scrollTop - chat.clientHeight < threshold;
+    const position = chat.scrollTop + chat.clientHeight;
+    const height = chat.scrollHeight;
 
-    userIsReading = !isNearBottom;
-  });
+    isUserNearBottom = (height - position) < threshold;
+
+  }, { passive: true });
 }
 
 function addTyping() {
@@ -850,7 +861,6 @@ function rerenderHistory() {
 function restoreHistory() {
   if (!state.chatEl) return;
   if (!Array.isArray(state.history) || state.history.length === 0) return;
-  rerenderHistory();
 }
 
 function addMsg(side, html) {
@@ -865,38 +875,26 @@ function addMsg(side, html) {
   };
 
   pushHistory(item);
-  rerenderHistory();
+
+  renderItem(item, true);
+  scrollBottom();
 }
 
 function addVideoBubble(src, seconds = 10) {
   updatePreviousGroupForNewMessage("left");
 
-  const fullSrc = `${src}?v=${Date.now()}`;
-
   const item = {
     type: "video",
     side: "left",
-    src: fullSrc,
+    src: `${src}?v=${Date.now()}`,
     time: nowTime(),
     cluster: getNewCluster("left"),
   };
 
   pushHistory(item);
-  rerenderHistory();
 
-  const videos = state.chatEl.querySelectorAll("video");
-  const vid = videos[videos.length - 1];
-  if (!vid) return;
-
-  const stopAt = Number(seconds) > 0 ? Number(seconds) : 10;
-  const t = setInterval(() => {
-    if (vid.currentTime >= stopAt) {
-      try { vid.pause(); } catch {}
-      clearInterval(t);
-    }
-  }, 120);
-
-  vid.onended = () => clearInterval(t);
+  renderItem(item, true);
+  scrollBottom(true);
 }
 
 function addMediaGridBubble(items = null) {
@@ -911,7 +909,9 @@ function addMediaGridBubble(items = null) {
   };
 
   pushHistory(item);
-  rerenderHistory();
+
+  renderItem(item, true);
+  scrollBottom();
 }
 
 function addAudioBubble(data = {}) {
@@ -920,7 +920,7 @@ function addAudioBubble(data = {}) {
   const item = {
     type: "audio",
     side: "left",
-    bars: Array.isArray(data.bars) ? data.bars : getDefaultWaveBars(),
+    bars: data.bars || getDefaultWaveBars(),
     start: data.start || "0:09",
     end: data.end || "10:00",
     time: nowTime(),
@@ -928,7 +928,9 @@ function addAudioBubble(data = {}) {
   };
 
   pushHistory(item);
-  rerenderHistory();
+
+  renderItem(item, true);
+  scrollBottom();
 }
 
 function addCtaCard(html) {
@@ -943,7 +945,9 @@ function addCtaCard(html) {
   };
 
   pushHistory(item);
-  rerenderHistory();
+
+  renderItem(item, true);
+  scrollBottom();
 }
 
 function typingDelayFor(text) {

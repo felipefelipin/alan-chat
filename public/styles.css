@@ -29,9 +29,8 @@ body{
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,Arial,sans-serif;
   background:var(--bg);
   color:var(--text);
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-  overscroll-behavior:none;
+
+  overscroll-behavior-y:none;
 }
 
 button,input{font:inherit}
@@ -39,7 +38,7 @@ img{display:block;max-width:100%}
 
 .full{
   width:100vw;
-  height:var(--tg-viewport-stable-height, 100vh);
+  height:var(--vvh);
   display:flex;
   flex-direction:column;
   background:linear-gradient(180deg,var(--bg2),var(--bg));
@@ -295,7 +294,7 @@ img{display:block;max-width:100%}
   flex:1 1 auto;
   min-height:0;
   position:relative;
-  overflow:hidden;
+  overflow:visible;
   background-color:var(--bg);
   background-image:var(--wall);
   background-repeat:repeat;
@@ -317,15 +316,16 @@ img{display:block;max-width:100%}
   position:relative;
   z-index:1;
   height:100%;
-  overflow:auto;
-  padding:8px 8px 10px;
-  -webkit-overflow-scrolling:touch;
-  overscroll-behavior:contain;
-  scroll-behavior:smooth;
-}
+  overflow-y:auto;
 
-body.kb-open .chat{
-  padding-bottom:10px;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+
+  touch-action:pan-y;
+
+  scroll-behavior:auto;
+
+  padding:8px 8px calc(10px + env(safe-area-inset-bottom));
 }
 
 /* rows and grouping */
@@ -821,7 +821,9 @@ body.kb-open .chat{
   background:transparent;
   color:#fff;
   outline:none;
-  font-size:15px;
+
+  font-size:16px; /* 🔥 ALTERAÇÃO AQUI */
+
   padding:10px 0;
   min-width:0;
 }
@@ -1297,4 +1299,9 @@ body.kb-open .chat{
 button:disabled{
   cursor:not-allowed;
   opacity:.6;
+}
+/* performance boost - scroll fluido */
+.chat,
+.chatShell{
+  will-change:transform;
 }
