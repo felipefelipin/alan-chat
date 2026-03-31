@@ -145,15 +145,14 @@ function bindKeyboardUX() {
   let lastY = 0;
   let direction = null;
 
- input.addEventListener("focus", () => {
+input.addEventListener("focus", () => {
   document.body.classList.add("kb-open");
   isKeyboardOpen = true;
 
-  // 🔥 sincroniza com render real do teclado
   requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
+    setTimeout(() => {
       scrollBottom(true);
-    });
+    }, 60); // 🔥 valor ideal
   });
 });
 
