@@ -149,11 +149,10 @@ input.addEventListener("focus", () => {
   document.body.classList.add("kb-open");
   isKeyboardOpen = true;
 
-  requestAnimationFrame(() => {
-    setTimeout(() => {
-      scrollBottom(true);
-    }, 60); // 🔥 valor ideal
-  });
+  // 🚀 scroll sincronizado com o teclado real
+  setTimeout(() => {
+    scrollBottom(true);
+  }, 30);
 });
 
   input.addEventListener("blur", () => {
@@ -189,11 +188,19 @@ if (direction === "up") {
 }
 
 function fixViewportHeight() {
-  const vh = window.innerHeight;
+  const vh = window.visualViewport
+    ? window.visualViewport.height
+    : window.innerHeight;
+
   document.documentElement.style.setProperty('--vvh', `${vh}px`);
 }
 
-window.addEventListener('resize', fixViewportHeight);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', fixViewportHeight);
+} else {
+  window.addEventListener('resize', fixViewportHeight);
+}
+
 fixViewportHeight();
 
 async function preloadMedia() {
@@ -641,13 +648,13 @@ handleScrollDetection();
 
 function scrollBottom(force = false) {
   if (!state.chatEl) return;
-
   if (!force && !isUserNearBottom) return;
 
-requestAnimationFrame(() => {
   const el = state.chatEl;
-  el.scrollTop = el.scrollHeight - el.clientHeight;
-});
+
+  requestAnimationFrame(() => {
+    el.scrollTop = el.scrollHeight;
+  });
 }
 
 function removeTyping() {
