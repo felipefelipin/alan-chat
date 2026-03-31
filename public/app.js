@@ -138,22 +138,17 @@ function getInputEl() {
 }
 
 function bindKeyboardUX() {
-  const input = getInputEl();
+  const input = document.getElementById("input");
   const chat = document.getElementById("chat");
   if (!input || !chat) return;
 
   let lastY = 0;
   let direction = null;
 
-input.addEventListener("focus", () => {
-  document.body.classList.add("kb-open");
-  isKeyboardOpen = true;
-
-  // 🚀 scroll sincronizado com o teclado real
-  setTimeout(() => {
-    scrollBottom(true);
-  }, 30);
-});
+  input.addEventListener("focus", () => {
+    document.body.classList.add("kb-open");
+    isKeyboardOpen = true;
+  });
 
   input.addEventListener("blur", () => {
     document.body.classList.remove("kb-open");
@@ -168,7 +163,7 @@ input.addEventListener("focus", () => {
     const currentY = e.touches[0].clientY;
     const delta = currentY - lastY;
 
-    if (Math.abs(delta) > 4) {
+    if (Math.abs(delta) > 6) {
       direction = delta > 0 ? "down" : "up";
     }
 
@@ -178,10 +173,9 @@ input.addEventListener("focus", () => {
   chat.addEventListener("touchend", () => {
     if (!isKeyboardOpen) return;
 
-    // 👉 fecha teclado só com gesto intencional pra cima
-if (direction === "up") {
-  input.blur();
-}
+    if (direction === "up") {
+      input.blur();
+    }
 
     direction = null;
   });
@@ -202,6 +196,43 @@ if (window.visualViewport) {
 }
 
 fixViewportHeight();
+
+if (window.visualViewport) {
+  let lastHeight = window.visualViewport.height;
+
+  window.visualViewport.addEventListener("resize", () => {
+    const vh = window.visualViewport.height;
+
+    // ✅ sempre atualiza viewport
+    document.documentElement.style.setProperty('--vvh', `${vh}px`);
+
+    const keyboardChanged = Math.abs(vh - lastHeight) > 80;
+
+    if (keyboardChanged) {
+      keyboardTransitioning = true;
+
+      // 🔥 trava interação sem quebrar layout
+      if (state.chatEl) {
+        state.chatEl.style.pointerEvents = "none";
+      }
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          scrollBottom(true);
+
+          setTimeout(() => {
+            if (state.chatEl) {
+              state.chatEl.style.pointerEvents = "auto";
+            }
+            keyboardTransitioning = false;
+          }, 100);
+        });
+      });
+    }
+
+    lastHeight = vh;
+  });
+}
 
 async function preloadMedia() {
   try {
@@ -229,6 +260,8 @@ async function fadeVolume(audio, from, to, ms = 700) {
     await sleep(stepMs);
   }
 }
+
+
 
 function getFlowTypes() {
   return new Set(["msg", "video", "cta", "mediaGrid", "audio"]);
@@ -648,12 +681,11 @@ handleScrollDetection();
 
 function scrollBottom(force = false) {
   if (!state.chatEl) return;
+  if (keyboardTransitioning) return;
   if (!force && !isUserNearBottom) return;
 
-  const el = state.chatEl;
-
   requestAnimationFrame(() => {
-    el.scrollTop = el.scrollHeight;
+    state.chatEl.scrollTop = state.chatEl.scrollHeight;
   });
 }
 
@@ -664,6 +696,7 @@ function removeTyping() {
 
 let isUserNearBottom = true;
 let isKeyboardOpen = false;
+let keyboardTransitioning = false;
 
 function handleScrollDetection() {
   const chat = state.chatEl;
