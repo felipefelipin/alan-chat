@@ -139,130 +139,15 @@ function getInputEl() {
 
 function bindKeyboardUX() {
   const input = document.getElementById("input");
-  const chat = document.getElementById("chat");
-  if (!input || !chat) return;
-
-  let startY = 0;
-  let lastY = 0;
-  let totalDelta = 0;
-  let direction = null;
+  if (!input) return;
 
   input.addEventListener("focus", () => {
-    isKeyboardOpen = true;
     document.body.classList.add("kb-open");
   });
 
   input.addEventListener("blur", () => {
-    isKeyboardOpen = false;
     document.body.classList.remove("kb-open");
   });
-
-  chat.addEventListener("touchstart", (e) => {
-    const y = e.touches[0].clientY;
-
-    startY = y;
-    lastY = y;
-    totalDelta = 0;
-    direction = null;
-
-  }, { passive: true });
-
-  chat.addEventListener("touchmove", (e) => {
-    const currentY = e.touches[0].clientY;
-    const delta = currentY - lastY;
-
-    totalDelta += delta;
-
-    if (Math.abs(totalDelta) > 10) {
-      direction = totalDelta > 0 ? "down" : "up";
-    }
-
-    lastY = currentY;
-
-  }, { passive: true });
-
-  chat.addEventListener("touchend", () => {
-    if (!isKeyboardOpen) return;
-
-    const strongSwipeDown = direction === "down" && Math.abs(totalDelta) > 70;
-
-    if (strongSwipeDown) {
-      input.blur();
-    }
-
-    totalDelta = 0;
-    direction = null;
-  });
-}
-
-function fixViewportHeight() {
-  const vh = window.visualViewport
-    ? window.visualViewport.height
-    : window.innerHeight;
-
-  document.documentElement.style.setProperty('--vvh', `${vh}px`);
-}
-
-if (window.visualViewport) {
-  window.visualViewport.addEventListener("resize", () => {
-    const vh = window.visualViewport.height;
-
-    document.documentElement.style.setProperty('--vvh', `${vh}px`);
-
-    const diff = lastViewportHeight - vh;
-
-    const keyboardOpening = diff > 120;
-    const keyboardClosing = diff < -120;
-
-    if (keyboardFramePending) return;
-    keyboardFramePending = true;
-
-    requestAnimationFrame(() => {
-
-      if (keyboardOpening) {
-        isKeyboardOpen = true;
-
-        if (isUserNearBottom) {
-          scrollBottom(true);
-        }
-      }
-
-      if (keyboardClosing) {
-        isKeyboardOpen = false;
-      }
-
-      keyboardFramePending = false;
-    });
-
-    lastViewportHeight = vh;
-  });
-}
-
-async function preloadMedia() {
-  try {
-    const v = document.createElement("video");
-    v.src = ASSETS.privateIntro;
-    v.preload = "auto";
-  } catch {}
-
-  try {
-    const a = new Audio();
-    a.src = ASSETS.privateMusic;
-    a.preload = "auto";
-  } catch {}
-}
-
-async function fadeVolume(audio, from, to, ms = 700) {
-  if (!audio) return;
-
-  const steps = Math.max(10, Math.floor(ms / 60));
-  const stepMs = Math.floor(ms / steps);
-
-  for (let i = 0; i <= steps; i++) {
-    const p = i / steps;
-    audio.volume = Math.max(0, Math.min(1, from + (to - from) * p));
-    await sleep(stepMs);
-  }
 }
 
 
@@ -687,27 +572,15 @@ function scrollBottom(force = false) {
   const el = state.chatEl;
   if (!el) return;
 
-  if (keyboardFramePending) return;
   if (!force && !isUserNearBottom) return;
 
-  requestAnimationFrame(() => {
-    const target = el.scrollHeight - el.clientHeight;
-
-    if (Math.abs(el.scrollTop - target) < 2) return;
-
-    el.scrollTop = target;
-  });
+  el.scrollTop = el.scrollHeight;
 }
 
 function removeTyping() {
   const el = document.getElementById("typingRow");
   if (el) el.remove();
 }
-
-let isUserNearBottom = true;
-let isKeyboardOpen = false;
-let keyboardFramePending = false;
-let lastViewportHeight = window.visualViewport?.height || window.innerHeight;
 
 function handleScrollDetection() {
   const chat = state.chatEl;
@@ -913,7 +786,15 @@ function rerenderHistory() {
 
 function restoreHistory() {
   if (!state.chatEl) return;
-  if (!Array.isArray(state.history) || state.history.length === 0) return;
+  if (!Array.isArray(state.history)) return;
+
+  state.chatEl.innerHTML = "";
+
+  for (const item of state.history) {
+    renderItem(item, false);
+  }
+
+  scrollBottom(true);
 }
 
 function addMsg(side, html) {
@@ -947,7 +828,7 @@ function addVideoBubble(src, seconds = 10) {
   pushHistory(item);
 
   renderItem(item, true);
-  scrollBottom(true);
+  scrollBottom();
 }
 
 function addMediaGridBubble(items = null) {
