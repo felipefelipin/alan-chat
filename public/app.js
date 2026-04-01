@@ -142,42 +142,65 @@ function bindKeyboardUX() {
   const chat = document.getElementById("chat");
   if (!input || !chat) return;
 
+  let startY = 0;
   let lastY = 0;
+  let totalDelta = 0;
   let direction = null;
 
+  // 👉 FOCO
   input.addEventListener("focus", () => {
     document.body.classList.add("kb-open");
     isKeyboardOpen = true;
   });
 
+  // 👉 BLUR
   input.addEventListener("blur", () => {
     document.body.classList.remove("kb-open");
     isKeyboardOpen = false;
   });
 
+  // 👉 INÍCIO DO TOQUE
   chat.addEventListener("touchstart", (e) => {
-    lastY = e.touches[0].clientY;
+    const y = e.touches[0].clientY;
+
+    startY = y;
+    lastY = y;
+    totalDelta = 0;
+    direction = null;
+
   }, { passive: true });
 
+  // 👉 MOVIMENTO
   chat.addEventListener("touchmove", (e) => {
     const currentY = e.touches[0].clientY;
     const delta = currentY - lastY;
 
-    if (Math.abs(delta) > 6) {
-      direction = delta > 0 ? "down" : "up";
+    totalDelta += delta;
+
+    // só define direção se for gesto real
+    if (Math.abs(totalDelta) > 10) {
+      direction = totalDelta > 0 ? "down" : "up";
     }
 
     lastY = currentY;
+
   }, { passive: true });
 
+  // 👉 FINAL DO GESTO
   chat.addEventListener("touchend", () => {
     if (!isKeyboardOpen) return;
 
-    if (direction === "up") {
+    // 🔥 REGRA WHATSAPP REAL
+    // só fecha com gesto forte + intenção clara
+    const strongSwipeUp = direction === "up" && Math.abs(totalDelta) > 60;
+
+    if (strongSwipeUp) {
       input.blur();
     }
 
     direction = null;
+    totalDelta = 0;
+
   });
 }
 
@@ -190,45 +213,45 @@ function fixViewportHeight() {
 }
 
 if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', fixViewportHeight);
-} else {
-  window.addEventListener('resize', fixViewportHeight);
-}
-
-fixViewportHeight();
-
-if (window.visualViewport) {
   let lastHeight = window.visualViewport.height;
 
   window.visualViewport.addEventListener("resize", () => {
     const vh = window.visualViewport.height;
 
-    // ✅ sempre atualiza viewport
+    // atualiza viewport CSS
     document.documentElement.style.setProperty('--vvh', `${vh}px`);
 
-    const keyboardChanged = Math.abs(vh - lastHeight) > 80;
+    const heightDiff = lastHeight - vh;
 
-    if (keyboardChanged) {
-      keyboardTransitioning = true;
+    // 🎯 DETECÇÃO REAL DE TECLADO
+    const keyboardOpening = heightDiff > 120;
+    const keyboardClosing = heightDiff < -120;
 
-      // 🔥 trava interação sem quebrar layout
-      if (state.chatEl) {
-        state.chatEl.style.pointerEvents = "none";
-      }
+    // 🔥 evita múltiplos triggers
+    if (keyboardFramePending) return;
+    keyboardFramePending = true;
 
+    requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          scrollBottom(true);
 
-          setTimeout(() => {
-            if (state.chatEl) {
-              state.chatEl.style.pointerEvents = "auto";
-            }
-            keyboardTransitioning = false;
-          }, 100);
-        });
+        // 👉 teclado abrindo
+        if (keyboardOpening) {
+          isKeyboardOpen = true;
+
+          // scroll só se estiver no fim
+          if (isUserNearBottom) {
+            scrollBottom(true);
+          }
+        }
+
+        // 👉 teclado fechando
+        if (keyboardClosing) {
+          isKeyboardOpen = false;
+        }
+
+        keyboardFramePending = false;
       });
-    }
+    });
 
     lastHeight = vh;
   });
@@ -680,12 +703,25 @@ handleScrollDetection();
 }
 
 function scrollBottom(force = false) {
-  if (!state.chatEl) return;
-  if (keyboardTransitioning) return;
+  const el = state.chatEl;
+  if (!el) return;
+
+  // 🚫 não interfere durante frame do teclado
+  if (keyboardFramePending) return;
+
+  // 🧠 só desce se usuário estiver no final
   if (!force && !isUserNearBottom) return;
 
   requestAnimationFrame(() => {
-    state.chatEl.scrollTop = state.chatEl.scrollHeight;
+    const target = el.scrollHeight - el.clientHeight;
+
+    // evita micro-jump
+    if (Math.abs(el.scrollTop - target) < 2) return;
+
+    el.scrollTo({
+      top: target,
+      behavior: "auto" // ⚠️ nunca use smooth aqui
+    });
   });
 }
 
@@ -696,19 +732,21 @@ function removeTyping() {
 
 let isUserNearBottom = true;
 let isKeyboardOpen = false;
-let keyboardTransitioning = false;
+
+// 🔥 controle real do teclado (sem travar UI)
+let keyboardFramePending = false;
 
 function handleScrollDetection() {
   const chat = state.chatEl;
   if (!chat) return;
 
   chat.addEventListener("scroll", () => {
-    const threshold = 80;
+    const threshold = 60;
 
     const position = chat.scrollTop + chat.clientHeight;
     const height = chat.scrollHeight;
 
-    isUserNearBottom = (height - position) < threshold;
+    isUserNearBottom = (height - position) <= threshold;
 
   }, { passive: true });
 }
