@@ -147,19 +147,16 @@ function bindKeyboardUX() {
   let totalDelta = 0;
   let direction = null;
 
-  // 👉 FOCO
   input.addEventListener("focus", () => {
-    document.body.classList.add("kb-open");
     isKeyboardOpen = true;
+    document.body.classList.add("kb-open");
   });
 
-  // 👉 BLUR
   input.addEventListener("blur", () => {
-    document.body.classList.remove("kb-open");
     isKeyboardOpen = false;
+    document.body.classList.remove("kb-open");
   });
 
-  // 👉 INÍCIO DO TOQUE
   chat.addEventListener("touchstart", (e) => {
     const y = e.touches[0].clientY;
 
@@ -170,14 +167,12 @@ function bindKeyboardUX() {
 
   }, { passive: true });
 
-  // 👉 MOVIMENTO
   chat.addEventListener("touchmove", (e) => {
     const currentY = e.touches[0].clientY;
     const delta = currentY - lastY;
 
     totalDelta += delta;
 
-    // só define direção se for gesto real
     if (Math.abs(totalDelta) > 10) {
       direction = totalDelta > 0 ? "down" : "up";
     }
@@ -186,21 +181,17 @@ function bindKeyboardUX() {
 
   }, { passive: true });
 
-  // 👉 FINAL DO GESTO
   chat.addEventListener("touchend", () => {
     if (!isKeyboardOpen) return;
 
-    // 🔥 REGRA WHATSAPP REAL
-    // só fecha com gesto forte + intenção clara
-    const strongSwipeUp = direction === "up" && Math.abs(totalDelta) > 60;
+    const strongSwipeDown = direction === "down" && Math.abs(totalDelta) > 70;
 
-    if (strongSwipeUp) {
+    if (strongSwipeDown) {
       input.blur();
     }
 
-    direction = null;
     totalDelta = 0;
-
+    direction = null;
   });
 }
 
@@ -213,47 +204,37 @@ function fixViewportHeight() {
 }
 
 if (window.visualViewport) {
-  let lastHeight = window.visualViewport.height;
-
   window.visualViewport.addEventListener("resize", () => {
     const vh = window.visualViewport.height;
 
-    // atualiza viewport CSS
     document.documentElement.style.setProperty('--vvh', `${vh}px`);
 
-    const heightDiff = lastHeight - vh;
+    const diff = lastViewportHeight - vh;
 
-    // 🎯 DETECÇÃO REAL DE TECLADO
-    const keyboardOpening = heightDiff > 120;
-    const keyboardClosing = heightDiff < -120;
+    const keyboardOpening = diff > 120;
+    const keyboardClosing = diff < -120;
 
-    // 🔥 evita múltiplos triggers
     if (keyboardFramePending) return;
     keyboardFramePending = true;
 
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
 
-        // 👉 teclado abrindo
-        if (keyboardOpening) {
-          isKeyboardOpen = true;
+      if (keyboardOpening) {
+        isKeyboardOpen = true;
 
-          // scroll só se estiver no fim
-          if (isUserNearBottom) {
-            scrollBottom(true);
-          }
+        if (isUserNearBottom) {
+          scrollBottom(true);
         }
+      }
 
-        // 👉 teclado fechando
-        if (keyboardClosing) {
-          isKeyboardOpen = false;
-        }
+      if (keyboardClosing) {
+        isKeyboardOpen = false;
+      }
 
-        keyboardFramePending = false;
-      });
+      keyboardFramePending = false;
     });
 
-    lastHeight = vh;
+    lastViewportHeight = vh;
   });
 }
 
@@ -706,22 +687,15 @@ function scrollBottom(force = false) {
   const el = state.chatEl;
   if (!el) return;
 
-  // 🚫 não interfere durante frame do teclado
   if (keyboardFramePending) return;
-
-  // 🧠 só desce se usuário estiver no final
   if (!force && !isUserNearBottom) return;
 
   requestAnimationFrame(() => {
     const target = el.scrollHeight - el.clientHeight;
 
-    // evita micro-jump
     if (Math.abs(el.scrollTop - target) < 2) return;
 
-    el.scrollTo({
-      top: target,
-      behavior: "auto" // ⚠️ nunca use smooth aqui
-    });
+    el.scrollTop = target;
   });
 }
 
@@ -732,9 +706,8 @@ function removeTyping() {
 
 let isUserNearBottom = true;
 let isKeyboardOpen = false;
-
-// 🔥 controle real do teclado (sem travar UI)
 let keyboardFramePending = false;
+let lastViewportHeight = window.visualViewport?.height || window.innerHeight;
 
 function handleScrollDetection() {
   const chat = state.chatEl;
