@@ -80,6 +80,9 @@ const state = {
   },
 };
 
+// Variável global de controle de scroll (essencial para evitar bugs)
+let isUserNearBottom = true;
+
 function snapshotForSave() {
   return {
     step: state.step,
@@ -173,59 +176,51 @@ function bindKeyboardUX() {
   let totalDelta = 0;
   let direction = null;
   let isKeyboardOpen = false;
+  let touchTimeout = null;
 
-  // FOCO
   input.addEventListener("focus", () => {
     document.body.classList.add("kb-open");
     isKeyboardOpen = true;
   });
 
-  // BLUR
   input.addEventListener("blur", () => {
     document.body.classList.remove("kb-open");
     isKeyboardOpen = false;
   });
 
-  // INÍCIO DO GESTO
   chat.addEventListener("touchstart", (e) => {
+    if (touchTimeout) clearTimeout(touchTimeout);
     startY = e.touches[0].clientY;
     lastY = startY;
     totalDelta = 0;
     direction = null;
   }, { passive: true });
 
-  // MOVIMENTO
   chat.addEventListener("touchmove", (e) => {
     const currentY = e.touches[0].clientY;
     const delta = currentY - lastY;
-
     totalDelta += delta;
 
-    if (Math.abs(totalDelta) > 10) {
+    if (Math.abs(totalDelta) > 12) {
       direction = totalDelta > 0 ? "down" : "up";
     }
 
     lastY = currentY;
   }, { passive: true });
 
-  // FINAL DO GESTO
   chat.addEventListener("touchend", () => {
-  if (!isKeyboardOpen) return;
+    if (!isKeyboardOpen) return;
+    if (touchTimeout) clearTimeout(touchTimeout);
 
-  // 🔥 REGRA CORRETA
-  const strongSwipeUp =
-    direction === "up" &&
-    Math.abs(totalDelta) > 70;
+    touchTimeout = setTimeout(() => {
+      const strongSwipeUp = direction === "up" && Math.abs(totalDelta) > 75;
 
-  // 🚫 BLOQUEIA swipe down (seu bug atual)
-  const isSwipeDown = direction === "down";
-
-  if (strongSwipeUp) {
-    input.blur();
-  }
-
-  // NÃO faz nada no swipe down
-});
+      if (strongSwipeUp) {
+        input.blur();
+      }
+      // Swipe down não fecha o teclado (igual WhatsApp)
+    }, 16);
+  });
 }
 
 function getFlowTypes() {
@@ -632,11 +627,11 @@ function mountChat() {
     micBtn.classList.toggle("is-hidden", hasText);
   });
 
- state.chatEl = document.getElementById("chat");
+  state.chatEl = document.getElementById("chat");
 
-restoreHistory();
-bindKeyboardUX();
-handleScrollDetection();
+  restoreHistory();
+  bindKeyboardUX();
+  handleScrollDetection();
 
   setInterval(() => {
     const t = document.getElementById("sbTime");
@@ -663,7 +658,7 @@ function handleScrollDetection() {
   if (!chat) return;
 
   chat.addEventListener("scroll", () => {
-    const threshold = 60;
+    const threshold = 80;
 
     const position = chat.scrollTop + chat.clientHeight;
     const height = chat.scrollHeight;
@@ -1025,7 +1020,7 @@ async function startScript() {
   saveState();
 }
 
-async function handleUserText() {
+async function handleUserText(text) {
   if (state.step === 1) {
     state.step = 2;
     saveState();
@@ -1171,22 +1166,20 @@ if (state.flags.entered) {
 } else {
   mountPremiumIntro();
 }
+
+// VisualViewport - Apenas 1 listener limpo
 if (window.visualViewport) {
   let lastHeight = window.visualViewport.height;
 
   window.visualViewport.addEventListener("resize", () => {
     const vh = window.visualViewport.height;
     const diff = lastHeight - vh;
-
-    const opening = diff > 120;
-    const closing = diff < -120;
+    const isOpening = diff > 100;
 
     requestAnimationFrame(() => {
-      if (opening && isUserNearBottom) {
-        const chat = document.getElementById("chat");
-        if (chat) {
-          chat.scrollTop = chat.scrollHeight;
-        }
+      const chat = document.getElementById("chat");
+      if (chat && (isOpening || isUserNearBottom)) {
+        chat.scrollTop = chat.scrollHeight;
       }
     });
 
