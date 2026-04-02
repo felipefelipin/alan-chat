@@ -21,6 +21,32 @@ const ASSETS = {
   media3: "/assets/grid-3.jpg",
   media4: "/assets/grid-4.jpg",
 };
+function preloadMedia() {
+  try {
+    const v = document.createElement("video");
+    v.src = ASSETS.privateIntro;
+    v.preload = "auto";
+  } catch {}
+
+  try {
+    const a = new Audio();
+    a.src = ASSETS.privateMusic;
+    a.preload = "auto";
+  } catch {}
+}
+
+async function fadeVolume(audio, from, to, ms = 700) {
+  if (!audio) return;
+
+  const steps = Math.max(10, Math.floor(ms / 60));
+  const stepMs = Math.floor(ms / steps);
+
+  for (let i = 0; i <= steps; i++) {
+    const p = i / steps;
+    audio.volume = Math.max(0, Math.min(1, from + (to - from) * p));
+    await new Promise(r => setTimeout(r, stepMs));
+  }
+}
 
 const CONTACT = {
   title: "Gisa",
