@@ -210,22 +210,23 @@ function bindKeyboardUX() {
 
   // FINAL DO GESTO
   chat.addEventListener("touchend", () => {
-    if (!isKeyboardOpen) return;
+  if (!isKeyboardOpen) return;
 
-    const strongSwipeUp =
-      direction === "up" &&
-      Math.abs(totalDelta) > 60;
+  // 🔥 REGRA CORRETA
+  const strongSwipeUp =
+    direction === "up" &&
+    Math.abs(totalDelta) > 70;
 
-    // 🔥 REGRA FINAL
-    if (strongSwipeUp) {
-      input.blur();
-    }
+  // 🚫 BLOQUEIA swipe down (seu bug atual)
+  const isSwipeDown = direction === "down";
 
-    totalDelta = 0;
-    direction = null;
-  });
+  if (strongSwipeUp) {
+    input.blur();
+  }
+
+  // NÃO faz nada no swipe down
+});
 }
-
 
 function getFlowTypes() {
   return new Set(["msg", "video", "cta", "mediaGrid", "audio"]);
