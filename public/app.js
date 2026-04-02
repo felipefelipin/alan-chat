@@ -165,17 +165,66 @@ function getInputEl() {
 
 function bindKeyboardUX() {
   const input = document.getElementById("input");
-  if (!input) return;
+  const chat = document.getElementById("chat");
+  if (!input || !chat) return;
 
+  let startY = 0;
+  let lastY = 0;
+  let totalDelta = 0;
+  let direction = null;
+  let isKeyboardOpen = false;
+
+  // FOCO
   input.addEventListener("focus", () => {
     document.body.classList.add("kb-open");
+    isKeyboardOpen = true;
   });
 
+  // BLUR
   input.addEventListener("blur", () => {
     document.body.classList.remove("kb-open");
+    isKeyboardOpen = false;
+  });
+
+  // INÍCIO DO GESTO
+  chat.addEventListener("touchstart", (e) => {
+    startY = e.touches[0].clientY;
+    lastY = startY;
+    totalDelta = 0;
+    direction = null;
+  }, { passive: true });
+
+  // MOVIMENTO
+  chat.addEventListener("touchmove", (e) => {
+    const currentY = e.touches[0].clientY;
+    const delta = currentY - lastY;
+
+    totalDelta += delta;
+
+    if (Math.abs(totalDelta) > 10) {
+      direction = totalDelta > 0 ? "down" : "up";
+    }
+
+    lastY = currentY;
+  }, { passive: true });
+
+  // FINAL DO GESTO
+  chat.addEventListener("touchend", () => {
+    if (!isKeyboardOpen) return;
+
+    const strongSwipeUp =
+      direction === "up" &&
+      Math.abs(totalDelta) > 60;
+
+    // 🔥 REGRA FINAL
+    if (strongSwipeUp) {
+      input.blur();
+    }
+
+    totalDelta = 0;
+    direction = null;
   });
 }
-
 
 
 function getFlowTypes() {
@@ -1120,4 +1169,26 @@ if (state.flags.entered) {
   }
 } else {
   mountPremiumIntro();
+}
+if (window.visualViewport) {
+  let lastHeight = window.visualViewport.height;
+
+  window.visualViewport.addEventListener("resize", () => {
+    const vh = window.visualViewport.height;
+    const diff = lastHeight - vh;
+
+    const opening = diff > 120;
+    const closing = diff < -120;
+
+    requestAnimationFrame(() => {
+      if (opening && isUserNearBottom) {
+        const chat = document.getElementById("chat");
+        if (chat) {
+          chat.scrollTop = chat.scrollHeight;
+        }
+      }
+    });
+
+    lastHeight = vh;
+  });
 }
