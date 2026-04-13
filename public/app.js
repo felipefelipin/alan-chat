@@ -556,32 +556,30 @@ function mountChat() {
           <span class="navChevron"></span>
         </button>
 
-        <div class="topbarCount">48</div>
-
         <div class="avatarWrap">
-          <div class="avatar avatarImgWrap">
+          <div class="avatar">
             <img
               src="${ASSETS.avatar}?v=1"
               alt="${CONTACT.title}"
               onerror="this.parentNode.classList.add('avatarFallback')"
             />
-            <span class="avatarFallbackText">${CONTACT.title.charAt(0)}</span>
           </div>
         </div>
 
         <div class="titlebox">
-          <div class="name">${CONTACT.number}</div>
+          <div class="name">${CONTACT.title}</div>
           <div class="status" id="status">${CONTACT.subtitle}</div>
         </div>
 
-       <div class="topActions">
-  <button class="callBtn video-call-btn" type="button" aria-label="Chamada de vídeo">
-    <img src="/assets/video-call-icon.png" alt="Vídeo" />
-  </button>
-  <button class="callBtn voice-call-btn" type="button" aria-label="Chamada de voz">
-    <img src="/assets/voice-call-icon.png" alt="Ligação" />
-  </button>
-</div>
+        <div class="topActions">
+          <button class="callBtn video-call-btn" type="button" aria-label="Chamada de vídeo">
+            <img src="/assets/video-call-icon.png" alt="Vídeo" />
+          </button>
+          <button class="callBtn voice-call-btn" type="button" aria-label="Chamada de voz">
+            <img src="/assets/voice-call-icon.png" alt="Ligação" />
+          </button>
+        </div>
+      </div>
 
       <div class="chatShell">
         <div class="chat" id="chat"></div>
