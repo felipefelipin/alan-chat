@@ -574,15 +574,14 @@ function mountChat() {
           <div class="status" id="status">${CONTACT.subtitle}</div>
         </div>
 
-        <div class="topActions">
-          <button class="iconBtn" type="button" aria-hidden="true">
-            <span class="topIcon topIconVideo"></span>
-          </button>
-          <button class="iconBtn" type="button" aria-hidden="true">
-            <span class="topIcon topIconPhone"></span>
-          </button>
-        </div>
-      </div>
+       <div class="topActions">
+  <button class="callBtn video-call-btn" type="button" aria-label="Chamada de vídeo">
+    <img src="/assets/video-call-icon.png" alt="Vídeo" />
+  </button>
+  <button class="callBtn voice-call-btn" type="button" aria-label="Chamada de voz">
+    <img src="/assets/voice-call-icon.png" alt="Ligação" />
+  </button>
+</div>
 
       <div class="chatShell">
         <div class="chat" id="chat"></div>
