@@ -162,7 +162,7 @@ function vibrate(ms = 18) {
   } catch {}
 }
 
-// ==================== KEYBOARD UX - VERSÃO MAIS AGRESSIVA POSSÍVEL ====================
+// ==================== KEYBOARD UX - VERSÃO FOCADA EM ELIMINAR JUMP ====================
 function bindKeyboardUX() {
   const input = document.getElementById("input");
   const chat = document.getElementById("chat");
@@ -174,21 +174,17 @@ function bindKeyboardUX() {
   let direction = null;
   let isKeyboardOpen = false;
 
-  // FOCUS - Máxima velocidade possível no Telegram WebApp
   input.addEventListener("focus", () => {
     document.body.classList.add("kb-open");
     isKeyboardOpen = true;
 
-    // Duplo + triplo RAF + setTimeout(0) para forçar o WebView a reagir imediatamente
+    // Técnica anti-jump: estabiliza o chatShell antes do teclado subir
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (state.chatEl) {
-            state.chatEl.style.paddingBottom = "8px";
-            // Força repaint
-            void state.chatEl.offsetHeight;
-          }
-        });
+        if (state.chatEl) {
+          state.chatEl.style.paddingBottom = "10px";
+          void state.chatEl.offsetHeight; // força repaint
+        }
       });
     });
   });
@@ -198,7 +194,7 @@ function bindKeyboardUX() {
     isKeyboardOpen = false;
   });
 
-  // Gesture swipe-up para fechar (mais sensível)
+  // Gesture swipe-up para fechar
   chat.addEventListener("touchstart", (e) => {
     startY = e.touches[0].clientY;
     lastY = startY;
@@ -649,7 +645,10 @@ function scrollBottom(force = false) {
 
   if (!force && !isUserNearBottom) return;
 
-  el.scrollTop = el.scrollHeight;
+  // Anti-jump: usa requestAnimationFrame para suavizar o scroll
+  requestAnimationFrame(() => {
+    el.scrollTop = el.scrollHeight;
+  });
 }
 
 function removeTyping() {
@@ -1171,14 +1170,14 @@ if (state.flags.entered) {
   mountPremiumIntro();
 }
 
-// VisualViewport - Versão mais agressiva
+// VisualViewport - Focado em estabilidade
 if (window.visualViewport) {
   let lastHeight = window.visualViewport.height;
 
   window.visualViewport.addEventListener("resize", () => {
     const vh = window.visualViewport.height;
     const diff = lastHeight - vh;
-    const isOpening = diff > 80; // mais sensível
+    const isOpening = diff > 80;
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {

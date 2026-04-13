@@ -130,6 +130,7 @@ body{
   background:rgba(255,255,255,.78);
   border-radius:2px;
 }
+
 /* top bar */
 .topbar{
   height:58px;
@@ -243,7 +244,7 @@ body{
   margin-top:2px;
 }
 
-/* CHAT SHELL - OTIMIZAÇÃO AGRESSIVA PARA TECLADO */
+/* CHAT SHELL - OTIMIZAÇÃO AGRESSIVA PARA EVITAR JUMP */
 .chatShell{
   flex:1 1 auto;
   min-height:0;
@@ -376,6 +377,7 @@ body{
   border-top-right-radius:16px;
   border-bottom-right-radius:18px;
 }
+
 /* meta */
 .meta{
   align-self:flex-end;
@@ -667,7 +669,8 @@ body{
   flex:0 0 auto;
   background:#3a3d46;
 }
-/* ==================== COMPOSER - VERSÃO AGRESSIVA PARA TECLADO ==================== */
+
+/* ==================== COMPOSER - VERSÃO AGRESSIVA PARA REDUZIR JUMP ==================== */
 .composer{
   flex-shrink: 0;
   z-index: 10;
@@ -781,6 +784,19 @@ body{
   display:none !important;
 }
 
+/* PERFORMANCE BOOST FINAL - ANTI-JUMP */
+.full, 
+.chatShell, 
+.chat, 
+.composer, 
+.composerField, 
+.composer input {
+  will-change: transform, height;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  contain: layout style paint;
+}
+
 /* CTA card */
 .ctaCardWrap{
   display:flex;
@@ -815,7 +831,7 @@ body{
   text-transform:uppercase;
 }
 
-/* premium intro */
+/* premium intro, routing e call screen mantidos iguais */
 .pIntro{position:fixed;inset:0;background:#000}
 .pIntroVideoWrap{position:absolute;inset:0}
 .pIntroVideoWrap:after{
@@ -1108,17 +1124,4 @@ body{
 button:disabled{
   cursor:not-allowed;
   opacity:.6;
-}
-
-/* PERFORMANCE BOOST FINAL - APLICADO EM TODOS OS ELEMENTOS CRÍTICOS */
-.full, 
-.chatShell, 
-.chat, 
-.composer, 
-.composerField, 
-.composer input {
-  will-change: transform, height;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  contain: layout style paint;
 }
