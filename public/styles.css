@@ -15,7 +15,7 @@
 
 *{box-sizing:border-box}
 
-/* Reset crítico para Telegram WebApp + iOS (reduz delay do teclado) */
+/* RESET AGRESSIVO PARA TECLADO NO TELEGRAM WEBAPP */
 html, body, #app {
   margin: 0;
   padding: 0;
@@ -23,6 +23,7 @@ html, body, #app {
   overflow: hidden;
   touch-action: manipulation;
   -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body{
@@ -32,7 +33,7 @@ body{
   overscroll-behavior-y:none;
 }
 
-/* Container principal - otimizado para teclado */
+/* CONTAINER PRINCIPAL - OTIMIZAÇÃO MÁXIMA PARA EVITAR JUMP */
 .full{
   width:100vw;
   height:100%;
@@ -45,6 +46,7 @@ body{
   will-change: transform, height;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  contain: layout style paint;
 }
 
 .fadeIn{animation:fadeIn .22s ease both}
@@ -128,7 +130,6 @@ body{
   background:rgba(255,255,255,.78);
   border-radius:2px;
 }
-
 /* top bar */
 .topbar{
   height:58px;
@@ -241,7 +242,8 @@ body{
   color:var(--muted);
   margin-top:2px;
 }
-/* chat area */
+
+/* CHAT SHELL - OTIMIZAÇÃO AGRESSIVA PARA TECLADO */
 .chatShell{
   flex:1 1 auto;
   min-height:0;
@@ -251,6 +253,10 @@ body{
   background-image:var(--wall);
   background-repeat:repeat;
   background-size:420px 420px;
+  will-change: transform, height;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  contain: layout style paint;
 }
 
 .chatShell::before{
@@ -274,6 +280,9 @@ body{
   touch-action:pan-y;
   scroll-behavior:auto;
   padding:8px 8px calc(10px + env(safe-area-inset-bottom));
+  will-change: transform, height;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 /* rows and grouping */
@@ -367,33 +376,6 @@ body{
   border-top-right-radius:16px;
   border-bottom-right-radius:18px;
 }
-
-.msg-left.is-single .bubble-in::after,
-.msg-left.is-last .bubble-in::after{
-  content:"";
-  position:absolute;
-  left:-3px;
-  bottom:0;
-  width:9px;
-  height:11px;
-  background:rgba(23,25,30,.96);
-  border-bottom-right-radius:8px;
-  clip-path:path("M 0 0 Q 6 0 6 7 L 9 11 L 0 11 Z");
-}
-
-.msg-right.is-single .bubble-out::after,
-.msg-right.is-last .bubble-out::after{
-  content:"";
-  position:absolute;
-  right:-3px;
-  bottom:0;
-  width:9px;
-  height:11px;
-  background:rgba(18,90,71,.98);
-  border-bottom-left-radius:8px;
-  clip-path:path("M 9 0 Q 3 0 3 7 L 0 11 L 9 11 Z");
-}
-
 /* meta */
 .meta{
   align-self:flex-end;
@@ -481,6 +463,7 @@ body{
   0%,100%{opacity:.22}
   50%{opacity:.9}
 }
+
 /* media */
 .videoBubble{
   width:min(268px, 68vw);
@@ -684,8 +667,7 @@ body{
   flex:0 0 auto;
   background:#3a3d46;
 }
-
-/* ==================== COMPOSER - OTIMIZADO PARA TECLADO (VERSÃO FINAL) ==================== */
+/* ==================== COMPOSER - VERSÃO AGRESSIVA PARA TECLADO ==================== */
 .composer{
   flex-shrink: 0;
   z-index: 10;
@@ -696,6 +678,10 @@ body{
   background: rgba(13, 15, 19, 0.98);
   border-top: 1px solid rgba(255,255,255,0.06);
   transition: none !important;
+  will-change: transform, height;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  contain: layout style paint;
 }
 
 .composerAttach {
@@ -723,6 +709,8 @@ body{
   padding: 8px 12px 8px 16px;
   position: relative;
   box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  will-change: transform, height;
+  backface-visibility: hidden;
 }
 
 .composer input {
@@ -766,7 +754,7 @@ body{
   justify-content: center;
   flex-shrink: 0;
   margin-bottom: 2px;
-  transition: transform .12s ease;
+  transition: none !important;
 }
 
 .composerMic {
@@ -793,17 +781,6 @@ body{
   display:none !important;
 }
 
-/* Performance boost final para reduzir delay do teclado */
-.full, 
-.chatShell, 
-.chat, 
-.composer, 
-.composerField,
-.composer input {
-  will-change: transform, height;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
 /* CTA card */
 .ctaCardWrap{
   display:flex;
@@ -1131,4 +1108,17 @@ body{
 button:disabled{
   cursor:not-allowed;
   opacity:.6;
+}
+
+/* PERFORMANCE BOOST FINAL - APLICADO EM TODOS OS ELEMENTOS CRÍTICOS */
+.full, 
+.chatShell, 
+.chat, 
+.composer, 
+.composerField, 
+.composer input {
+  will-change: transform, height;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  contain: layout style paint;
 }
