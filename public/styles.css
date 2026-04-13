@@ -65,7 +65,7 @@ body{
   border-radius:3px;
 }
 
-/* TOP BAR - ESTILO WHATSAPP (ícones vetoriais limpos + espaçamento perfeito) */
+/* ====================== TOP BAR - VERSÃO COM IMAGENS ====================== */
 .topbar{
   height: 64px;
   display: flex;
@@ -161,8 +161,8 @@ body{
   margin-top: 1px;
 }
 
-/* TOP ACTIONS - USANDO IMAGENS REAIS */
-.topActions {
+/* Botões com imagens - limpo e alinhado */
+.topActions{
   display: flex;
   align-items: center;
   gap: 12px;
@@ -170,7 +170,7 @@ body{
   padding-right: 8px;
 }
 
-.callBtn {
+.callBtn{
   border: 0;
   background: transparent;
   width: 44px;
@@ -178,20 +178,19 @@ body{
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.95;
-  cursor: pointer;
   padding: 0;
+  opacity: 0.95;
 }
 
-.callBtn img {
+.callBtn img{
   width: 26px;
   height: 26px;
   filter: brightness(1.05);
 }
 
-.callBtn:active {
+.callBtn:active{
   opacity: 0.65;
-  transform: scale(0.90);
+  transform: scale(0.92);
 }
 
 /* ==================== COMPOSER - ESTILO WHATSAPP ==================== */
