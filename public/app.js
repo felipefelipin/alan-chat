@@ -162,6 +162,7 @@ function vibrate(ms = 18) {
   } catch {}
 }
 
+// ==================== KEYBOARD UX - VERSÃO MAIS AGRESSIVA POSSÍVEL ====================
 function bindKeyboardUX() {
   const input = document.getElementById("input");
   const chat = document.getElementById("chat");
@@ -172,19 +173,22 @@ function bindKeyboardUX() {
   let totalDelta = 0;
   let direction = null;
   let isKeyboardOpen = false;
-  let touchTimeout = null;
 
-  // Otimizado para abrir mais rápido
+  // FOCUS - Máxima velocidade possível no Telegram WebApp
   input.addEventListener("focus", () => {
     document.body.classList.add("kb-open");
     isKeyboardOpen = true;
 
-    // Força layout rápido para reduzir delay no Telegram/iOS
+    // Duplo + triplo RAF + setTimeout(0) para forçar o WebView a reagir imediatamente
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        if (state.chatEl) {
-          state.chatEl.style.paddingBottom = "0px"; // evita jump
-        }
+        requestAnimationFrame(() => {
+          if (state.chatEl) {
+            state.chatEl.style.paddingBottom = "8px";
+            // Força repaint
+            void state.chatEl.offsetHeight;
+          }
+        });
       });
     });
   });
@@ -194,8 +198,8 @@ function bindKeyboardUX() {
     isKeyboardOpen = false;
   });
 
+  // Gesture swipe-up para fechar (mais sensível)
   chat.addEventListener("touchstart", (e) => {
-    if (touchTimeout) clearTimeout(touchTimeout);
     startY = e.touches[0].clientY;
     lastY = startY;
     totalDelta = 0;
@@ -216,15 +220,12 @@ function bindKeyboardUX() {
 
   chat.addEventListener("touchend", () => {
     if (!isKeyboardOpen) return;
-    if (touchTimeout) clearTimeout(touchTimeout);
 
-    touchTimeout = setTimeout(() => {
-      const strongSwipeUp = direction === "up" && Math.abs(totalDelta) > 75;
+    const strongSwipeUp = direction === "up" && Math.abs(totalDelta) > 70;
 
-      if (strongSwipeUp) {
-        input.blur();
-      }
-    }, 10);
+    if (strongSwipeUp) {
+      input.blur();
+    }
   });
 }
 
@@ -591,7 +592,6 @@ function mountChat() {
         <div class="chat" id="chat"></div>
       </div>
 
-      <!-- COMPOSER OTIMIZADO -->
       <div class="composer">
         <button class="composerAttach" type="button" aria-hidden="true">
           <span class="composerPlusMark">+</span>
@@ -1171,20 +1171,22 @@ if (state.flags.entered) {
   mountPremiumIntro();
 }
 
-// VisualViewport otimizado para reduzir delay
+// VisualViewport - Versão mais agressiva
 if (window.visualViewport) {
   let lastHeight = window.visualViewport.height;
 
   window.visualViewport.addEventListener("resize", () => {
     const vh = window.visualViewport.height;
     const diff = lastHeight - vh;
-    const isOpening = diff > 100;
+    const isOpening = diff > 80; // mais sensível
 
     requestAnimationFrame(() => {
-      const chat = document.getElementById("chat");
-      if (chat && (isOpening || isUserNearBottom)) {
-        chat.scrollTop = chat.scrollHeight;
-      }
+      requestAnimationFrame(() => {
+        const chat = document.getElementById("chat");
+        if (chat && (isOpening || isUserNearBottom)) {
+          chat.scrollTop = chat.scrollHeight;
+        }
+      });
     });
 
     lastHeight = vh;
