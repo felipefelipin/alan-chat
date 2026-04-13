@@ -21,6 +21,7 @@ const ASSETS = {
   media3: "/assets/grid-3.jpg",
   media4: "/assets/grid-4.jpg",
 };
+
 function preloadMedia() {
   try {
     const v = document.createElement("video");
@@ -80,7 +81,6 @@ const state = {
   },
 };
 
-// Variável global de controle de scroll (essencial para evitar bugs)
 let isUserNearBottom = true;
 
 function snapshotForSave() {
@@ -162,10 +162,6 @@ function vibrate(ms = 18) {
   } catch {}
 }
 
-function getInputEl() {
-  return document.getElementById("input");
-}
-
 function bindKeyboardUX() {
   const input = document.getElementById("input");
   const chat = document.getElementById("chat");
@@ -218,7 +214,6 @@ function bindKeyboardUX() {
       if (strongSwipeUp) {
         input.blur();
       }
-      // Swipe down não fecha o teclado (igual WhatsApp)
     }, 16);
   });
 }
@@ -586,20 +581,19 @@ function mountChat() {
         <div class="chat" id="chat"></div>
       </div>
 
-      <div class="composer composerRef">
+      <!-- COMPOSER ATUALIZADO - ESTILO WHATSAPP -->
+      <div class="composer">
         <button class="composerAttach" type="button" aria-hidden="true">
-          <span class="composerPlusMark"></span>
+          <span class="composerPlusMark">+</span>
         </button>
 
-        <div class="composerField composerFieldRef">
+        <div class="composerField">
           <input id="input" autocomplete="off" placeholder="Mensagem" />
-          <button class="composerGhostBtn" type="button" aria-hidden="true">
-            <span class="iconSticker"></span>
-          </button>
-          <button class="composerGhostBtn" type="button" aria-hidden="true">
-            <span class="iconCamera"></span>
-          </button>
         </div>
+
+        <button class="composerGhostBtn" type="button" aria-hidden="true">
+          <span class="iconSticker">😀</span>
+        </button>
 
         <button class="composerMic" id="composerMic" type="button" aria-hidden="true">
           <span class="iconMic"></span>
