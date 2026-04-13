@@ -65,7 +65,7 @@ body{
   border-radius:3px;
 }
 
-/* TOP BAR - ESTILO WHATSAPP (versão mais fiel) */
+/* TOP BAR - ESTILO WHATSAPP (versão final com ícones e status) */
 .topbar{
   height: 64px;
   display: flex;
@@ -126,7 +126,7 @@ body{
   object-fit: cover;
 }
 
-/* Borda verde online (como no WhatsApp) */
+/* Borda verde de "online" */
 .avatar::after{
   content: "";
   position: absolute;
@@ -135,7 +135,7 @@ body{
   width: 14px;
   height: 14px;
   background: #30d158;
-  border: 2px solid rgba(14,16,20,.98);
+  border: 2.5px solid rgba(14,16,20,.98);
   border-radius: 50%;
 }
 
@@ -157,16 +157,18 @@ body{
 
 .status{
   font-size: 12.8px;
-  color: #30d158;           /* verde online */
+  color: #30d158;
   font-weight: 500;
+  margin-top: 1px;
 }
 
+/* Ações da direita - Vídeo e Ligação */
 .topActions{
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   margin-left: auto;
-  padding-right: 4px;
+  padding-right: 8px;
 }
 
 .iconBtn{
@@ -179,11 +181,22 @@ body{
   justify-content: center;
   color: #fff;
   opacity: 0.85;
-  font-size: 22px;
+  font-size: 23px;
 }
 
 .iconBtn:active {
-  opacity: 0.6;
+  opacity: 0.55;
+}
+
+/* Ícones */
+.video-icon::before {
+  content: "📹";
+  font-size: 22px;
+}
+
+.call-icon::before {
+  content: "📞";
+  font-size: 22px;
 }
 
 /* ==================== COMPOSER - ESTILO WHATSAPP ==================== */
