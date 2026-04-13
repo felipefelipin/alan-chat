@@ -162,10 +162,11 @@ body{
 }
 
 /* Ações da direita */
+/* AÇÕES DA DIREITA - ÍCONES IDÊNTICOS AO WHATSAPP (primeira foto) */
 .topActions{
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   margin-left: auto;
   padding-right: 8px;
 }
@@ -179,25 +180,40 @@ body{
   align-items: center;
   justify-content: center;
   color: #fff;
-  opacity: 0.92;
-  font-size: 24px;
+  opacity: 0.95;
 }
 
-.iconBtn:active {
-  opacity: 0.6;
-}
-
-/* Ícones vetoriais limpos - estilo WhatsApp */
-.topIconVideo::before {
-  content: "📹";
-  font-size: 23px;
-}
-
-/* Ícone de telefone mais próximo do WhatsApp */
-.topIconPhone {
+/* Ícone de Vídeo - exatamente como no WhatsApp */
+.topIconVideo {
+  width: 26px;
+  height: 20px;
   position: relative;
+}
+
+.topIconVideo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 2px solid #fff;
+  border-radius: 4px;
+}
+
+.topIconVideo::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  left: 9px;
+  width: 8px;
+  height: 8px;
+  background: #fff;
+  border-radius: 2px;
+}
+
+/* Ícone de Telefone - exatamente como no WhatsApp */
+.topIconPhone {
   width: 24px;
   height: 24px;
+  position: relative;
 }
 
 .topIconPhone::before {
@@ -214,7 +230,7 @@ body{
 .topIconPhone::after {
   content: "";
   position: absolute;
-  bottom: 3px;
+  bottom: 4px;
   left: 8px;
   width: 8px;
   height: 8px;
