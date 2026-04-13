@@ -161,12 +161,11 @@ body{
   margin-top: 1px;
 }
 
-/* Ações da direita */
-/* AÇÕES DA DIREITA - ÍCONES IDÊNTICOS AO WHATSAPP (primeira foto) */
+/* ÍCONES DE CHAMADA - EXATAMENTE COMO NO WHATSAPP (traços idênticos) */
 .topActions{
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin-left: auto;
   padding-right: 8px;
 }
@@ -183,9 +182,9 @@ body{
   opacity: 0.95;
 }
 
-/* Ícone de Vídeo - exatamente como no WhatsApp */
+/* Ícone de Vídeo - idêntico ao WhatsApp */
 .topIconVideo {
-  width: 26px;
+  width: 28px;
   height: 20px;
   position: relative;
 }
@@ -193,48 +192,51 @@ body{
 .topIconVideo::before {
   content: "";
   position: absolute;
-  inset: 0;
-  border: 2px solid #fff;
+  left: 0;
+  top: 2px;
+  width: 24px;
+  height: 16px;
+  border: 2px solid #ffffff;
   border-radius: 4px;
 }
 
 .topIconVideo::after {
   content: "";
   position: absolute;
+  left: 10px;
   top: 6px;
-  left: 9px;
   width: 8px;
   height: 8px;
-  background: #fff;
+  background: #ffffff;
   border-radius: 2px;
 }
 
-/* Ícone de Telefone - exatamente como no WhatsApp */
+/* Ícone de Telefone - idêntico ao WhatsApp */
 .topIconPhone {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   position: relative;
 }
 
 .topIconPhone::before {
   content: "";
   position: absolute;
-  top: 4px;
-  left: 3px;
-  width: 18px;
-  height: 16px;
-  border: 2px solid #fff;
-  border-radius: 4px 4px 0 0;
+  left: 2px;
+  top: 5px;
+  width: 20px;
+  height: 15px;
+  border: 2px solid #ffffff;
+  border-radius: 5px 5px 2px 2px;
 }
 
 .topIconPhone::after {
   content: "";
   position: absolute;
-  bottom: 4px;
   left: 8px;
-  width: 8px;
+  bottom: 4px;
+  width: 10px;
   height: 8px;
-  background: #fff;
+  background: #ffffff;
   border-radius: 50%;
 }
 
