@@ -65,7 +65,7 @@ body{
   border-radius:3px;
 }
 
-/* TOP BAR - ESTILO WHATSAPP (corrigido para seu HTML) */
+/* TOP BAR - ESTILO WHATSAPP (versão final - espaçamento + ícones idênticos) */
 .topbar{
   height: 64px;
   display: flex;
@@ -126,6 +126,7 @@ body{
   object-fit: cover;
 }
 
+/* Bolinha verde online */
 .avatar::after{
   content: "";
   position: absolute;
@@ -161,10 +162,11 @@ body{
   margin-top: 1px;
 }
 
+/* Ações da direita - Ícones grandes e brancos */
 .topActions{
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   margin-left: auto;
   padding-right: 8px;
 }
@@ -178,23 +180,25 @@ body{
   align-items: center;
   justify-content: center;
   color: #fff;
-  opacity: 0.85;
-  font-size: 23px;
+  opacity: 0.9;
+  font-size: 24px;
 }
 
 .iconBtn:active {
-  opacity: 0.55;
+  opacity: 0.6;
 }
 
-/* Ícones - compatível com seu HTML */
+/* Ícones limpos e grandes (compatível com seu HTML) */
 .topIconVideo::before {
   content: "📹";
-  font-size: 22px;
+  font-size: 24px;
+  line-height: 1;
 }
 
 .topIconPhone::before {
   content: "📞";
-  font-size: 22px;
+  font-size: 23px;
+  line-height: 1;
 }
 
 /* ==================== COMPOSER - ESTILO WHATSAPP ==================== */
