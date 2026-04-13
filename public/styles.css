@@ -128,10 +128,11 @@ body{
   margin-top: 1px;
 }
 
+/* ÍCONES DE CHAMADA - SEM FUNDO + TAMANHO AJUSTADO */
 .topActions{
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   margin-left: auto;
   padding-right: 8px;
 }
@@ -144,11 +145,21 @@ body{
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
+  opacity: 0.95;
 }
 
 .callBtn img{
-  width: 28px;
-  height: 28px;
+  width: 27px;
+  height: 27px;
+  filter: brightness(1.1);
+  background: transparent !important;
+  box-shadow: none;
+}
+
+/* Força transparência máxima */
+.callBtn img {
+  mix-blend-mode: normal;
 }
 
 /* ==================== COMPOSER - ESTILO WHATSAPP ==================== */
