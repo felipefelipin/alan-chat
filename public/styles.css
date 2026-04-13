@@ -65,18 +65,17 @@ body{
   border-radius:3px;
 }
 
-/* ====================== TOP BAR - IDÊNTICA À SEGUNDA FOTO ====================== */
+/* TOP BAR - APENAS POSIÇÃO DO NOME E ÍCONES SEM FUNDO */
 .topbar{
   height: 64px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   padding: 0 8px 0 4px;
   background: rgba(14, 16, 20, 0.98);
   border-bottom: 1px solid var(--line);
   position: relative;
   z-index: 4;
-  flex: 0 0 auto;
 }
 
 .navBtn{
@@ -89,31 +88,12 @@ body{
   justify-content: center;
   color: #fff;
   padding: 0;
-  opacity: 0.9;
-}
-
-.navChevron{
-  width: 12px;
-  height: 12px;
-  border-left: 2.8px solid rgba(255,255,255,.92);
-  border-bottom: 2.8px solid rgba(255,255,255,.92);
-  transform: rotate(45deg);
-  margin-left: 4px;
-}
-
-.topbarCount{
-  font-size: 17px;
-  font-weight: 600;
-  color: #fff;
-  opacity: 0.85;
-  min-width: 28px;
 }
 
 .avatarWrap{
   display: flex;
   align-items: center;
-  flex: 1;
-  min-width: 0;
+  gap: 12px;
 }
 
 .avatar{
@@ -121,9 +101,7 @@ body{
   height: 42px;
   border-radius: 50%;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,.35);
   position: relative;
-  flex-shrink: 0;
 }
 
 .avatar img{
@@ -133,26 +111,23 @@ body{
 }
 
 .titlebox{
-  margin-left: 8px;
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-left: 6px;
 }
 
 .name{
   font-weight: 600;
   font-size: 16.5px;
   color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .status{
   font-size: 12.8px;
   color: #30d158;
-  font-weight: 500;
+  margin-top: 1px;
 }
 
-/* Ícones PNG limpos */
 .topActions{
   display: flex;
   align-items: center;
@@ -169,19 +144,11 @@ body{
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
-  opacity: 0.95;
 }
 
 .callBtn img{
   width: 28px;
   height: 28px;
-  filter: brightness(1.1);
-}
-
-.callBtn:active{
-  opacity: 0.6;
-  transform: scale(0.92);
 }
 
 /* ==================== COMPOSER - ESTILO WHATSAPP ==================== */
