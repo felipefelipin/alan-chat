@@ -561,7 +561,6 @@ function mountChat() {
             <img
               src="${ASSETS.avatar}?v=1"
               alt="${CONTACT.title}"
-              onerror="this.parentNode.classList.add('avatarFallback')"
             />
           </div>
         </div>
