@@ -65,12 +65,12 @@ body{
   border-radius:3px;
 }
 
-/* ====================== TOP BAR - ALINHADA COM IMAGENS PNG ====================== */
+/* ====================== TOP BAR - VERSÃO FINAL ALINHADA ====================== */
 .topbar{
   height: 64px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding: 0 8px 0 4px;
   background: rgba(14, 16, 20, 0.98);
   border-bottom: 1px solid var(--line);
@@ -143,6 +143,7 @@ body{
   flex-direction: column;
   line-height: 1.15;
   min-width: 0;
+  margin-left: 4px;
 }
 
 .name{
@@ -161,7 +162,7 @@ body{
   margin-top: 1px;
 }
 
-/* Botões com imagens PNG - alinhados corretamente */
+/* Botões com imagens PNG - sem fundo + tamanho ajustado */
 .topActions{
   display: flex;
   align-items: center;
@@ -183,9 +184,11 @@ body{
 }
 
 .callBtn img{
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   filter: brightness(1.05);
+  /* Remove qualquer fundo que o PNG possa ter */
+  mix-blend-mode: normal;
 }
 
 .callBtn:active{
