@@ -65,7 +65,7 @@ body{
   border-radius:3px;
 }
 
-/* TOP BAR - ESTILO WHATSAPP (versão final com ícones e status) */
+/* TOP BAR - ESTILO WHATSAPP (corrigido para seu HTML) */
 .topbar{
   height: 64px;
   display: flex;
@@ -126,7 +126,6 @@ body{
   object-fit: cover;
 }
 
-/* Borda verde de "online" */
 .avatar::after{
   content: "";
   position: absolute;
@@ -162,7 +161,6 @@ body{
   margin-top: 1px;
 }
 
-/* Ações da direita - Vídeo e Ligação */
 .topActions{
   display: flex;
   align-items: center;
@@ -188,13 +186,13 @@ body{
   opacity: 0.55;
 }
 
-/* Ícones */
-.video-icon::before {
+/* Ícones - compatível com seu HTML */
+.topIconVideo::before {
   content: "📹";
   font-size: 22px;
 }
 
-.call-icon::before {
+.topIconPhone::before {
   content: "📞";
   font-size: 22px;
 }
