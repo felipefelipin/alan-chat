@@ -1,40 +1,38 @@
 :root{
   --bg:#0a0b0d;
   --bg2:#0f1115;
-  --panel:rgba(18,20,24,.96);
-  --panel2:rgba(18,20,24,.96);
-
   --bubbleIn:#17191e;
   --bubbleOut:#1d6d58;
-
   --text:#f5f7fb;
   --muted:rgba(245,247,251,.56);
   --muted-2:rgba(245,247,251,.38);
   --line:rgba(255,255,255,.08);
-
   --accent:#b56a7c;
   --accent2:#d6b07a;
-
   --shadow:0 18px 56px rgba(0,0,0,.52);
   --wall:url("/assets/chat-bg.png?v=9");
 }
 
 *{box-sizing:border-box}
-html,body{height:100%}
+
+/* Reset crítico para Telegram WebApp + iOS (reduz delay do teclado) */
+html, body, #app {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+}
 
 body{
-  margin:0;
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,Arial,sans-serif;
   background:var(--bg);
   color:var(--text);
-
   overscroll-behavior-y:none;
-  touch-action:manipulation;
 }
 
-button,input{font:inherit}
-img{display:block;max-width:100%}
-
+/* Container principal - otimizado para teclado */
 .full{
   width:100vw;
   height:100%;
@@ -42,7 +40,11 @@ img{display:block;max-width:100%}
   flex-direction:column;
   background:linear-gradient(180deg,var(--bg2),var(--bg));
   overflow:hidden;
+  position:relative;
   transition: none !important;
+  will-change: transform, height;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .fadeIn{animation:fadeIn .22s ease both}
@@ -68,6 +70,7 @@ img{display:block;max-width:100%}
   background:rgba(10,11,13,.98);
   border-bottom:.5px solid rgba(255,255,255,.05);
   flex:0 0 auto;
+  z-index: 5;
 }
 
 #sbTime{
@@ -136,7 +139,7 @@ img{display:block;max-width:100%}
   background:rgba(14,16,20,.98);
   border-bottom:.5px solid var(--line);
   position:relative;
-  z-index:3;
+  z-index:4;
   flex:0 0 auto;
 }
 
@@ -238,57 +241,6 @@ img{display:block;max-width:100%}
   color:var(--muted);
   margin-top:2px;
 }
-
-.topIcon{
-  display:block;
-  position:relative;
-}
-
-.topIconVideo{
-  width:16px;
-  height:12px;
-  border:1.7px solid rgba(255,255,255,.84);
-  border-radius:3px;
-}
-.topIconVideo::after{
-  content:"";
-  position:absolute;
-  right:-5px;
-  top:2px;
-  width:0;
-  height:0;
-  border-top:3px solid transparent;
-  border-bottom:3px solid transparent;
-  border-left:5px solid rgba(255,255,255,.84);
-}
-
-.topIconPhone{
-  width:12px;
-  height:16px;
-}
-.topIconPhone::before,
-.topIconPhone::after{
-  content:"";
-  position:absolute;
-  background:rgba(255,255,255,.84);
-}
-.topIconPhone::before{
-  width:12px;
-  height:4px;
-  border-radius:10px;
-  top:6px;
-  left:0;
-  transform:rotate(-45deg);
-}
-.topIconPhone::after{
-  width:5px;
-  height:5px;
-  border-radius:50%;
-  right:0;
-  top:0;
-  opacity:0;
-}
-
 /* chat area */
 .chatShell{
   flex:1 1 auto;
@@ -317,14 +269,10 @@ img{display:block;max-width:100%}
   z-index:1;
   height:100%;
   overflow-y:auto;
-
   -webkit-overflow-scrolling:touch;
   overscroll-behavior-y:contain;
-
   touch-action:pan-y;
-
   scroll-behavior:auto;
-
   padding:8px 8px calc(10px + env(safe-area-inset-bottom));
 }
 
@@ -533,7 +481,6 @@ img{display:block;max-width:100%}
   0%,100%{opacity:.22}
   50%{opacity:.9}
 }
-
 /* media */
 .videoBubble{
   width:min(268px, 68vw);
@@ -738,7 +685,7 @@ img{display:block;max-width:100%}
   background:#3a3d46;
 }
 
-/* ==================== COMPOSER - ESTILO WHATSAPP ==================== */
+/* ==================== COMPOSER - OTIMIZADO PARA TECLADO (VERSÃO FINAL) ==================== */
 .composer{
   flex-shrink: 0;
   z-index: 10;
@@ -775,7 +722,7 @@ img{display:block;max-width:100%}
   align-items: center;
   padding: 8px 12px 8px 16px;
   position: relative;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
 }
 
 .composer input {
@@ -819,6 +766,7 @@ img{display:block;max-width:100%}
   justify-content: center;
   flex-shrink: 0;
   margin-bottom: 2px;
+  transition: transform .12s ease;
 }
 
 .composerMic {
@@ -827,7 +775,7 @@ img{display:block;max-width:100%}
 }
 
 .send {
-  background: #00d15a;           /* verde WhatsApp */
+  background: #00d15a;
   color: #000;
   box-shadow: 0 2px 6px rgba(0, 209, 90, 0.4);
 }
@@ -845,6 +793,17 @@ img{display:block;max-width:100%}
   display:none !important;
 }
 
+/* Performance boost final para reduzir delay do teclado */
+.full, 
+.chatShell, 
+.chat, 
+.composer, 
+.composerField,
+.composer input {
+  will-change: transform, height;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
 /* CTA card */
 .ctaCardWrap{
   display:flex;
@@ -1172,12 +1131,4 @@ img{display:block;max-width:100%}
 button:disabled{
   cursor:not-allowed;
   opacity:.6;
-}
-
-/* performance boost */
-.chat,
-.chatShell,
-.full {
-  will-change: transform, height;
-  backface-visibility: hidden;
 }
