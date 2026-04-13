@@ -161,9 +161,7 @@ body{
   margin-top: 1px;
 }
 
-/* ÍCONES DE CHAMADA - EXATAMENTE COMO NO WHATSAPP (traços idênticos) */
-/* ÍCONES DE CHAMADA - VERSÃO MAIS FIEL AO WHATSAPP (segunda foto) */
-
+/* TOP ACTIONS - USANDO IMAGENS REAIS */
 .topActions {
   display: flex;
   align-items: center;
@@ -172,7 +170,7 @@ body{
   padding-right: 8px;
 }
 
-.iconBtn {
+.callBtn {
   border: 0;
   background: transparent;
   width: 44px;
@@ -180,69 +178,20 @@ body{
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
   opacity: 0.95;
+  cursor: pointer;
+  padding: 0;
 }
 
-/* ==================== ÍCONE DE VÍDEO (Câmera) ==================== */
-.topIconVideo {
-  width: 28px;
-  height: 21px;
-  position: relative;
-}
-
-.topIconVideo::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 2px;
-  width: 24px;
-  height: 17px;
-  border: 2px solid #ffffff;
-  border-radius: 4px;
-}
-
-.topIconVideo::after {
-  content: "";
-  position: absolute;
-  left: 9px;
-  top: 6px;
-  width: 10px;
-  height: 9px;
-  background: #ffffff;
-  border-radius: 2px;
-}
-
-/* ==================== ÍCONE DE TELEFONE (Voz) ==================== */
-.topIconPhone {
+.callBtn img {
   width: 26px;
   height: 26px;
-  position: relative;
+  filter: brightness(1.05);
 }
 
-.topIconPhone::before {
-  content: "";
-  position: absolute;
-  left: 3px;
-  top: 5px;
-  width: 20px;
-  height: 16px;
-  border: 2px solid #ffffff;
-  border-radius: 5px 5px 2px 2px;
-}
-
-/* Parte inferior do telefone (fio/curva) */
-.topIconPhone::after {
-  content: "";
-  position: absolute;
-  left: 8px;
-  bottom: 4px;
-  width: 10px;
-  height: 9px;
-  border: 2px solid #ffffff;
-  border-top: 0;
-  border-left: 0;
-  border-radius: 0 0 8px 8px;
+.callBtn:active {
+  opacity: 0.65;
+  transform: scale(0.90);
 }
 
 /* ==================== COMPOSER - ESTILO WHATSAPP ==================== */
