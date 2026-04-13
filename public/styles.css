@@ -65,7 +65,7 @@ body{
   border-radius:3px;
 }
 
-/* TOP BAR - ESTILO WHATSAPP (versão final - espaçamento + ícones idênticos) */
+/* TOP BAR - ESTILO WHATSAPP (ícones vetoriais limpos + espaçamento perfeito) */
 .topbar{
   height: 64px;
   display: flex;
@@ -126,7 +126,6 @@ body{
   object-fit: cover;
 }
 
-/* Bolinha verde online */
 .avatar::after{
   content: "";
   position: absolute;
@@ -162,11 +161,11 @@ body{
   margin-top: 1px;
 }
 
-/* Ações da direita - Ícones grandes e brancos */
+/* Ações da direita */
 .topActions{
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin-left: auto;
   padding-right: 8px;
 }
@@ -180,7 +179,7 @@ body{
   align-items: center;
   justify-content: center;
   color: #fff;
-  opacity: 0.9;
+  opacity: 0.92;
   font-size: 24px;
 }
 
@@ -188,17 +187,39 @@ body{
   opacity: 0.6;
 }
 
-/* Ícones limpos e grandes (compatível com seu HTML) */
+/* Ícones vetoriais limpos - estilo WhatsApp */
 .topIconVideo::before {
   content: "📹";
-  font-size: 24px;
-  line-height: 1;
+  font-size: 23px;
+}
+
+/* Ícone de telefone mais próximo do WhatsApp */
+.topIconPhone {
+  position: relative;
+  width: 24px;
+  height: 24px;
 }
 
 .topIconPhone::before {
-  content: "📞";
-  font-size: 23px;
-  line-height: 1;
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 3px;
+  width: 18px;
+  height: 16px;
+  border: 2px solid #fff;
+  border-radius: 4px 4px 0 0;
+}
+
+.topIconPhone::after {
+  content: "";
+  position: absolute;
+  bottom: 3px;
+  left: 8px;
+  width: 8px;
+  height: 8px;
+  background: #fff;
+  border-radius: 50%;
 }
 
 /* ==================== COMPOSER - ESTILO WHATSAPP ==================== */
