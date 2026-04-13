@@ -65,12 +65,12 @@ body{
   border-radius:3px;
 }
 
-/* ====================== TOP BAR - VERSÃO FINAL ALINHADA ====================== */
+/* ====================== TOP BAR - IDÊNTICA À SEGUNDA FOTO ====================== */
 .topbar{
   height: 64px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   padding: 0 8px 0 4px;
   background: rgba(14, 16, 20, 0.98);
   border-bottom: 1px solid var(--line);
@@ -101,10 +101,17 @@ body{
   margin-left: 4px;
 }
 
+.topbarCount{
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0.85;
+  min-width: 28px;
+}
+
 .avatarWrap{
   display: flex;
   align-items: center;
-  gap: 12px;
   flex: 1;
   min-width: 0;
 }
@@ -113,7 +120,6 @@ body{
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: #3a3d46;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0,0,0,.35);
   position: relative;
@@ -126,24 +132,9 @@ body{
   object-fit: cover;
 }
 
-.avatar::after{
-  content: "";
-  position: absolute;
-  bottom: 2px;
-  right: 2px;
-  width: 14px;
-  height: 14px;
-  background: #30d158;
-  border: 2.5px solid rgba(14,16,20,.98);
-  border-radius: 50%;
-}
-
 .titlebox{
-  display: flex;
-  flex-direction: column;
-  line-height: 1.15;
-  min-width: 0;
-  margin-left: 4px;
+  margin-left: 8px;
+  flex: 1;
 }
 
 .name{
@@ -159,10 +150,9 @@ body{
   font-size: 12.8px;
   color: #30d158;
   font-weight: 500;
-  margin-top: 1px;
 }
 
-/* Botões com imagens PNG - sem fundo + tamanho ajustado */
+/* Ícones PNG limpos */
 .topActions{
   display: flex;
   align-items: center;
@@ -186,13 +176,11 @@ body{
 .callBtn img{
   width: 28px;
   height: 28px;
-  filter: brightness(1.05);
-  /* Remove qualquer fundo que o PNG possa ter */
-  mix-blend-mode: normal;
+  filter: brightness(1.1);
 }
 
 .callBtn:active{
-  opacity: 0.65;
+  opacity: 0.6;
   transform: scale(0.92);
 }
 
