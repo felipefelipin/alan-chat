@@ -174,9 +174,19 @@ function bindKeyboardUX() {
   let isKeyboardOpen = false;
   let touchTimeout = null;
 
+  // Otimizado para abrir mais rápido
   input.addEventListener("focus", () => {
     document.body.classList.add("kb-open");
     isKeyboardOpen = true;
+
+    // Força layout rápido para reduzir delay no Telegram/iOS
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (state.chatEl) {
+          state.chatEl.style.paddingBottom = "0px"; // evita jump
+        }
+      });
+    });
   });
 
   input.addEventListener("blur", () => {
@@ -214,7 +224,7 @@ function bindKeyboardUX() {
       if (strongSwipeUp) {
         input.blur();
       }
-    }, 16);
+    }, 10);
   });
 }
 
@@ -581,7 +591,7 @@ function mountChat() {
         <div class="chat" id="chat"></div>
       </div>
 
-      <!-- COMPOSER ATUALIZADO - ESTILO WHATSAPP -->
+      <!-- COMPOSER OTIMIZADO -->
       <div class="composer">
         <button class="composerAttach" type="button" aria-hidden="true">
           <span class="composerPlusMark">+</span>
@@ -1161,7 +1171,7 @@ if (state.flags.entered) {
   mountPremiumIntro();
 }
 
-// VisualViewport - Apenas 1 listener limpo
+// VisualViewport otimizado para reduzir delay
 if (window.visualViewport) {
   let lastHeight = window.visualViewport.height;
 
