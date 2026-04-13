@@ -150,9 +150,9 @@ body{
 }
 
 .callBtn img {
-  width: 27px;
-  height: 27px;
-  filter: brightness(1.08);
+  width: 36px;
+  height: 36px;
+  filter: brightness(1.01);
   background: transparent !important;
 }
 
