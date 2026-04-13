@@ -162,15 +162,17 @@ body{
 }
 
 /* ÍCONES DE CHAMADA - EXATAMENTE COMO NO WHATSAPP (traços idênticos) */
-.topActions{
+/* ÍCONES DE CHAMADA - VERSÃO MAIS FIEL AO WHATSAPP (segunda foto) */
+
+.topActions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   margin-left: auto;
   padding-right: 8px;
 }
 
-.iconBtn{
+.iconBtn {
   border: 0;
   background: transparent;
   width: 44px;
@@ -182,10 +184,10 @@ body{
   opacity: 0.95;
 }
 
-/* Ícone de Vídeo - idêntico ao WhatsApp */
+/* ==================== ÍCONE DE VÍDEO (Câmera) ==================== */
 .topIconVideo {
   width: 28px;
-  height: 20px;
+  height: 21px;
   position: relative;
 }
 
@@ -195,7 +197,7 @@ body{
   left: 0;
   top: 2px;
   width: 24px;
-  height: 16px;
+  height: 17px;
   border: 2px solid #ffffff;
   border-radius: 4px;
 }
@@ -203,15 +205,15 @@ body{
 .topIconVideo::after {
   content: "";
   position: absolute;
-  left: 10px;
+  left: 9px;
   top: 6px;
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 9px;
   background: #ffffff;
   border-radius: 2px;
 }
 
-/* Ícone de Telefone - idêntico ao WhatsApp */
+/* ==================== ÍCONE DE TELEFONE (Voz) ==================== */
 .topIconPhone {
   width: 26px;
   height: 26px;
@@ -221,23 +223,26 @@ body{
 .topIconPhone::before {
   content: "";
   position: absolute;
-  left: 2px;
+  left: 3px;
   top: 5px;
   width: 20px;
-  height: 15px;
+  height: 16px;
   border: 2px solid #ffffff;
   border-radius: 5px 5px 2px 2px;
 }
 
+/* Parte inferior do telefone (fio/curva) */
 .topIconPhone::after {
   content: "";
   position: absolute;
   left: 8px;
   bottom: 4px;
   width: 10px;
-  height: 8px;
-  background: #ffffff;
-  border-radius: 50%;
+  height: 9px;
+  border: 2px solid #ffffff;
+  border-top: 0;
+  border-left: 0;
+  border-radius: 0 0 8px 8px;
 }
 
 /* ==================== COMPOSER - ESTILO WHATSAPP ==================== */
