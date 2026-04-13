@@ -65,7 +65,7 @@ body{
   border-radius:3px;
 }
 
-/* ====================== TOP BAR - VERSÃO COM IMAGENS ====================== */
+/* ====================== TOP BAR - ALINHADA COM IMAGENS PNG ====================== */
 .topbar{
   height: 64px;
   display: flex;
@@ -161,7 +161,7 @@ body{
   margin-top: 1px;
 }
 
-/* Botões com imagens - limpo e alinhado */
+/* Botões com imagens PNG - alinhados corretamente */
 .topActions{
   display: flex;
   align-items: center;
