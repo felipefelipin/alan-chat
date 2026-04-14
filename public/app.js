@@ -1175,33 +1175,33 @@ function openStoryReply() {
   if (video) video.pause();
 
   const replyHTML = `
-    <div id="storyReplyOverlay" style="position:absolute; inset:0; background:rgba(0,0,0,0.85); z-index:50; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+    <div id="storyReplyOverlay" style="position:absolute; inset:0; background:rgba(0,0,0,0.75); z-index:50; display:flex; flex-direction:column; justify-content:space-between; padding:40px 0 80px;">
 
       <!-- 4 Emojis de cima -->
-      <div style="display:flex; gap:24px; margin-bottom:60px;">
-        <span onclick="sendReaction('😍')" style="font-size:46px; cursor:pointer;">😍</span>
-        <span onclick="sendReaction('😂')" style="font-size:46px; cursor:pointer;">😂</span>
-        <span onclick="sendReaction('😮')" style="font-size:46px; cursor:pointer;">😮</span>
-        <span onclick="sendReaction('😢')" style="font-size:46px; cursor:pointer;">😢</span>
+      <div style="display:flex; gap:26px; justify-content:center;">
+        <span onclick="sendReaction('😍')" style="font-size:44px; cursor:pointer;">😍</span>
+        <span onclick="sendReaction('😂')" style="font-size:44px; cursor:pointer;">😂</span>
+        <span onclick="sendReaction('😮')" style="font-size:44px; cursor:pointer;">😮</span>
+        <span onclick="sendReaction('😢')" style="font-size:44px; cursor:pointer;">😢</span>
       </div>
 
-      <!-- Campo Responder -->
-      <div style="width:90%; max-width:380px; background:#1f2228; border-radius:30px; padding:12px 20px; margin-bottom:40px;">
+      <!-- Campo de texto no meio/baixo -->
+      <div style="padding:0 20px;">
         <input 
           id="storyReplyInput" 
           type="text" 
           placeholder="Responder..." 
           autofocus 
-          style="width:100%; background:transparent; border:none; color:#fff; font-size:16px; outline:none;"
+          style="width:100%; background:#2a2f38; border:none; border-radius:30px; padding:16px 20px; color:#fff; font-size:16px; outline:none;"
         >
       </div>
 
       <!-- 4 Emojis de baixo -->
-      <div style="display:flex; gap:24px;">
-        <span onclick="sendReaction('🙏')" style="font-size:46px; cursor:pointer;">🙏</span>
-        <span onclick="sendReaction('🎉')" style="font-size:46px; cursor:pointer;">🎉</span>
-        <span onclick="sendReaction('🔥')" style="font-size:46px; cursor:pointer;">🔥</span>
-        <span onclick="sendReaction('💯')" style="font-size:46px; cursor:pointer;">💯</span>
+      <div style="display:flex; gap:26px; justify-content:center;">
+        <span onclick="sendReaction('🙏')" style="font-size:44px; cursor:pointer;">🙏</span>
+        <span onclick="sendReaction('🎉')" style="font-size:44px; cursor:pointer;">🎉</span>
+        <span onclick="sendReaction('🔥')" style="font-size:44px; cursor:pointer;">🔥</span>
+        <span onclick="sendReaction('💯')" style="font-size:44px; cursor:pointer;">💯</span>
       </div>
 
       <!-- Botão fechar -->
