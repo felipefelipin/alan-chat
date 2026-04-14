@@ -143,6 +143,9 @@ body{
 .callBtn img {
   width: 27px;
   height: 27px;
+  filter: brightness(1.2) contrast(1.1) invert(1);
+  background: transparent !important;
+  mix-blend-mode: normal;
 }
 
 /* ==================== COMPOSER - ESTILO WHATSAPP ==================== */
