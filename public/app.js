@@ -551,13 +551,14 @@ function mountChat() {
         </span>
       </div>
 
-      <!-- TOP BAR - VERSÃO ESTÁVEL (igual ao que estava antes) -->
+      <!-- TOP BAR - VERSÃO ORIGINAL E ESTÁVEL -->
       <div class="topbar">
         <button class="navBtn" onclick="mountChat()" type="button" aria-label="Voltar">
           <span class="navChevron"></span>
         </button>
 
         <div class="avatarWrap">
+          <!-- FOTO DO PERFIL CLICÁVEL PARA STORIES -->
           <div class="avatar" onclick="showStories()" style="cursor: pointer;">
             <img src="${ASSETS.avatar}?v=1" alt="${CONTACT.title}" />
           </div>
@@ -606,16 +607,12 @@ function mountChat() {
     </div>
   `;
 
-  // Configurações básicas do chat
   const sendBtn = document.getElementById("send");
   const input = document.getElementById("input");
   const micBtn = document.getElementById("composerMic");
 
   sendBtn.onclick = onSend;
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") onSend();
-  });
-
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter") onSend(); });
   input.addEventListener("input", () => {
     const hasText = !!input.value.trim();
     sendBtn.classList.toggle("is-hidden", !hasText);
@@ -623,12 +620,10 @@ function mountChat() {
   });
 
   state.chatEl = document.getElementById("chat");
-
   restoreHistory();
   bindKeyboardUX();
   handleScrollDetection();
 
-  // Atualiza hora a cada 30 segundos
   setInterval(() => {
     const t = document.getElementById("sbTime");
     if (t) t.textContent = nowTime();
@@ -1174,7 +1169,7 @@ function showIncomingCall() {
   );
   
 function showStories() {
-  console.log("📸 Abrindo Stories...");
+  console.log("📸 SHOWSTORIES FOI CHAMADO!"); // ← isso vai aparecer no console
 
   app.innerHTML = `
     <div class="full" style="background:#000; position:relative; overflow:hidden; height:100vh;">
@@ -1196,13 +1191,7 @@ function showStories() {
       </div>
 
       <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#000;">
-        <video 
-          src="/assets/story-video.mp4" 
-          autoplay 
-          loop 
-          playsinline 
-          style="max-width:100%; max-height:100%; object-fit:contain;"
-        ></video>
+        <video src="/assets/story-video.mp4" autoplay loop playsinline style="max-width:100%; max-height:100%; object-fit:contain;"></video>
       </div>
 
       <div style="position:absolute; bottom:0; left:0; right:0; padding:20px 16px; background:linear-gradient(to top, rgba(0,0,0,0.85), transparent); z-index:20;">
@@ -1219,9 +1208,7 @@ function showStories() {
     if (progress) progress.style.width = "100%";
   }, 100);
 
-  setTimeout(() => {
-    mountChat();
-  }, 8000);
+  setTimeout(() => mountChat(), 8000);
 }
 
   document.getElementById("decline").onclick = () => endCall(false);
