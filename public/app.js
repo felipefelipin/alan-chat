@@ -558,26 +558,25 @@ function mountChat() {
 
         <div class="avatarWrap">
           <div class="avatar">
-            <img
-              src="${ASSETS.avatar}?v=1"
-              alt="${CONTACT.title}"
-            />
+            <img src="${ASSETS.avatar}?v=1" alt="${CONTACT.title}" />
           </div>
         </div>
 
-       <div class="titlebox">
-  <div class="name">${CONTACT.title}</div>
-  <div class="status" id="status">${CONTACT.subtitle}</div>
-</div>
+        <div class="titlebox">
+          <div class="name">${CONTACT.title}</div>
+          <div class="status" id="status">${CONTACT.subtitle}</div>
+        </div>
 
-      <div class="topActions">
-  <button class="callBtn video-call-btn" type="button">
-    <img src="/assets/video-call-icon.svg" alt="Vídeo" />
-  </button>
-  <button class="callBtn voice-call-btn" type="button">
-    <img src="/assets/voice-call-icon.svg" alt="Ligação" />
-  </button>
-</div>
+        <div class="topActions">
+          <button class="callBtn video-call-btn" type="button">
+            <img src="/assets/video-call-icon.svg" alt="Vídeo" />
+          </button>
+          <button class="callBtn voice-call-btn" type="button">
+            <img src="/assets/voice-call-icon.svg" alt="Ligação" />
+          </button>
+        </div>
+      </div>
+
       <div class="chatShell">
         <div class="chat" id="chat"></div>
       </div>
