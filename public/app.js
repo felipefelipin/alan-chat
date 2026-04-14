@@ -558,10 +558,12 @@ function mountChat() {
 
 <div class="avatarWrap">
   <div class="avatar">
-    <img 
-      src="${ASSETS.avatar}?v=${Date.now()}" 
-      alt="${CONTACT.title}"
-    />
+    <img src="${ASSETS.avatar}?v=1" alt="${CONTACT.title}" />
+  </div>
+
+  <div class="titlebox">
+    <div class="name">${CONTACT.title}</div>
+    <div class="status" id="status">${CONTACT.subtitle}</div>
   </div>
 </div>
 

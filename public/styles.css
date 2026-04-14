@@ -90,7 +90,7 @@ body{
   padding: 0;
 }
 
-/* AVATAR - QUALIDADE EXCELENTE E CENTRALIZADO */
+/* AVATAR + NOME - POSIÇÃO CORRETA */
 .avatarWrap {
   display: flex;
   align-items: center;
@@ -104,49 +104,42 @@ body{
   height: 42px;
   border-radius: 50%;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 12px rgba(0,0,0,.35);
   position: relative;
   flex-shrink: 0;
-  background: #1f2228;
 }
 
 .avatar img {
   width: 100%;
   height: 100%;
-  object-fit: cover;           /* mantém proporção e qualidade */
-  object-position: center;
-  image-rendering: -webkit-optimize-contrast;   /* melhora qualidade */
+  object-fit: cover;
 }
 
-/* Bolinha verde de online */
+/* Remove a bolinha verde dentro da foto */
 .avatar::after {
-  content: "";
-  position: absolute;
-  bottom: 1px;
-  right: 1px;
-  width: 14px;
-  height: 14px;
-  background: #30d158;
-  border: 2.5px solid rgba(14, 16, 20, 0.98);
-  border-radius: 50%;
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.3);
+  display: none;
 }
 
-.titlebox{
+.titlebox {
   display: flex;
   flex-direction: column;
-  margin-left: 6px;
+  margin-left: 8px;
+  line-height: 1.15;
 }
 
-.name{
+.name {
   font-weight: 600;
   font-size: 16.5px;
   color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.status{
+.status {
   font-size: 12.8px;
   color: #30d158;
+  font-weight: 500;
   margin-top: 1px;
 }
 
