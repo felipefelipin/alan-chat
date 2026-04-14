@@ -1170,29 +1170,24 @@ function showStories() {
   };
 }
 
-// Abrir responder com emojis no estilo da segunda foto
 function openStoryReply() {
   const video = document.getElementById("storyVideo");
   if (video) video.pause();
 
   const replyHTML = `
     <div id="storyReplyOverlay" style="position:absolute; bottom:0; left:0; right:0; background:#1f2228; z-index:50; padding-bottom: env(safe-area-inset-bottom);">
-      
-      <!-- Emojis (exatamente como na segunda foto) -->
-      <div style="display:flex; gap:12px; padding:12px 16px; background:#1f2228; overflow-x:auto; border-bottom:1px solid rgba(255,255,255,0.08);">
-        <span onclick="sendReaction('😍')" style="font-size:32px; cursor:pointer;">😍</span>
-        <span onclick="sendReaction('😂')" style="font-size:32px; cursor:pointer;">😂</span>
-        <span onclick="sendReaction('😮')" style="font-size:32px; cursor:pointer;">😮</span>
-        <span onclick="sendReaction('😢')" style="font-size:32px; cursor:pointer;">😢</span>
-        <span onclick="sendReaction('🙏')" style="font-size:32px; cursor:pointer;">🙏</span>
-        <span onclick="sendReaction('🎉')" style="font-size:32px; cursor:pointer;">🎉</span>
-        <span onclick="sendReaction('🔥')" style="font-size:32px; cursor:pointer;">🔥</span>
-        <span onclick="sendReaction('💯')" style="font-size:32px; cursor:pointer;">💯</span>
+
+      <!-- Primeira linha de emojis (acima do campo) -->
+      <div style="display:flex; gap:16px; padding:12px 16px 8px; background:#1f2228; overflow-x:auto; justify-content:center;">
+        <span onclick="sendReaction('😍')" style="font-size:34px; cursor:pointer;">😍</span>
+        <span onclick="sendReaction('😂')" style="font-size:34px; cursor:pointer;">😂</span>
+        <span onclick="sendReaction('😮')" style="font-size:34px; cursor:pointer;">😮</span>
+        <span onclick="sendReaction('😢')" style="font-size:34px; cursor:pointer;">😢</span>
       </div>
 
-      <!-- Campo de texto com sugestões -->
+      <!-- Campo de texto + sugestões -->
       <div style="padding:8px 16px; background:#1f2228;">
-        <div style="display:flex; gap:8px; margin-bottom:8px;">
+        <div style="display:flex; gap:8px; margin-bottom:10px;">
           <div onclick="quickReply(this)" style="background:#2a2f38; padding:8px 16px; border-radius:20px; color:#fff; font-size:14px; cursor:pointer;">Eu</div>
           <div onclick="quickReply(this)" style="background:#2a2f38; padding:8px 16px; border-radius:20px; color:#fff; font-size:14px; cursor:pointer;">Não</div>
           <div onclick="quickReply(this)" style="background:#2a2f38; padding:8px 16px; border-radius:20px; color:#fff; font-size:14px; cursor:pointer;">O</div>
@@ -1200,9 +1195,23 @@ function openStoryReply() {
 
         <div style="display:flex; align-items:center; gap:10px;">
           <button onclick="closeStoryReply()" style="background:none; border:0; color:#aaa; font-size:26px;">←</button>
-          <input id="storyReplyInput" type="text" placeholder="Responder..." autofocus style="flex:1; background:#2a2f38; border:none; border-radius:30px; padding:14px 18px; color:#fff; font-size:16px;">
+          <input 
+            id="storyReplyInput" 
+            type="text" 
+            placeholder="Responder..." 
+            autofocus 
+            style="flex:1; background:#2a2f38; border:none; border-radius:30px; padding:14px 18px; color:#fff; font-size:16px;"
+          >
           <button onclick="sendStoryReply()" style="background:#00d15a; color:#000; border:none; border-radius:50%; width:44px; height:44px; font-size:20px;">↑</button>
         </div>
+      </div>
+
+      <!-- Segunda linha de emojis (abaixo do campo) -->
+      <div style="display:flex; gap:16px; padding:8px 16px; background:#1f2228; overflow-x:auto; justify-content:center; border-top:1px solid rgba(255,255,255,0.08);">
+        <span onclick="sendReaction('🙏')" style="font-size:34px; cursor:pointer;">🙏</span>
+        <span onclick="sendReaction('🎉')" style="font-size:34px; cursor:pointer;">🎉</span>
+        <span onclick="sendReaction('🔥')" style="font-size:34px; cursor:pointer;">🔥</span>
+        <span onclick="sendReaction('💯')" style="font-size:34px; cursor:pointer;">💯</span>
       </div>
     </div>
   `;
