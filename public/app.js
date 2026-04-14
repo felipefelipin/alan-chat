@@ -1166,7 +1166,7 @@ function showContactProfile() {
 }
 
 function showStories() {
-  console.log("📸 Stories aberto - carregando com qualidade máxima");
+  console.log("📸 Stories aberto - modo qualidade máxima");
 
   app.innerHTML = `
     <div class="full" style="background:#000; position:relative; overflow:hidden; height:100vh;">
@@ -1175,12 +1175,13 @@ function showStories() {
         <div id="progressBar" style="height:100%; width:0%; background:#fff; transition:width linear;"></div>
       </div>
 
-      <!-- Cabeçalho -->
+      <!-- Cabeçalho - Foto SEM círculo verde -->
       <div style="position:absolute; top:20px; left:16px; right:16px; display:flex; align-items:center; z-index:20;">
         <button onclick="mountChat()" style="background:none; border:0; color:#fff; font-size:28px; margin-right:12px;">←</button>
         
-        <div class="avatar" style="width:36px; height:36px; margin-right:10px; border:2px solid #30d158;">
-          <img src="${ASSETS.avatar}?v=1" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />
+        <!-- Foto limpa sem círculo -->
+        <div style="width:36px; height:36px; margin-right:10px; border-radius:50%; overflow:hidden; flex-shrink:0;">
+          <img src="${ASSETS.avatar}?v=1" style="width:100%; height:100%; object-fit:cover;" />
         </div>
         
         <div>
@@ -1189,7 +1190,7 @@ function showStories() {
         </div>
       </div>
 
-      <!-- Vídeo com qualidade máxima e sem delay -->
+      <!-- Vídeo com qualidade máxima e carregamento agressivo -->
       <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#000;">
         <video 
           id="storyVideo"
@@ -1199,7 +1200,7 @@ function showStories() {
           playsinline 
           webkit-playsinline
           preload="auto"
-          style="max-width:100%; max-height:100%; object-fit:contain;"
+          style="max-width:100%; max-height:100%; object-fit:contain; image-rendering: -webkit-optimize-contrast;"
         ></video>
       </div>
 
@@ -1215,12 +1216,10 @@ function showStories() {
 
   const video = document.getElementById("storyVideo");
 
-  // Quando o vídeo carregar a duração real
   video.onloadedmetadata = function() {
-    const duration = video.duration; // duração real em segundos
-    console.log(`🎥 Vídeo carregado - duração real: ${duration.toFixed(1)}s`);
+    const duration = video.duration || 8; // fallback caso não carregue
+    console.log(`🎥 Vídeo carregado - duração: ${duration.toFixed(1)}s`);
 
-    // Barra de progresso com duração exata
     const progressBar = document.getElementById("progressBar");
     if (progressBar) {
       progressBar.style.transitionDuration = duration + "s";
@@ -1233,10 +1232,9 @@ function showStories() {
     };
   };
 
-  // Caso o vídeo não carregue (fallback)
   video.onerror = function() {
-    console.error("Erro ao carregar vídeo");
-    setTimeout(() => mountChat(), 3000);
+    console.error("Erro ao carregar vídeo dos stories");
+    setTimeout(() => mountChat(), 2000);
   };
 }
 
