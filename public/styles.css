@@ -65,7 +65,7 @@ body{
   border-radius:3px;
 }
 
-/* TOP BAR - APENAS POSIÇÃO DO NOME E ÍCONES SEM FUNDO */
+/* TOP BAR - MANTENDO EXATAMENTE O VISUAL ANTERIOR */
 .topbar{
   height: 64px;
   display: flex;
@@ -90,23 +90,24 @@ body{
   padding: 0;
 }
 
-/* AVATAR COM CÍRCULO VERDE MUITO FINO - VERSÃO FINAL */
+/* AVATAR WRAP + CÍRCULO VERDE FINO (com ::before) */
 .avatarWrap {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex: 1;
-  min-width: 0;
+  flex-shrink: 0;
+  margin-right: 8px;
 }
 
 .avatar {
   width: 46px;
   height: 46px;
-  padding: 1.8px;                  /* círculo verde bem mais fino */
+  padding: 1.8px;                  
   background: #30d158;
   border-radius: 50%;
   position: relative;
   flex-shrink: 0;
+  cursor: pointer;
 }
 
 /* Camada preta externa - visível e delicada */
@@ -127,52 +128,50 @@ body{
   background: #0a0b0d;
 }
 
+/* NOME + ONLINE AGORA (do lado da foto) */
 .titlebox {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  line-height: 1.15;
+  justify-content: center;
 }
 
 .name {
   font-weight: 600;
-  font-size: 16.5px;
+  font-size: 16px;
   color: #fff;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .status {
-  font-size: 12.8px;
+  font-size: 13px;
   color: #30d158;
-  font-weight: 500;
   margin-top: 1px;
 }
 
-/* ÍCONES DE CHAMADA - SEM FUNDO BRANCO (versão limpa) */
+/* ÍCONES DE CHAMADA À DIREITA */
 .topActions {
+  margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-left: auto;
-  padding-right: 8px;
+  gap: 18px;
+  flex-shrink: 0;
 }
 
 .callBtn {
-  border: 0;
-  background: transparent;
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  opacity: 0.95;
+  background: none;
+  border: none;
+  padding: 6px;
 }
 
 .callBtn img {
-  width: 27px;
-  height: 27px;
-  filter: brightness(1.15);           /* mantém branco puro */
-  background: transparent !important;
-  mix-blend-mode: normal;
+  width: 26px;
+  height: 26px;
+  filter: brightness(1.1);
 }
 
 /* ==================== COMPOSER - ESTILO WHATSAPP ==================== */
