@@ -552,7 +552,10 @@ function mountChat() {
       </div>
 
       <div class="topbar">
-        <!-- Foto + Nome + Status juntos (posição original) -->
+        <!-- Espaço vazio onde ficava a seta (para manter o alinhamento perfeito) -->
+        <div style="width:40px;"></div>
+
+        <!-- Foto + Nome + Status -->
         <div class="avatarWrap">
           <div class="avatar" onclick="showContactProfile()" style="cursor: pointer;">
             <img 
