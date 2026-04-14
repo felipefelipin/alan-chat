@@ -552,7 +552,7 @@ function mountChat() {
       </div>
 
       <div class="topbar">
-        <!-- Avatar + Nome + Status juntos (sem seta extra) -->
+        <!-- Foto + Nome + Status juntos (posição original) -->
         <div class="avatarWrap">
           <div class="avatar" onclick="showContactProfile()" style="cursor: pointer;">
             <img 
