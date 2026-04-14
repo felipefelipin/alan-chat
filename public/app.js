@@ -1166,14 +1166,16 @@ function showContactProfile() {
 }
 
 function showStories() {
-  console.log("📸 SHOWSTORIES FOI CHAMADO!");
+  console.log("📸 Stories aberto - carregando com qualidade máxima");
 
   app.innerHTML = `
     <div class="full" style="background:#000; position:relative; overflow:hidden; height:100vh;">
+      <!-- Barra de progresso -->
       <div style="position:absolute; top:0; left:0; right:0; height:3px; background:rgba(255,255,255,0.25); z-index:20;">
-        <div id="progressBar" style="height:100%; width:0%; background:#fff; transition:width 8s linear;"></div>
+        <div id="progressBar" style="height:100%; width:0%; background:#fff; transition:width linear;"></div>
       </div>
 
+      <!-- Cabeçalho -->
       <div style="position:absolute; top:20px; left:16px; right:16px; display:flex; align-items:center; z-index:20;">
         <button onclick="mountChat()" style="background:none; border:0; color:#fff; font-size:28px; margin-right:12px;">←</button>
         
@@ -1187,10 +1189,21 @@ function showStories() {
         </div>
       </div>
 
+      <!-- Vídeo com qualidade máxima e sem delay -->
       <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#000;">
-        <video src="/assets/story-video.mp4" autoplay loop playsinline style="max-width:100%; max-height:100%; object-fit:contain;"></video>
+        <video 
+          id="storyVideo"
+          src="/assets/story-video.mp4" 
+          autoplay 
+          muted 
+          playsinline 
+          webkit-playsinline
+          preload="auto"
+          style="max-width:100%; max-height:100%; object-fit:contain;"
+        ></video>
       </div>
 
+      <!-- Barra inferior -->
       <div style="position:absolute; bottom:0; left:0; right:0; padding:20px 16px; background:linear-gradient(to top, rgba(0,0,0,0.85), transparent); z-index:20;">
         <div style="background:rgba(255,255,255,0.12); border-radius:30px; padding:12px 20px; color:#fff; display:flex; align-items:center;">
           <span style="flex:1; font-size:15px;">Responder...</span>
@@ -1200,12 +1213,31 @@ function showStories() {
     </div>
   `;
 
-  setTimeout(() => {
-    const progress = document.getElementById("progressBar");
-    if (progress) progress.style.width = "100%";
-  }, 100);
+  const video = document.getElementById("storyVideo");
 
-  setTimeout(() => mountChat(), 8000);
+  // Quando o vídeo carregar a duração real
+  video.onloadedmetadata = function() {
+    const duration = video.duration; // duração real em segundos
+    console.log(`🎥 Vídeo carregado - duração real: ${duration.toFixed(1)}s`);
+
+    // Barra de progresso com duração exata
+    const progressBar = document.getElementById("progressBar");
+    if (progressBar) {
+      progressBar.style.transitionDuration = duration + "s";
+      progressBar.style.width = "100%";
+    }
+
+    // Volta automaticamente quando o vídeo terminar
+    video.onended = function() {
+      mountChat();
+    };
+  };
+
+  // Caso o vídeo não carregue (fallback)
+  video.onerror = function() {
+    console.error("Erro ao carregar vídeo");
+    setTimeout(() => mountChat(), 3000);
+  };
 }
 
 async function endCall(wasAnswered) {
