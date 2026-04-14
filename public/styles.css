@@ -132,6 +132,7 @@ body{
   margin-top: 1px;
 }
 
+/* ÍCONES DE CHAMADA - SEM FUNDO BRANCO (versão limpa) */
 .topActions {
   display: flex;
   align-items: center;
@@ -140,10 +141,22 @@ body{
   padding-right: 8px;
 }
 
+.callBtn {
+  border: 0;
+  background: transparent;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  opacity: 0.95;
+}
+
 .callBtn img {
   width: 27px;
   height: 27px;
-  filter: brightness(1.2) contrast(1.1) invert(1);
+  filter: brightness(1.15);           /* mantém branco puro */
   background: transparent !important;
   mix-blend-mode: normal;
 }
