@@ -551,24 +551,26 @@ function mountChat() {
         </span>
       </div>
 
-      <!-- TOP BAR - VERSÃO ORIGINAL E ESTÁVEL -->
+      <!-- TOP BAR - VERSÃO CORRIGIDA E ESTÁVEL -->
       <div class="topbar">
         <button class="navBtn" onclick="mountChat()" type="button" aria-label="Voltar">
           <span class="navChevron"></span>
         </button>
 
+        <!-- Foto do perfil clicável para Stories -->
         <div class="avatarWrap">
-          <!-- FOTO DO PERFIL CLICÁVEL PARA STORIES -->
           <div class="avatar" onclick="showStories()" style="cursor: pointer;">
             <img src="${ASSETS.avatar}?v=1" alt="${CONTACT.title}" />
           </div>
         </div>
 
+        <!-- Nome + Online Agora (do lado da foto) -->
         <div class="titlebox">
           <div class="name">${CONTACT.title}</div>
           <div class="status" id="status">${CONTACT.subtitle}</div>
         </div>
 
+        <!-- Ícones de chamada à direita -->
         <div class="topActions">
           <button class="callBtn video-call-btn" type="button" aria-label="Chamada de vídeo">
             <img src="/assets/video-call-icon.svg" alt="Vídeo" />
@@ -607,12 +609,16 @@ function mountChat() {
     </div>
   `;
 
+  // Configurações do chat
   const sendBtn = document.getElementById("send");
   const input = document.getElementById("input");
   const micBtn = document.getElementById("composerMic");
 
   sendBtn.onclick = onSend;
-  input.addEventListener("keydown", (e) => { if (e.key === "Enter") onSend(); });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") onSend();
+  });
+
   input.addEventListener("input", () => {
     const hasText = !!input.value.trim();
     sendBtn.classList.toggle("is-hidden", !hasText);
@@ -1169,7 +1175,7 @@ function showIncomingCall() {
   );
   
 function showStories() {
-  console.log("📸 SHOWSTORIES FOI CHAMADO!"); // ← isso vai aparecer no console
+  console.log("📸 SHOWSTORIES FOI CHAMADO!");
 
   app.innerHTML = `
     <div class="full" style="background:#000; position:relative; overflow:hidden; height:100vh;">
@@ -1209,10 +1215,9 @@ function showStories() {
   }, 100);
 
   setTimeout(() => mountChat(), 8000);
+  
 }
 
-  document.getElementById("decline").onclick = () => endCall(false);
-  document.getElementById("accept").onclick = () => endCall(true);
 }
 
 async function endCall(wasAnswered) {
