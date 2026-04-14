@@ -94,9 +94,9 @@ body{
 .avatarWrap {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;           /* reduzido */
   flex-shrink: 0;
-  margin-right: 8px;
+  margin-right: 6px;   /* reduzido */
 }
 
 .avatar {
@@ -135,6 +135,7 @@ body{
   display: flex;
   flex-direction: column;
   justify-content: center;
+  margin-left: 2px;    /* ajuda a aproximar ainda mais */
 }
 
 .name {
