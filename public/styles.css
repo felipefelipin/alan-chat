@@ -65,12 +65,12 @@ body{
   border-radius:3px;
 }
 
-/* TOP BAR - NOME BEM COLADO NA FOTO (igual WhatsApp) */
-.topbar {
+/* TOP BAR - MANTENDO EXATAMENTE O VISUAL ANTERIOR */
+.topbar{
   height: 64px;
   display: flex;
   align-items: center;
-  gap: 8px;                    /* espaço geral pequeno */
+  gap: 12px;
   padding: 0 8px 0 4px;
   background: rgba(14, 16, 20, 0.98);
   border-bottom: 1px solid var(--line);
@@ -78,18 +78,31 @@ body{
   z-index: 4;
 }
 
+.navBtn{
+  border: 0;
+  background: transparent;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  padding: 0;
+}
+
+/* AVATAR WRAP + CÍRCULO VERDE FINO (com ::before) */
 .avatarWrap {
   display: flex;
   align-items: center;
-  gap: 8px;                    /* reduzido */
+  gap: 4px;           /* bem colado */
   flex-shrink: 0;
-  margin-right: 4px;           /* bem pequeno */
+  margin-right: 2px;
 }
 
 .avatar {
-  width: 42px;                 /* avatar um pouco menor para ficar mais natural */
-  height: 42px;
-  padding: 1.8px;
+  width: 46px;
+  height: 46px;
+  padding: 1.8px;                  
   background: #30d158;
   border-radius: 50%;
   position: relative;
@@ -97,6 +110,7 @@ body{
   cursor: pointer;
 }
 
+/* Camada preta externa - visível e delicada */
 .avatar::before {
   content: "";
   position: absolute;
@@ -114,21 +128,24 @@ body{
   background: #0a0b0d;
 }
 
-/* Nome e status bem próximos da foto */
+/* NOME + ONLINE AGORA (do lado da foto) */
 .titlebox {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  margin-left: 2px;            /* bem colado */
+  margin-left: 0px;   /* colado ao máximo */
 }
 
 .name {
   font-weight: 600;
-  font-size: 16.5px;
+  font-size: 16px;
   color: #fff;
-  line-height: 1.05;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .status {
@@ -137,18 +154,25 @@ body{
   margin-top: 1px;
 }
 
-/* Ícones de chamada à direita */
+/* ÍCONES DE CHAMADA À DIREITA */
 .topActions {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 18px;
   flex-shrink: 0;
+}
+
+.callBtn {
+  background: none;
+  border: none;
+  padding: 6px;
 }
 
 .callBtn img {
   width: 26px;
   height: 26px;
+  filter: brightness(1.1);
 }
 
 /* ==================== COMPOSER - ESTILO WHATSAPP ==================== */
