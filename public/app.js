@@ -1175,7 +1175,7 @@ function showStories() {
         <div id="progressBar" style="height:100%; width:0%; background:#fff; transition:width linear;"></div>
       </div>
 
-      <!-- Cabeçalho - Foto sem círculo -->
+      <!-- Cabeçalho -->
       <div style="position:absolute; top:20px; left:16px; right:16px; display:flex; align-items:center; z-index:30;">
         <button onclick="mountChat()" style="background:none; border:0; color:#fff; font-size:28px; margin-right:12px;">←</button>
         
@@ -1189,8 +1189,8 @@ function showStories() {
         </div>
       </div>
 
-      <!-- Vídeo -->
-      <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#000; z-index:10;">
+      <!-- Vídeo (não alterar nada aqui) -->
+      <div id="storyContainer" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#000; z-index:10;">
         <video 
           id="storyVideo"
           src="/assets/story-video.mp4" 
@@ -1203,7 +1203,7 @@ function showStories() {
         ></video>
       </div>
 
-      <!-- Responder - Barra inferior funcional -->
+      <!-- Barra Responder -->
       <div id="replyBar" style="position:absolute; bottom:0; left:0; right:0; padding:12px 16px 20px; background:linear-gradient(to top, rgba(0,0,0,0.95), transparent); z-index:40;">
         <div onclick="openStoryReply()" style="background:rgba(255,255,255,0.15); border-radius:30px; padding:14px 20px; color:#fff; display:flex; align-items:center; cursor:pointer;">
           <span style="flex:1; font-size:15px;">Responder...</span>
@@ -1217,60 +1217,97 @@ function showStories() {
 
   video.onloadedmetadata = function() {
     const duration = video.duration || 10;
-    const progressBar = document.getElementById("progressBar");
-    if (progressBar) {
-      progressBar.style.transitionDuration = duration + "s";
-      progressBar.style.width = "100%";
+    const progress = document.getElementById("progressBar");
+    if (progress) {
+      progress.style.transitionDuration = duration + "s";
+      progress.style.width = "100%";
     }
-
     video.onended = () => mountChat();
   };
 }
 
-// Função para abrir o responder (teclado + campo de texto)
+// ==================== ABRIR RESPONDER (TECLADO + EMOJIS) ====================
 function openStoryReply() {
+  const video = document.getElementById("storyVideo");
+  if (video) video.pause();   // pausa o vídeo
+
   const replyHTML = `
-    <div style="position:absolute; bottom:0; left:0; right:0; background:#1f2228; padding:12px 16px; z-index:50; border-top:1px solid rgba(255,255,255,0.1);">
-      <div style="display:flex; align-items:center; gap:12px;">
-        <button onclick="closeStoryReply()" style="background:none; border:0; color:#fff; font-size:24px;">←</button>
+    <div id="storyReplyOverlay" style="position:absolute; bottom:0; left:0; right:0; background:#1f2228; z-index:50; padding-bottom: env(safe-area-inset-bottom);">
+      
+      <!-- Sugestões rápidas (Eu, Não, O) -->
+      <div style="display:flex; gap:8px; padding:12px 16px; overflow-x:auto; background:#1f2228;">
+        <div onclick="quickReply(this)" style="background:#2a2f38; padding:8px 18px; border-radius:20px; color:#fff; white-space:nowrap; font-size:14px; cursor:pointer;">Eu</div>
+        <div onclick="quickReply(this)" style="background:#2a2f38; padding:8px 18px; border-radius:20px; color:#fff; white-space:nowrap; font-size:14px; cursor:pointer;">Não</div>
+        <div onclick="quickReply(this)" style="background:#2a2f38; padding:8px 18px; border-radius:20px; color:#fff; white-space:nowrap; font-size:14px; cursor:pointer;">O</div>
+      </div>
+
+      <!-- Campo de texto -->
+      <div style="display:flex; align-items:center; gap:10px; padding:8px 16px; background:#1f2228;">
+        <button onclick="closeStoryReply()" style="background:none; border:0; color:#aaa; font-size:26px;">←</button>
+        
         <input 
           id="storyReplyInput" 
           type="text" 
           placeholder="Responder..." 
           autofocus 
-          style="flex:1; background:#2a2f38; border:none; border-radius:30px; padding:14px 20px; color:#fff; font-size:16px; outline:none;"
+          style="flex:1; background:#2a2f38; border:none; border-radius:30px; padding:14px 18px; color:#fff; font-size:16px; outline:none;"
         >
+        
         <button onclick="sendStoryReply()" style="background:#00d15a; color:#000; border:none; border-radius:50%; width:44px; height:44px; font-size:20px;">↑</button>
+      </div>
+
+      <!-- Emojis (como na foto) -->
+      <div style="display:flex; gap:12px; padding:12px 16px; background:#1f2228; overflow-x:auto;">
+        <span onclick="insertEmoji(this)" style="font-size:30px; cursor:pointer;">😍</span>
+        <span onclick="insertEmoji(this)" style="font-size:30px; cursor:pointer;">😂</span>
+        <span onclick="insertEmoji(this)" style="font-size:30px; cursor:pointer;">😮</span>
+        <span onclick="insertEmoji(this)" style="font-size:30px; cursor:pointer;">😢</span>
+        <span onclick="insertEmoji(this)" style="font-size:30px; cursor:pointer;">🙏</span>
+        <span onclick="insertEmoji(this)" style="font-size:30px; cursor:pointer;">🎉</span>
+        <span onclick="insertEmoji(this)" style="font-size:30px; cursor:pointer;">🔥</span>
+        <span onclick="insertEmoji(this)" style="font-size:30px; cursor:pointer;">💯</span>
       </div>
     </div>
   `;
 
-  // Adiciona a barra de resposta por cima
-  const replyContainer = document.createElement("div");
-  replyContainer.innerHTML = replyHTML;
-  document.body.appendChild(replyContainer.firstElementChild);
+  const overlay = document.createElement("div");
+  overlay.innerHTML = replyHTML;
+  document.body.appendChild(overlay.firstElementChild);
 
   // Foca no input para abrir o teclado
   setTimeout(() => {
     const input = document.getElementById("storyReplyInput");
     if (input) input.focus();
-  }, 100);
+  }, 80);
 }
 
-// Fechar o responder
 function closeStoryReply() {
-  const replyBar = document.querySelector("#replyBar ~ div[style*='background:#1f2228']");
-  if (replyBar) replyBar.remove();
+  const overlay = document.getElementById("storyReplyOverlay");
+  if (overlay) overlay.remove();
+
+  const video = document.getElementById("storyVideo");
+  if (video) video.play();   // volta o vídeo
 }
 
-// Enviar resposta (por enquanto só fecha e volta)
+function quickReply(el) {
+  const input = document.getElementById("storyReplyInput");
+  if (input) input.value = el.textContent;
+}
+
+function insertEmoji(el) {
+  const input = document.getElementById("storyReplyInput");
+  if (input) {
+    input.value += el.textContent;
+    input.focus();
+  }
+}
+
 function sendStoryReply() {
   const input = document.getElementById("storyReplyInput");
   if (input && input.value.trim()) {
     console.log("Resposta enviada:", input.value.trim());
   }
   closeStoryReply();
-  // Aqui você pode adicionar lógica futura para salvar a resposta
 }
 
 async function endCall(wasAnswered) {
