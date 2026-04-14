@@ -1175,18 +1175,29 @@ function openStoryReply() {
   if (video) video.pause();
 
   const replyHTML = `
-    <div id="storyReplyOverlay" style="position:absolute; inset:0; background:rgba(0,0,0,0.75); z-index:50; display:flex; flex-direction:column; justify-content:space-between; padding:40px 0 80px;">
+    <div id="storyReplyOverlay" style="position:absolute; inset:0; background:rgba(0,0,0,0.75); z-index:50; display:flex; flex-direction:column; justify-content:space-between; padding:40px 0 100px 0;">
 
       <!-- 4 Emojis de cima -->
-      <div style="display:flex; gap:26px; justify-content:center;">
-        <span onclick="sendReaction('😍')" style="font-size:44px; cursor:pointer;">😍</span>
-        <span onclick="sendReaction('😂')" style="font-size:44px; cursor:pointer;">😂</span>
-        <span onclick="sendReaction('😮')" style="font-size:44px; cursor:pointer;">😮</span>
-        <span onclick="sendReaction('😢')" style="font-size:44px; cursor:pointer;">😢</span>
+      <div style="display:flex; gap:26px; justify-content:center; margin-top:40px;">
+        <span onclick="sendReaction('😍')" style="font-size:46px; cursor:pointer;">😍</span>
+        <span onclick="sendReaction('😂')" style="font-size:46px; cursor:pointer;">😂</span>
+        <span onclick="sendReaction('😮')" style="font-size:46px; cursor:pointer;">😮</span>
+        <span onclick="sendReaction('😢')" style="font-size:46px; cursor:pointer;">😢</span>
       </div>
 
-      <!-- Campo de texto no meio/baixo -->
-      <div style="padding:0 20px;">
+      <!-- Espaço vazio no meio (nada aqui) -->
+      <div style="flex:1;"></div>
+
+      <!-- 4 Emojis de baixo -->
+      <div style="display:flex; gap:26px; justify-content:center; margin-bottom:20px;">
+        <span onclick="sendReaction('🙏')" style="font-size:46px; cursor:pointer;">🙏</span>
+        <span onclick="sendReaction('🎉')" style="font-size:46px; cursor:pointer;">🎉</span>
+        <span onclick="sendReaction('🔥')" style="font-size:46px; cursor:pointer;">🔥</span>
+        <span onclick="sendReaction('💯')" style="font-size:46px; cursor:pointer;">💯</span>
+      </div>
+
+      <!-- Campo de texto na parte de baixo -->
+      <div style="padding:0 20px; width:100%;">
         <input 
           id="storyReplyInput" 
           type="text" 
@@ -1194,14 +1205,6 @@ function openStoryReply() {
           autofocus 
           style="width:100%; background:#2a2f38; border:none; border-radius:30px; padding:16px 20px; color:#fff; font-size:16px; outline:none;"
         >
-      </div>
-
-      <!-- 4 Emojis de baixo -->
-      <div style="display:flex; gap:26px; justify-content:center;">
-        <span onclick="sendReaction('🙏')" style="font-size:44px; cursor:pointer;">🙏</span>
-        <span onclick="sendReaction('🎉')" style="font-size:44px; cursor:pointer;">🎉</span>
-        <span onclick="sendReaction('🔥')" style="font-size:44px; cursor:pointer;">🔥</span>
-        <span onclick="sendReaction('💯')" style="font-size:44px; cursor:pointer;">💯</span>
       </div>
 
       <!-- Botão fechar -->
