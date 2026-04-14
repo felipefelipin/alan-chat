@@ -90,7 +90,7 @@ body{
   padding: 0;
 }
 
-/* AVATAR COM CÍRCULO VERDE DE STORIES */
+/* AVATAR COM CÍRCULO VERDE FINO - ESTILO WHATSAPP STORIES */
 .avatarWrap {
   display: flex;
   align-items: center;
@@ -100,23 +100,31 @@ body{
 }
 
 .avatar {
-  width: 42px;
-  height: 42px;
+  width: 46px;                    /* um pouco maior para melhor visual */
+  height: 46px;
+  padding: 3px;                   /* espessura fina do círculo verde */
+  background: linear-gradient(135deg, #30d158, #00ff7f);  /* verde vibrante */
   border-radius: 50%;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,.35);
   position: relative;
   flex-shrink: 0;
-  padding: 3px;                    /* espaço para o círculo verde */
-  background: linear-gradient(135deg, #30d158, #00ff7f);   /* círculo verde */
-  border-radius: 50%;
 }
 
 .avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 50%;              /* mantém a foto redonda */
+  border-radius: 50%;
+  background: #0a0b0d;            /* fundo escuro caso a imagem falhe */
+}
+
+/* Camada preta externa fina (igual WhatsApp) */
+.avatar::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border: 3px solid #0a0b0d;
+  border-radius: 50%;
+  z-index: -1;
 }
 
 .titlebox {
