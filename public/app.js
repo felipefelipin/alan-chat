@@ -1166,7 +1166,7 @@ function showContactProfile() {
 }
 
 function showStories() {
-  console.log("📸 Stories aberto - modo qualidade máxima");
+  console.log("📸 Stories aberto");
 
   app.innerHTML = `
     <div class="full" style="background:#000; position:relative; overflow:hidden; height:100vh;">
@@ -1175,12 +1175,11 @@ function showStories() {
         <div id="progressBar" style="height:100%; width:0%; background:#fff; transition:width linear;"></div>
       </div>
 
-      <!-- Cabeçalho - Foto SEM círculo verde -->
-      <div style="position:absolute; top:20px; left:16px; right:16px; display:flex; align-items:center; z-index:20;">
+      <!-- Cabeçalho - Foto sem círculo -->
+      <div style="position:absolute; top:20px; left:16px; right:16px; display:flex; align-items:center; z-index:30;">
         <button onclick="mountChat()" style="background:none; border:0; color:#fff; font-size:28px; margin-right:12px;">←</button>
         
-        <!-- Foto limpa sem círculo -->
-        <div style="width:36px; height:36px; margin-right:10px; border-radius:50%; overflow:hidden; flex-shrink:0;">
+        <div style="width:36px; height:36px; margin-right:10px; border-radius:50%; overflow:hidden;">
           <img src="${ASSETS.avatar}?v=1" style="width:100%; height:100%; object-fit:cover;" />
         </div>
         
@@ -1190,23 +1189,23 @@ function showStories() {
         </div>
       </div>
 
-      <!-- Vídeo com qualidade máxima e carregamento agressivo -->
-      <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#000;">
+      <!-- Vídeo -->
+      <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#000; z-index:10;">
         <video 
           id="storyVideo"
           src="/assets/story-video.mp4" 
           autoplay 
           muted 
+          loop 
           playsinline 
-          webkit-playsinline
           preload="auto"
-          style="max-width:100%; max-height:100%; object-fit:contain; image-rendering: -webkit-optimize-contrast;"
+          style="max-width:100%; max-height:100%; object-fit:contain;"
         ></video>
       </div>
 
-      <!-- Barra inferior -->
-      <div style="position:absolute; bottom:0; left:0; right:0; padding:20px 16px; background:linear-gradient(to top, rgba(0,0,0,0.85), transparent); z-index:20;">
-        <div style="background:rgba(255,255,255,0.12); border-radius:30px; padding:12px 20px; color:#fff; display:flex; align-items:center;">
+      <!-- Responder - Barra inferior funcional -->
+      <div id="replyBar" style="position:absolute; bottom:0; left:0; right:0; padding:12px 16px 20px; background:linear-gradient(to top, rgba(0,0,0,0.95), transparent); z-index:40;">
+        <div onclick="openStoryReply()" style="background:rgba(255,255,255,0.15); border-radius:30px; padding:14px 20px; color:#fff; display:flex; align-items:center; cursor:pointer;">
           <span style="flex:1; font-size:15px;">Responder...</span>
           <span style="font-size:24px;">❤️</span>
         </div>
@@ -1217,25 +1216,61 @@ function showStories() {
   const video = document.getElementById("storyVideo");
 
   video.onloadedmetadata = function() {
-    const duration = video.duration || 8; // fallback caso não carregue
-    console.log(`🎥 Vídeo carregado - duração: ${duration.toFixed(1)}s`);
-
+    const duration = video.duration || 10;
     const progressBar = document.getElementById("progressBar");
     if (progressBar) {
       progressBar.style.transitionDuration = duration + "s";
       progressBar.style.width = "100%";
     }
 
-    // Volta automaticamente quando o vídeo terminar
-    video.onended = function() {
-      mountChat();
-    };
+    video.onended = () => mountChat();
   };
+}
 
-  video.onerror = function() {
-    console.error("Erro ao carregar vídeo dos stories");
-    setTimeout(() => mountChat(), 2000);
-  };
+// Função para abrir o responder (teclado + campo de texto)
+function openStoryReply() {
+  const replyHTML = `
+    <div style="position:absolute; bottom:0; left:0; right:0; background:#1f2228; padding:12px 16px; z-index:50; border-top:1px solid rgba(255,255,255,0.1);">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button onclick="closeStoryReply()" style="background:none; border:0; color:#fff; font-size:24px;">←</button>
+        <input 
+          id="storyReplyInput" 
+          type="text" 
+          placeholder="Responder..." 
+          autofocus 
+          style="flex:1; background:#2a2f38; border:none; border-radius:30px; padding:14px 20px; color:#fff; font-size:16px; outline:none;"
+        >
+        <button onclick="sendStoryReply()" style="background:#00d15a; color:#000; border:none; border-radius:50%; width:44px; height:44px; font-size:20px;">↑</button>
+      </div>
+    </div>
+  `;
+
+  // Adiciona a barra de resposta por cima
+  const replyContainer = document.createElement("div");
+  replyContainer.innerHTML = replyHTML;
+  document.body.appendChild(replyContainer.firstElementChild);
+
+  // Foca no input para abrir o teclado
+  setTimeout(() => {
+    const input = document.getElementById("storyReplyInput");
+    if (input) input.focus();
+  }, 100);
+}
+
+// Fechar o responder
+function closeStoryReply() {
+  const replyBar = document.querySelector("#replyBar ~ div[style*='background:#1f2228']");
+  if (replyBar) replyBar.remove();
+}
+
+// Enviar resposta (por enquanto só fecha e volta)
+function sendStoryReply() {
+  const input = document.getElementById("storyReplyInput");
+  if (input && input.value.trim()) {
+    console.log("Resposta enviada:", input.value.trim());
+  }
+  closeStoryReply();
+  // Aqui você pode adicionar lógica futura para salvar a resposta
 }
 
 async function endCall(wasAnswered) {
