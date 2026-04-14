@@ -1109,62 +1109,6 @@ function showIncomingCall() {
   `);
 }
 
-function showContactProfile() {
-  app.innerHTML = `
-    <div class="full fadeIn" style="background:#0a0b0d;">
-      <div class="statusbar">
-        <span id="sbTime">${nowTime()}</span>
-        <span class="sbIcons">
-          <span class="sbSignal"></span>
-          <span class="sbWifi"></span>
-          <span class="sbBattery"></span>
-        </span>
-      </div>
-
-      <div style="height:60px; display:flex; align-items:center; padding:0 16px; background:rgba(14,16,20,0.98); border-bottom:1px solid rgba(255,255,255,0.08);">
-        <button onclick="mountChat()" style="background:none; border:0; color:#fff; font-size:24px; margin-right:16px;">←</button>
-        <div style="font-size:17px; font-weight:600; color:#fff;">Dados do contato</div>
-      </div>
-
-      <div style="padding:30px 16px 20px; text-align:center;">
-        <div style="width:140px; height:140px; margin:0 auto 20px; border-radius:50%; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.6);">
-          <img src="${ASSETS.avatar}?v=1" style="width:100%; height:100%; object-fit:cover;" />
-        </div>
-
-        <div style="font-size:24px; font-weight:600; color:#fff; margin-bottom:4px;">${CONTACT.title}</div>
-        <div style="font-size:15px; color:#30d158; margin-bottom:30px;">${CONTACT.number}</div>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px; margin-bottom:40px;">
-          <button onclick="alert('Ligação não implementada')" style="background:#1f2228; border:0; border-radius:12px; padding:14px 8px; color:#30d158;">
-            📞<br><span style="font-size:12px; margin-top:6px; display:block;">Ligar</span>
-          </button>
-          <button onclick="alert('Vídeo não implementada')" style="background:#1f2228; border:0; border-radius:12px; padding:14px 8px; color:#30d158;">
-            📹<br><span style="font-size:12px; margin-top:6px; display:block;">Vídeo</span>
-          </button>
-          <button onclick="alert('Pix não implementado')" style="background:#1f2228; border:0; border-radius:12px; padding:14px 8px; color:#30d158;">
-            💰<br><span style="font-size:12px; margin-top:6px; display:block;">Pix</span>
-          </button>
-          <button onclick="alert('Pesquisar não implementado')" style="background:#1f2228; border:0; border-radius:12px; padding:14px 8px; color:#30d158;">
-            🔍<br><span style="font-size:12px; margin-top:6px; display:block;">Pesquisar</span>
-          </button>
-        </div>
-
-        <div style="background:#1f2228; border-radius:12px; overflow:hidden; margin-bottom:20px;">
-          <div style="padding:16px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; gap:12px; color:#fff;">
-            <span style="font-size:20px;">📸</span>
-            <span>Mídia, links e docs</span>
-            <span style="margin-left:auto; color:#888;">8</span>
-          </div>
-        </div>
-
-        <button onclick="mountChat()" style="width:100%; padding:16px; background:#1f2228; border:0; border-radius:12px; color:#ff453a; font-weight:600;">
-          Voltar para conversa
-        </button>
-      </div>
-    </div>
-  `;
-}
-
 function showStories() {
   console.log("📸 Stories aberto");
 
@@ -1189,7 +1133,7 @@ function showStories() {
         </div>
       </div>
 
-      <!-- Vídeo (não alterar nada aqui) -->
+      <!-- Vídeo -->
       <div id="storyContainer" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#000; z-index:10;">
         <video 
           id="storyVideo"
@@ -1226,46 +1170,39 @@ function showStories() {
   };
 }
 
-// ==================== ABRIR RESPONDER (TECLADO + EMOJIS) ====================
+// Abrir responder com emojis no estilo da segunda foto
 function openStoryReply() {
   const video = document.getElementById("storyVideo");
-  if (video) video.pause();   // pausa o vídeo
+  if (video) video.pause();
 
   const replyHTML = `
     <div id="storyReplyOverlay" style="position:absolute; bottom:0; left:0; right:0; background:#1f2228; z-index:50; padding-bottom: env(safe-area-inset-bottom);">
       
-      <!-- Sugestões rápidas (Eu, Não, O) -->
-      <div style="display:flex; gap:8px; padding:12px 16px; overflow-x:auto; background:#1f2228;">
-        <div onclick="quickReply(this)" style="background:#2a2f38; padding:8px 18px; border-radius:20px; color:#fff; white-space:nowrap; font-size:14px; cursor:pointer;">Eu</div>
-        <div onclick="quickReply(this)" style="background:#2a2f38; padding:8px 18px; border-radius:20px; color:#fff; white-space:nowrap; font-size:14px; cursor:pointer;">Não</div>
-        <div onclick="quickReply(this)" style="background:#2a2f38; padding:8px 18px; border-radius:20px; color:#fff; white-space:nowrap; font-size:14px; cursor:pointer;">O</div>
+      <!-- Emojis (exatamente como na segunda foto) -->
+      <div style="display:flex; gap:12px; padding:12px 16px; background:#1f2228; overflow-x:auto; border-bottom:1px solid rgba(255,255,255,0.08);">
+        <span onclick="sendReaction('😍')" style="font-size:32px; cursor:pointer;">😍</span>
+        <span onclick="sendReaction('😂')" style="font-size:32px; cursor:pointer;">😂</span>
+        <span onclick="sendReaction('😮')" style="font-size:32px; cursor:pointer;">😮</span>
+        <span onclick="sendReaction('😢')" style="font-size:32px; cursor:pointer;">😢</span>
+        <span onclick="sendReaction('🙏')" style="font-size:32px; cursor:pointer;">🙏</span>
+        <span onclick="sendReaction('🎉')" style="font-size:32px; cursor:pointer;">🎉</span>
+        <span onclick="sendReaction('🔥')" style="font-size:32px; cursor:pointer;">🔥</span>
+        <span onclick="sendReaction('💯')" style="font-size:32px; cursor:pointer;">💯</span>
       </div>
 
-      <!-- Campo de texto -->
-      <div style="display:flex; align-items:center; gap:10px; padding:8px 16px; background:#1f2228;">
-        <button onclick="closeStoryReply()" style="background:none; border:0; color:#aaa; font-size:26px;">←</button>
-        
-        <input 
-          id="storyReplyInput" 
-          type="text" 
-          placeholder="Responder..." 
-          autofocus 
-          style="flex:1; background:#2a2f38; border:none; border-radius:30px; padding:14px 18px; color:#fff; font-size:16px; outline:none;"
-        >
-        
-        <button onclick="sendStoryReply()" style="background:#00d15a; color:#000; border:none; border-radius:50%; width:44px; height:44px; font-size:20px;">↑</button>
-      </div>
+      <!-- Campo de texto com sugestões -->
+      <div style="padding:8px 16px; background:#1f2228;">
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <div onclick="quickReply(this)" style="background:#2a2f38; padding:8px 16px; border-radius:20px; color:#fff; font-size:14px; cursor:pointer;">Eu</div>
+          <div onclick="quickReply(this)" style="background:#2a2f38; padding:8px 16px; border-radius:20px; color:#fff; font-size:14px; cursor:pointer;">Não</div>
+          <div onclick="quickReply(this)" style="background:#2a2f38; padding:8px 16px; border-radius:20px; color:#fff; font-size:14px; cursor:pointer;">O</div>
+        </div>
 
-      <!-- Emojis (como na foto) -->
-      <div style="display:flex; gap:12px; padding:12px 16px; background:#1f2228; overflow-x:auto;">
-        <span onclick="insertEmoji(this)" style="font-size:30px; cursor:pointer;">😍</span>
-        <span onclick="insertEmoji(this)" style="font-size:30px; cursor:pointer;">😂</span>
-        <span onclick="insertEmoji(this)" style="font-size:30px; cursor:pointer;">😮</span>
-        <span onclick="insertEmoji(this)" style="font-size:30px; cursor:pointer;">😢</span>
-        <span onclick="insertEmoji(this)" style="font-size:30px; cursor:pointer;">🙏</span>
-        <span onclick="insertEmoji(this)" style="font-size:30px; cursor:pointer;">🎉</span>
-        <span onclick="insertEmoji(this)" style="font-size:30px; cursor:pointer;">🔥</span>
-        <span onclick="insertEmoji(this)" style="font-size:30px; cursor:pointer;">💯</span>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button onclick="closeStoryReply()" style="background:none; border:0; color:#aaa; font-size:26px;">←</button>
+          <input id="storyReplyInput" type="text" placeholder="Responder..." autofocus style="flex:1; background:#2a2f38; border:none; border-radius:30px; padding:14px 18px; color:#fff; font-size:16px;">
+          <button onclick="sendStoryReply()" style="background:#00d15a; color:#000; border:none; border-radius:50%; width:44px; height:44px; font-size:20px;">↑</button>
+        </div>
       </div>
     </div>
   `;
@@ -1274,11 +1211,10 @@ function openStoryReply() {
   overlay.innerHTML = replyHTML;
   document.body.appendChild(overlay.firstElementChild);
 
-  // Foca no input para abrir o teclado
   setTimeout(() => {
     const input = document.getElementById("storyReplyInput");
     if (input) input.focus();
-  }, 80);
+  }, 100);
 }
 
 function closeStoryReply() {
@@ -1286,7 +1222,7 @@ function closeStoryReply() {
   if (overlay) overlay.remove();
 
   const video = document.getElementById("storyVideo");
-  if (video) video.play();   // volta o vídeo
+  if (video) video.play();
 }
 
 function quickReply(el) {
@@ -1296,16 +1232,19 @@ function quickReply(el) {
 
 function insertEmoji(el) {
   const input = document.getElementById("storyReplyInput");
-  if (input) {
-    input.value += el.textContent;
-    input.focus();
-  }
+  if (input) input.value += el.textContent;
+}
+
+function sendReaction(emoji) {
+  console.log("Reação enviada:", emoji);
+  // Aqui você pode adicionar lógica futura para salvar a reação na conversa
+  closeStoryReply();
 }
 
 function sendStoryReply() {
   const input = document.getElementById("storyReplyInput");
   if (input && input.value.trim()) {
-    console.log("Resposta enviada:", input.value.trim());
+    console.log("Mensagem enviada:", input.value.trim());
   }
   closeStoryReply();
 }
