@@ -1175,6 +1175,62 @@ function showIncomingCall() {
   `
   );
 
+function showStories() {
+  app.innerHTML = `
+    <div class="full" style="background:#000; position:relative; overflow:hidden; height:100vh;">
+      <!-- Barra de progresso no topo -->
+      <div style="position:absolute; top:0; left:0; right:0; height:3px; background:rgba(255,255,255,0.25); z-index:20;">
+        <div id="progressBar" style="height:100%; width:0%; background:#fff; transition:width 8s linear;"></div>
+      </div>
+
+      <!-- Cabeçalho -->
+      <div style="position:absolute; top:20px; left:16px; right:16px; display:flex; align-items:center; z-index:20;">
+        <button onclick="mountChat()" style="background:none; border:0; color:#fff; font-size:28px; margin-right:12px;">←</button>
+        
+        <div class="avatar" style="width:36px; height:36px; margin-right:10px; border:2px solid #30d158;">
+          <img src="${ASSETS.avatar}?v=1" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />
+        </div>
+        
+        <div>
+          <div style="color:#fff; font-weight:600; font-size:15px;">${CONTACT.title}</div>
+          <div style="color:rgba(255,255,255,0.7); font-size:13px;">12h</div>
+        </div>
+      </div>
+
+      <!-- Vídeo do Story -->
+      <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
+        <video 
+          id="storyVideo"
+          src="/assets/story-video.mp4" 
+          autoplay 
+          loop 
+          playsinline 
+          style="max-width:100%; max-height:100%; object-fit:contain;"
+        ></video>
+      </div>
+
+      <!-- Barra inferior -->
+      <div style="position:absolute; bottom:0; left:0; right:0; padding:20px 16px; background:linear-gradient(to top, rgba(0,0,0,0.85), transparent); z-index:20;">
+        <div style="background:rgba(255,255,255,0.12); border-radius:30px; padding:12px 20px; color:#fff; display:flex; align-items:center;">
+          <span style="flex:1; font-size:15px;">Responder...</span>
+          <span style="font-size:24px;">❤️</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Inicia a barra de progresso
+  setTimeout(() => {
+    const progress = document.getElementById("progressBar");
+    if (progress) progress.style.width = "100%";
+  }, 100);
+
+  // Volta automaticamente após 8 segundos
+  setTimeout(() => {
+    mountChat();
+  }, 8000);
+}
+
   document.getElementById("decline").onclick = () => endCall(false);
   document.getElementById("accept").onclick = () => endCall(true);
 }
