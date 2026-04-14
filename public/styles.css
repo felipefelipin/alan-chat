@@ -90,24 +90,46 @@ body{
   padding: 0;
 }
 
-.avatarWrap{
+/* AVATAR - QUALIDADE EXCELENTE E CENTRALIZADO */
+.avatarWrap {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 1;
+  min-width: 0;
 }
 
-.avatar{
+.avatar {
   width: 42px;
   height: 42px;
   border-radius: 50%;
   overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
   position: relative;
+  flex-shrink: 0;
+  background: #1f2228;
 }
 
-.avatar img{
+.avatar img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: cover;           /* mantém proporção e qualidade */
+  object-position: center;
+  image-rendering: -webkit-optimize-contrast;   /* melhora qualidade */
+}
+
+/* Bolinha verde de online */
+.avatar::after {
+  content: "";
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 14px;
+  height: 14px;
+  background: #30d158;
+  border: 2.5px solid rgba(14, 16, 20, 0.98);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.3);
 }
 
 .titlebox{

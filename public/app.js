@@ -557,10 +557,14 @@ function mountChat() {
         </button>
 
         <div class="avatarWrap">
-          <div class="avatar">
-            <img src="${ASSETS.avatar}?v=1" alt="${CONTACT.title}" />
-          </div>
-        </div>
+  <div class="avatar">
+    <img 
+      src="${ASSETS.avatar}?v=1" 
+      alt="${CONTACT.title}"
+      onerror="this.src='/assets/avatar-gisa.jpg'" 
+    />
+  </div>
+</div>
 
         <div class="titlebox">
           <div class="name">${CONTACT.title}</div>
