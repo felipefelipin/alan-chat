@@ -552,15 +552,14 @@ function mountChat() {
       </div>
 
       <div class="topbar">
-        <button class="navBtn" type="button" aria-label="Voltar">
-          <span class="navChevron"></span>
-        </button>
-
-        <!-- Foto + Nome + Status juntos -->
+        <!-- Avatar + Nome + Status juntos (sem seta extra) -->
         <div class="avatarWrap">
-        <div class="avatar" onclick="showContactProfile()" style="cursor:pointer;">
-  <img src="${ASSETS.avatar}?v=1" alt="${CONTACT.title}" />
-</div>>
+          <div class="avatar" onclick="showContactProfile()" style="cursor: pointer;">
+            <img 
+              src="${ASSETS.avatar}?v=1" 
+              alt="${CONTACT.title}" 
+            />
+          </div>
 
           <div class="titlebox">
             <div class="name">${CONTACT.title}</div>
