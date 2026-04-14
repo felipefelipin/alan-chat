@@ -551,33 +551,28 @@ function mountChat() {
         </span>
       </div>
 
+      <!-- TOP BAR - VERSÃO ESTÁVEL (igual ao que estava antes) -->
       <div class="topbar">
-        <!-- Espaço vazio onde ficava a seta (para manter o alinhamento perfeito) -->
-        <div style="width:40px;"></div>
+        <button class="navBtn" onclick="mountChat()" type="button" aria-label="Voltar">
+          <span class="navChevron"></span>
+        </button>
 
-        <!-- Foto + Nome + Status -->
- <div class="avatarWrap">
-  <div class="avatar" onclick="showStories()" style="cursor: pointer;">
-    <img 
-      src="${ASSETS.avatar}?v=1" 
-      alt="${CONTACT.title}" 
-      style="width:100%; height:100%; object-fit:cover;"
-    />
-  </div>
-</div>
+        <div class="avatarWrap">
+          <div class="avatar" onclick="showStories()" style="cursor: pointer;">
+            <img src="${ASSETS.avatar}?v=1" alt="${CONTACT.title}" />
+          </div>
+        </div>
 
-  <div class="titlebox">
-    <div class="name">${CONTACT.title}</div>
-    <div class="status" id="status">${CONTACT.subtitle}</div>
-  </div>
-</div>
+        <div class="titlebox">
+          <div class="name">${CONTACT.title}</div>
+          <div class="status" id="status">${CONTACT.subtitle}</div>
+        </div>
 
-        <!-- Ícones de chamada à direita -->
         <div class="topActions">
-          <button class="callBtn video-call-btn" type="button">
+          <button class="callBtn video-call-btn" type="button" aria-label="Chamada de vídeo">
             <img src="/assets/video-call-icon.svg" alt="Vídeo" />
           </button>
-          <button class="callBtn voice-call-btn" type="button">
+          <button class="callBtn voice-call-btn" type="button" aria-label="Chamada de voz">
             <img src="/assets/voice-call-icon.svg" alt="Ligação" />
           </button>
         </div>
@@ -588,7 +583,7 @@ function mountChat() {
       </div>
 
       <div class="composer">
-        <button class="composerAttach" type="button" aria-hidden="true">
+        <button class="composerAttach" type="button">
           <span class="composerPlusMark">+</span>
         </button>
 
@@ -596,11 +591,11 @@ function mountChat() {
           <input id="input" autocomplete="off" placeholder="Mensagem" />
         </div>
 
-        <button class="composerGhostBtn" type="button" aria-hidden="true">
+        <button class="composerGhostBtn" type="button">
           <span class="iconSticker">😀</span>
         </button>
 
-        <button class="composerMic" id="composerMic" type="button" aria-hidden="true">
+        <button class="composerMic" id="composerMic" type="button">
           <span class="iconMic"></span>
         </button>
 
@@ -611,7 +606,7 @@ function mountChat() {
     </div>
   `;
 
-  // Eventos do composer
+  // Configurações básicas do chat
   const sendBtn = document.getElementById("send");
   const input = document.getElementById("input");
   const micBtn = document.getElementById("composerMic");
@@ -633,6 +628,7 @@ function mountChat() {
   bindKeyboardUX();
   handleScrollDetection();
 
+  // Atualiza hora a cada 30 segundos
   setInterval(() => {
     const t = document.getElementById("sbTime");
     if (t) t.textContent = nowTime();
@@ -1178,16 +1174,14 @@ function showIncomingCall() {
   );
   
 function showStories() {
-  console.log("📸 Abrindo Stories...");   // ← ajuda a testar se está chamando
+  console.log("📸 Abrindo Stories...");
 
   app.innerHTML = `
     <div class="full" style="background:#000; position:relative; overflow:hidden; height:100vh;">
-      <!-- Barra de progresso -->
       <div style="position:absolute; top:0; left:0; right:0; height:3px; background:rgba(255,255,255,0.25); z-index:20;">
         <div id="progressBar" style="height:100%; width:0%; background:#fff; transition:width 8s linear;"></div>
       </div>
 
-      <!-- Cabeçalho -->
       <div style="position:absolute; top:20px; left:16px; right:16px; display:flex; align-items:center; z-index:20;">
         <button onclick="mountChat()" style="background:none; border:0; color:#fff; font-size:28px; margin-right:12px;">←</button>
         
@@ -1201,10 +1195,8 @@ function showStories() {
         </div>
       </div>
 
-      <!-- Vídeo do Story -->
       <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#000;">
         <video 
-          id="storyVideo"
           src="/assets/story-video.mp4" 
           autoplay 
           loop 
@@ -1213,7 +1205,6 @@ function showStories() {
         ></video>
       </div>
 
-      <!-- Barra inferior -->
       <div style="position:absolute; bottom:0; left:0; right:0; padding:20px 16px; background:linear-gradient(to top, rgba(0,0,0,0.85), transparent); z-index:20;">
         <div style="background:rgba(255,255,255,0.12); border-radius:30px; padding:12px 20px; color:#fff; display:flex; align-items:center;">
           <span style="flex:1; font-size:15px;">Responder...</span>
@@ -1223,13 +1214,11 @@ function showStories() {
     </div>
   `;
 
-  // Barra de progresso
   setTimeout(() => {
     const progress = document.getElementById("progressBar");
     if (progress) progress.style.width = "100%";
   }, 100);
 
-  // Volta para o chat após 8 segundos
   setTimeout(() => {
     mountChat();
   }, 8000);
