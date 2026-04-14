@@ -558,12 +558,9 @@ function mountChat() {
 
         <!-- Foto + Nome + Status juntos -->
         <div class="avatarWrap">
-          <div class="avatar">
-            <img 
-              src="${ASSETS.avatar}?v=1" 
-              alt="${CONTACT.title}" 
-            />
-          </div>
+        <div class="avatar" onclick="showContactProfile()" style="cursor:pointer;">
+  <img src="${ASSETS.avatar}?v=1" alt="${CONTACT.title}" />
+</div>>
 
           <div class="titlebox">
             <div class="name">${CONTACT.title}</div>
@@ -1080,6 +1077,66 @@ function showIncomingCall() {
     state.ring.loop = true;
     state.ring.play().catch(() => {});
   } catch {}
+
+  function showContactProfile() {
+  app.innerHTML = `
+    <div class="full fadeIn" style="background:#0a0b0d;">
+      <div class="statusbar">
+        <span id="sbTime">${nowTime()}</span>
+        <span class="sbIcons">
+          <span class="sbSignal"></span>
+          <span class="sbWifi"></span>
+          <span class="sbBattery"></span>
+        </span>
+      </div>
+
+      <!-- Cabeçalho da tela de perfil -->
+      <div style="height:60px; display:flex; align-items:center; padding:0 16px; background:rgba(14,16,20,0.98); border-bottom:1px solid rgba(255,255,255,0.08);">
+        <button onclick="mountChat()" style="background:none; border:0; color:#fff; font-size:24px; margin-right:16px;">←</button>
+        <div style="font-size:17px; font-weight:600; color:#fff;">Dados do contato</div>
+      </div>
+
+      <div style="padding:30px 16px 20px; text-align:center;">
+        <div style="width:140px; height:140px; margin:0 auto 20px; border-radius:50%; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.6);">
+          <img src="${ASSETS.avatar}?v=1" style="width:100%; height:100%; object-fit:cover;" />
+        </div>
+
+        <div style="font-size:24px; font-weight:600; color:#fff; margin-bottom:4px;">${CONTACT.title}</div>
+        <div style="font-size:15px; color:#30d158; margin-bottom:30px;">${CONTACT.number}</div>
+
+        <!-- Botões de ação -->
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px; margin-bottom:40px;">
+          <button onclick="alert('Ligação não implementada')" style="background:#1f2228; border:0; border-radius:12px; padding:14px 8px; color:#30d158;">
+            📞<br><span style="font-size:12px; margin-top:6px; display:block;">Ligar</span>
+          </button>
+          <button onclick="alert('Vídeo não implementada')" style="background:#1f2228; border:0; border-radius:12px; padding:14px 8px; color:#30d158;">
+            📹<br><span style="font-size:12px; margin-top:6px; display:block;">Vídeo</span>
+          </button>
+          <button onclick="alert('Pix não implementado')" style="background:#1f2228; border:0; border-radius:12px; padding:14px 8px; color:#30d158;">
+            💰<br><span style="font-size:12px; margin-top:6px; display:block;">Pix</span>
+          </button>
+          <button onclick="alert('Pesquisar não implementado')" style="background:#1f2228; border:0; border-radius:12px; padding:14px 8px; color:#30d158;">
+            🔍<br><span style="font-size:12px; margin-top:6px; display:block;">Pesquisar</span>
+          </button>
+        </div>
+
+        <!-- Outras opções (como no WhatsApp) -->
+        <div style="background:#1f2228; border-radius:12px; overflow:hidden; margin-bottom:20px;">
+          <div style="padding:16px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; gap:12px; color:#fff;">
+            <span style="font-size:20px;">📸</span>
+            <span>Mídia, links e docs</span>
+            <span style="margin-left:auto; color:#888;">8</span>
+          </div>
+          <!-- Adicione mais itens aqui se quiser -->
+        </div>
+
+        <button onclick="mountChat()" style="width:100%; padding:16px; background:#1f2228; border:0; border-radius:12px; color:#ff453a; font-weight:600;">
+          Voltar para conversa
+        </button>
+      </div>
+    </div>
+  `;
+}
 
   app.insertAdjacentHTML(
     "beforeend",
