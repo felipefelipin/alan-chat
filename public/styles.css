@@ -90,7 +90,7 @@ body{
   padding: 0;
 }
 
-/* AVATAR COM CÍRCULO VERDE FINO - ESTILO WHATSAPP STORIES */
+/* AVATAR COM CÍRCULO VERDE - ESTILO EXATO WHATSAPP STORIES */
 .avatarWrap {
   display: flex;
   align-items: center;
@@ -100,13 +100,23 @@ body{
 }
 
 .avatar {
-  width: 46px;                    /* um pouco maior para melhor visual */
-  height: 46px;
-  padding: 3px;                   /* espessura fina do círculo verde */
-  background: linear-gradient(135deg, #30d158, #00ff7f);  /* verde vibrante */
+  width: 48px;                    /* tamanho ideal para o círculo */
+  height: 48px;
+  padding: 3.5px;                 /* espessura fina do círculo verde */
+  background: #30d158;            /* verde vibrante do WhatsApp */
   border-radius: 50%;
   position: relative;
   flex-shrink: 0;
+}
+
+/* Camada preta externa (espaço preto visível) */
+.avatar::before {
+  content: "";
+  position: absolute;
+  inset: -4px;                    /* controla o espaço preto externo */
+  border: 4px solid #0a0b0d;      /* borda preta ao redor */
+  border-radius: 50%;
+  z-index: -1;
 }
 
 .avatar img {
@@ -114,17 +124,7 @@ body{
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
-  background: #0a0b0d;            /* fundo escuro caso a imagem falhe */
-}
-
-/* Camada preta externa fina (igual WhatsApp) */
-.avatar::before {
-  content: "";
-  position: absolute;
-  inset: -3px;
-  border: 3px solid #0a0b0d;
-  border-radius: 50%;
-  z-index: -1;
+  background: #0a0b0d;
 }
 
 .titlebox {
