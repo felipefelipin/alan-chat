@@ -556,16 +556,14 @@ function mountChat() {
           <span class="navChevron"></span>
         </button>
 
-<div class="avatarWrap">
-  <div class="avatar">
-    <img src="${ASSETS.avatar}?v=1" alt="${CONTACT.title}" />
-  </div>
-
-  <div class="titlebox">
-    <div class="name">${CONTACT.title}</div>
-    <div class="status" id="status">${CONTACT.subtitle}</div>
-  </div>
-</div>
+        <div class="avatarWrap">
+          <div class="avatar">
+            <img 
+              src="${ASSETS.avatar}?v=1" 
+              alt="${CONTACT.title}" 
+            />
+          </div>
+        </div>
 
         <div class="titlebox">
           <div class="name">${CONTACT.title}</div>
@@ -610,6 +608,7 @@ function mountChat() {
     </div>
   `;
 
+  // Eventos do composer
   const sendBtn = document.getElementById("send");
   const input = document.getElementById("input");
   const micBtn = document.getElementById("composerMic");
