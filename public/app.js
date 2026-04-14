@@ -556,13 +556,15 @@ function mountChat() {
         <div style="width:40px;"></div>
 
         <!-- Foto + Nome + Status -->
-        <div class="avatarWrap">
-  <div class="avatar" onclick="showContactProfile()" style="cursor: pointer;">
+ <div class="avatarWrap">
+  <div class="avatar" onclick="showStories()" style="cursor: pointer;">
     <img 
       src="${ASSETS.avatar}?v=1" 
       alt="${CONTACT.title}" 
+      style="width:100%; height:100%; object-fit:cover;"
     />
   </div>
+</div>
 
   <div class="titlebox">
     <div class="name">${CONTACT.title}</div>
@@ -1174,11 +1176,13 @@ function showIncomingCall() {
     </div>
   `
   );
-
+  
 function showStories() {
+  console.log("📸 Abrindo Stories...");   // ← ajuda a testar se está chamando
+
   app.innerHTML = `
     <div class="full" style="background:#000; position:relative; overflow:hidden; height:100vh;">
-      <!-- Barra de progresso no topo -->
+      <!-- Barra de progresso -->
       <div style="position:absolute; top:0; left:0; right:0; height:3px; background:rgba(255,255,255,0.25); z-index:20;">
         <div id="progressBar" style="height:100%; width:0%; background:#fff; transition:width 8s linear;"></div>
       </div>
@@ -1198,7 +1202,7 @@ function showStories() {
       </div>
 
       <!-- Vídeo do Story -->
-      <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
+      <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#000;">
         <video 
           id="storyVideo"
           src="/assets/story-video.mp4" 
@@ -1219,13 +1223,13 @@ function showStories() {
     </div>
   `;
 
-  // Inicia a barra de progresso
+  // Barra de progresso
   setTimeout(() => {
     const progress = document.getElementById("progressBar");
     if (progress) progress.style.width = "100%";
   }, 100);
 
-  // Volta automaticamente após 8 segundos
+  // Volta para o chat após 8 segundos
   setTimeout(() => {
     mountChat();
   }, 8000);
