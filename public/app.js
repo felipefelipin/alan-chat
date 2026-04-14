@@ -556,12 +556,11 @@ function mountChat() {
           <span class="navChevron"></span>
         </button>
 
-        <div class="avatarWrap">
+<div class="avatarWrap">
   <div class="avatar">
     <img 
-      src="${ASSETS.avatar}?v=1" 
+      src="${ASSETS.avatar}?v=${Date.now()}" 
       alt="${CONTACT.title}"
-      onerror="this.src='/assets/avatar-gisa.jpg'" 
     />
   </div>
 </div>
