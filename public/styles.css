@@ -90,7 +90,6 @@ body{
   padding: 0;
 }
 
-/* AVATAR + NOME - POSIÇÃO CORRETA */
 .avatarWrap {
   display: flex;
   align-items: center;
@@ -105,7 +104,6 @@ body{
   border-radius: 50%;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0,0,0,.35);
-  position: relative;
   flex-shrink: 0;
 }
 
@@ -115,15 +113,9 @@ body{
   object-fit: cover;
 }
 
-/* Remove a bolinha verde dentro da foto */
-.avatar::after {
-  display: none;
-}
-
 .titlebox {
   display: flex;
   flex-direction: column;
-  margin-left: 8px;
   line-height: 1.15;
 }
 
@@ -131,9 +123,6 @@ body{
   font-weight: 600;
   font-size: 16.5px;
   color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .status {
@@ -143,7 +132,6 @@ body{
   margin-top: 1px;
 }
 
-/* ÍCONES DE CHAMADA COM PNG TRANSPARENTE */
 .topActions {
   display: flex;
   align-items: center;
@@ -152,23 +140,9 @@ body{
   padding-right: 8px;
 }
 
-.callBtn {
-  border: 0;
-  background: transparent;
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  opacity: 0.95;
-}
-
 .callBtn img {
-  width: 36px;
-  height: 36px;
-  filter: brightness(1.01);
-  background: transparent !important;
+  width: 27px;
+  height: 27px;
 }
 
 /* ==================== COMPOSER - ESTILO WHATSAPP ==================== */

@@ -556,6 +556,7 @@ function mountChat() {
           <span class="navChevron"></span>
         </button>
 
+        <!-- Foto + Nome + Status juntos -->
         <div class="avatarWrap">
           <div class="avatar">
             <img 
@@ -563,13 +564,14 @@ function mountChat() {
               alt="${CONTACT.title}" 
             />
           </div>
+
+          <div class="titlebox">
+            <div class="name">${CONTACT.title}</div>
+            <div class="status" id="status">${CONTACT.subtitle}</div>
+          </div>
         </div>
 
-        <div class="titlebox">
-          <div class="name">${CONTACT.title}</div>
-          <div class="status" id="status">${CONTACT.subtitle}</div>
-        </div>
-
+        <!-- Ícones de chamada à direita -->
         <div class="topActions">
           <button class="callBtn video-call-btn" type="button">
             <img src="/assets/video-call-icon.svg" alt="Vídeo" />
