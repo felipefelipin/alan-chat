@@ -1173,6 +1173,14 @@ function showStories() {
 function openStoryReply() {
   if (document.getElementById("storyReplyOverlay")) return;
 
+  // 🔥 trava altura real da tela (ANTES do teclado)
+const realHeight = window.innerHeight;
+
+document.documentElement.style.setProperty(
+  "--real-vh",
+  `${realHeight}px`
+);
+
   const video = document.getElementById("storyVideo");
   if (video) video.pause();
 
