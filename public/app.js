@@ -1171,63 +1171,109 @@ function showStories() {
 }
 
 function openStoryReply() {
+  // ✅ evita duplicação
+  if (document.getElementById("storyReplyOverlay")) return;
+
   const video = document.getElementById("storyVideo");
   if (video) video.pause();
 
   const replyHTML = `
-    <div id="storyReplyOverlay" style="position:absolute; inset:0; background:rgba(0,0,0,0.75); z-index:50; display:flex; flex-direction:column; justify-content:space-between; padding:40px 0 100px 0;">
+    <div id="storyReplyOverlay" style="
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.75);
+      z-index:999;
+      display:flex;
+      flex-direction:column;
+      padding-top:40px;
+    ">
 
-      <!-- 4 Emojis de cima -->
-      <div style="display:flex; gap:24px; justify-content:center; margin-top:40px;">
-        <span onclick="sendReaction('😍')" style="font-size:44px; cursor:pointer;">😍</span>
-        <span onclick="sendReaction('😂')" style="font-size:44px; cursor:pointer;">😂</span>
-        <span onclick="sendReaction('😮')" style="font-size:44px; cursor:pointer;">😮</span>
-        <span onclick="sendReaction('😢')" style="font-size:44px; cursor:pointer;">😢</span>
+      <!-- EMOJIS DE CIMA -->
+      <div style="display:flex; gap:24px; justify-content:center; margin-top:10px;">
+        <span onclick="sendReaction('😍')" style="font-size:44px;">😍</span>
+        <span onclick="sendReaction('😂')" style="font-size:44px;">😂</span>
+        <span onclick="sendReaction('😮')" style="font-size:44px;">😮</span>
+        <span onclick="sendReaction('😢')" style="font-size:44px;">😢</span>
       </div>
 
-      <!-- Espaço vazio no meio -->
+      <!-- ESPAÇO FLEX (empurra tudo pra baixo corretamente) -->
       <div style="flex:1;"></div>
 
-      <!-- 4 Emojis de baixo -->
-      <div style="display:flex; gap:24px; justify-content:center; margin-bottom:30px;">
-        <span onclick="sendReaction('🙏')" style="font-size:44px; cursor:pointer;">🙏</span>
-        <span onclick="sendReaction('🎉')" style="font-size:44px; cursor:pointer;">🎉</span>
-        <span onclick="sendReaction('🔥')" style="font-size:44px; cursor:pointer;">🔥</span>
-        <span onclick="sendReaction('💯')" style="font-size:44px; cursor:pointer;">💯</span>
+      <!-- EMOJIS DE BAIXO -->
+      <div style="display:flex; gap:24px; justify-content:center; margin-bottom:20px;">
+        <span onclick="sendReaction('🙏')" style="font-size:44px;">🙏</span>
+        <span onclick="sendReaction('🎉')" style="font-size:44px;">🎉</span>
+        <span onclick="sendReaction('🔥')" style="font-size:44px;">🔥</span>
+        <span onclick="sendReaction('💯')" style="font-size:44px;">💯</span>
       </div>
 
-      <!-- Campo de texto + coração (único) -->
-      <div style="padding:0 20px; width:100%;">
-        <div style="display:flex; align-items:center; gap:12px; background:#2a2f38; border-radius:30px; padding:14px 20px;">
+      <!-- INPUT -->
+      <div style="padding:0 20px; margin-bottom:20px;">
+        <div style="
+          display:flex;
+          align-items:center;
+          gap:12px;
+          background:#2a2f38;
+          border-radius:30px;
+          padding:14px 20px;
+        ">
           <input 
             id="storyReplyInput" 
             type="text" 
             placeholder="Responder..." 
-            autofocus 
-            style="flex:1; background:transparent; border:none; color:#fff; font-size:16px; outline:none;"
+            style="
+              flex:1;
+              background:transparent;
+              border:none;
+              color:#fff;
+              font-size:16px;
+              outline:none;
+            "
           >
-          <span onclick="sendStoryReply()" style="font-size:28px; color:#ff4d94; cursor:pointer;">❤️</span>
+          <span onclick="sendStoryReply()" style="font-size:28px; color:#ff4d94;">❤️</span>
         </div>
       </div>
 
-      <!-- Botão fechar -->
-      <button onclick="closeStoryReply()" style="position:absolute; top:25px; right:25px; background:none; border:0; color:#fff; font-size:30px;">✕</button>
+      <!-- BOTÃO FECHAR -->
+      <button onclick="closeStoryReply()" style="
+        position:absolute;
+        top:20px;
+        right:20px;
+        background:none;
+        border:0;
+        color:#fff;
+        font-size:28px;
+      ">✕</button>
+
     </div>
   `;
 
-  const overlay = document.createElement("div");
-  overlay.innerHTML = replyHTML;
-  document.body.appendChild(overlay.firstElementChild);
+  // ✅ injeta direto (sem wrapper bugado)
+  document.body.insertAdjacentHTML("beforeend", replyHTML);
 
-  // Força o foco no input para abrir o teclado imediatamente
+  const input = document.getElementById("storyReplyInput");
+  const overlay = document.getElementById("storyReplyOverlay");
+
+  // ✅ abre teclado corretamente
   setTimeout(() => {
-    const input = document.getElementById("storyReplyInput");
     if (input) {
       input.focus();
-      input.click(); // ajuda em alguns dispositivos mobile
+      input.click();
     }
-  }, 120);
+
+    if (window.Telegram?.WebApp) {
+      Telegram.WebApp.expand();
+    }
+  }, 300);
+
+  // ✅ clique fora fecha
+  overlay.addEventListener("click", (e) => {
+    if (e.target.id === "storyReplyOverlay") {
+      closeStoryReply();
+    }
+  });
 }
+
 
 function closeStoryReply() {
   const overlay = document.getElementById("storyReplyOverlay");
