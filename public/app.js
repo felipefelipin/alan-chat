@@ -1171,29 +1171,33 @@ function showStories() {
 }
 
 function openStoryReply() {
+  // evita duplicação
   if (document.getElementById("storyReplyOverlay")) return;
-
-  // 🔥 trava altura real da tela (ANTES do teclado)
-const realHeight = window.innerHeight;
-
-document.documentElement.style.setProperty(
-  "--real-vh",
-  `${realHeight}px`
-);
 
   const video = document.getElementById("storyVideo");
   if (video) video.pause();
+
+  // 🔥 TRAVA VIEWPORT (SOLUÇÃO REAL)
+  const lockViewport = () => {
+    const height = window.innerHeight;
+    document.body.style.height = height + "px";
+    document.body.style.overflow = "hidden";
+  };
+
+  lockViewport();
 
   const html = `
     <div id="storyReplyOverlay">
 
       <div class="story-hint">Toque para enviar</div>
 
+      <!-- EMOJIS -->
       <div class="story-emojis">
         <div>😍 😂 😮 😢</div>
         <div>🙏 🎉 🔥 💯</div>
       </div>
 
+      <!-- INPUT -->
       <div class="story-input-bar" id="replyBar">
 
         <span style="font-size:22px;">＋</span>
@@ -1219,7 +1223,10 @@ document.documentElement.style.setProperty(
   const overlay = document.getElementById("storyReplyOverlay");
   const replyBar = document.getElementById("replyBar");
 
-  // 🔥 TECLADO (100% funciona)
+  // 🔥 ESCONDE INPUT ATÉ TECLADO
+  replyBar.style.opacity = "0";
+
+  // 🔥 ABRE TECLADO (100%)
   input.focus();
 
   setTimeout(() => {
@@ -1231,10 +1238,7 @@ document.documentElement.style.setProperty(
     }
   }, 200);
 
-  // 🔥 ESCONDE INPUT ATÉ TECLADO ABRIR
-  replyBar.style.opacity = "0";
-
-  // 🔥 DETECÇÃO DO TECLADO (PERFEITA)
+  // 🔥 CONTROLE DO TECLADO (PERFEITO)
   const handleViewport = () => {
     const vh = window.visualViewport.height;
     const full = window.innerHeight;
@@ -1247,11 +1251,14 @@ document.documentElement.style.setProperty(
       replyBar.style.opacity = "0";
       replyBar.style.transform = `translateY(0)`;
     }
+
+    // 🔥 MANTÉM VIEWPORT TRAVADO
+    document.body.style.height = window.innerHeight + "px";
   };
 
   window.visualViewport?.addEventListener("resize", handleViewport);
 
-  // fechar
+  // fechar ao clicar fora
   overlay.addEventListener("click", (e) => {
     if (e.target.id === "storyReplyOverlay") {
       closeStoryReply();
@@ -1265,6 +1272,10 @@ function closeStoryReply() {
 
   const video = document.getElementById("storyVideo");
   if (video) video.play();
+
+  // 🔥 RESTAURA VIEWPORT
+  document.body.style.height = "";
+  document.body.style.overflow = "";
 }
 
 function quickReply(el) {
