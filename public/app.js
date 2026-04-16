@@ -1117,6 +1117,8 @@ function showStories() {
   // 🔥 define vídeo corretamente
   video.src = "/assets/story-video.mp4?v=" + Date.now();
   video.style.display = "block";
+  video.currentTime = 0;
+
   video.play().catch(() => {});
 
   app.innerHTML = `
@@ -1129,7 +1131,7 @@ function showStories() {
 
       <!-- HEADER -->
       <div style="position:absolute; top:20px; left:16px; right:16px; display:flex; align-items:center; z-index:30;">
-        <button onclick="mountChat()" style="background:none; border:0; color:#fff; font-size:28px; margin-right:12px;">←</button>
+        <button onclick="exitStories()" style="background:none; border:0; color:#fff; font-size:28px; margin-right:12px;">←</button>
         
         <div style="width:36px; height:36px; margin-right:10px; border-radius:50%; overflow:hidden;">
           <img src="${ASSETS.avatar}?v=1" style="width:100%; height:100%; object-fit:cover;" />
@@ -1152,16 +1154,31 @@ function showStories() {
     </div>
   `;
 
-  video.onloadedmetadata = function () {
-    const duration = video.duration || 10;
-    const progress = document.getElementById("progressBar");
+  const progress = document.getElementById("progressBar");
 
-    if (progress) {
-      progress.style.transition = `width ${duration}s linear`;
-      progress.style.width = "100%";
-    }
+  let progressInterval = null;
 
-    video.onended = () => mountChat();
+  // 🔥 sincroniza progresso com vídeo
+  video.onplay = () => {
+    clearInterval(progressInterval);
+
+    progressInterval = setInterval(() => {
+      if (!video.duration) return;
+
+      const percent = (video.currentTime / video.duration) * 100;
+      if (progress) progress.style.width = percent + "%";
+    }, 50);
+  };
+
+  // 🔥 pausa progresso junto com vídeo
+  video.onpause = () => {
+    clearInterval(progressInterval);
+  };
+
+  // 🔥 finaliza corretamente
+  video.onended = () => {
+    clearInterval(progressInterval);
+    exitStories();
   };
 }
 
@@ -1169,17 +1186,14 @@ function openStoryReply() {
   // evita duplicação
   if (document.getElementById("storyReplyOverlay")) return;
 
-  let video = document.getElementById("storyVideo");
+  const video = document.getElementById("storyVideo");
 
-  // 🔥 GARANTE QUE O VÍDEO ESTÁ NO BODY (CRÍTICO)
-  if (video && video.parentElement !== document.body) {
-    document.body.appendChild(video);
+  // 🔥 pausa vídeo + dispara evento correto
+  if (video) {
+    video.pause();
   }
 
-  // pausa vídeo
-  if (video) video.pause();
-
-  // 🔥 TRAVA LAYOUT (impede reflow do body)
+  // 🔥 trava scroll
   document.body.style.overflow = "hidden";
 
   const html = `
@@ -1219,10 +1233,10 @@ function openStoryReply() {
   const overlay = document.getElementById("storyReplyOverlay");
   const replyBar = document.getElementById("replyBar");
 
-  // 🔥 ESCONDE INPUT ATÉ TECLADO ABRIR
+  // 🔥 começa invisível (até teclado abrir)
   replyBar.style.opacity = "0";
 
-  // 🔥 FORÇA ABERTURA DO TECLADO
+  // 🔥 abre teclado
   input.focus();
 
   setTimeout(() => {
@@ -1234,18 +1248,20 @@ function openStoryReply() {
     }
   }, 200);
 
-  // 🔥 DETECÇÃO REAL DO TECLADO
+  // 🔥 CONTROLE CORRETO DO TECLADO
   const handleViewport = () => {
     const vh = window.visualViewport.height;
     const full = window.innerHeight;
     const keyboard = full - vh;
 
     if (keyboard > 80) {
+      // teclado aberto
       replyBar.style.opacity = "1";
       replyBar.style.transform = `translateY(-${keyboard}px)`;
     } else {
-      replyBar.style.opacity = "0";
-      replyBar.style.transform = `translateY(0)`;
+      // teclado fechado → continua visível (FIX)
+      replyBar.style.opacity = "1";
+      replyBar.style.transform = "translateY(0)";
     }
   };
 
@@ -1263,11 +1279,41 @@ function closeStoryReply() {
   const overlay = document.getElementById("storyReplyOverlay");
   if (overlay) overlay.remove();
 
-  const video = document.getElementById("storyVideo");
-  if (video) video.play();
+  const input = document.getElementById("storyReplyInput");
 
-  // 🔥 RESTAURA SCROLL
+  // 🔥 fecha teclado corretamente
+  if (input) {
+    input.blur();
+  }
+
+  const video = document.getElementById("storyVideo");
+
+  // 🔥 retoma vídeo corretamente
+  if (video) {
+    video.play().catch(() => {});
+  }
+
+  // 🔥 restaura scroll
   document.body.style.overflow = "";
+
+  // 🔥 reseta posição do replyBar (evita bug visual)
+  const replyBar = document.getElementById("replyBar");
+  if (replyBar) {
+    replyBar.style.transform = "translateY(0)";
+    replyBar.style.opacity = "1";
+  }
+}
+
+function exitStories() {
+  const video = document.getElementById("storyVideo");
+
+  if (video) {
+    video.pause();
+    video.currentTime = 0;
+    video.style.display = "none"; // 🔥 ESSENCIAL
+  }
+
+  mountChat();
 }
 
 function quickReply(el) {
