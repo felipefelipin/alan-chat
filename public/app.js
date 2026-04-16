@@ -1171,133 +1171,75 @@ function showStories() {
 }
 
 function openStoryReply() {
-  // evita duplicação
   if (document.getElementById("storyReplyOverlay")) return;
 
   const video = document.getElementById("storyVideo");
   if (video) video.pause();
 
-  const replyHTML = `
-    <div id="storyReplyOverlay" style="
-      position:fixed;
-      inset:0;
-      z-index:999;
-      display:flex;
-      flex-direction:column;
-      justify-content:flex-end;
-      background:rgba(0,0,0,0.3);
-    ">
+  const html = `
+    <div id="storyReplyOverlay">
 
-      <!-- TEXTO -->
-      <div style="
-        position:absolute;
-        top:120px;
-        width:100%;
-        text-align:center;
-        color:#fff;
-        font-size:16px;
-      ">
-        Toque para enviar
-      </div>
+      <div class="story-hint">Toque para enviar</div>
 
       <!-- EMOJIS -->
-      <div style="
-        position:absolute;
-        top:50%;
-        left:50%;
-        transform:translate(-50%, -50%);
-        display:flex;
-        flex-direction:column;
-        gap:30px;
-        align-items:center;
-      ">
-        <div style="display:flex; gap:24px;">
-          😍 😂 😮 😢
-        </div>
-        <div style="display:flex; gap:24px;">
-          🙏 🎉 🔥 💯
-        </div>
+      <div class="story-emojis">
+        <div>😍 😂 😮 😢</div>
+        <div>🙏 🎉 🔥 💯</div>
       </div>
 
-      <!-- INPUT BAR -->
-      <div id="replyBar" style="
-        width:100%;
-        padding:10px;
-        padding-bottom:env(safe-area-inset-bottom);
-        display:flex;
-        align-items:center;
-        gap:10px;
-        transition: transform 0.25s ease;
-      ">
+      <!-- INPUT AREA -->
+      <div class="story-input-bar">
 
-        <span style="font-size:22px;">➕</span>
+        <span style="font-size:22px;">＋</span>
 
-        <div style="
-          flex:1;
-          display:flex;
-          align-items:center;
-          background:#1e1e1e;
-          border-radius:25px;
-          padding:10px 15px;
-        ">
-          <input 
-            id="storyReplyInput"
-            type="text"
-            placeholder="Mensagem..."
-            style="
-              flex:1;
-              background:transparent;
-              border:none;
-              color:#fff;
-              font-size:16px;
-              outline:none;
-            "
-          />
-          <span>😊</span>
+        <div class="story-input-wrap">
+          <input id="storyReplyInput" placeholder="Mensagem..." />
+          <span style="margin-left:8px;">😊</span>
         </div>
 
-        <span>📷</span>
-        <span>🎤</span>
+        <span style="font-size:20px;">📷</span>
+        <span style="font-size:20px;">🎤</span>
+
+        <div class="story-heart">❤️</div>
 
       </div>
+
     </div>
   `;
 
-  document.body.insertAdjacentHTML("beforeend", replyHTML);
+  document.body.insertAdjacentHTML("beforeend", html);
 
   const input = document.getElementById("storyReplyInput");
   const overlay = document.getElementById("storyReplyOverlay");
-  const replyBar = document.getElementById("replyBar");
 
-  // 🔥 FORÇA TECLADO (primeira vez funciona)
-  if (input) {
-    input.focus();
-  }
+  // 🔥 teclado 100%
+  if (input) input.focus();
 
   setTimeout(() => {
-    if (input) {
-      input.focus();
-      input.click();
-    }
+    input?.focus();
+    input?.click();
 
     if (window.Telegram?.WebApp) {
       Telegram.WebApp.expand();
     }
-  }, 300);
+  }, 250);
 
-  // 🎯 AJUSTE DINÂMICO DO TECLADO
-  window.visualViewport?.addEventListener("resize", () => {
-    const viewportHeight = window.visualViewport.height;
-    const fullHeight = window.innerHeight;
+  // 🎯 comportamento teclado (igual app)
+  const handleViewport = () => {
+    const vh = window.visualViewport.height;
+    const full = window.innerHeight;
+    const keyboard = full - vh;
 
-    const keyboardHeight = fullHeight - viewportHeight;
+    const bar = document.querySelector(".story-input-bar");
 
-    if (keyboardHeight > 0) {
-      replyBar.style.transform = `translateY(-${keyboardHeight}px)`;
+    if (keyboard > 0) {
+      bar.style.transform = `translateY(-${keyboard}px)`;
     } else {
-      replyBar.style.transform = `translateY(0)`;
+      bar.style.transform = `translateY(0)`;
     }
-  });
+  };
+
+  window.visualViewport?.addEventListener("resize", handleViewport);
 
   // fechar ao clicar fora
   overlay.addEventListener("click", (e) => {
@@ -1314,9 +1256,6 @@ function closeStoryReply() {
 
   const video = document.getElementById("storyVideo");
   if (video) video.play();
-
-  // limpa listener do teclado (evita bug acumulado)
-  window.visualViewport?.removeEventListener("resize", () => {});
 }
 
 function quickReply(el) {
