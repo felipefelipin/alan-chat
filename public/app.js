@@ -1171,7 +1171,7 @@ function showStories() {
 }
 
 function openStoryReply() {
-  // ✅ evita duplicação
+  // evita duplicação
   if (document.getElementById("storyReplyOverlay")) return;
 
   const video = document.getElementById("storyVideo");
@@ -1181,46 +1181,76 @@ function openStoryReply() {
     <div id="storyReplyOverlay" style="
       position:fixed;
       inset:0;
-      background:rgba(0,0,0,0.75);
       z-index:999;
       display:flex;
       flex-direction:column;
-      padding-top:40px;
+      justify-content:flex-end;
+      background:rgba(0,0,0,0.4);
+      backdrop-filter:blur(10px);
     ">
 
-      <!-- EMOJIS DE CIMA -->
-      <div style="display:flex; gap:24px; justify-content:center; margin-top:10px;">
-        <span onclick="sendReaction('😍')" style="font-size:44px;">😍</span>
-        <span onclick="sendReaction('😂')" style="font-size:44px;">😂</span>
-        <span onclick="sendReaction('😮')" style="font-size:44px;">😮</span>
-        <span onclick="sendReaction('😢')" style="font-size:44px;">😢</span>
+      <!-- TEXTO -->
+      <div style="
+        position:absolute;
+        top:120px;
+        width:100%;
+        text-align:center;
+        color:#fff;
+        font-size:16px;
+      ">
+        Toque para enviar
       </div>
 
-      <!-- ESPAÇO FLEX (empurra tudo pra baixo corretamente) -->
-      <div style="flex:1;"></div>
+      <!-- EMOJIS CENTRAL -->
+      <div style="
+        position:absolute;
+        top:50%;
+        left:50%;
+        transform:translate(-50%, -50%);
+        display:flex;
+        flex-direction:column;
+        gap:30px;
+        align-items:center;
+      ">
+        <div style="display:flex; gap:24px;">
+          <span onclick="sendReaction('😍')" style="font-size:44px;">😍</span>
+          <span onclick="sendReaction('😂')" style="font-size:44px;">😂</span>
+          <span onclick="sendReaction('😮')" style="font-size:44px;">😮</span>
+          <span onclick="sendReaction('😢')" style="font-size:44px;">😢</span>
+        </div>
 
-      <!-- EMOJIS DE BAIXO -->
-      <div style="display:flex; gap:24px; justify-content:center; margin-bottom:20px;">
-        <span onclick="sendReaction('🙏')" style="font-size:44px;">🙏</span>
-        <span onclick="sendReaction('🎉')" style="font-size:44px;">🎉</span>
-        <span onclick="sendReaction('🔥')" style="font-size:44px;">🔥</span>
-        <span onclick="sendReaction('💯')" style="font-size:44px;">💯</span>
+        <div style="display:flex; gap:24px;">
+          <span onclick="sendReaction('🙏')" style="font-size:44px;">🙏</span>
+          <span onclick="sendReaction('🎉')" style="font-size:44px;">🎉</span>
+          <span onclick="sendReaction('🔥')" style="font-size:44px;">🔥</span>
+          <span onclick="sendReaction('💯')" style="font-size:44px;">💯</span>
+        </div>
       </div>
 
-      <!-- INPUT -->
-      <div style="padding:0 20px; margin-bottom:20px;">
+      <!-- INPUT TOOLBAR -->
+      <div style="
+        width:100%;
+        padding:10px;
+        padding-bottom:env(safe-area-inset-bottom);
+        display:flex;
+        align-items:center;
+        gap:10px;
+      ">
+
+        <span style="font-size:22px;">➕</span>
+
         <div style="
+          flex:1;
           display:flex;
           align-items:center;
-          gap:12px;
-          background:#2a2f38;
-          border-radius:30px;
-          padding:14px 20px;
+          background:#1e1e1e;
+          border-radius:25px;
+          padding:10px 15px;
         ">
           <input 
-            id="storyReplyInput" 
-            type="text" 
-            placeholder="Responder..." 
+            id="storyReplyInput"
+            type="text"
+            placeholder="Mensagem..."
             style="
               flex:1;
               background:transparent;
@@ -1229,32 +1259,24 @@ function openStoryReply() {
               font-size:16px;
               outline:none;
             "
-          >
-          <span onclick="sendStoryReply()" style="font-size:28px; color:#ff4d94;">❤️</span>
+          />
+          <span style="font-size:20px;">😊</span>
         </div>
-      </div>
 
-      <!-- BOTÃO FECHAR -->
-      <button onclick="closeStoryReply()" style="
-        position:absolute;
-        top:20px;
-        right:20px;
-        background:none;
-        border:0;
-        color:#fff;
-        font-size:28px;
-      ">✕</button>
+        <span style="font-size:22px;">📷</span>
+        <span style="font-size:22px;">🎤</span>
+
+      </div>
 
     </div>
   `;
 
-  // ✅ injeta direto (sem wrapper bugado)
   document.body.insertAdjacentHTML("beforeend", replyHTML);
 
   const input = document.getElementById("storyReplyInput");
   const overlay = document.getElementById("storyReplyOverlay");
 
-  // ✅ abre teclado corretamente
+  // abre teclado
   setTimeout(() => {
     if (input) {
       input.focus();
@@ -1266,7 +1288,7 @@ function openStoryReply() {
     }
   }, 300);
 
-  // ✅ clique fora fecha
+  // clique fora fecha
   overlay.addEventListener("click", (e) => {
     if (e.target.id === "storyReplyOverlay") {
       closeStoryReply();
