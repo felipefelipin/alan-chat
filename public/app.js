@@ -1185,8 +1185,7 @@ function openStoryReply() {
       display:flex;
       flex-direction:column;
       justify-content:flex-end;
-      background:rgba(0,0,0,0.4);
-      backdrop-filter:blur(10px);
+      background:rgba(0,0,0,0.3);
     ">
 
       <!-- TEXTO -->
@@ -1201,7 +1200,7 @@ function openStoryReply() {
         Toque para enviar
       </div>
 
-      <!-- EMOJIS CENTRAL -->
+      <!-- EMOJIS -->
       <div style="
         position:absolute;
         top:50%;
@@ -1213,28 +1212,22 @@ function openStoryReply() {
         align-items:center;
       ">
         <div style="display:flex; gap:24px;">
-          <span onclick="sendReaction('😍')" style="font-size:44px;">😍</span>
-          <span onclick="sendReaction('😂')" style="font-size:44px;">😂</span>
-          <span onclick="sendReaction('😮')" style="font-size:44px;">😮</span>
-          <span onclick="sendReaction('😢')" style="font-size:44px;">😢</span>
+          😍 😂 😮 😢
         </div>
-
         <div style="display:flex; gap:24px;">
-          <span onclick="sendReaction('🙏')" style="font-size:44px;">🙏</span>
-          <span onclick="sendReaction('🎉')" style="font-size:44px;">🎉</span>
-          <span onclick="sendReaction('🔥')" style="font-size:44px;">🔥</span>
-          <span onclick="sendReaction('💯')" style="font-size:44px;">💯</span>
+          🙏 🎉 🔥 💯
         </div>
       </div>
 
-      <!-- INPUT TOOLBAR -->
-      <div style="
+      <!-- INPUT BAR -->
+      <div id="replyBar" style="
         width:100%;
         padding:10px;
         padding-bottom:env(safe-area-inset-bottom);
         display:flex;
         align-items:center;
         gap:10px;
+        transition: transform 0.25s ease;
       ">
 
         <span style="font-size:22px;">➕</span>
@@ -1260,14 +1253,13 @@ function openStoryReply() {
               outline:none;
             "
           />
-          <span style="font-size:20px;">😊</span>
+          <span>😊</span>
         </div>
 
-        <span style="font-size:22px;">📷</span>
-        <span style="font-size:22px;">🎤</span>
+        <span>📷</span>
+        <span>🎤</span>
 
       </div>
-
     </div>
   `;
 
@@ -1275,8 +1267,13 @@ function openStoryReply() {
 
   const input = document.getElementById("storyReplyInput");
   const overlay = document.getElementById("storyReplyOverlay");
+  const replyBar = document.getElementById("replyBar");
 
-  // abre teclado
+  // 🔥 FORÇA TECLADO (primeira vez funciona)
+  if (input) {
+    input.focus();
+  }
+
   setTimeout(() => {
     if (input) {
       input.focus();
@@ -1288,7 +1285,21 @@ function openStoryReply() {
     }
   }, 300);
 
-  // clique fora fecha
+  // 🎯 AJUSTE DINÂMICO DO TECLADO
+  window.visualViewport?.addEventListener("resize", () => {
+    const viewportHeight = window.visualViewport.height;
+    const fullHeight = window.innerHeight;
+
+    const keyboardHeight = fullHeight - viewportHeight;
+
+    if (keyboardHeight > 0) {
+      replyBar.style.transform = `translateY(-${keyboardHeight}px)`;
+    } else {
+      replyBar.style.transform = `translateY(0)`;
+    }
+  });
+
+  // fechar ao clicar fora
   overlay.addEventListener("click", (e) => {
     if (e.target.id === "storyReplyOverlay") {
       closeStoryReply();
@@ -1303,6 +1314,9 @@ function closeStoryReply() {
 
   const video = document.getElementById("storyVideo");
   if (video) video.play();
+
+  // limpa listener do teclado (evita bug acumulado)
+  window.visualViewport?.removeEventListener("resize", () => {});
 }
 
 function quickReply(el) {
