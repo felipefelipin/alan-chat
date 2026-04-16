@@ -1112,14 +1112,22 @@ function showIncomingCall() {
 function showStories() {
   console.log("📸 Stories aberto");
 
+  const video = document.getElementById("storyVideo");
+
+  // 🔥 define vídeo corretamente
+  video.src = "/assets/story-video.mp4?v=" + Date.now();
+  video.style.display = "block";
+  video.play().catch(() => {});
+
   app.innerHTML = `
-    <div class="full" style="background:#000; position:relative; overflow:hidden; height:100vh;">
-      <!-- Barra de progresso -->
+    <div class="full" style="background:transparent; position:relative; overflow:hidden; height:100vh;">
+
+      <!-- PROGRESS -->
       <div style="position:absolute; top:0; left:0; right:0; height:3px; background:rgba(255,255,255,0.25); z-index:20;">
-        <div id="progressBar" style="height:100%; width:0%; background:#fff; transition:width linear;"></div>
+        <div id="progressBar" style="height:100%; width:0%; background:#fff;"></div>
       </div>
 
-      <!-- Cabeçalho -->
+      <!-- HEADER -->
       <div style="position:absolute; top:20px; left:16px; right:16px; display:flex; align-items:center; z-index:30;">
         <button onclick="mountChat()" style="background:none; border:0; color:#fff; font-size:28px; margin-right:12px;">←</button>
         
@@ -1133,39 +1141,26 @@ function showStories() {
         </div>
       </div>
 
-      <!-- Vídeo -->
-      <div id="storyContainer" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#000; z-index:10;">
-        <video 
-          id="storyVideo"
-          src="/assets/story-video.mp4" 
-          autoplay 
-          muted 
-          loop 
-          playsinline 
-          preload="auto"
-          style="max-width:100%; max-height:100%; object-fit:contain;"
-        ></video>
-      </div>
-
-      <!-- Barra Responder -->
-      <div id="replyBar" style="position:absolute; bottom:0; left:0; right:0; padding:12px 16px 20px; background:linear-gradient(to top, rgba(0,0,0,0.95), transparent); z-index:40;">
-        <div onclick="openStoryReply()" style="background:rgba(255,255,255,0.15); border-radius:30px; padding:14px 20px; color:#fff; display:flex; align-items:center; cursor:pointer;">
-          <span style="flex:1; font-size:15px;">Responder...</span>
+      <!-- RESPOSTA -->
+      <div id="replyBar" style="position:absolute; bottom:0; left:0; right:0; padding:12px 16px 20px; background:linear-gradient(to top, rgba(0,0,0,0.9), transparent); z-index:40;">
+        <div onclick="openStoryReply()" style="background:rgba(255,255,255,0.15); border-radius:30px; padding:14px 20px; color:#fff; display:flex; align-items:center;">
+          <span style="flex:1;">Responder...</span>
           <span style="font-size:24px;">❤️</span>
         </div>
       </div>
+
     </div>
   `;
 
-  const video = document.getElementById("storyVideo");
-
-  video.onloadedmetadata = function() {
+  video.onloadedmetadata = function () {
     const duration = video.duration || 10;
     const progress = document.getElementById("progressBar");
+
     if (progress) {
-      progress.style.transitionDuration = duration + "s";
+      progress.style.transition = `width ${duration}s linear`;
       progress.style.width = "100%";
     }
+
     video.onended = () => mountChat();
   };
 }
@@ -1174,17 +1169,18 @@ function openStoryReply() {
   // evita duplicação
   if (document.getElementById("storyReplyOverlay")) return;
 
-  const video = document.getElementById("storyVideo");
+  let video = document.getElementById("storyVideo");
+
+  // 🔥 GARANTE QUE O VÍDEO ESTÁ NO BODY (CRÍTICO)
+  if (video && video.parentElement !== document.body) {
+    document.body.appendChild(video);
+  }
+
+  // pausa vídeo
   if (video) video.pause();
 
-  // 🔥 TRAVA VIEWPORT (SOLUÇÃO REAL)
-  const lockViewport = () => {
-    const height = window.innerHeight;
-    document.body.style.height = height + "px";
-    document.body.style.overflow = "hidden";
-  };
-
-  lockViewport();
+  // 🔥 TRAVA LAYOUT (impede reflow do body)
+  document.body.style.overflow = "hidden";
 
   const html = `
     <div id="storyReplyOverlay">
@@ -1223,10 +1219,10 @@ function openStoryReply() {
   const overlay = document.getElementById("storyReplyOverlay");
   const replyBar = document.getElementById("replyBar");
 
-  // 🔥 ESCONDE INPUT ATÉ TECLADO
+  // 🔥 ESCONDE INPUT ATÉ TECLADO ABRIR
   replyBar.style.opacity = "0";
 
-  // 🔥 ABRE TECLADO (100%)
+  // 🔥 FORÇA ABERTURA DO TECLADO
   input.focus();
 
   setTimeout(() => {
@@ -1238,7 +1234,7 @@ function openStoryReply() {
     }
   }, 200);
 
-  // 🔥 CONTROLE DO TECLADO (PERFEITO)
+  // 🔥 DETECÇÃO REAL DO TECLADO
   const handleViewport = () => {
     const vh = window.visualViewport.height;
     const full = window.innerHeight;
@@ -1251,9 +1247,6 @@ function openStoryReply() {
       replyBar.style.opacity = "0";
       replyBar.style.transform = `translateY(0)`;
     }
-
-    // 🔥 MANTÉM VIEWPORT TRAVADO
-    document.body.style.height = window.innerHeight + "px";
   };
 
   window.visualViewport?.addEventListener("resize", handleViewport);
@@ -1273,8 +1266,7 @@ function closeStoryReply() {
   const video = document.getElementById("storyVideo");
   if (video) video.play();
 
-  // 🔥 RESTAURA VIEWPORT
-  document.body.style.height = "";
+  // 🔥 RESTAURA SCROLL
   document.body.style.overflow = "";
 }
 

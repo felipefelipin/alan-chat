@@ -2,29 +2,48 @@
 <html lang="pt-br">
 <head>
   <meta charset="utf-8" />
+
   <meta
     name="viewport"
     content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"
   />
+
   <title>Alana</title>
 
+  <!-- cache control -->
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, proxy-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
+  <!-- mobile config -->
   <meta name="theme-color" content="#0a0b0d" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="mobile-web-app-capable" content="yes" />
 
+  <!-- CSS -->
   <link id="appcss" rel="stylesheet" href="./styles.css?v=init" />
 </head>
 
 <body>
+
+  <!-- 🔥 VÍDEO FIXO (ESSENCIAL PRA NÃO QUEBRAR) -->
+  <video
+    id="storyVideo"
+    playsinline
+    webkit-playsinline
+    muted
+    preload="auto"
+    style="display:none;"
+  ></video>
+
+  <!-- APP -->
   <div id="app"></div>
 
+  <!-- Telegram -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
+  <!-- Boot loader -->
   <script>
     async function boot() {
       let v = Date.now();
@@ -35,9 +54,11 @@
         if (j && (j.v || j.v === 0)) v = j.v;
       } catch {}
 
+      // atualiza CSS
       const css = document.getElementById("appcss");
       css.href = "./styles.css?v=" + encodeURIComponent(v);
 
+      // carrega app.js
       const s = document.createElement("script");
       s.src = "./app.js?v=" + encodeURIComponent(v);
       s.defer = true;
@@ -46,5 +67,6 @@
 
     boot();
   </script>
+
 </body>
 </html>
