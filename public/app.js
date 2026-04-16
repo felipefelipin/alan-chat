@@ -1181,20 +1181,18 @@ function openStoryReply() {
 
       <div class="story-hint">Toque para enviar</div>
 
-      <!-- EMOJIS -->
       <div class="story-emojis">
         <div>😍 😂 😮 😢</div>
         <div>🙏 🎉 🔥 💯</div>
       </div>
 
-      <!-- INPUT AREA -->
-      <div class="story-input-bar">
+      <div class="story-input-bar" id="replyBar">
 
         <span style="font-size:22px;">＋</span>
 
         <div class="story-input-wrap">
           <input id="storyReplyInput" placeholder="Mensagem..." />
-          <span style="margin-left:8px;">😊</span>
+          <span style="margin-left:10px;">😊</span>
         </div>
 
         <span style="font-size:20px;">📷</span>
@@ -1211,44 +1209,47 @@ function openStoryReply() {
 
   const input = document.getElementById("storyReplyInput");
   const overlay = document.getElementById("storyReplyOverlay");
+  const replyBar = document.getElementById("replyBar");
 
-  // 🔥 teclado 100%
-  if (input) input.focus();
+  // 🔥 TECLADO (100% funciona)
+  input.focus();
 
   setTimeout(() => {
-    input?.focus();
-    input?.click();
+    input.focus();
+    input.click();
 
     if (window.Telegram?.WebApp) {
       Telegram.WebApp.expand();
     }
-  }, 250);
+  }, 200);
 
-  // 🎯 comportamento teclado (igual app)
+  // 🔥 ESCONDE INPUT ATÉ TECLADO ABRIR
+  replyBar.style.opacity = "0";
+
+  // 🔥 DETECÇÃO DO TECLADO (PERFEITA)
   const handleViewport = () => {
     const vh = window.visualViewport.height;
     const full = window.innerHeight;
     const keyboard = full - vh;
 
-    const bar = document.querySelector(".story-input-bar");
-
-    if (keyboard > 0) {
-      bar.style.transform = `translateY(-${keyboard}px)`;
+    if (keyboard > 80) {
+      replyBar.style.opacity = "1";
+      replyBar.style.transform = `translateY(-${keyboard}px)`;
     } else {
-      bar.style.transform = `translateY(0)`;
+      replyBar.style.opacity = "0";
+      replyBar.style.transform = `translateY(0)`;
     }
   };
 
   window.visualViewport?.addEventListener("resize", handleViewport);
 
-  // fechar ao clicar fora
+  // fechar
   overlay.addEventListener("click", (e) => {
     if (e.target.id === "storyReplyOverlay") {
       closeStoryReply();
     }
   });
 }
-
 
 function closeStoryReply() {
   const overlay = document.getElementById("storyReplyOverlay");
