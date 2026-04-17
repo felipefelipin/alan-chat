@@ -1288,36 +1288,16 @@ function openStoryReply() {
   if (document.getElementById("storyReplyOverlay")) return;
 
   const video = document.getElementById("storyVideo");
+  const oldBar = document.getElementById("replyBar");
 
   // pausa vídeo
   if (video) video.pause();
 
-  // 🔥 PACOTE ANTI-DELAY TOTAL
-  document.body.style.overflow = "hidden";
-  document.body.style.position = "fixed";
-  document.body.style.width = "100%";
-  document.body.style.height = "100%";
-  document.body.style.top = "0";
-  document.body.style.left = "0";
-
-  document.documentElement.style.height = "100%";
-  document.documentElement.style.overflow = "hidden";
-
-  // trava vídeo real
-  if (video) {
-    video.style.position = "fixed";
-    video.style.top = "0";
-    video.style.left = "0";
-    video.style.width = "100vw";
-    video.style.height = "100vh";
-    video.style.objectFit = "cover";
-    video.style.transform = "translateZ(0)";
-    video.style.willChange = "transform";
-  }
-
   // esconde barra antiga
-  const oldBar = document.getElementById("replyBar");
   if (oldBar) oldBar.style.display = "none";
+
+  // trava scroll leve (sem body fixed pesado)
+  document.body.style.overflow = "hidden";
 
   const html = `
     <div id="storyReplyOverlay" style="
@@ -1353,7 +1333,6 @@ function openStoryReply() {
         <span class="plus-btn">＋</span>
 
         <div class="story-input-wrap">
-
           <input
             id="storyReplyInput"
             type="text"
@@ -1363,7 +1342,6 @@ function openStoryReply() {
             autocapitalize="off"
             spellcheck="false"
           />
-
         </div>
 
         <span class="side-icon">
@@ -1388,13 +1366,16 @@ function openStoryReply() {
 
   document.body.insertAdjacentHTML("beforeend", html);
 
-  const input = document.getElementById("storyReplyInput");
   const overlay = document.getElementById("storyReplyOverlay");
+  const input = document.getElementById("storyReplyInput");
   const replyBar = document.getElementById("replyBarKeyboard");
 
-  replyBar.style.opacity = "0";
+  // estado inicial
+  replyBar.style.opacity = "1";
+  replyBar.style.bottom = "10px";
+  replyBar.style.transform = "translateY(0)";
 
-  // 🔥 TURBO KEYBOARD
+  // 🔥 teclado turbo universal
   input.focus();
   input.click();
 
@@ -1414,7 +1395,9 @@ function openStoryReply() {
     input.click();
   });
 
-  // teclado detecta altura
+  // 🔥 detector profissional sem lag
+  let keyboardOpen = false;
+
   const handleViewport = () => {
     const vh = window.visualViewport
       ? window.visualViewport.height
@@ -1423,19 +1406,29 @@ function openStoryReply() {
     const full = window.innerHeight;
     const keyboard = full - vh;
 
-    if (keyboard > 80) {
-      replyBar.style.opacity = "1";
-      replyBar.style.transform = `translateY(-${keyboard}px)`;
-    } else {
-      replyBar.style.opacity = "1";
+    // abriu teclado
+    if (keyboard > 120 && !keyboardOpen) {
+      keyboardOpen = true;
+
+      replyBar.style.transition = "none";
+      replyBar.style.transform = "translateY(-320px)";
+    }
+
+    // fechou teclado
+    if (keyboard < 80 && keyboardOpen) {
+      keyboardOpen = false;
+
+      replyBar.style.transition = "none";
       replyBar.style.transform = "translateY(0)";
     }
   };
 
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener("resize", handleViewport);
-  }
+  window.visualViewport?.addEventListener("resize", handleViewport);
 
+  // salvar listener para remover depois
+  overlay._viewportHandler = handleViewport;
+
+  // clique fora fecha
   overlay.addEventListener("click", (e) => {
     if (e.target.id === "storyReplyOverlay") {
       closeStoryReply();
