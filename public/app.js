@@ -1292,17 +1292,39 @@ function openStoryReply() {
   // pausa vídeo
   if (video) video.pause();
 
-  // trava scroll
+  // 🔥 PACOTE ANTI-DELAY TOTAL
   document.body.style.overflow = "hidden";
-  document.documentElement.style.height = "100vh";
-document.body.style.height = "100vh";
+  document.body.style.position = "fixed";
+  document.body.style.width = "100%";
+  document.body.style.height = "100%";
+  document.body.style.top = "0";
+  document.body.style.left = "0";
+
+  document.documentElement.style.height = "100%";
+  document.documentElement.style.overflow = "hidden";
+
+  // trava vídeo real
+  if (video) {
+    video.style.position = "fixed";
+    video.style.top = "0";
+    video.style.left = "0";
+    video.style.width = "100vw";
+    video.style.height = "100vh";
+    video.style.objectFit = "cover";
+    video.style.transform = "translateZ(0)";
+    video.style.willChange = "transform";
+  }
 
   // esconde barra antiga
   const oldBar = document.getElementById("replyBar");
   if (oldBar) oldBar.style.display = "none";
 
   const html = `
-    <div id="storyReplyOverlay">
+    <div id="storyReplyOverlay" style="
+      position:fixed;
+      inset:0;
+      z-index:9999;
+    ">
 
       <div class="story-hint">Toque para enviar</div>
 
@@ -1336,7 +1358,6 @@ document.body.style.height = "100vh";
             id="storyReplyInput"
             type="text"
             placeholder=""
-            readonly
             autocomplete="off"
             autocorrect="off"
             autocapitalize="off"
@@ -1371,15 +1392,9 @@ document.body.style.height = "100vh";
   const overlay = document.getElementById("storyReplyOverlay");
   const replyBar = document.getElementById("replyBarKeyboard");
 
-  // começa invisível até teclado subir
   replyBar.style.opacity = "0";
 
-  // 🔥 TURBO UNIVERSAL iPhone + Android
-  input.removeAttribute("readonly");
-  input.style.opacity = "1";
-  input.style.pointerEvents = "auto";
-
-  // foco imediato no clique
+  // 🔥 TURBO KEYBOARD
   input.focus();
   input.click();
 
@@ -1394,17 +1409,9 @@ document.body.style.height = "100vh";
     Telegram.WebApp.expand();
   }
 
-  // reforço no próximo frame (sem delay)
   requestAnimationFrame(() => {
     input.focus({ preventScroll: true });
     input.click();
-
-    try {
-      input.setSelectionRange(
-        input.value.length,
-        input.value.length
-      );
-    } catch (e) {}
   });
 
   // teclado detecta altura
@@ -1429,7 +1436,6 @@ document.body.style.height = "100vh";
     window.visualViewport.addEventListener("resize", handleViewport);
   }
 
-  // clique fora fecha
   overlay.addEventListener("click", (e) => {
     if (e.target.id === "storyReplyOverlay") {
       closeStoryReply();
