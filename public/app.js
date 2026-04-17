@@ -1345,32 +1345,33 @@ function openStoryReply() {
   // começa invisível até teclado subir
   replyBar.style.opacity = "0";
 
-  // 🔥 abre teclado automaticamente (versão forte)
+  // 🔥 MÉTODO DEFINITIVO iPhone + Android
+  input.removeAttribute("readonly");
+
+  input.focus();
+  input.click();
+
+  try {
+    input.setSelectionRange(0, 0);
+  } catch (e) {}
+
+  if (window.Telegram?.WebApp) {
+    Telegram.WebApp.expand();
+  }
+
   setTimeout(() => {
-    if (window.Telegram?.WebApp) {
-      Telegram.WebApp.expand();
-    }
-
-    input.removeAttribute("readonly");
-
-    input.focus({ preventScroll: true });
+    input.focus();
     input.click();
 
-    setTimeout(() => {
-      input.focus({ preventScroll: true });
-      input.click();
+    try {
+      input.setSelectionRange(
+        input.value.length,
+        input.value.length
+      );
+    } catch (e) {}
+  }, 120);
 
-      try {
-        input.setSelectionRange(
-          input.value.length,
-          input.value.length
-        );
-      } catch (e) {}
-    }, 180);
-
-  }, 180);
-
-  // controla teclado
+  // teclado detecta altura
   const handleViewport = () => {
     const vh = window.visualViewport
       ? window.visualViewport.height
@@ -1380,11 +1381,9 @@ function openStoryReply() {
     const keyboard = full - vh;
 
     if (keyboard > 80) {
-      // teclado aberto
       replyBar.style.opacity = "1";
       replyBar.style.transform = `translateY(-${keyboard}px)`;
     } else {
-      // teclado fechado
       replyBar.style.opacity = "1";
       replyBar.style.transform = "translateY(0)";
     }
