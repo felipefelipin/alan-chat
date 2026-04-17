@@ -1069,44 +1069,38 @@ button:disabled{
 }
 
 /* INPUT BAR */
-.story-input-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  padding-bottom: calc(12px + env(safe-area-inset-bottom));
-  width: 100%;
+.story-input-bar{
+  position:absolute;
+  left:12px;
+  right:12px;
+  bottom:10px;
+  display:flex;
+  align-items:center;
+  z-index:999;
 }
 
-/* INPUT */
-.story-input-wrap {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  background: rgba(30,30,30,0.85);
-  backdrop-filter: blur(6px);
-  border-radius: 30px;
-  padding: 12px 16px;
+.story-input-wrap{
+  flex:1;
+  height:54px;
+  border-radius:999px;
+  background:rgba(30,30,30,.88);
+  backdrop-filter:blur(12px);
+  display:flex;
+  align-items:center;
+  padding:0 16px;
 }
 
-/* INPUT TEXTO */
-#storyReplyInput {
-  flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: #fff;
-  font-size: 16px;
+.story-input-wrap input{
+  width:100%;
 }
 
-/* ❤️ BOTÃO */
-.story-heart {
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  background: rgba(30,30,30,0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
+.story-heart{
+  width:54px;
+  height:54px;
+  border-radius:50%;
+  background:rgba(30,30,30,.88);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:28px;
 }

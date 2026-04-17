@@ -1301,23 +1301,61 @@ function openStoryReply() {
 </div>
 
       <!-- INPUT -->
-      <div class="story-input-bar" id="replyBarKeyboard">
+<div class="story-input-bar" id="replyBar">
 
-        <span style="font-size:22px;">＋</span>
+  <span style="
+    font-size:30px;
+    color:#fff;
+    margin-right:12px;
+    line-height:1;
+  ">＋</span>
 
-        <div class="story-input-wrap">
-          <input id="storyReplyInput" placeholder="Mensagem..." />
-          <span style="margin-left:10px;">😊</span>
-        </div>
+  <div class="story-input-wrap">
 
-        <span style="font-size:20px;">📷</span>
-        <span style="font-size:20px;">🎤</span>
+    <div style="
+      width:3px;
+      height:30px;
+      background:#20d463;
+      border-radius:999px;
+      margin-right:12px;
+      flex-shrink:0;
+    "></div>
 
-        <div class="story-heart">❤️</div>
+    <input
+      id="storyReplyInput"
+      placeholder=""
+      style="
+        flex:1;
+        background:transparent;
+        border:none;
+        outline:none;
+        color:#fff;
+        font-size:28px;
+      "
+    />
 
-      </div>
+    <span style="
+      font-size:28px;
+      margin-left:10px;
+      opacity:.95;
+    ">🗨️</span>
 
-    </div>
+  </div>
+
+  <span style="
+    font-size:30px;
+    margin-left:14px;
+    margin-right:16px;
+  ">📷</span>
+
+  <span style="
+    font-size:30px;
+    margin-right:16px;
+  ">🎤</span>
+
+  <div class="story-heart">❤️</div>
+
+</div>
   `;
 
   document.body.insertAdjacentHTML("beforeend", html);
