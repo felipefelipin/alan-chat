@@ -1201,9 +1201,22 @@ function openStoryReply() {
 
       <!-- EMOJIS -->
       <div class="story-emojis">
-        <div>😍 😂 😮 😢</div>
-        <div>🙏 👏 🎉 💯</div>
-      </div>
+
+  <div class="emoji-row">
+    <span>😍</span>
+    <span>😂</span>
+    <span>😮</span>
+    <span>😢</span>
+  </div>
+
+  <div class="emoji-row">
+    <span>🙏</span>
+    <span>👏</span>
+    <span>🎉</span>
+    <span>💯</span>
+  </div>
+
+</div>
 
       <!-- INPUT -->
       <div class="story-input-bar" id="replyBarKeyboard">
