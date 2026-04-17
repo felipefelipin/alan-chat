@@ -1447,9 +1447,24 @@ function closeStoryReply() {
   const overlay = document.getElementById("storyReplyOverlay");
   if (overlay) overlay.remove();
 
+  // fecha teclado
   const input = document.getElementById("storyReplyInput");
-  if (input) input.blur();
+  if (input) {
+    input.blur();
+  }
 
+  // 🔥 REMOVE TRAVA ANTI-DELAY
+  document.body.style.overflow = "";
+  document.body.style.position = "";
+  document.body.style.width = "";
+  document.body.style.height = "";
+  document.body.style.top = "";
+  document.body.style.left = "";
+
+  document.documentElement.style.height = "";
+  document.documentElement.style.overflow = "";
+
+  // volta barra antiga
   const oldBar = document.getElementById("replyBar");
   if (oldBar) {
     oldBar.style.display = "block";
@@ -1457,10 +1472,20 @@ function closeStoryReply() {
     oldBar.style.transform = "translateY(0)";
   }
 
+  // restaura vídeo
   const video = document.getElementById("storyVideo");
-  if (video) video.play().catch(() => {});
+  if (video) {
+    video.style.position = "fixed";
+    video.style.top = "0";
+    video.style.left = "0";
+    video.style.width = "100vw";
+    video.style.height = "100vh";
+    video.style.objectFit = "cover";
+    video.style.transform = "";
+    video.style.willChange = "";
 
-  document.body.style.overflow = "";
+    video.play().catch(() => {});
+  }
 }
 
 function exitStories() {
