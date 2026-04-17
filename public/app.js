@@ -1530,11 +1530,9 @@ function exitStories() {
 function sendStoryReaction(emojiEl) {
   if (!emojiEl) return;
 
-  const avatar =
-    document.querySelector("#storyReplyOverlay .story-avatar-target") ||
-    document.querySelector('[onclick="exitStories()"]')
-      ?.parentElement
-      ?.querySelector("img");
+  const avatar = document.querySelector(
+    '#storyVideo + #app img, .full img'
+  );
 
   if (!avatar) return;
 
@@ -1544,19 +1542,27 @@ function sendStoryReaction(emojiEl) {
   const to = avatar.getBoundingClientRect();
 
   const fly = document.createElement("div");
-  fly.className = "story-fly-emoji";
   fly.textContent = emoji;
+  fly.className = "story-fly-emoji";
 
+  fly.style.position = "fixed";
   fly.style.left = from.left + from.width / 2 + "px";
   fly.style.top = from.top + from.height / 2 + "px";
+  fly.style.zIndex = "99999";
+  fly.style.fontSize = "34px";
+  fly.style.pointerEvents = "none";
+  fly.style.transition =
+    "transform .62s cubic-bezier(.22,.8,.22,1), opacity .62s ease";
 
   document.body.appendChild(fly);
 
   const dx =
-    to.left + to.width / 2 - (from.left + from.width / 2);
+    to.left + to.width / 2 -
+    (from.left + from.width / 2);
 
   const dy =
-    to.top + to.height / 2 - (from.top + from.height / 2);
+    to.top + to.height / 2 -
+    (from.top + from.height / 2);
 
   requestAnimationFrame(() => {
     fly.style.transform =
@@ -1564,17 +1570,34 @@ function sendStoryReaction(emojiEl) {
     fly.style.opacity = "0";
   });
 
-  // pulse no avatar
-  avatar.classList.add("story-avatar-hit");
+  // pulso no avatar
+  avatar.animate(
+    [
+      { transform: "scale(1)" },
+      { transform: "scale(1.12)" },
+      { transform: "scale(1)" }
+    ],
+    {
+      duration: 380,
+      easing: "ease-out"
+    }
+  );
 
-  setTimeout(() => {
-    avatar.classList.remove("story-avatar-hit");
-  }, 420);
+  // clique visual no emoji
+  emojiEl.animate(
+    [
+      { transform: "scale(1)" },
+      { transform: "scale(.86)" },
+      { transform: "scale(1)" }
+    ],
+    {
+      duration: 180
+    }
+  );
 
-  // remove emoji voando
   setTimeout(() => {
     fly.remove();
-  }, 650);
+  }, 700);
 }
 
 function quickReply(el) {
