@@ -1116,11 +1116,17 @@ button:disabled{
 
 .side-icon{
   width:32px;
-  text-align:center;
-  font-size:28px;
+  height:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   margin-left:12px;
-  color:#fff;
   flex-shrink:0;
+}
+
+.side-icon svg{
+  width:28px;
+  height:28px;
 }
 
 .story-hint{

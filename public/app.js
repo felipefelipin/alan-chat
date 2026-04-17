@@ -1327,8 +1327,20 @@ function openStoryReply() {
 
         </div>
 
-        <span class="side-icon">📷</span>
-        <span class="side-icon">🎤</span>
+<span class="side-icon">
+<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<path d="M4 7h4l2-2h4l2 2h4v12H4z"/>
+<circle cx="12" cy="13" r="3.5"/>
+</svg>
+</span>
+
+<span class="side-icon">
+<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<rect x="9" y="3" width="6" height="12" rx="3"/>
+<path d="M6 11a6 6 0 0 0 12 0"/>
+<path d="M12 17v4"/>
+</svg>
+</span>
 
       </div>
 
