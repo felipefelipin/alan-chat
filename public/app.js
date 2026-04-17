@@ -1294,6 +1294,8 @@ function openStoryReply() {
 
   // trava scroll
   document.body.style.overflow = "hidden";
+  document.documentElement.style.height = "100vh";
+document.body.style.height = "100vh";
 
   // esconde barra antiga
   const oldBar = document.getElementById("replyBar");
