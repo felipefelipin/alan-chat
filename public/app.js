@@ -1328,21 +1328,21 @@ function openStoryReply() {
       <!-- EMOJIS -->
       <div class="story-emojis">
 
-        <div class="emoji-row">
-          <span>😍</span>
-          <span>😂</span>
-          <span>😮</span>
-          <span>😢</span>
-        </div>
+  <div class="emoji-row">
+    <span onclick="sendStoryReaction(this)">😍</span>
+    <span onclick="sendStoryReaction(this)">😂</span>
+    <span onclick="sendStoryReaction(this)">😮</span>
+    <span onclick="sendStoryReaction(this)">😢</span>
+  </div>
 
-        <div class="emoji-row">
-          <span>🙏</span>
-          <span>👏</span>
-          <span>🎉</span>
-          <span>💯</span>
-        </div>
+  <div class="emoji-row">
+    <span onclick="sendStoryReaction(this)">🙏</span>
+    <span onclick="sendStoryReaction(this)">👏</span>
+    <span onclick="sendStoryReaction(this)">🎉</span>
+    <span onclick="sendStoryReaction(this)">💯</span>
+  </div>
 
-      </div>
+</div>
 
       <!-- INPUT -->
       <div class="story-input-bar" id="replyBarKeyboard">
