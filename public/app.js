@@ -1323,7 +1323,7 @@ function openStoryReply() {
             spellcheck="false"
           />
 
-          <span class="inside-icon">🗨️</span>
+         
 
         </div>
 
