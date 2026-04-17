@@ -1059,7 +1059,7 @@ button:disabled{
 .story-emojis .emoji-row{
   display:flex;
   justify-content:center;
-  gap: 36px;
+  gap: 34px;
 }
 
 .story-emojis span{
@@ -1071,36 +1071,73 @@ button:disabled{
 /* INPUT BAR */
 .story-input-bar{
   position:absolute;
-  left:12px;
-  right:12px;
+  left:10px;
+  right:10px;
   bottom:10px;
   display:flex;
   align-items:center;
   z-index:999;
 }
 
+.plus-btn{
+  color:#fff;
+  font-size:34px;
+  margin-right:12px;
+  line-height:1;
+}
+
 .story-input-wrap{
   flex:1;
-  height:54px;
+  height:48px;
   border-radius:999px;
-  background:rgba(30,30,30,.88);
+  background:rgba(20,20,20,.92);
   backdrop-filter:blur(12px);
   display:flex;
   align-items:center;
-  padding:0 16px;
+  padding:0 14px;
+}
+
+.cursor-green{
+  width:3px;
+  height:28px;
+  border-radius:999px;
+  background:#1ed760;
+  margin-right:12px;
+  flex-shrink:0;
 }
 
 .story-input-wrap input{
-  width:100%;
+  flex:1;
+  background:transparent !important;
+  border:none !important;
+  outline:none !important;
+  box-shadow:none !important;
+  color:#fff;
+  font-size:22px;
+  padding:0;
+  margin:0;
+  appearance:none;
+  -webkit-appearance:none;
 }
 
-.story-heart{
-  width:54px;
-  height:54px;
-  border-radius:50%;
-  background:rgba(30,30,30,.88);
-  display:flex;
-  align-items:center;
-  justify-content:center;
+.inside-icon{
+  font-size:24px;
+  opacity:.95;
+  margin-left:8px;
+}
+
+.side-icon{
   font-size:28px;
+  margin-left:14px;
+  color:#fff;
+}
+
+.story-hint{
+  position:absolute;
+  top:28%;
+  left:0;
+  right:0;
+  text-align:center;
+  color:#fff;
+  font-size:18px;
 }

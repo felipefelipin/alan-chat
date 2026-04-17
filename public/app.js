@@ -1265,29 +1265,22 @@ function showStories() {
 }
 
 function openStoryReply() {
-  // evita duplicação
   if (document.getElementById("storyReplyOverlay")) return;
 
   const video = document.getElementById("storyVideo");
-
-  // pausa vídeo
   if (video) video.pause();
 
-  // trava scroll
   document.body.style.overflow = "hidden";
 
-  // esconde barra antiga
-  const oldReplyBar = document.getElementById("replyBar");
-  if (oldReplyBar) oldReplyBar.style.display = "none";
+  const oldBar = document.getElementById("replyBar");
+  if (oldBar) oldBar.style.display = "none";
 
   const html = `
     <div id="storyReplyOverlay">
 
       <div class="story-hint">Toque para enviar</div>
 
-      <!-- EMOJIS -->
       <div class="story-emojis">
-
         <div class="emoji-row">
           <span>😍</span>
           <span>😂</span>
@@ -1301,10 +1294,8 @@ function openStoryReply() {
           <span>🎉</span>
           <span>💯</span>
         </div>
-
       </div>
 
-      <!-- INPUT -->
       <div class="story-input-bar" id="replyBarKeyboard">
 
         <span class="plus-btn">＋</span>
@@ -1341,13 +1332,8 @@ function openStoryReply() {
   const overlay = document.getElementById("storyReplyOverlay");
   const replyBar = document.getElementById("replyBarKeyboard");
 
-  // começa invisível até teclado abrir
   replyBar.style.opacity = "0";
 
-  // foco inicial
-  input.focus();
-
-  // força teclado abrir automaticamente
   setTimeout(() => {
     input.focus();
     input.click();
@@ -1359,9 +1345,8 @@ function openStoryReply() {
     if (window.Telegram?.WebApp) {
       Telegram.WebApp.expand();
     }
-  }, 50);
+  }, 60);
 
-  // controla teclado
   const handleViewport = () => {
     const vh = window.visualViewport
       ? window.visualViewport.height
@@ -1371,11 +1356,9 @@ function openStoryReply() {
     const keyboard = full - vh;
 
     if (keyboard > 80) {
-      // teclado aberto
       replyBar.style.opacity = "1";
       replyBar.style.transform = `translateY(-${keyboard}px)`;
     } else {
-      // teclado fechado
       replyBar.style.opacity = "1";
       replyBar.style.transform = "translateY(0)";
     }
@@ -1385,7 +1368,6 @@ function openStoryReply() {
     window.visualViewport.addEventListener("resize", handleViewport);
   }
 
-  // clique fora fecha
   overlay.addEventListener("click", (e) => {
     if (e.target.id === "storyReplyOverlay") {
       closeStoryReply();
@@ -1397,27 +1379,19 @@ function closeStoryReply() {
   const overlay = document.getElementById("storyReplyOverlay");
   if (overlay) overlay.remove();
 
-  // fecha teclado
   const input = document.getElementById("storyReplyInput");
-  if (input) {
-    input.blur();
+  if (input) input.blur();
+
+  const oldBar = document.getElementById("replyBar");
+  if (oldBar) {
+    oldBar.style.display = "block";
+    oldBar.style.opacity = "1";
+    oldBar.style.transform = "translateY(0)";
   }
 
-  // volta barra antiga
-  const oldReplyBar = document.getElementById("replyBar");
-  if (oldReplyBar) {
-    oldReplyBar.style.display = "block";
-    oldReplyBar.style.opacity = "1";
-    oldReplyBar.style.transform = "translateY(0)";
-  }
-
-  // volta vídeo
   const video = document.getElementById("storyVideo");
-  if (video) {
-    video.play().catch(() => {});
-  }
+  if (video) video.play().catch(() => {});
 
-  // libera scroll
   document.body.style.overflow = "";
 }
 
