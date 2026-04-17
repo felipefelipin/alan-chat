@@ -1311,7 +1311,6 @@ function openStoryReply() {
 
         <div class="story-input-wrap">
 
-          <div class="cursor-green"></div>
 
           <input
             id="storyReplyInput"

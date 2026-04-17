@@ -1087,7 +1087,7 @@ button:disabled{
 }
 
 .story-input-wrap{
-  flex:1;
+  width:72%;
   height:48px;
   border-radius:999px;
   background:rgba(20,20,20,.92);
@@ -1095,15 +1095,6 @@ button:disabled{
   display:flex;
   align-items:center;
   padding:0 14px;
-}
-
-.cursor-green{
-  width:3px;
-  height:28px;
-  border-radius:999px;
-  background:#1ed760;
-  margin-right:12px;
-  flex-shrink:0;
 }
 
 .story-input-wrap input{
@@ -1118,6 +1109,7 @@ button:disabled{
   margin:0;
   appearance:none;
   -webkit-appearance:none;
+  caret-color:#1ed760;
 }
 
 .inside-icon{
