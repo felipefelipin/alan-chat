@@ -1084,10 +1084,11 @@ button:disabled{
   font-size:34px;
   margin-right:12px;
   line-height:1;
+  flex-shrink:0;
 }
 
 .story-input-wrap{
-  width:72%;
+  width:68%;
   height:48px;
   border-radius:999px;
   background:rgba(20,20,20,.92);
@@ -1095,6 +1096,7 @@ button:disabled{
   display:flex;
   align-items:center;
   padding:0 14px;
+  flex-shrink:0;
 }
 
 .story-input-wrap input{
@@ -1112,16 +1114,13 @@ button:disabled{
   caret-color:#1ed760;
 }
 
-.inside-icon{
-  font-size:24px;
-  opacity:.95;
-  margin-left:8px;
-}
-
 .side-icon{
+  width:32px;
+  text-align:center;
   font-size:28px;
-  margin-left:14px;
+  margin-left:12px;
   color:#fff;
+  flex-shrink:0;
 }
 
 .story-hint{
