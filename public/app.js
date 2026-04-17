@@ -1183,18 +1183,16 @@ function showStories() {
 }
 
 function openStoryReply() {
-  // evita duplicação
   if (document.getElementById("storyReplyOverlay")) return;
 
   const video = document.getElementById("storyVideo");
+  if (video) video.pause();
 
-  // 🔥 pausa vídeo + dispara evento correto
-  if (video) {
-    video.pause();
-  }
-
-  // 🔥 trava scroll
   document.body.style.overflow = "hidden";
+
+  // 🔥 ESCONDE barra antiga do responder
+  const oldReplyBar = document.getElementById("replyBar");
+  if (oldReplyBar) oldReplyBar.style.display = "none";
 
   const html = `
     <div id="storyReplyOverlay">
@@ -1204,11 +1202,11 @@ function openStoryReply() {
       <!-- EMOJIS -->
       <div class="story-emojis">
         <div>😍 😂 😮 😢</div>
-        <div>🙏 🎉 🔥 💯</div>
+        <div>🙏 👏 🎉 💯</div>
       </div>
 
       <!-- INPUT -->
-      <div class="story-input-bar" id="replyBar">
+      <div class="story-input-bar" id="replyBarKeyboard">
 
         <span style="font-size:22px;">＋</span>
 
@@ -1231,12 +1229,10 @@ function openStoryReply() {
 
   const input = document.getElementById("storyReplyInput");
   const overlay = document.getElementById("storyReplyOverlay");
-  const replyBar = document.getElementById("replyBar");
+  const replyBar = document.getElementById("replyBarKeyboard");
 
-  // 🔥 começa invisível (até teclado abrir)
   replyBar.style.opacity = "0";
 
-  // 🔥 abre teclado
   input.focus();
 
   setTimeout(() => {
@@ -1248,18 +1244,15 @@ function openStoryReply() {
     }
   }, 200);
 
-  // 🔥 CONTROLE CORRETO DO TECLADO
   const handleViewport = () => {
     const vh = window.visualViewport.height;
     const full = window.innerHeight;
     const keyboard = full - vh;
 
     if (keyboard > 80) {
-      // teclado aberto
       replyBar.style.opacity = "1";
       replyBar.style.transform = `translateY(-${keyboard}px)`;
     } else {
-      // teclado fechado → continua visível (FIX)
       replyBar.style.opacity = "1";
       replyBar.style.transform = "translateY(0)";
     }
@@ -1267,7 +1260,6 @@ function openStoryReply() {
 
   window.visualViewport?.addEventListener("resize", handleViewport);
 
-  // fechar ao clicar fora
   overlay.addEventListener("click", (e) => {
     if (e.target.id === "storyReplyOverlay") {
       closeStoryReply();
@@ -1280,28 +1272,15 @@ function closeStoryReply() {
   if (overlay) overlay.remove();
 
   const input = document.getElementById("storyReplyInput");
+  if (input) input.blur();
 
-  // 🔥 fecha teclado corretamente
-  if (input) {
-    input.blur();
-  }
+  const oldReplyBar = document.getElementById("replyBar");
+  if (oldReplyBar) oldReplyBar.style.display = "block";
 
   const video = document.getElementById("storyVideo");
+  if (video) video.play().catch(() => {});
 
-  // 🔥 retoma vídeo corretamente
-  if (video) {
-    video.play().catch(() => {});
-  }
-
-  // 🔥 restaura scroll
   document.body.style.overflow = "";
-
-  // 🔥 reseta posição do replyBar (evita bug visual)
-  const replyBar = document.getElementById("replyBar");
-  if (replyBar) {
-    replyBar.style.transform = "translateY(0)";
-    replyBar.style.opacity = "1";
-  }
 }
 
 function exitStories() {
