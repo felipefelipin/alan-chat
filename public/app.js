@@ -1527,6 +1527,56 @@ function exitStories() {
   mountChat();
 }
 
+function sendStoryReaction(emojiEl) {
+  if (!emojiEl) return;
+
+  const avatar =
+    document.querySelector("#storyReplyOverlay .story-avatar-target") ||
+    document.querySelector('[onclick="exitStories()"]')
+      ?.parentElement
+      ?.querySelector("img");
+
+  if (!avatar) return;
+
+  const emoji = emojiEl.textContent.trim();
+
+  const from = emojiEl.getBoundingClientRect();
+  const to = avatar.getBoundingClientRect();
+
+  const fly = document.createElement("div");
+  fly.className = "story-fly-emoji";
+  fly.textContent = emoji;
+
+  fly.style.left = from.left + from.width / 2 + "px";
+  fly.style.top = from.top + from.height / 2 + "px";
+
+  document.body.appendChild(fly);
+
+  const dx =
+    to.left + to.width / 2 - (from.left + from.width / 2);
+
+  const dy =
+    to.top + to.height / 2 - (from.top + from.height / 2);
+
+  requestAnimationFrame(() => {
+    fly.style.transform =
+      `translate(${dx}px, ${dy}px) scale(.18)`;
+    fly.style.opacity = "0";
+  });
+
+  // pulse no avatar
+  avatar.classList.add("story-avatar-hit");
+
+  setTimeout(() => {
+    avatar.classList.remove("story-avatar-hit");
+  }, 420);
+
+  // remove emoji voando
+  setTimeout(() => {
+    fly.remove();
+  }, 650);
+}
+
 function quickReply(el) {
   const input = document.getElementById("storyReplyInput");
   if (input) input.value = el.textContent;
