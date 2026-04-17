@@ -1114,10 +1114,14 @@ function showStories() {
 
   const video = document.getElementById("storyVideo");
 
-  // 🔥 ALTURA REAL TRAVADA (anti subida no teclado)
-  const realHeight = window.innerHeight;
+  // 🔥 TRAVA ALTURA ORIGINAL UMA ÚNICA VEZ
+  if (!window.__storyHeight) {
+    window.__storyHeight = window.innerHeight;
+  }
 
-  // 🔥 configura vídeo travado
+  const realHeight = window.__storyHeight;
+
+  // 🔥 configura vídeo fixo
   video.src = "/assets/story-video.mp4?v=" + Date.now();
   video.style.display = "block";
   video.currentTime = 0;
@@ -1455,11 +1459,17 @@ function closeStoryReply() {
 
   // fecha teclado
   const input = document.getElementById("storyReplyInput");
-  if (input) {
-    input.blur();
+  if (input) input.blur();
+
+  // remove listener viewport salvo no overlay
+  if (overlay && overlay._viewportHandler && window.visualViewport) {
+    window.visualViewport.removeEventListener(
+      "resize",
+      overlay._viewportHandler
+    );
   }
 
-  // 🔥 REMOVE TRAVA ANTI-DELAY
+  // restaura body
   document.body.style.overflow = "";
   document.body.style.position = "";
   document.body.style.width = "";
@@ -1467,10 +1477,10 @@ function closeStoryReply() {
   document.body.style.top = "";
   document.body.style.left = "";
 
-  document.documentElement.style.height = "";
   document.documentElement.style.overflow = "";
+  document.documentElement.style.height = "";
 
-  // volta barra antiga
+  // volta barra original
   const oldBar = document.getElementById("replyBar");
   if (oldBar) {
     oldBar.style.display = "block";
@@ -1478,17 +1488,28 @@ function closeStoryReply() {
     oldBar.style.transform = "translateY(0)";
   }
 
-  // restaura vídeo
+  // 🔥 RESET VIEWPORT iPhone / Telegram
+  window.scrollTo(0, 0);
+
+  setTimeout(() => {
+    window.scrollTo(0, 0);
+  }, 30);
+
+  setTimeout(() => {
+    window.scrollTo(0, 0);
+  }, 120);
+
+  // volta vídeo
   const video = document.getElementById("storyVideo");
   if (video) {
     video.style.position = "fixed";
     video.style.top = "0";
     video.style.left = "0";
     video.style.width = "100vw";
-    video.style.height = "100vh";
+    video.style.height = window.__storyHeight + "px";
     video.style.objectFit = "cover";
-    video.style.transform = "";
-    video.style.willChange = "";
+    video.style.transform = "translateZ(0)";
+    video.style.willChange = "transform";
 
     video.play().catch(() => {});
   }
