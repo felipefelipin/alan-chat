@@ -1122,30 +1122,109 @@ function showStories() {
   video.play().catch(() => {});
 
   app.innerHTML = `
-    <div class="full" style="background:transparent; position:relative; overflow:hidden; height:100vh;">
+    <div class="full" style="
+      background:transparent;
+      position:relative;
+      overflow:hidden;
+      height:100vh;
+    ">
 
       <!-- PROGRESS -->
-      <div style="position:absolute; top:0; left:0; right:0; height:3px; background:rgba(255,255,255,0.25); z-index:20;">
-        <div id="progressBar" style="height:100%; width:0%; background:#fff;"></div>
+      <div style="
+        position:absolute;
+        top:0;
+        left:0;
+        right:0;
+        height:3px;
+        background:rgba(255,255,255,0.22);
+        z-index:20;
+      ">
+        <div id="progressBar" style="
+          height:100%;
+          width:0%;
+          background:#fff;
+        "></div>
       </div>
 
       <!-- HEADER -->
-      <div style="position:absolute; top:20px; left:16px; right:16px; display:flex; align-items:center; z-index:30;">
-        <button onclick="exitStories()" style="background:none; border:0; color:#fff; font-size:28px; margin-right:12px;">←</button>
-        
-        <div style="width:36px; height:36px; margin-right:10px; border-radius:50%; overflow:hidden;">
-          <img src="${ASSETS.avatar}?v=1" style="width:100%; height:100%; object-fit:cover;" />
+      <div style="
+        position:absolute;
+        top:8px;
+        left:14px;
+        right:14px;
+        display:flex;
+        align-items:flex-start;
+        z-index:30;
+      ">
+
+        <button onclick="exitStories()" style="
+          background:none;
+          border:0;
+          color:#fff;
+          font-size:34px;
+          margin-right:10px;
+          padding:0;
+          line-height:1;
+        ">‹</button>
+
+        <div style="
+          width:42px;
+          height:42px;
+          margin-right:10px;
+          border-radius:50%;
+          overflow:hidden;
+          flex-shrink:0;
+        ">
+          <img
+            src="${ASSETS.avatar}?v=1"
+            style="
+              width:100%;
+              height:100%;
+              object-fit:cover;
+            "
+          />
         </div>
-        
-        <div>
-          <div style="color:#fff; font-weight:600; font-size:15px;">${CONTACT.title}</div>
-          <div style="color:rgba(255,255,255,0.7); font-size:13px;">12h</div>
+
+        <div style="margin-top:1px;">
+          <div style="
+            color:#fff;
+            font-weight:600;
+            font-size:15px;
+            line-height:1.1;
+          ">
+            ${CONTACT.title}
+          </div>
+
+          <div style="
+            color:rgba(255,255,255,0.85);
+            font-size:12px;
+            margin-top:2px;
+            line-height:1;
+          ">
+            12h
+          </div>
         </div>
+
       </div>
 
       <!-- RESPOSTA -->
-      <div id="replyBar" style="position:absolute; bottom:0; left:0; right:0; padding:12px 16px 20px; background:linear-gradient(to top, rgba(0,0,0,0.9), transparent); z-index:40;">
-        <div onclick="openStoryReply()" style="background:rgba(255,255,255,0.15); border-radius:30px; padding:14px 20px; color:#fff; display:flex; align-items:center;">
+      <div id="replyBar" style="
+        position:absolute;
+        bottom:0;
+        left:0;
+        right:0;
+        padding:12px 16px 20px;
+        background:linear-gradient(to top, rgba(0,0,0,.92), transparent);
+        z-index:40;
+      ">
+        <div onclick="openStoryReply()" style="
+          background:rgba(255,255,255,.14);
+          border-radius:30px;
+          padding:14px 20px;
+          color:#fff;
+          display:flex;
+          align-items:center;
+        ">
           <span style="flex:1;">Responder...</span>
           <span style="font-size:24px;">❤️</span>
         </div>
@@ -1166,7 +1245,10 @@ function showStories() {
       if (!video.duration) return;
 
       const percent = (video.currentTime / video.duration) * 100;
-      if (progress) progress.style.width = percent + "%";
+
+      if (progress) {
+        progress.style.width = percent + "%";
+      }
     }, 50);
   };
 
