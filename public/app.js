@@ -1530,10 +1530,7 @@ function exitStories() {
 function sendStoryReaction(emojiEl) {
   if (!emojiEl) return;
 
-  const avatar = document.querySelector(
-    '#storyVideo + #app img, .full img'
-  );
-
+  const avatar = document.querySelector(".full img");
   if (!avatar) return;
 
   const emoji = emojiEl.textContent.trim();
@@ -1542,8 +1539,8 @@ function sendStoryReaction(emojiEl) {
   const to = avatar.getBoundingClientRect();
 
   const fly = document.createElement("div");
-  fly.textContent = emoji;
   fly.className = "story-fly-emoji";
+  fly.textContent = emoji;
 
   fly.style.position = "fixed";
   fly.style.left = from.left + from.width / 2 + "px";
@@ -1564,13 +1561,16 @@ function sendStoryReaction(emojiEl) {
     to.top + to.height / 2 -
     (from.top + from.height / 2);
 
+  // 🔥 some overlay / fecha teclado / volta responder
+  closeStoryReply();
+
   requestAnimationFrame(() => {
     fly.style.transform =
       `translate(${dx}px, ${dy}px) scale(.18)`;
     fly.style.opacity = "0";
   });
 
-  // pulso no avatar
+  // pulse avatar
   avatar.animate(
     [
       { transform: "scale(1)" },
@@ -1580,18 +1580,6 @@ function sendStoryReaction(emojiEl) {
     {
       duration: 380,
       easing: "ease-out"
-    }
-  );
-
-  // clique visual no emoji
-  emojiEl.animate(
-    [
-      { transform: "scale(1)" },
-      { transform: "scale(.86)" },
-      { transform: "scale(1)" }
-    ],
-    {
-      duration: 180
     }
   );
 
