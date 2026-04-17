@@ -1584,14 +1584,27 @@ if (window.visualViewport) {
   let lastHeight = window.visualViewport.height;
 
   window.visualViewport.addEventListener("resize", () => {
+    const chat = document.getElementById("chat");
+
+    // só funciona se estiver na tela de chat
+    if (!chat) {
+      lastHeight = window.visualViewport.height;
+      return;
+    }
+
+    // se stories aberto, ignora tudo
+    if (document.getElementById("storyVideo")?.style.display === "block") {
+      lastHeight = window.visualViewport.height;
+      return;
+    }
+
     const vh = window.visualViewport.height;
     const diff = lastHeight - vh;
     const isOpening = diff > 80;
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        const chat = document.getElementById("chat");
-        if (chat && (isOpening || isUserNearBottom)) {
+        if (isOpening || isUserNearBottom) {
           chat.scrollTop = chat.scrollHeight;
         }
       });
