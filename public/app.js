@@ -1328,21 +1328,21 @@ function openStoryReply() {
       <!-- EMOJIS -->
       <div class="story-emojis">
 
-  <div class="emoji-row">
-    <span onclick="sendStoryReaction(this)">😍</span>
-    <span onclick="sendStoryReaction(this)">😂</span>
-    <span onclick="sendStoryReaction(this)">😮</span>
-    <span onclick="sendStoryReaction(this)">😢</span>
-  </div>
+        <div class="emoji-row">
+          <span onclick="sendStoryReaction(this)">😍</span>
+          <span onclick="sendStoryReaction(this)">😂</span>
+          <span onclick="sendStoryReaction(this)">😮</span>
+          <span onclick="sendStoryReaction(this)">😢</span>
+        </div>
 
-  <div class="emoji-row">
-    <span onclick="sendStoryReaction(this)">🙏</span>
-    <span onclick="sendStoryReaction(this)">👏</span>
-    <span onclick="sendStoryReaction(this)">🎉</span>
-    <span onclick="sendStoryReaction(this)">💯</span>
-  </div>
+        <div class="emoji-row">
+          <span onclick="sendStoryReaction(this)">🙏</span>
+          <span onclick="sendStoryReaction(this)">👏</span>
+          <span onclick="sendStoryReaction(this)">🎉</span>
+          <span onclick="sendStoryReaction(this)">💯</span>
+        </div>
 
-</div>
+      </div>
 
       <!-- INPUT -->
       <div class="story-input-bar" id="replyBarKeyboard">
@@ -1386,11 +1386,16 @@ function openStoryReply() {
   const overlay = document.getElementById("storyReplyOverlay");
   const input = document.getElementById("storyReplyInput");
   const replyBar = document.getElementById("replyBarKeyboard");
+  const emojis = document.querySelector(".story-emojis");
 
   // estado inicial
   replyBar.style.opacity = "1";
   replyBar.style.bottom = "10px";
   replyBar.style.transform = "translateY(0)";
+
+  if (emojis) {
+    emojis.style.transform = "translateY(0)";
+  }
 
   // 🔥 teclado turbo universal
   input.focus();
@@ -1420,7 +1425,9 @@ function openStoryReply() {
       ? window.visualViewport.height
       : window.innerHeight;
 
-    const full = window.innerHeight;
+    const full =
+      window.__storyHeight || window.innerHeight;
+
     const keyboard = full - vh;
 
     // abriu teclado
@@ -1428,7 +1435,14 @@ function openStoryReply() {
       keyboardOpen = true;
 
       replyBar.style.transition = "none";
-      replyBar.style.transform = "translateY(-320px)";
+      replyBar.style.transform =
+        `translateY(-${keyboard}px)`;
+
+      if (emojis) {
+        emojis.style.transition = "none";
+        emojis.style.transform =
+          `translateY(-${keyboard}px)`;
+      }
     }
 
     // fechou teclado
@@ -1437,10 +1451,18 @@ function openStoryReply() {
 
       replyBar.style.transition = "none";
       replyBar.style.transform = "translateY(0)";
+
+      if (emojis) {
+        emojis.style.transition = "none";
+        emojis.style.transform = "translateY(0)";
+      }
     }
   };
 
-  window.visualViewport?.addEventListener("resize", handleViewport);
+  window.visualViewport?.addEventListener(
+    "resize",
+    handleViewport
+  );
 
   // salvar listener para remover depois
   overlay._viewportHandler = handleViewport;
@@ -1535,6 +1557,11 @@ function sendStoryReaction(emojiEl) {
 
   const emoji = emojiEl.textContent.trim();
 
+  // vibração
+  try {
+    if (navigator.vibrate) navigator.vibrate(60);
+  } catch (e) {}
+
   const from = emojiEl.getBoundingClientRect();
   const to = avatar.getBoundingClientRect();
 
@@ -1561,7 +1588,7 @@ function sendStoryReaction(emojiEl) {
     to.top + to.height / 2 -
     (from.top + from.height / 2);
 
-  // 🔥 some overlay / fecha teclado / volta responder
+  // fecha teclado / overlay
   closeStoryReply();
 
   requestAnimationFrame(() => {
@@ -1582,6 +1609,31 @@ function sendStoryReaction(emojiEl) {
       easing: "ease-out"
     }
   );
+
+  // toast
+  const toast = document.createElement("div");
+  toast.id = "storyReactionToast";
+  toast.innerHTML = `
+    <span class="toast-left">Responder</span>
+    <span class="toast-center">Enviando Resposta...</span>
+    <span class="toast-heart">♡</span>
+  `;
+
+  document.body.appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.classList.add("show");
+  });
+
+  // fade out depois
+  setTimeout(() => {
+    toast.classList.remove("show");
+    toast.classList.add("hide");
+  }, 1700);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 3300);
 
   setTimeout(() => {
     fly.remove();
