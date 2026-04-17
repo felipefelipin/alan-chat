@@ -1230,6 +1230,25 @@ function showStories() {
         </div>
       </div>
 
+      <!-- PRELOAD TURBO INPUT -->
+      <div id="storyReplyTurbo" style="
+        position:absolute;
+        opacity:0;
+        pointer-events:none;
+        left:-9999px;
+        top:-9999px;
+        z-index:-1;
+      ">
+        <input
+          id="storyTurboInput"
+          type="text"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+        />
+      </div>
+
     </div>
   `;
 
@@ -1311,7 +1330,6 @@ function openStoryReply() {
 
         <div class="story-input-wrap">
 
-
           <input
             id="storyReplyInput"
             type="text"
@@ -1323,24 +1341,22 @@ function openStoryReply() {
             spellcheck="false"
           />
 
-         
-
         </div>
 
-<span class="side-icon">
-<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-<path d="M4 7h4l2-2h4l2 2h4v12H4z"/>
-<circle cx="12" cy="13" r="3.5"/>
-</svg>
-</span>
+        <span class="side-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 7h4l2-2h4l2 2h4v12H4z"/>
+            <circle cx="12" cy="13" r="3.5"/>
+          </svg>
+        </span>
 
-<span class="side-icon">
-<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-<rect x="9" y="3" width="6" height="12" rx="3"/>
-<path d="M6 11a6 6 0 0 0 12 0"/>
-<path d="M12 17v4"/>
-</svg>
-</span>
+        <span class="side-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="3" width="6" height="12" rx="3"/>
+            <path d="M6 11a6 6 0 0 0 12 0"/>
+            <path d="M12 17v4"/>
+          </svg>
+        </span>
 
       </div>
 
@@ -1356,22 +1372,29 @@ function openStoryReply() {
   // começa invisível até teclado subir
   replyBar.style.opacity = "0";
 
-  // 🔥 MÉTODO DEFINITIVO iPhone + Android
+  // 🔥 TURBO UNIVERSAL iPhone + Android
   input.removeAttribute("readonly");
+  input.style.opacity = "1";
+  input.style.pointerEvents = "auto";
 
+  // foco imediato no clique
   input.focus();
   input.click();
 
   try {
-    input.setSelectionRange(0, 0);
+    input.setSelectionRange(
+      input.value.length,
+      input.value.length
+    );
   } catch (e) {}
 
   if (window.Telegram?.WebApp) {
     Telegram.WebApp.expand();
   }
 
-  setTimeout(() => {
-    input.focus();
+  // reforço no próximo frame (sem delay)
+  requestAnimationFrame(() => {
+    input.focus({ preventScroll: true });
     input.click();
 
     try {
@@ -1380,7 +1403,7 @@ function openStoryReply() {
         input.value.length
       );
     } catch (e) {}
-  }, 120);
+  });
 
   // teclado detecta altura
   const handleViewport = () => {
