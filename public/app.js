@@ -1265,13 +1265,18 @@ function showStories() {
 }
 
 function openStoryReply() {
+  // evita duplicação
   if (document.getElementById("storyReplyOverlay")) return;
 
   const video = document.getElementById("storyVideo");
+
+  // pausa vídeo
   if (video) video.pause();
 
+  // trava scroll
   document.body.style.overflow = "hidden";
 
+  // esconde barra antiga
   const oldBar = document.getElementById("replyBar");
   if (oldBar) oldBar.style.display = "none";
 
@@ -1280,7 +1285,9 @@ function openStoryReply() {
 
       <div class="story-hint">Toque para enviar</div>
 
+      <!-- EMOJIS -->
       <div class="story-emojis">
+
         <div class="emoji-row">
           <span>😍</span>
           <span>😂</span>
@@ -1294,8 +1301,10 @@ function openStoryReply() {
           <span>🎉</span>
           <span>💯</span>
         </div>
+
       </div>
 
+      <!-- INPUT -->
       <div class="story-input-bar" id="replyBarKeyboard">
 
         <span class="plus-btn">＋</span>
@@ -1308,6 +1317,7 @@ function openStoryReply() {
             id="storyReplyInput"
             type="text"
             placeholder=""
+            readonly
             autocomplete="off"
             autocorrect="off"
             autocapitalize="off"
@@ -1332,21 +1342,35 @@ function openStoryReply() {
   const overlay = document.getElementById("storyReplyOverlay");
   const replyBar = document.getElementById("replyBarKeyboard");
 
+  // começa invisível até teclado subir
   replyBar.style.opacity = "0";
 
+  // 🔥 abre teclado automaticamente (versão forte)
   setTimeout(() => {
-    input.focus();
-    input.click();
-
-    try {
-      input.setSelectionRange(0, 0);
-    } catch (e) {}
-
     if (window.Telegram?.WebApp) {
       Telegram.WebApp.expand();
     }
-  }, 60);
 
+    input.removeAttribute("readonly");
+
+    input.focus({ preventScroll: true });
+    input.click();
+
+    setTimeout(() => {
+      input.focus({ preventScroll: true });
+      input.click();
+
+      try {
+        input.setSelectionRange(
+          input.value.length,
+          input.value.length
+        );
+      } catch (e) {}
+    }, 180);
+
+  }, 180);
+
+  // controla teclado
   const handleViewport = () => {
     const vh = window.visualViewport
       ? window.visualViewport.height
@@ -1356,9 +1380,11 @@ function openStoryReply() {
     const keyboard = full - vh;
 
     if (keyboard > 80) {
+      // teclado aberto
       replyBar.style.opacity = "1";
       replyBar.style.transform = `translateY(-${keyboard}px)`;
     } else {
+      // teclado fechado
       replyBar.style.opacity = "1";
       replyBar.style.transform = "translateY(0)";
     }
@@ -1368,6 +1394,7 @@ function openStoryReply() {
     window.visualViewport.addEventListener("resize", handleViewport);
   }
 
+  // clique fora fecha
   overlay.addEventListener("click", (e) => {
     if (e.target.id === "storyReplyOverlay") {
       closeStoryReply();
