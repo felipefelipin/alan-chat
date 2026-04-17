@@ -1265,14 +1265,18 @@ function showStories() {
 }
 
 function openStoryReply() {
+  // evita duplicação
   if (document.getElementById("storyReplyOverlay")) return;
 
   const video = document.getElementById("storyVideo");
+
+  // pausa vídeo
   if (video) video.pause();
 
+  // trava scroll
   document.body.style.overflow = "hidden";
 
-  // 🔥 ESCONDE barra antiga do responder
+  // esconde barra antiga
   const oldReplyBar = document.getElementById("replyBar");
   if (oldReplyBar) oldReplyBar.style.display = "none";
 
@@ -1284,78 +1288,51 @@ function openStoryReply() {
       <!-- EMOJIS -->
       <div class="story-emojis">
 
-  <div class="emoji-row">
-    <span>😍</span>
-    <span>😂</span>
-    <span>😮</span>
-    <span>😢</span>
-  </div>
+        <div class="emoji-row">
+          <span>😍</span>
+          <span>😂</span>
+          <span>😮</span>
+          <span>😢</span>
+        </div>
 
-  <div class="emoji-row">
-    <span>🙏</span>
-    <span>👏</span>
-    <span>🎉</span>
-    <span>💯</span>
-  </div>
+        <div class="emoji-row">
+          <span>🙏</span>
+          <span>👏</span>
+          <span>🎉</span>
+          <span>💯</span>
+        </div>
 
-</div>
+      </div>
 
       <!-- INPUT -->
-<div class="story-input-bar" id="replyBar">
+      <div class="story-input-bar" id="replyBarKeyboard">
 
-  <span style="
-    font-size:30px;
-    color:#fff;
-    margin-right:12px;
-    line-height:1;
-  ">＋</span>
+        <span class="plus-btn">＋</span>
 
-  <div class="story-input-wrap">
+        <div class="story-input-wrap">
 
-    <div style="
-      width:3px;
-      height:30px;
-      background:#20d463;
-      border-radius:999px;
-      margin-right:12px;
-      flex-shrink:0;
-    "></div>
+          <div class="cursor-green"></div>
 
-    <input
-      id="storyReplyInput"
-      placeholder=""
-      style="
-        flex:1;
-        background:transparent;
-        border:none;
-        outline:none;
-        color:#fff;
-        font-size:28px;
-      "
-    />
+          <input
+            id="storyReplyInput"
+            type="text"
+            placeholder=""
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
+          />
 
-    <span style="
-      font-size:28px;
-      margin-left:10px;
-      opacity:.95;
-    ">🗨️</span>
+          <span class="inside-icon">🗨️</span>
 
-  </div>
+        </div>
 
-  <span style="
-    font-size:30px;
-    margin-left:14px;
-    margin-right:16px;
-  ">📷</span>
+        <span class="side-icon">📷</span>
+        <span class="side-icon">🎤</span>
 
-  <span style="
-    font-size:30px;
-    margin-right:16px;
-  ">🎤</span>
+      </div>
 
-  <div class="story-heart">❤️</div>
-
-</div>
+    </div>
   `;
 
   document.body.insertAdjacentHTML("beforeend", html);
@@ -1364,35 +1341,51 @@ function openStoryReply() {
   const overlay = document.getElementById("storyReplyOverlay");
   const replyBar = document.getElementById("replyBarKeyboard");
 
+  // começa invisível até teclado abrir
   replyBar.style.opacity = "0";
 
+  // foco inicial
   input.focus();
 
+  // força teclado abrir automaticamente
   setTimeout(() => {
     input.focus();
     input.click();
 
+    try {
+      input.setSelectionRange(0, 0);
+    } catch (e) {}
+
     if (window.Telegram?.WebApp) {
       Telegram.WebApp.expand();
     }
-  }, 200);
+  }, 50);
 
+  // controla teclado
   const handleViewport = () => {
-    const vh = window.visualViewport.height;
+    const vh = window.visualViewport
+      ? window.visualViewport.height
+      : window.innerHeight;
+
     const full = window.innerHeight;
     const keyboard = full - vh;
 
     if (keyboard > 80) {
+      // teclado aberto
       replyBar.style.opacity = "1";
       replyBar.style.transform = `translateY(-${keyboard}px)`;
     } else {
+      // teclado fechado
       replyBar.style.opacity = "1";
       replyBar.style.transform = "translateY(0)";
     }
   };
 
-  window.visualViewport?.addEventListener("resize", handleViewport);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", handleViewport);
+  }
 
+  // clique fora fecha
   overlay.addEventListener("click", (e) => {
     if (e.target.id === "storyReplyOverlay") {
       closeStoryReply();
@@ -1404,15 +1397,27 @@ function closeStoryReply() {
   const overlay = document.getElementById("storyReplyOverlay");
   if (overlay) overlay.remove();
 
+  // fecha teclado
   const input = document.getElementById("storyReplyInput");
-  if (input) input.blur();
+  if (input) {
+    input.blur();
+  }
 
+  // volta barra antiga
   const oldReplyBar = document.getElementById("replyBar");
-  if (oldReplyBar) oldReplyBar.style.display = "block";
+  if (oldReplyBar) {
+    oldReplyBar.style.display = "block";
+    oldReplyBar.style.opacity = "1";
+    oldReplyBar.style.transform = "translateY(0)";
+  }
 
+  // volta vídeo
   const video = document.getElementById("storyVideo");
-  if (video) video.play().catch(() => {});
+  if (video) {
+    video.play().catch(() => {});
+  }
 
+  // libera scroll
   document.body.style.overflow = "";
 }
 
