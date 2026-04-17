@@ -1059,11 +1059,11 @@ button:disabled{
 .story-emojis .emoji-row{
   display:flex;
   justify-content:center;
-  gap:52px;
+  gap: 46px;
 }
 
 .story-emojis span{
-  font-size: 40px;
+  font-size: 35px;
   line-height:1;
   display:block;
 }
