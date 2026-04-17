@@ -1047,19 +1047,24 @@ button:disabled{
 /* 🔥 EMOJIS (AGORA CORRETOS) */
 .story-emojis {
   position: absolute;
-  top: 58%;
+  top: 60.5%;
   left: 50%;
   transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   gap: 34px;
-  align-items: center;
+  width: 100%;
+  padding: 0 34px;
+  box-sizing: border-box;
 }
 
 .story-emojis div {
   display: flex;
-  gap: 34px;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
   font-size: 42px;
+  line-height: 1;
 }
 
 /* INPUT BAR */
