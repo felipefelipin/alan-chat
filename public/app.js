@@ -1114,10 +1114,23 @@ function showStories() {
 
   const video = document.getElementById("storyVideo");
 
-  // 🔥 define vídeo corretamente
+  // 🔥 ALTURA REAL TRAVADA (anti subida no teclado)
+  const realHeight = window.innerHeight;
+
+  // 🔥 configura vídeo travado
   video.src = "/assets/story-video.mp4?v=" + Date.now();
   video.style.display = "block";
   video.currentTime = 0;
+
+  video.style.position = "fixed";
+  video.style.top = "0";
+  video.style.left = "0";
+  video.style.width = "100vw";
+  video.style.height = realHeight + "px";
+  video.style.objectFit = "cover";
+  video.style.zIndex = "0";
+  video.style.transform = "translateZ(0)";
+  video.style.willChange = "transform";
 
   video.play().catch(() => {});
 
@@ -1126,7 +1139,7 @@ function showStories() {
       background:transparent;
       position:relative;
       overflow:hidden;
-      height:100vh;
+      height:${realHeight}px;
     ">
 
       <!-- PROGRESS -->
@@ -1256,7 +1269,7 @@ function showStories() {
 
   let progressInterval = null;
 
-  // 🔥 sincroniza progresso com vídeo
+  // 🔥 progresso sincronizado
   video.onplay = () => {
     clearInterval(progressInterval);
 
@@ -1271,12 +1284,12 @@ function showStories() {
     }, 50);
   };
 
-  // 🔥 pausa progresso junto com vídeo
+  // pausa progresso
   video.onpause = () => {
     clearInterval(progressInterval);
   };
 
-  // 🔥 finaliza corretamente
+  // finaliza stories
   video.onended = () => {
     clearInterval(progressInterval);
     exitStories();

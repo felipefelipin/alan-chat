@@ -1005,14 +1005,10 @@ button:disabled{
 
 /* 🔥 VÍDEO CORRIGIDO (AGORA FUNCIONA COM TECLADO) */
 #storyVideo{
-  position:fixed;
-  top:0;
-  left:0;
-  width:100vw;
-  height:100vh;
-  object-fit:cover;
-  z-index:0;
-  transform:none !important;
+position:fixed;
+top:0;
+left:0;
+object-fit:cover;
 }
 
 /* ===== OVERLAY ===== */
