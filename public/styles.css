@@ -17,12 +17,24 @@
 
 *{box-sizing:border-box}
 
-html, body, #app {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  overflow: hidden;
-  touch-action: manipulation;
+html,
+body{
+  margin:0;
+  padding:0;
+  width:100%;
+  height:auto;
+  min-height:100%;
+  overflow:hidden;
+}
+
+#app{
+  margin:0;
+  padding:0;
+  width:100%;
+  height:100dvh;
+  min-height:100dvh;
+  overflow:hidden;
+  position:relative;
 }
 
 body{
