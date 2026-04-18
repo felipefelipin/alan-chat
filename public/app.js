@@ -565,10 +565,15 @@ function mountChat() {
         </div>
 
         <!-- Nome + Online Agora (do lado da foto) -->
-        <div class="titlebox">
-          <div class="name">${CONTACT.title}</div>
-          <div class="status" id="status">${CONTACT.subtitle}</div>
-        </div>
+<div class="titlebox" onclick="openProfile()" style="cursor:pointer;">
+  
+  <div class="name">${CONTACT.title}</div>
+  
+  <div class="status" id="status">
+    ${CONTACT.subtitle}
+  </div>
+
+</div>
 
         <!-- Ícones de chamada à direita -->
         <div class="topActions">
