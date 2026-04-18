@@ -1109,6 +1109,32 @@ function showIncomingCall() {
   `);
 }
 
+(function initStoryVideo() {
+  if (document.getElementById("storyVideo")) return;
+
+  const video = document.createElement("video");
+  video.id = "storyVideo";
+
+  video.src = "/assets/story-video.mp4";
+  video.preload = "auto";
+  video.muted = false;
+  video.playsInline = true;
+
+  video.style.position = "fixed";
+  video.style.top = "0";
+  video.style.left = "0";
+  video.style.width = "100vw";
+  video.style.height = "100dvh";
+  video.style.objectFit = "cover";
+  video.style.zIndex = "0";
+  video.style.display = "none";
+
+  document.body.appendChild(video);
+
+  // 🔥 força carregamento antecipado
+  video.load();
+})();
+
 function showStories() {
   console.log("📸 Stories aberto");
 
@@ -1121,8 +1147,11 @@ function showStories() {
 
   const realHeight = window.__storyHeight;
 
-  // 🔥 configura vídeo fixo
-  video.src = "/assets/story-video.mp4?v=" + Date.now();
+  // 🔥 NÃO troca src (ESSENCIAL PRO ZERO DELAY)
+  if (!video.src) {
+    video.src = "/assets/story-video.mp4";
+  }
+
   video.style.display = "block";
   video.currentTime = 0;
 
@@ -1136,7 +1165,14 @@ function showStories() {
   video.style.transform = "translateZ(0)";
   video.style.willChange = "transform";
 
-  video.play().catch(() => {});
+  // 🔥 play só depois que pode tocar (evita tela preta)
+  if (video.readyState >= 2) {
+    video.play().catch(() => {});
+  } else {
+    video.oncanplay = () => {
+      video.play().catch(() => {});
+    };
+  }
 
   app.innerHTML = `
     <div class="full" style="
@@ -1288,12 +1324,10 @@ function showStories() {
     }, 50);
   };
 
-  // pausa progresso
   video.onpause = () => {
     clearInterval(progressInterval);
   };
 
-  // finaliza stories
   video.onended = () => {
     clearInterval(progressInterval);
     exitStories();
