@@ -1669,6 +1669,166 @@ function sendStoryReaction(emojiEl) {
   }, 700);
 }
 
+function openProfile() {
+  const contact = CONTACT;
+
+  app.innerHTML = `
+    <div style="
+      background:#000;
+      height:100vh;
+      overflow:auto;
+      color:#fff;
+      font-family:-apple-system, BlinkMacSystemFont;
+    ">
+
+      <!-- HEADER -->
+      <div style="
+        display:flex;
+        align-items:center;
+        padding:14px;
+        font-size:18px;
+        position:sticky;
+        top:0;
+        background:#000;
+        z-index:10;
+      ">
+        <span onclick="mountChat()" style="
+          font-size:28px;
+          margin-right:12px;
+        ">‹</span>
+
+        <span style="flex:1;text-align:center;font-weight:500;">
+          Dados do contato
+        </span>
+      </div>
+
+      <!-- FOTO + NOME -->
+      <div style="text-align:center;margin-top:10px;">
+        <img src="${ASSETS.avatar}" style="
+          width:120px;
+          height:120px;
+          border-radius:50%;
+          object-fit:cover;
+        "/>
+
+        <div style="
+          margin-top:12px;
+          font-size:22px;
+          font-weight:600;
+        ">
+          ${contact.title}
+        </div>
+
+        <div style="
+          opacity:.7;
+          margin-top:4px;
+        ">
+          @modelo
+        </div>
+      </div>
+
+      <!-- AÇÕES -->
+      <div style="
+        display:flex;
+        justify-content:space-around;
+        margin:20px 10px;
+      ">
+
+        ${actionBtn("Ligar")}
+        ${actionBtn("Vídeo")}
+        ${actionBtn("Pix")}
+        ${actionBtn("Pesquisar")}
+
+      </div>
+
+      <!-- BLOCO -->
+      ${profileItem("Mídia, links e docs", "8")}
+      ${profileItem("Gerenciar armazenamento", "14,9 MB")}
+      ${profileItem("Mensagens salvas", "Nenhuma")}
+
+      ${profileItem("Notificações")}
+      ${profileItem("Tema da conversa")}
+      ${profileItem("Salvar no Fotos", "Desativado")}
+
+      ${profileItem("Mensagens temporárias", "24 horas")}
+      ${profileItem("Trancar conversa")}
+      ${profileItem("Privacidade avançada da conversa", "Desativada")}
+      ${profileItem("Criptografia")}
+
+      <!-- AÇÕES VERDES -->
+      <div style="margin-top:10px;">
+        ${profileAction("Adicionar aos favoritos")}
+        ${profileAction("Adicionar à lista")}
+        ${profileAction("Exportar conversa")}
+        ${profileAction("Limpar conversa", true)}
+      </div>
+
+      <!-- BLOQUEAR -->
+      <div style="margin-top:10px;">
+        ${profileDanger("Bloquear ${contact.title}")}
+        ${profileDanger("Denunciar ${contact.title}")}
+      </div>
+
+    </div>
+  `;
+}
+
+function actionBtn(label) {
+  return `
+    <div style="
+      width:80px;
+      height:70px;
+      background:#111;
+      border-radius:12px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      font-size:14px;
+      color:#25D366;
+    ">
+      ${label}
+    </div>
+  `;
+}
+
+function profileItem(title, value = "") {
+  return `
+    <div style="
+      padding:16px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    ">
+      <span>${title}</span>
+      <span style="opacity:.6">${value}</span>
+    </div>
+  `;
+}
+
+function profileAction(text, red = false) {
+  return `
+    <div style="
+      padding:16px;
+      color:${red ? "#ff3b30" : "#25D366"};
+    ">
+      ${text}
+    </div>
+  `;
+}
+
+function profileDanger(text) {
+  return `
+    <div style="
+      padding:16px;
+      color:#ff3b30;
+    ">
+      ${text}
+    </div>
+  `;
+}
+
 function quickReply(el) {
   const input = document.getElementById("storyReplyInput");
   if (input) input.value = el.textContent;
