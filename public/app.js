@@ -1535,26 +1535,27 @@ function sendStoryReaction(emojiEl) {
 
   const emoji = emojiEl.textContent.trim();
 
-  // vibração
+  // 🔥 vibração real
   try {
-    if (navigator.vibrate) navigator.vibrate(60);
+    if (navigator.vibrate) {
+      navigator.vibrate([40, 30, 60]);
+    }
   } catch (e) {}
 
   const from = emojiEl.getBoundingClientRect();
   const to = avatar.getBoundingClientRect();
 
   const fly = document.createElement("div");
-  fly.className = "story-fly-emoji";
   fly.textContent = emoji;
 
   fly.style.position = "fixed";
   fly.style.left = from.left + from.width / 2 + "px";
   fly.style.top = from.top + from.height / 2 + "px";
-  fly.style.zIndex = "99999";
   fly.style.fontSize = "34px";
+  fly.style.zIndex = "999999";
   fly.style.pointerEvents = "none";
   fly.style.transition =
-    "transform .62s cubic-bezier(.22,.8,.22,1), opacity .62s ease";
+    "transform .65s cubic-bezier(.22,.8,.22,1), opacity .65s ease";
 
   document.body.appendChild(fly);
 
@@ -1566,7 +1567,7 @@ function sendStoryReaction(emojiEl) {
     to.top + to.height / 2 -
     (from.top + from.height / 2);
 
-  // fecha teclado / overlay
+  // fecha overlay
   closeStoryReply();
 
   requestAnimationFrame(() => {
@@ -1575,43 +1576,36 @@ function sendStoryReaction(emojiEl) {
     fly.style.opacity = "0";
   });
 
-  // pulse avatar
-  avatar.animate(
-    [
-      { transform: "scale(1)" },
-      { transform: "scale(1.12)" },
-      { transform: "scale(1)" }
-    ],
-    {
-      duration: 380,
-      easing: "ease-out"
-    }
-  );
-
-  // toast
+  // 🔥 toast inline garantido
   const toast = document.createElement("div");
-  toast.id = "storyReactionToast";
-  toast.innerHTML = `
-    <span class="toast-left">Responder</span>
-    <span class="toast-center">Enviando Resposta...</span>
-    <span class="toast-heart">♡</span>
-  `;
+  toast.textContent = "Enviando resposta...";
+  toast.style.position = "fixed";
+  toast.style.left = "50%";
+  toast.style.bottom = "120px";
+  toast.style.transform = "translateX(-50%)";
+  toast.style.background = "rgba(18,18,18,.92)";
+  toast.style.color = "#fff";
+  toast.style.padding = "12px 18px";
+  toast.style.borderRadius = "999px";
+  toast.style.fontSize = "15px";
+  toast.style.fontWeight = "500";
+  toast.style.zIndex = "999999";
+  toast.style.opacity = "0";
+  toast.style.transition = "opacity 1.5s ease";
 
   document.body.appendChild(toast);
 
   requestAnimationFrame(() => {
-    toast.classList.add("show");
+    toast.style.opacity = "1";
   });
 
-  // fade out depois
   setTimeout(() => {
-    toast.classList.remove("show");
-    toast.classList.add("hide");
-  }, 1700);
+    toast.style.opacity = "0";
+  }, 1600);
 
   setTimeout(() => {
     toast.remove();
-  }, 3300);
+  }, 3200);
 
   setTimeout(() => {
     fly.remove();
