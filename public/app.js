@@ -1279,7 +1279,11 @@ function showStories() {
           align-items:center;
         ">
           <span style="flex:1;">Responder...</span>
-          <span style="font-size:24px;">❤️</span>
+          <span style="display:flex;align-items:center;justify-content:center;width:42px;height:42px;margin-left:10px;">
+  <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:26px;height:26px;">
+    <path d="M20.8 4.6c-1.5-1.6-4-1.6-5.6 0L12 7.7l-3.2-3.1c-1.6-1.6-4.1-1.6-5.6 0-1.6 1.6-1.6 4.1 0 5.6L12 20l8.8-9.8c1.6-1.5 1.6-4 0-5.6z"/>
+  </svg>
+</span>
         </div>
       </div>
 
