@@ -1708,7 +1708,7 @@ function openProfile() {
         Dados do contato
       </div>
 
-      <!-- AVATAR / NOME -->
+      <!-- AVATAR -->
       <div style="
         display:flex;
         flex-direction:column;
@@ -1722,19 +1722,11 @@ function openProfile() {
           object-fit:cover;
         "/>
 
-        <div style="
-          margin-top:16px;
-          font-size:22px;
-          font-weight:600;
-        ">
+        <div style="margin-top:16px;font-size:22px;font-weight:600;">
           ${contact.title}
         </div>
 
-        <div style="
-          margin-top:4px;
-          font-size:15px;
-          color:rgba(255,255,255,0.6);
-        ">
+        <div style="margin-top:4px;font-size:15px;color:rgba(255,255,255,0.6);">
           @modelo
         </div>
       </div>
@@ -1742,79 +1734,47 @@ function openProfile() {
       <!-- BOTÕES -->
       <div style="
         display:flex;
-        justify-content:space-between;
         gap:10px;
         padding:20px 14px;
       ">
-        ${actionBtn("Ligar")}
-        ${actionBtn("Vídeo")}
-        ${actionBtn("Pix")}
-        ${actionBtn("Pesquisar")}
+        ${actionBtn("📞","Ligar")}
+        ${actionBtn("📹","Vídeo")}
+        ${actionBtn("💠","Pix")}
+        ${actionBtn("🔍","Pesquisar")}
       </div>
 
-      <!-- BLOCO PRINCIPAL -->
-      <div style="
-        margin:0 12px;
-        background:#111;
-        border-radius:14px;
-        overflow:hidden;
-      ">
-        ${item("Mídia, links e docs", "8")}
-        ${item("Gerenciar armazenamento", "14,9 MB")}
-        ${item("Mensagens salvas", "Nenhuma")}
+      <!-- BLOCO -->
+      <div style="margin:0 12px;background:#111;border-radius:14px;overflow:hidden;">
+        ${item(iconMedia(),"Mídia, links e docs","8")}
+        ${item(iconStorage(),"Gerenciar armazenamento","14,9 MB")}
+        ${item(iconSaved(),"Mensagens salvas","Nenhuma")}
       </div>
 
-      <!-- BLOCO CONFIG -->
-      <div style="
-        margin:12px;
-        background:#111;
-        border-radius:14px;
-        overflow:hidden;
-      ">
-        ${item("Notificações")}
-        ${item("Tema da conversa")}
-        ${item("Salvar no Fotos", "Desativado")}
+      <div style="margin:12px;background:#111;border-radius:14px;overflow:hidden;">
+        ${item(iconBell(),"Notificações")}
+        ${item(iconTheme(),"Tema da conversa")}
+        ${item(iconDownload(),"Salvar no Fotos","Desativado")}
       </div>
 
-      <!-- BLOCO PRIVACIDADE -->
-      <div style="
-        margin:12px;
-        background:#111;
-        border-radius:14px;
-        overflow:hidden;
-      ">
-        ${item("Mensagens temporárias", "24 horas")}
-        ${item("Trancar conversa")}
-        ${item("Privacidade avançada da conversa", "Desativada")}
-        ${item("Criptografia")}
+      <div style="margin:12px;background:#111;border-radius:14px;overflow:hidden;">
+        ${item(iconTimer(),"Mensagens temporárias","24 horas")}
+        ${item(iconLock(),"Trancar conversa")}
+        ${item(iconShield(),"Privacidade avançada da conversa","Desativada")}
+        ${item(iconCrypto(),"Criptografia")}
       </div>
 
       <!-- GRUPO -->
-      <div style="
-        margin:16px 14px 8px;
-        color:rgba(255,255,255,0.6);
-        font-size:13px;
-      ">
+      <div style="margin:16px 14px 8px;color:rgba(255,255,255,0.6);font-size:13px;">
         1 grupo em comum
       </div>
 
-      <div style="
-        margin:0 12px;
-        background:#111;
-        border-radius:14px;
-        overflow:hidden;
-      ">
-        ${item("Criar grupo com ~Cleitin")}
-        ${item(contact.title)}
+      <div style="margin:0 12px;background:#111;border-radius:14px;overflow:hidden;">
+        ${item(iconPlus(),"Criar grupo com ~Cleitin")}
+        ${item(iconGroup(),contact.title)}
       </div>
 
       <!-- AÇÕES -->
-      <div style="
-        margin:12px;
-        background:#111;
-        border-radius:14px;
-        overflow:hidden;
-      ">
+      <div style="margin:12px;background:#111;border-radius:14px;overflow:hidden;">
         ${action("Adicionar aos favoritos")}
         ${action("Adicionar à lista")}
         ${action("Exportar conversa")}
@@ -1822,23 +1782,17 @@ function openProfile() {
       </div>
 
       <!-- PERIGO -->
-      <div style="
-        margin:12px;
-        background:#111;
-        border-radius:14px;
-        overflow:hidden;
-      ">
+      <div style="margin:12px;background:#111;border-radius:14px;overflow:hidden;">
         ${danger("Bloquear " + contact.title)}
         ${danger("Denunciar " + contact.title)}
       </div>
 
       <div style="height:40px;"></div>
-
     </div>
   `;
 }
 
-function actionBtn(label) {
+function actionBtn(icon,label){
   return `
     <div style="
       flex:1;
@@ -1846,55 +1800,69 @@ function actionBtn(label) {
       background:#111;
       border-radius:14px;
       display:flex;
+      flex-direction:column;
       align-items:center;
       justify-content:center;
       color:#25D366;
-      font-size:15px;
-      font-weight:500;
+      font-size:14px;
     ">
+      <div style="font-size:20px;margin-bottom:4px;">${icon}</div>
       ${label}
     </div>
   `;
 }
 
-function item(title, value = "") {
+function item(icon,title,value=""){
   return `
     <div style="
       padding:16px;
       display:flex;
-      justify-content:space-between;
       align-items:center;
+      justify-content:space-between;
       border-bottom:1px solid rgba(255,255,255,0.05);
     ">
-      <span>${title}</span>
-      <span style="color:rgba(255,255,255,0.5)">${value}</span>
+      <div style="display:flex;align-items:center;gap:12px;">
+        ${icon}
+        <span>${title}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="color:rgba(255,255,255,0.5)">${value}</span>
+        <span style="opacity:.3;">›</span>
+      </div>
     </div>
   `;
 }
 
-function action(text, red = false) {
-  return `
-    <div style="
-      padding:16px;
-      color:${red ? "#ff3b30" : "#25D366"};
-      border-bottom:1px solid rgba(255,255,255,0.05);
-    ">
-      ${text}
-    </div>
-  `;
+function action(text,red=false){
+  return `<div style="padding:16px;color:${red?"#ff3b30":"#25D366"};">${text}</div>`;
 }
 
-function danger(text) {
-  return `
-    <div style="
-      padding:16px;
-      color:#ff3b30;
-      border-bottom:1px solid rgba(255,255,255,0.05);
-    ">
-      ${text}
-    </div>
-  `;
+function danger(text){
+  return `<div style="padding:16px;color:#ff3b30;">${text}</div>`;
 }
+
+
+
+
+
+
+
+
+
+/* SVG ICONS */
+
+const iconMedia = () => `<svg width="22" height="22" stroke="white" fill="none" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8" cy="10" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>`;
+const iconStorage = () => `<svg width="22" height="22" stroke="white" fill="none" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/></svg>`;
+const iconSaved = () => `<svg width="22" height="22" stroke="white" fill="none" stroke-width="1.8"><path d="M6 3h12v18l-6-4-6 4z"/></svg>`;
+const iconBell = () => `<svg width="22" height="22" stroke="white" fill="none" stroke-width="1.8"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18"/></svg>`;
+const iconTheme = () => `<svg width="22" height="22" stroke="white" fill="none" stroke-width="1.8"><circle cx="12" cy="12" r="9"/></svg>`;
+const iconDownload = () => `<svg width="22" height="22" stroke="white" fill="none" stroke-width="1.8"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/></svg>`;
+const iconTimer = () => `<svg width="22" height="22" stroke="white" fill="none" stroke-width="1.8"><circle cx="12" cy="12" r="9"/></svg>`;
+const iconLock = () => `<svg width="22" height="22" stroke="white" fill="none" stroke-width="1.8"><rect x="5" y="10" width="14" height="10" rx="2"/></svg>`;
+const iconShield = () => `<svg width="22" height="22" stroke="white" fill="none" stroke-width="1.8"><path d="M12 2l7 4v6c0 5-3.5 8-7 10"/></svg>`;
+const iconCrypto = () => `<svg width="22" height="22" stroke="white" fill="none" stroke-width="1.8"><circle cx="12" cy="12" r="9"/></svg>`;
+const iconPlus = () => `<svg width="22" height="22" stroke="white" fill="none" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>`;
+const iconGroup = () => `<svg width="22" height="22" stroke="white" fill="none" stroke-width="1.8"><circle cx="9" cy="10" r="3"/><circle cx="17" cy="12" r="2"/></svg>`;
 
 function actionBtn(label) {
   return `
