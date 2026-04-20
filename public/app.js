@@ -542,6 +542,8 @@ async function runRoutingOverlayV4() {
 function mountChat() {
   app.innerHTML = `
     <div class="full fadeIn">
+      
+      <!-- STATUS BAR -->
       <div class="statusbar">
         <span id="sbTime">${nowTime()}</span>
         <span class="sbIcons">
@@ -551,58 +553,89 @@ function mountChat() {
         </span>
       </div>
 
-      <!-- TOP BAR - VERSÃO CORRIGIDA E ESTÁVEL -->
-      <div class="topbar">
-        <button class="navBtn" onclick="mountChat()" type="button" aria-label="Voltar">
+      <!-- TOP BAR -->
+      <div class="topbar" style="
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        padding:10px 14px;
+      ">
+
+        <!-- VOLTAR -->
+        <button class="navBtn" onclick="mountChat()" type="button">
           <span class="navChevron"></span>
         </button>
 
-        <!-- Foto do perfil clicável para Stories -->
-        <div class="avatarWrap">
-          <div class="avatar" onclick="showStories()" style="cursor: pointer;">
-            <img src="${ASSETS.avatar}?v=1" alt="${CONTACT.title}" />
+        <!-- BLOCO ESQUERDA -->
+        <div style="
+          display:flex;
+          align-items:center;
+          flex:1;
+          min-width:0;
+        ">
+
+          <!-- AVATAR -->
+          <div class="avatarWrap">
+            <div class="avatar" onclick="showStories()" style="cursor:pointer;">
+              <img src="${ASSETS.avatar}?v=1" />
+            </div>
           </div>
+
+          <!-- NOME + STATUS -->
+          <div class="titlebox" onclick="openProfile()" style="
+            margin-left:10px;
+            cursor:pointer;
+            overflow:hidden;
+          ">
+            <div class="name" style="white-space:nowrap;">
+              ${CONTACT.title}
+            </div>
+
+            <div class="status" style="
+              color:#25D366;
+              font-size:13px;
+              margin-top:2px;
+            ">
+              ${CONTACT.subtitle}
+            </div>
+          </div>
+
         </div>
 
-        <!-- Nome + Online Agora (do lado da foto) -->
-<div class="titlebox" onclick="openProfile()" style="cursor:pointer;">
-  
-  <div class="name">${CONTACT.title}</div>
-  
-  <div class="status" id="status">
-    ${CONTACT.subtitle}
-  </div>
+        <!-- AÇÕES -->
+        <div style="
+          display:flex;
+          align-items:center;
+          gap:16px;
+          margin-left:10px;
+        ">
 
-</div>
+          <!-- VIDEO -->
+          <button style="background:none;border:none;padding:0;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+            stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="6" width="13" height="12" rx="3"/>
+              <path d="M16 10l5-3v10l-5-3z"/>
+            </svg>
+          </button>
 
-        <!-- Ícones de chamada à direita -->
-<div class="topActions" style="
-  display:flex;
-  align-items:center;
-  gap:18px;
-">
+          <!-- VOZ -->
+          <button style="background:none;border:none;padding:0;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v2.5a1.8 1.8 0 0 1-2 1.8 19 19 0 0 1-8.2-2.9 18.7 18.7 0 0 1-5.8-5.8A19 19 0 0 1 2.68 4 1.8 1.8 0 0 1 4.48 2h2.5a1.8 1.8 0 0 1 1.7 1.5c.12.8.3 1.6.55 2.3a1.8 1.8 0 0 1-.4 1.8L7.9 9.5a15 15 0 0 0 6.6 6.6l1.9-1.4a1.8 1.8 0 0 1 1.8-.4c.7.25 1.5.43 2.3.55A1.8 1.8 0 0 1 22 16.92z"/>
+            </svg>
+          </button>
 
-  <button style="background:none;border:none;padding:0;">
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
-    stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="3" y="6" width="13" height="12" rx="3"/>
-      <path d="M16 10l5-3v10l-5-3z"/>
-    </svg>
-  </button>
+        </div>
+      </div>
 
-  <button style="background:none;border:none;padding:0;">
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
-    stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M22 16.92v2.5a1.8 1.8 0 0 1-2 1.8 19 19 0 0 1-8.2-2.9 18.7 18.7 0 0 1-5.8-5.8A19 19 0 0 1 2.68 4 1.8 1.8 0 0 1 4.48 2h2.5a1.8 1.8 0 0 1 1.7 1.5c.12.8.3 1.6.55 2.3a1.8 1.8 0 0 1-.4 1.8L7.9 9.5a15 15 0 0 0 6.6 6.6l1.9-1.4a1.8 1.8 0 0 1 1.8-.4c.7.25 1.5.43 2.3.55A1.8 1.8 0 0 1 22 16.92z"/>
-    </svg>
-  </button>
-
-</div>
-
+      <!-- CHAT -->
       <div class="chatShell">
         <div class="chat" id="chat"></div>
       </div>
 
+      <!-- COMPOSER -->
       <div class="composer">
         <button class="composerAttach" type="button">
           <span class="composerPlusMark">+</span>
@@ -620,19 +653,21 @@ function mountChat() {
           <span class="iconMic"></span>
         </button>
 
-        <button class="send is-hidden" id="send" aria-label="Enviar">
+        <button class="send is-hidden" id="send">
           <span class="sendArrow"></span>
         </button>
       </div>
+
     </div>
   `;
 
-  // Configurações do chat
+  // lógica original intacta
   const sendBtn = document.getElementById("send");
   const input = document.getElementById("input");
   const micBtn = document.getElementById("composerMic");
 
   sendBtn.onclick = onSend;
+
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") onSend();
   });
@@ -644,6 +679,7 @@ function mountChat() {
   });
 
   state.chatEl = document.getElementById("chat");
+
   restoreHistory();
   bindKeyboardUX();
   handleScrollDetection();
