@@ -1731,17 +1731,33 @@ function openProfile() {
         </div>
       </div>
 
-      <!-- BOTÕES -->
-      <div style="
-        display:flex;
-        gap:10px;
-        padding:20px 14px;
-      ">
-        ${actionBtn("📞","Ligar")}
-        ${actionBtn("📹","Vídeo")}
-        ${actionBtn("💠","Pix")}
-        ${actionBtn("🔍","Pesquisar")}
-      </div>
+     <!-- BOTÕES CORRETOS -->
+<div style="
+  display:flex;
+  justify-content:space-between;
+  padding:20px 14px 10px;
+  gap:10px;
+">
+
+  ${actionBtnSVG(iconCall(), "Ligar")}
+  ${actionBtnSVG(iconVideo(), "Vídeo")}
+  ${actionBtnSVG(iconPix(), "Pix")}
+  ${actionBtnSVG(iconSearch(), "Pesquisar")}
+
+</div>
+
+<!-- CRIAR CONTATO -->
+<div style="
+  margin:0 12px 12px;
+  background:#111;
+  border-radius:14px;
+  padding:16px;
+  color:#25D366;
+  font-size:16px;
+  font-weight:500;
+">
+  Criar contato
+</div>
 
       <!-- BLOCO -->
       <div style="margin:0 12px;background:#111;border-radius:14px;overflow:hidden;">
@@ -1792,22 +1808,28 @@ function openProfile() {
   `;
 }
 
-function actionBtn(icon,label){
+function actionBtnSVG(icon, label){
   return `
     <div style="
       flex:1;
-      height:70px;
+      height:82px;
       background:#111;
-      border-radius:14px;
+      border-radius:16px;
       display:flex;
       flex-direction:column;
       align-items:center;
       justify-content:center;
-      color:#25D366;
-      font-size:14px;
     ">
-      <div style="font-size:20px;margin-bottom:4px;">${icon}</div>
-      ${label}
+      <div style="margin-bottom:8px;">
+        ${icon}
+      </div>
+      <div style="
+        color:#25D366;
+        font-size:13px;
+        font-weight:500;
+      ">
+        ${label}
+      </div>
     </div>
   `;
 }
@@ -1863,6 +1885,28 @@ const iconShield = () => `<svg width="22" height="22" stroke="white" fill="none"
 const iconCrypto = () => `<svg width="22" height="22" stroke="white" fill="none" stroke-width="1.8"><circle cx="12" cy="12" r="9"/></svg>`;
 const iconPlus = () => `<svg width="22" height="22" stroke="white" fill="none" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>`;
 const iconGroup = () => `<svg width="22" height="22" stroke="white" fill="none" stroke-width="1.8"><circle cx="9" cy="10" r="3"/><circle cx="17" cy="12" r="2"/></svg>`;
+const iconCall = () => `
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#25D366" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.09 4.18 2 2 0 0 1 4.06 2h3a2 2 0 0 1 2 1.72c.12.9.32 1.78.59 2.63a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.45-1.11a2 2 0 0 1 2.11-.45c.85.27 1.73.47 2.63.59A2 2 0 0 1 22 16.92z"/>
+</svg>`;
+
+const iconVideo = () => `
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#25D366" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="3" y="5" width="15" height="14" rx="2"/>
+  <polygon points="18,10 22,8 22,16 18,14"/>
+</svg>`;
+
+const iconPix = () => `
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#25D366" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 2l5 5-5 5-5-5 5-5z"/>
+  <path d="M12 12l5 5-5 5-5-5 5-5z"/>
+</svg>`;
+
+const iconSearch = () => `
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#25D366" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="11" cy="11" r="7"/>
+  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+</svg>`;
 
 function actionBtn(label) {
   return `
