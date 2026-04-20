@@ -1680,44 +1680,50 @@ function openProfile() {
   app.innerHTML = `
     <div style="
       background:#000;
+      color:#fff;
       height:100vh;
       overflow:auto;
-      color:#fff;
       font-family:-apple-system, BlinkMacSystemFont;
     ">
 
       <!-- HEADER -->
       <div style="
-        display:flex;
-        align-items:center;
-        padding:14px;
-        font-size:18px;
         position:sticky;
         top:0;
+        height:52px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:17px;
+        font-weight:600;
         background:#000;
         z-index:10;
       ">
         <span onclick="mountChat()" style="
+          position:absolute;
+          left:14px;
           font-size:28px;
-          margin-right:12px;
         ">‹</span>
 
-        <span style="flex:1;text-align:center;font-weight:500;">
-          Dados do contato
-        </span>
+        Dados do contato
       </div>
 
-      <!-- FOTO + NOME -->
-      <div style="text-align:center;margin-top:10px;">
+      <!-- AVATAR / NOME -->
+      <div style="
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        margin-top:28px;
+      ">
         <img src="${ASSETS.avatar}" style="
-          width:120px;
-          height:120px;
+          width:110px;
+          height:110px;
           border-radius:50%;
           object-fit:cover;
         "/>
 
         <div style="
-          margin-top:12px;
+          margin-top:16px;
           font-size:22px;
           font-weight:600;
         ">
@@ -1725,55 +1731,167 @@ function openProfile() {
         </div>
 
         <div style="
-          opacity:.7;
           margin-top:4px;
+          font-size:15px;
+          color:rgba(255,255,255,0.6);
         ">
           @modelo
         </div>
       </div>
 
-      <!-- AÇÕES -->
+      <!-- BOTÕES -->
       <div style="
         display:flex;
-        justify-content:space-around;
-        margin:20px 10px;
+        justify-content:space-between;
+        gap:10px;
+        padding:20px 14px;
       ">
-
         ${actionBtn("Ligar")}
         ${actionBtn("Vídeo")}
         ${actionBtn("Pix")}
         ${actionBtn("Pesquisar")}
-
       </div>
 
-      <!-- BLOCO -->
-      ${profileItem("Mídia, links e docs", "8")}
-      ${profileItem("Gerenciar armazenamento", "14,9 MB")}
-      ${profileItem("Mensagens salvas", "Nenhuma")}
-
-      ${profileItem("Notificações")}
-      ${profileItem("Tema da conversa")}
-      ${profileItem("Salvar no Fotos", "Desativado")}
-
-      ${profileItem("Mensagens temporárias", "24 horas")}
-      ${profileItem("Trancar conversa")}
-      ${profileItem("Privacidade avançada da conversa", "Desativada")}
-      ${profileItem("Criptografia")}
-
-      <!-- AÇÕES VERDES -->
-      <div style="margin-top:10px;">
-        ${profileAction("Adicionar aos favoritos")}
-        ${profileAction("Adicionar à lista")}
-        ${profileAction("Exportar conversa")}
-        ${profileAction("Limpar conversa", true)}
+      <!-- BLOCO PRINCIPAL -->
+      <div style="
+        margin:0 12px;
+        background:#111;
+        border-radius:14px;
+        overflow:hidden;
+      ">
+        ${item("Mídia, links e docs", "8")}
+        ${item("Gerenciar armazenamento", "14,9 MB")}
+        ${item("Mensagens salvas", "Nenhuma")}
       </div>
 
-      <!-- BLOQUEAR -->
-      <div style="margin-top:10px;">
-        ${profileDanger("Bloquear ${contact.title}")}
-        ${profileDanger("Denunciar ${contact.title}")}
+      <!-- BLOCO CONFIG -->
+      <div style="
+        margin:12px;
+        background:#111;
+        border-radius:14px;
+        overflow:hidden;
+      ">
+        ${item("Notificações")}
+        ${item("Tema da conversa")}
+        ${item("Salvar no Fotos", "Desativado")}
       </div>
 
+      <!-- BLOCO PRIVACIDADE -->
+      <div style="
+        margin:12px;
+        background:#111;
+        border-radius:14px;
+        overflow:hidden;
+      ">
+        ${item("Mensagens temporárias", "24 horas")}
+        ${item("Trancar conversa")}
+        ${item("Privacidade avançada da conversa", "Desativada")}
+        ${item("Criptografia")}
+      </div>
+
+      <!-- GRUPO -->
+      <div style="
+        margin:16px 14px 8px;
+        color:rgba(255,255,255,0.6);
+        font-size:13px;
+      ">
+        1 grupo em comum
+      </div>
+
+      <div style="
+        margin:0 12px;
+        background:#111;
+        border-radius:14px;
+        overflow:hidden;
+      ">
+        ${item("Criar grupo com ~Cleitin")}
+        ${item(contact.title)}
+      </div>
+
+      <!-- AÇÕES -->
+      <div style="
+        margin:12px;
+        background:#111;
+        border-radius:14px;
+        overflow:hidden;
+      ">
+        ${action("Adicionar aos favoritos")}
+        ${action("Adicionar à lista")}
+        ${action("Exportar conversa")}
+        ${action("Limpar conversa", true)}
+      </div>
+
+      <!-- PERIGO -->
+      <div style="
+        margin:12px;
+        background:#111;
+        border-radius:14px;
+        overflow:hidden;
+      ">
+        ${danger("Bloquear " + contact.title)}
+        ${danger("Denunciar " + contact.title)}
+      </div>
+
+      <div style="height:40px;"></div>
+
+    </div>
+  `;
+}
+
+function actionBtn(label) {
+  return `
+    <div style="
+      flex:1;
+      height:70px;
+      background:#111;
+      border-radius:14px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#25D366;
+      font-size:15px;
+      font-weight:500;
+    ">
+      ${label}
+    </div>
+  `;
+}
+
+function item(title, value = "") {
+  return `
+    <div style="
+      padding:16px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      border-bottom:1px solid rgba(255,255,255,0.05);
+    ">
+      <span>${title}</span>
+      <span style="color:rgba(255,255,255,0.5)">${value}</span>
+    </div>
+  `;
+}
+
+function action(text, red = false) {
+  return `
+    <div style="
+      padding:16px;
+      color:${red ? "#ff3b30" : "#25D366"};
+      border-bottom:1px solid rgba(255,255,255,0.05);
+    ">
+      ${text}
+    </div>
+  `;
+}
+
+function danger(text) {
+  return `
+    <div style="
+      padding:16px;
+      color:#ff3b30;
+      border-bottom:1px solid rgba(255,255,255,0.05);
+    ">
+      ${text}
     </div>
   `;
 }
