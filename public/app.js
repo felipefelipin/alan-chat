@@ -558,62 +558,72 @@ function mountChat() {
         display:flex;
         align-items:center;
         justify-content:space-between;
-        padding:10px 14px;
+        padding:8px 12px;
       ">
 
         <!-- ESQUERDA -->
         <div style="display:flex;align-items:center;flex:1;min-width:0;">
 
           <!-- VOLTAR -->
-          <button class="navBtn" onclick="mountChat()" style="margin-right:6px;">
+          <button class="navBtn" onclick="mountChat()" style="margin-right:4px;">
             <span class="navChevron"></span>
           </button>
 
- <!-- AVATAR COM STORY RING -->
-<div onclick="showStories()" style="
-  width:42px;
-  height:42px;
-  border-radius:50%;
-  background:#000;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  margin-right:10px;
-  flex-shrink:0;
-">
+          <!-- AVATAR COM STORY -->
+          <div onclick="showStories()" style="
+            width:40px;
+            height:40px;
+            border-radius:50%;
+            background:#000;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            margin-right:10px;
+            flex-shrink:0;
+          ">
 
-  <!-- ANEL VERDE -->
-  <div style="
-    width:100%;
-    height:100%;
-    border-radius:50%;
-    border:2.5px solid #25D366;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  ">
+            <!-- ANEL VERDE -->
+            <div style="
+              width:100%;
+              height:100%;
+              border-radius:50%;
+              border:2px solid #25D366;
+              display:flex;
+              align-items:center;
+              justify-content:center;
+            ">
 
-    <!-- IMAGEM -->
-    <div style="
-      width:34px;
-      height:34px;
-      border-radius:50%;
-      overflow:hidden;
-      background:#000;
-    ">
-      <img src="${ASSETS.avatar}?v=1"
-        style="width:100%;height:100%;object-fit:cover;" />
-    </div>
+              <!-- FOTO -->
+              <div style="
+                width:32px;
+                height:32px;
+                border-radius:50%;
+                overflow:hidden;
+                background:#000;
+              ">
+                <img src="${ASSETS.avatar}?v=1"
+                  style="width:100%;height:100%;object-fit:cover;" />
+              </div>
 
-  </div>
-</div>
+            </div>
+          </div>
 
           <!-- NOME + STATUS -->
           <div onclick="openProfile()" style="overflow:hidden;">
-            <div style="font-size:16px;font-weight:600;color:#fff;">
+            <div style="
+              font-size:15px;
+              font-weight:600;
+              color:#fff;
+              line-height:1.2;
+            ">
               ${CONTACT.title}
             </div>
-            <div style="font-size:13px;color:rgba(255,255,255,0.55);margin-top:2px;">
+
+            <div style="
+              font-size:12px;
+              color:rgba(255,255,255,0.55);
+              margin-top:2px;
+            ">
               online
             </div>
           </div>
@@ -621,32 +631,40 @@ function mountChat() {
         </div>
 
         <!-- DIREITA -->
-        <div style="display:flex;align-items:center;gap:16px;">
+        <div style="
+          display:flex;
+          align-items:center;
+          gap:14px;
+        ">
 
-<!-- VIDEO -->
-<button style="background:none;border:none;padding:0;">
-  <svg width="26" height="26" viewBox="0 0 24 24"
-  fill="none"
-  stroke="rgba(255,255,255,0.85)"
-  stroke-width="1.8"
-  stroke-linecap="round"
-  stroke-linejoin="round">
-    <rect x="3" y="6" width="13" height="12" rx="3"></rect>
-    <path d="M16 10l5-3v10l-5-3z"></path>
-  </svg>
-</button>
+          <!-- VIDEO -->
+          <button style="background:none;border:none;padding:0;">
+            <svg width="24" height="24" viewBox="0 0 24 24"
+              fill="none"
+              stroke="rgba(255,255,255,0.7)"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round">
+              
+              <rect x="3" y="6" width="13" height="12" rx="3"></rect>
+              <path d="M16 10l5-3v10l-5-3z"></path>
 
-<!-- VOZ -->
-<button style="background:none;border:none;padding:0;">
-  <svg width="24" height="24" viewBox="0 0 24 24"
-  fill="none"
-  stroke="rgba(255,255,255,0.85)"
-  stroke-width="1.8"
-  stroke-linecap="round"
-  stroke-linejoin="round">
-    <path d="M22 16.92v2.5a1.8 1.8 0 0 1-2 1.8 19 19 0 0 1-8.2-2.9 18.7 18.7 0 0 1-5.8-5.8A19 19 0 0 1 2.68 4 1.8 1.8 0 0 1 4.48 2h2.5a1.8 1.8 0 0 1 1.7 1.5c.12.8.3 1.6.55 2.3a1.8 1.8 0 0 1-.4 1.8L7.9 9.5a15 15 0 0 0 6.6 6.6l1.9-1.4a1.8 1.8 0 0 1 1.8-.4c.7.25 1.5.43 2.3.55A1.8 1.8 0 0 1 22 16.92z"></path>
-  </svg>
-</button>
+            </svg>
+          </button>
+
+          <!-- VOZ -->
+          <button style="background:none;border:none;padding:0;">
+            <svg width="23" height="23" viewBox="0 0 24 24"
+              fill="none"
+              stroke="rgba(255,255,255,0.7)"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round">
+
+              <path d="M22 16.92v2.5a1.8 1.8 0 0 1-2 1.8 19 19 0 0 1-8.2-2.9 18.7 18.7 0 0 1-5.8-5.8A19 19 0 0 1 2.68 4 1.8 1.8 0 0 1 4.48 2h2.5a1.8 1.8 0 0 1 1.7 1.5c.12.8.3 1.6.55 2.3a1.8 1.8 0 0 1-.4 1.8L7.9 9.5a15 15 0 0 0 6.6 6.6l1.9-1.4a1.8 1.8 0 0 1 1.8-.4c.7.25 1.5.43 2.3.55A1.8 1.8 0 0 1 22 16.92z"></path>
+
+            </svg>
+          </button>
 
         </div>
 
