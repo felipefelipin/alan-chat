@@ -1973,11 +1973,10 @@ function openProfile() {
         background:#000;
         z-index:10;
       ">
-        <span id="backBtn" style="
+        <span onclick="mountChat()" style="
           position:absolute;
           left:14px;
           font-size:28px;
-          cursor:pointer;
         ">‹</span>
 
         Dados do contato
@@ -2013,62 +2012,10 @@ function openProfile() {
         gap:10px;
       ">
 
-        <div class="btn-call" style="
-          flex:1;
-          height:82px;
-          background:#111;
-          border-radius:16px;
-          display:flex;
-          flex-direction:column;
-          align-items:center;
-          justify-content:center;
-          cursor:pointer;
-        ">
-          ${iconCall()}
-          <div style="margin-top:8px;font-size:13px;">Ligar</div>
-        </div>
-
-        <div style="
-          flex:1;
-          height:82px;
-          background:#111;
-          border-radius:16px;
-          display:flex;
-          flex-direction:column;
-          align-items:center;
-          justify-content:center;
-        ">
-          ${iconVideo()}
-          <div style="margin-top:8px;font-size:13px;">Vídeo</div>
-        </div>
-
-        <div style="
-          flex:1;
-          height:82px;
-          background:#111;
-          border-radius:16px;
-          display:flex;
-          flex-direction:column;
-          align-items:center;
-          justify-content:center;
-        ">
-          ${iconPix()}
-          <div style="margin-top:8px;font-size:13px;">Pix</div>
-        </div>
-
-        <div style="
-          flex:1;
-          height:82px;
-          background:#111;
-          border-radius:16px;
-          display:flex;
-          flex-direction:column;
-          align-items:center;
-          justify-content:center;
-        ">
-          ${iconSearch()}
-          <div style="margin-top:8px;font-size:13px;">Pesquisar</div>
-        </div>
+        ${actionBtnSVG(iconCall(), "Ligar", "startCall")}
+        ${actionBtnSVG(iconVideo(), "Vídeo", "video")}
+        ${actionBtnSVG(iconPix(), "Pix", "pix")}
+        ${actionBtnSVG(iconSearch(), "Pesquisar", "search")}
 
       </div>
 
@@ -2078,44 +2025,80 @@ function openProfile() {
         background:#111;
         border-radius:14px;
         padding:16px;
-        color:#fff;
+        color:#25D366;
         font-size:16px;
         font-weight:500;
       ">
         Criar contato
       </div>
 
-      <!-- RESTO -->
+      <!-- BLOCO -->
       <div style="margin:0 12px;background:#111;border-radius:14px;overflow:hidden;">
         ${item(iconMedia(),"Mídia, links e docs","8")}
         ${item(iconStorage(),"Gerenciar armazenamento","14,9 MB")}
         ${item(iconSaved(),"Mensagens salvas","Nenhuma")}
       </div>
 
+      <div style="margin:12px;background:#111;border-radius:14px;overflow:hidden;">
+        ${item(iconBell(),"Notificações")}
+        ${item(iconTheme(),"Tema da conversa")}
+        ${item(iconDownload(),"Salvar no Fotos","Desativado")}
+      </div>
+
+      <div style="margin:12px;background:#111;border-radius:14px;overflow:hidden;">
+        ${item(iconTimer(),"Mensagens temporárias","24 horas")}
+        ${item(iconLock(),"Trancar conversa")}
+        ${item(iconShield(),"Privacidade avançada da conversa","Desativada")}
+        ${item(iconCrypto(),"Criptografia")}
+      </div>
+
+      <!-- GRUPO -->
+      <div style="margin:16px 14px 8px;color:rgba(255,255,255,0.6);font-size:13px;">
+        1 grupo em comum
+      </div>
+
+      <div style="margin:0 12px;background:#111;border-radius:14px;overflow:hidden;">
+        ${item(iconPlus(),"Criar grupo com ~Cleitin")}
+        ${item(iconGroup(),contact.title)}
+      </div>
+
+      <!-- AÇÕES -->
+      <div style="margin:12px;background:#111;border-radius:14px;overflow:hidden;">
+        ${action("Adicionar aos favoritos")}
+        ${action("Adicionar à lista")}
+        ${action("Exportar conversa")}
+        ${action("Limpar conversa", true)}
+      </div>
+
+      <!-- PERIGO -->
+      <div style="margin:12px;background:#111;border-radius:14px;overflow:hidden;">
+        ${danger("Bloquear " + contact.title)}
+        ${danger("Denunciar " + contact.title)}
+      </div>
+
       <div style="height:40px;"></div>
     </div>
   `;
 
-  // 🔥 BACK
-  document.getElementById("backBtn").onclick = mountChat;
+  // 🔥 EVENTO GLOBAL (CORRIGE TUDO)
+  app.onclick = (e) => {
+    const btn = e.target.closest("[data-action]");
+    if (!btn) return;
 
-  // 🔥 BOTÃO LIGAR (AGORA FUNCIONA 100%)
-  setTimeout(() => {
-    const btn = document.querySelector(".btn-call");
+    const action = btn.getAttribute("data-action");
 
-    if (btn) {
-      btn.addEventListener("click", () => {
-        startCall();
-      });
-    } else {
-      console.log("ERRO: botão ligar não encontrado");
-    }
-  }, 0);
+    if (action === "startCall") startCall();
+    if (action === "video") console.log("Vídeo");
+    if (action === "pix") console.log("Pix");
+    if (action === "search") console.log("Pesquisar");
+  };
 }
 
+
+// ✅ BOTÃO CORRIGIDO
 function actionBtnSVG(icon, label, action = "") {
   return `
-    <div onclick="${action}" style="
+    <div data-action="${action}" style="
       flex:1;
       height:82px;
       background:#111;
@@ -2140,6 +2123,8 @@ function actionBtnSVG(icon, label, action = "") {
   `;
 }
 
+
+// 🔒 RESTO INTACTO
 function item(icon,title,value=""){
   return `
     <div style="
