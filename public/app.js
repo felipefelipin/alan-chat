@@ -2019,6 +2019,7 @@ function openProfile() {
 
   <div onclick="startCall()" style="flex:1;">
     ${actionBtnSVG(iconCall(), "Ligar")}
+    onclick="startCall()"
   </div>
 
   <div style="flex:1;">
