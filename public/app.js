@@ -330,6 +330,13 @@ function mountPremiumIntro() {
       </div>
     </div>
   `;
+  
+  setTimeout(() => {
+  const btn = document.getElementById("btn-call");
+  if (btn) {
+    btn.addEventListener("click", startCall);
+  }
+});
 
   const vid = document.getElementById("pIntroVid");
   const btnAudio = document.getElementById("pEnableAudio");
@@ -2016,10 +2023,10 @@ function openProfile() {
   gap:10px;
 ">
 
-  ${actionBtnSVG(iconCall(), "Ligar", "startCall()")}
-  ${actionBtnSVG(iconVideo(), "Vídeo")}
-  ${actionBtnSVG(iconPix(), "Pix")}
-  ${actionBtnSVG(iconSearch(), "Pesquisar")}
+${actionBtnSVG(iconCall(), "Ligar", "btn-call")}
+${actionBtnSVG(iconVideo(), "Vídeo")}
+${actionBtnSVG(iconPix(), "Pix")}
+${actionBtnSVG(iconSearch(), "Pesquisar")}}
 
 </div>
 
@@ -2085,9 +2092,9 @@ function openProfile() {
   `;
 }
 
-function actionBtnSVG(icon, label, action = "") {
+function actionBtnSVG(icon, label, id = "") {
   return `
-    <div onclick="${action}" style="
+    <div id="${id}" style="
       flex:1;
       height:82px;
       background:#111;
