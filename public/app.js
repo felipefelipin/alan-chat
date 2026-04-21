@@ -2005,7 +2005,7 @@ function openProfile() {
         </div>
 
         <div style="margin-top:4px;font-size:15px;color:rgba(255,255,255,0.6);">
-          @modelo
+          Alana Lemes
         </div>
       </div>
 
@@ -2017,24 +2017,10 @@ function openProfile() {
   gap:10px;
 ">
 
-  <div onclick="startCall()" style="flex:1;">
-    ${actionBtnSVG(iconCall(), "Ligar")}
-    onclick="startCall()"
-  </div>
-
-  <div style="flex:1;">
-    ${actionBtnSVG(iconVideo(), "Vídeo")}
-  </div>
-
-  <div style="flex:1;">
-    ${actionBtnSVG(iconPix(), "Pix")}
-  </div>
-
-  <div style="flex:1;">
-    ${actionBtnSVG(iconSearch(), "Pesquisar")}
-  </div>
-
-</div>
+${actionBtnSVG(iconCall(), "Ligar", "startCall()")}
+${actionBtnSVG(iconVideo(), "Vídeo")}
+${actionBtnSVG(iconPix(), "Pix")}
+${actionBtnSVG(iconSearch(), "Pesquisar")}
 
 <!-- CRIAR CONTATO -->
 <div style="
@@ -2098,9 +2084,9 @@ function openProfile() {
   `;
 }
 
-function actionBtnSVG(icon, label){
+function actionBtnSVG(icon, label, action = "") {
   return `
-    <div style="
+    <div onclick="${action}" style="
       flex:1;
       height:82px;
       background:#111;
@@ -2109,6 +2095,7 @@ function actionBtnSVG(icon, label){
       flex-direction:column;
       align-items:center;
       justify-content:center;
+      cursor:pointer;
     ">
       <div style="margin-bottom:8px;">
         ${icon}
