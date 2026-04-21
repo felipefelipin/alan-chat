@@ -581,8 +581,6 @@ function mountChat() {
             margin-right:10px;
             flex-shrink:0;
           ">
-
-            <!-- ANEL VERDE -->
             <div style="
               width:100%;
               height:100%;
@@ -592,19 +590,15 @@ function mountChat() {
               align-items:center;
               justify-content:center;
             ">
-
-              <!-- FOTO -->
               <div style="
                 width:32px;
                 height:32px;
                 border-radius:50%;
                 overflow:hidden;
-                background:#000;
               ">
                 <img src="${ASSETS.avatar}?v=1"
                   style="width:100%;height:100%;object-fit:cover;" />
               </div>
-
             </div>
           </div>
 
@@ -630,82 +624,72 @@ function mountChat() {
 
         </div>
 
-        <!-- DIREITA -->
+        <!-- DIREITA (AÇÕES) -->
         <div style="
           display:flex;
           align-items:center;
-          gap:14px;
+          gap:18px;
+          margin-right:4px;
         ">
 
-<!-- AÇÕES (WHATSAPP PERFEITO) -->
-<div style="
-  display:flex;
-  align-items:center;
-  gap:18px;
-  margin-right:4px;
-">
+          <!-- VIDEO -->
+          <button style="
+            background:none;
+            border:none;
+            padding:0;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            width:32px;
+            height:32px;
+          ">
+            <svg width="26" height="26" viewBox="0 0 24 24"
+              fill="none"
+              stroke="rgba(255,255,255,0.72)"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              style="filter:brightness(0.95);">
+              <rect x="3" y="6" width="13" height="12" rx="3"></rect>
+              <path d="M16 10l5-3v10l-5-3z"></path>
+            </svg>
+          </button>
 
-  <!-- VIDEO -->
-  <button style="
-    background:none;
-    border:none;
-    padding:0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    width:32px;
-    height:32px;
-  ">
-    <svg width="26" height="26" viewBox="0 0 24 24"
-      fill="none"
-      stroke="rgba(255,255,255,0.72)"
-      stroke-width="1.6"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      style="filter:brightness(0.95);">
+          <!-- VOZ -->
+          <button style="
+            background:none;
+            border:none;
+            padding:0;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            width:32px;
+            height:32px;
+          ">
+            <svg width="25" height="25" viewBox="0 0 24 24"
+              fill="none"
+              stroke="rgba(255,255,255,0.72)"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              style="filter:brightness(0.95);">
+              <path d="M22 16.92v2.5a1.8 1.8 0 0 1-2 1.8 
+              19 19 0 0 1-8.2-2.9 
+              18.7 18.7 0 0 1-5.8-5.8 
+              19 19 0 0 1-2.62-8.52 
+              1.8 1.8 0 0 1 1.8-1.8h2.5 
+              a1.8 1.8 0 0 1 1.7 1.5 
+              c.12.8.3 1.6.55 2.3 
+              a1.8 1.8 0 0 1-.4 1.8L7.9 9.5 
+              a15 15 0 0 0 6.6 6.6 
+              l1.9-1.4a1.8 1.8 0 0 1 1.8-.4 
+              c.7.25 1.5.43 2.3.55 
+              A1.8 1.8 0 0 1 22 16.92z"></path>
+            </svg>
+          </button>
 
-      <rect x="3" y="6" width="13" height="12" rx="3"></rect>
-      <path d="M16 10l5-3v10l-5-3z"></path>
-
-    </svg>
-  </button>
-
-  <!-- VOZ -->
-  <button style="
-    background:none;
-    border:none;
-    padding:0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    width:32px;
-    height:32px;
-  ">
-    <svg width="25" height="25" viewBox="0 0 24 24"
-      fill="none"
-      stroke="rgba(255,255,255,0.72)"
-      stroke-width="1.6"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      style="filter:brightness(0.95);">
-
-      <path d="M22 16.92v2.5a1.8 1.8 0 0 1-2 1.8 
-      19 19 0 0 1-8.2-2.9 
-      18.7 18.7 0 0 1-5.8-5.8 
-      19 19 0 0 1-2.62-8.52 
-      1.8 1.8 0 0 1 1.8-1.8h2.5 
-      a1.8 1.8 0 0 1 1.7 1.5 
-      c.12.8.3 1.6.55 2.3 
-      a1.8 1.8 0 0 1-.4 1.8L7.9 9.5 
-      a15 15 0 0 0 6.6 6.6 
-      l1.9-1.4a1.8 1.8 0 0 1 1.8-.4 
-      c.7.25 1.5.43 2.3.55 
-      A1.8 1.8 0 0 1 22 16.92z"></path>
-
-    </svg>
-  </button>
-
-</div>
+        </div>
+      </div>
 
       <!-- CHAT -->
       <div class="chatShell">
