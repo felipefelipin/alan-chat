@@ -751,6 +751,154 @@ function mountChat() {
   }, 30000);
 }
 
+function startCall() {
+  app.innerHTML = `
+    <div style="
+      height:100vh;
+      background:#0b0b0b;
+      color:white;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      font-family:-apple-system, BlinkMacSystemFont;
+    ">
+
+      <!-- TOPO -->
+      <div style="
+        text-align:center;
+        margin-top:60px;
+      ">
+        <div style="font-size:26px;font-weight:500;">
+          ${CONTACT.title}
+        </div>
+
+        <div id="callStatus" style="
+          margin-top:8px;
+          font-size:16px;
+          color:rgba(255,255,255,0.6);
+        ">
+          Ligando...
+        </div>
+      </div>
+
+      <!-- FOTO -->
+      <div style="
+        display:flex;
+        justify-content:center;
+        align-items:center;
+      ">
+        <img src="${ASSETS.avatar}" style="
+          width:180px;
+          height:180px;
+          border-radius:50%;
+          object-fit:cover;
+        ">
+      </div>
+
+      <!-- CONTROLES -->
+      <div style="
+        background:#1c1c1e;
+        padding:30px 20px;
+        border-top-left-radius:30px;
+        border-top-right-radius:30px;
+      ">
+
+        <div style="
+          display:flex;
+          justify-content:space-around;
+          margin-bottom:25px;
+        ">
+          ${callBtn("Alto-falante")}
+          ${callBtn("Vídeo")}
+          ${callBtn("Silenciar")}
+        </div>
+
+        <div style="
+          display:flex;
+          justify-content:space-around;
+        ">
+          ${callBtn("Mais")}
+          ${callBtn("Compartilhar")}
+
+          <div onclick="endCall()" style="
+            width:70px;
+            height:70px;
+            background:#ff3b30;
+            border-radius:50%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:20px;
+          ">
+            📞
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  `;
+
+  // 🔥 fluxo da chamada
+  setTimeout(() => {
+    const el = document.getElementById("callStatus");
+    if (el) el.textContent = "Chamando...";
+  }, 2000);
+
+  setTimeout(() => {
+    endCall();
+  }, 30000);
+
+  playRingtone();
+}
+
+let ringtone;
+
+function playRingtone() {
+  ringtone = new Audio("/assets/ringtone.mp3");
+  ringtone.loop = true;
+  ringtone.play().catch(() => {});
+}
+
+function stopRingtone() {
+  if (ringtone) {
+    ringtone.pause();
+    ringtone.currentTime = 0;
+  }
+}
+
+function endCall() {
+  stopRingtone();
+  mountChat();
+}
+
+function callBtn(label) {
+  return `
+    <div style="
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
+    ">
+      <div style="
+        width:65px;
+        height:65px;
+        background:#3a3a3c;
+        border-radius:50%;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:18px;
+      ">
+        •
+      </div>
+      <span style="font-size:13px;color:#ccc;">
+        ${label}
+      </span>
+    </div>
+  `;
+}
+
 function scrollBottom(force = false) {
   const el = state.chatEl;
   if (!el) return;
@@ -1849,7 +1997,9 @@ function openProfile() {
   gap:10px;
 ">
 
-  ${actionBtnSVG(iconCall(), "Ligar")}
+  <div onclick="startCall()">
+  ${actionBtn("Ligar")}
+</div>
   ${actionBtnSVG(iconVideo(), "Vídeo")}
   ${actionBtnSVG(iconPix(), "Pix")}
   ${actionBtnSVG(iconSearch(), "Pesquisar")}
