@@ -864,6 +864,23 @@ const endIcon = () => `
 
 let ringtone;
 
+function endCallBtn() {
+  return `
+    <div onclick="endCall(false)" style="
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#ff3b30;
+      border-radius:50%;
+      width:70px;
+      height:70px;
+      margin:auto;
+    ">
+      ${endIcon()}
+    </div>
+  `;
+}
+
 function playRingtone() {
   ringtone = new Audio("/assets/ringtone.mp3");
   ringtone.loop = true;
