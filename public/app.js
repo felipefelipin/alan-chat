@@ -2079,26 +2079,13 @@ function openProfile() {
       <div style="height:40px;"></div>
     </div>
   `;
-
-  // 🔥 EVENTO GLOBAL (CORRIGE TUDO)
-  app.onclick = (e) => {
-    const btn = e.target.closest("[data-action]");
-    if (!btn) return;
-
-    const action = btn.getAttribute("data-action");
-
-    if (action === "startCall") startCall();
-    if (action === "video") console.log("Vídeo");
-    if (action === "pix") console.log("Pix");
-    if (action === "search") console.log("Pesquisar");
-  };
 }
 
 
 // ✅ BOTÃO CORRIGIDO
 function actionBtnSVG(icon, label, action = "") {
   return `
-    <div data-action="${action}" style="
+    <div onclick="${action}()" style="
       flex:1;
       height:82px;
       background:#111;
