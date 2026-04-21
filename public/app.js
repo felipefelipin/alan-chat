@@ -331,12 +331,6 @@ function mountPremiumIntro() {
     </div>
   `;
   
-  setTimeout(() => {
-  const btn = document.getElementById("btn-call");
-  if (btn) {
-    btn.addEventListener("click", startCall);
-  }
-});
 
   const vid = document.getElementById("pIntroVid");
   const btnAudio = document.getElementById("pEnableAudio");
@@ -2026,7 +2020,7 @@ function openProfile() {
 ${actionBtnSVG(iconCall(), "Ligar", "btn-call")}
 ${actionBtnSVG(iconVideo(), "Vídeo")}
 ${actionBtnSVG(iconPix(), "Pix")}
-${actionBtnSVG(iconSearch(), "Pesquisar")}}
+${actionBtnSVG(iconSearch(), "Pesquisar")}
 
 </div>
 
@@ -2090,6 +2084,16 @@ ${actionBtnSVG(iconSearch(), "Pesquisar")}}
       <div style="height:40px;"></div>
     </div>
   `;
+  requestAnimationFrame(() => {
+  const btn = document.getElementById("btn-call");
+
+  if (btn) {
+    btn.onclick = startCall;
+  } else {
+    console.log("botão ligar não encontrado");
+  }
+});
+
 }
 
 function actionBtnSVG(icon, label, id = "") {
