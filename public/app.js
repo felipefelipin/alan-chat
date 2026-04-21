@@ -756,24 +756,22 @@ function startCall() {
     <div style="
       height:100vh;
       background:#0b0b0b;
-      color:white;
+      color:#fff;
       display:flex;
       flex-direction:column;
+      align-items:center;
       justify-content:space-between;
-      font-family:-apple-system, BlinkMacSystemFont;
+      font-family:-apple-system,BlinkMacSystemFont;
     ">
 
       <!-- TOPO -->
-      <div style="
-        text-align:center;
-        margin-top:60px;
-      ">
-        <div style="font-size:26px;font-weight:500;">
+      <div style="margin-top:60px;text-align:center;">
+        <div style="font-size:22px;font-weight:600;">
           ${CONTACT.title}
         </div>
 
         <div id="callStatus" style="
-          margin-top:8px;
+          margin-top:6px;
           font-size:16px;
           color:rgba(255,255,255,0.6);
         ">
@@ -782,75 +780,86 @@ function startCall() {
       </div>
 
       <!-- FOTO -->
-      <div style="
-        display:flex;
-        justify-content:center;
-        align-items:center;
+      <img src="${ASSETS.avatar}" style="
+        width:180px;
+        height:180px;
+        border-radius:50%;
+        object-fit:cover;
       ">
-        <img src="${ASSETS.avatar}" style="
-          width:180px;
-          height:180px;
-          border-radius:50%;
-          object-fit:cover;
-        ">
-      </div>
 
       <!-- CONTROLES -->
       <div style="
-        background:#1c1c1e;
-        padding:30px 20px;
-        border-top-left-radius:30px;
-        border-top-right-radius:30px;
+        width:100%;
+        padding:20px;
+        display:grid;
+        grid-template-columns:repeat(3,1fr);
+        gap:22px;
+        margin-bottom:30px;
       ">
 
-        <div style="
-          display:flex;
-          justify-content:space-around;
-          margin-bottom:25px;
-        ">
-          ${callBtn("Alto-falante")}
-          ${callBtn("Vídeo")}
-          ${callBtn("Silenciar")}
-        </div>
-
-        <div style="
-          display:flex;
-          justify-content:space-around;
-        ">
-          ${callBtn("Mais")}
-          ${callBtn("Compartilhar")}
-
-          <div onclick="endCall()" style="
-            width:70px;
-            height:70px;
-            background:#ff3b30;
-            border-radius:50%;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:20px;
-          ">
-            📞
-          </div>
-        </div>
+        ${callBtn(speakerIcon(), "Alto-falante")}
+        ${callBtn(videoIcon(), "Vídeo")}
+        ${callBtn(muteIcon(), "Silenciar")}
+        ${callBtn(moreIcon(), "Mais")}
+        ${callBtn(shareIcon(), "Compartilhar")}
+        ${endCallBtn()}
 
       </div>
-
     </div>
   `;
 
-  // 🔥 fluxo da chamada
+  // STATUS TIMELINE
   setTimeout(() => {
     const el = document.getElementById("callStatus");
     if (el) el.textContent = "Chamando...";
   }, 2000);
 
+  // ENCERRA AUTOMATICAMENTE
   setTimeout(() => {
-    endCall();
+    mountChat();
   }, 30000);
-
-  playRingtone();
 }
+
+const speakerIcon = () => `
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+stroke="white" stroke-width="1.6" stroke-linecap="round">
+  <path d="M11 5L6 9H3v6h3l5 4V5z"/>
+  <path d="M15 9.5a3.5 3.5 0 0 1 0 5"/>
+</svg>`;
+
+const videoIcon = () => `
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+stroke="white" stroke-width="1.6" stroke-linecap="round">
+  <rect x="3" y="6" width="13" height="12" rx="3"/>
+  <path d="M16 10l5-3v10l-5-3z"/>
+</svg>`;
+
+const muteIcon = () => `
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+stroke="white" stroke-width="1.6" stroke-linecap="round">
+  <path d="M11 5L6 9H3v6h3l5 4V5z"/>
+  <line x1="23" y1="9" x2="17" y2="15"/>
+  <line x1="17" y1="9" x2="23" y2="15"/>
+</svg>`;
+
+const moreIcon = () => `
+<svg width="26" height="26" viewBox="0 0 24 24" fill="white">
+  <circle cx="6" cy="12" r="1.5"/>
+  <circle cx="12" cy="12" r="1.5"/>
+  <circle cx="18" cy="12" r="1.5"/>
+</svg>`;
+
+const shareIcon = () => `
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+stroke="white" stroke-width="1.6" stroke-linecap="round">
+  <rect x="2" y="7" width="14" height="10" rx="2"/>
+  <path d="M16 11l6-4v10l-6-4z"/>
+</svg>`;
+
+const endIcon = () => `
+<svg width="26" height="26" viewBox="0 0 24 24" fill="white">
+  <path d="M6.6 10.8c3.6-3.2 7.2-3.2 10.8 0l-1.6 2c-2.6-2.2-5-2.2-7.6 0l-1.6-2z"/>
+</svg>`;
 
 let ringtone;
 
