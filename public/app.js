@@ -2084,7 +2084,7 @@ function openProfile() {
 
 function actionBtnSVG(icon, label, action = "") {
   return `
-    <div onclick="${action}()" style="
+    <div onclick="window.${action} && window.${action}()" style="
       flex:1;
       height:82px;
       background:#111;
@@ -2139,8 +2139,6 @@ function action(text,red=false){
 function danger(text){
   return `<div style="padding:16px;color:#ff3b30;">${text}</div>`;
 }
-
-
 
 
 
@@ -2253,7 +2251,6 @@ function insertEmoji(el) {
 
 function sendReaction(emoji) {
   console.log("Reação enviada:", emoji);
-  // Aqui você pode adicionar lógica futura para salvar a reação na conversa
   closeStoryReply();
 }
 
@@ -2321,13 +2318,11 @@ if (window.visualViewport) {
   window.visualViewport.addEventListener("resize", () => {
     const chat = document.getElementById("chat");
 
-    // só funciona se estiver na tela de chat
     if (!chat) {
       lastHeight = window.visualViewport.height;
       return;
     }
 
-    // se stories aberto, ignora tudo
     if (document.getElementById("storyVideo")?.style.display === "block") {
       lastHeight = window.visualViewport.height;
       return;
