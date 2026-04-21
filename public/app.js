@@ -2008,11 +2008,21 @@ function openProfile() {
   gap:10px;
 ">
 
-  <div onclick="startCall()">
-  ${actionBtnSVG(iconCall(), "Ligar")}
-  ${actionBtnSVG(iconVideo(), "Vídeo")}
-  ${actionBtnSVG(iconPix(), "Pix")}
-  ${actionBtnSVG(iconSearch(), "Pesquisar")}
+  <div onclick="startCall()" style="flex:1;">
+    ${actionBtnSVG(iconCall(), "Ligar")}
+  </div>
+
+  <div style="flex:1;">
+    ${actionBtnSVG(iconVideo(), "Vídeo")}
+  </div>
+
+  <div style="flex:1;">
+    ${actionBtnSVG(iconPix(), "Pix")}
+  </div>
+
+  <div style="flex:1;">
+    ${actionBtnSVG(iconSearch(), "Pesquisar")}
+  </div>
 
 </div>
 
@@ -2094,7 +2104,7 @@ function actionBtnSVG(icon, label){
         ${icon}
       </div>
       <div style="
-        color:#25D366;
+        color:#fff;
         font-size:13px;
         font-weight:500;
       ">
