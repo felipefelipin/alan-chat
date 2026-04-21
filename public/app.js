@@ -880,6 +880,7 @@ function callBtn(label) {
       align-items:center;
       gap:8px;
     ">
+      
       <div style="
         width:65px;
         height:65px;
@@ -888,13 +889,23 @@ function callBtn(label) {
         display:flex;
         align-items:center;
         justify-content:center;
-        font-size:18px;
       ">
-        •
+        <div style="
+          width:22px;
+          height:22px;
+          background:rgba(255,255,255,0.85);
+          border-radius:50%;
+        "></div>
       </div>
-      <span style="font-size:13px;color:#ccc;">
+
+      <span style="
+        font-size:13px;
+        color:rgba(255,255,255,0.85);
+        font-weight:400;
+      ">
         ${label}
       </span>
+
     </div>
   `;
 }
@@ -1998,8 +2009,7 @@ function openProfile() {
 ">
 
   <div onclick="startCall()">
-  ${actionBtn("Ligar")}
-</div>
+  ${actionBtnSVG(iconCall(), "Ligar")}
   ${actionBtnSVG(iconVideo(), "Vídeo")}
   ${actionBtnSVG(iconPix(), "Pix")}
   ${actionBtnSVG(iconSearch(), "Pesquisar")}
