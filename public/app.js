@@ -751,7 +751,7 @@ function mountChat() {
   }, 30000);
 }
 
-function startCall() {
+window.startCall = function() {
   app.innerHTML = `
     <div style="
       height:100vh;
