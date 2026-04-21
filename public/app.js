@@ -2012,15 +2012,16 @@ function openProfile() {
      <!-- BOTÕES CORRETOS -->
 <div style="
   display:flex;
-  justify-content:space-between;
   padding:20px 14px 10px;
   gap:10px;
 ">
 
-${actionBtnSVG(iconCall(), "Ligar", "startCall()")}
-${actionBtnSVG(iconVideo(), "Vídeo")}
-${actionBtnSVG(iconPix(), "Pix")}
-${actionBtnSVG(iconSearch(), "Pesquisar")}
+  ${actionBtnSVG(iconCall(), "Ligar", "startCall()")}
+  ${actionBtnSVG(iconVideo(), "Vídeo")}
+  ${actionBtnSVG(iconPix(), "Pix")}
+  ${actionBtnSVG(iconSearch(), "Pesquisar")}
+
+</div>
 
 <!-- CRIAR CONTATO -->
 <div style="
