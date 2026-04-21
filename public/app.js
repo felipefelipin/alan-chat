@@ -2082,7 +2082,6 @@ function openProfile() {
 }
 
 
-// ✅ BOTÃO CORRIGIDO
 function actionBtnSVG(icon, label, action = "") {
   return `
     <div onclick="${action}()" style="
