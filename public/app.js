@@ -861,6 +861,7 @@ setTimeout(() => {
   }
 
 }, 2000);
+};
 
 const speakerIcon = () => `
 <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
