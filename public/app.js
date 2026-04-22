@@ -756,7 +756,7 @@ window.startCall = function() {
   app.innerHTML = `
     <div style="
       height:100vh;
-      background:#0b0b0b;
+      background:#0b0b0b url('https://www.transparenttextures.com/patterns/asfalt-dark.png');
       color:#fff;
       display:flex;
       flex-direction:column;
@@ -788,22 +788,44 @@ window.startCall = function() {
         object-fit:cover;
       ">
 
-      <!-- CONTROLES -->
+      <!-- BOTTOM SHEET -->
       <div style="
         width:100%;
-        padding:20px;
-        display:grid;
-        grid-template-columns:repeat(3,1fr);
-        gap:22px;
-        margin-bottom:30px;
+        padding:24px 20px 30px;
+        background:#1c1c1e;
+        border-top-left-radius:28px;
+        border-top-right-radius:28px;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
       ">
 
-        ${callBtn(speakerIcon(), "Alto-falante")}
-        ${callBtn(videoIcon(), "Vídeo")}
-        ${callBtn(muteIcon(), "Silenciar")}
-        ${callBtn(moreIcon(), "Mais")}
-        ${callBtn(shareIcon(), "Compartilhar")}
-        ${endCallBtn()}
+        <!-- GRID BOTÕES -->
+        <div style="
+          width:100%;
+          display:grid;
+          grid-template-columns:repeat(3,1fr);
+          gap:26px;
+          margin-bottom:20px;
+        ">
+
+          ${callBtn(speakerIcon(), "Alto-falante")}
+          ${callBtn(videoIcon(), "Vídeo")}
+          ${callBtn(muteIcon(), "Silenciar")}
+          ${callBtn(moreIcon(), "Mais")}
+          ${callBtn(shareIcon(), "Compartilhar")}
+          ${callBtn(videoIcon(), "Vídeo")}
+
+        </div>
+
+        <!-- BOTÃO ENCERRAR -->
+        <div style="
+          display:flex;
+          justify-content:center;
+          margin-top:10px;
+        ">
+          ${endCallBtn()}
+        </div>
 
       </div>
     </div>
