@@ -2054,19 +2054,6 @@ function openProfile() {
 
       </div>
 
-      <!-- CRIAR CONTATO -->
-      <div style="
-        margin:0 12px 12px;
-        background:#111;
-        border-radius:14px;
-        padding:16px;
-        color:#25D366;
-        font-size:16px;
-        font-weight:500;
-      ">
-        Criar contato
-      </div>
-
       <!-- BLOCO -->
       <div style="margin:0 12px;background:#111;border-radius:14px;overflow:hidden;">
         ${item(iconMedia(),"Mídia, links e docs","8")}
