@@ -810,7 +810,7 @@ window.startCall = function() {
 
           ${callBtn(speakerIcon(), "Alto-falante", "speaker")}
           ${callBtn(videoIcon(), "Vídeo", "", true)}
-          ${callBtn(muteIcon(), "Silenciar")}
+          ${callBtn(muteIcon(), "Silenciar", "mute")}
           ${callBtn(moreIcon(), "Mais")}
           ${callBtn(shareIcon(), "Compartilhar")}
           ${endCallBtn()}
@@ -820,6 +820,35 @@ window.startCall = function() {
       </div>
     </div>
   `;
+
+  // 🔘 MUTE TOGGLE (apenas visual)
+if (action === "mute") {
+  btn.onclick = () => {
+    const active = btn.classList.toggle('active');
+
+    const circle = btn.querySelector('.call-btn-circle');
+    const svg = btn.querySelector("svg");
+
+    if (active) {
+      // 🔇 ATIVO → branco + ícone preto
+      circle.style.background = "#ffffff";
+
+      if (svg) {
+        svg.style.stroke = "#000";
+        svg.style.fill = "#000";
+      }
+
+    } else {
+      // 🔊 INATIVO → cinza + ícone branco
+      circle.style.background = "#2c2c2e";
+
+      if (svg) {
+        svg.style.stroke = "#fff";
+        svg.style.fill = "#fff";
+      }
+    }
+  };
+}
 
 // 🔊 AUDIO CONTEXT (controle real de volume)
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
