@@ -825,28 +825,42 @@ window.startCall = function() {
 ringtone = new Audio("/assets/ringtone.mp3");
 ringtone.preload = "auto";
 ringtone.loop = true;
-ringtone.volume = 0.02; // 🔉 MUITO baixo (quase inaudível)
+ringtone.volume = 0.01; // 🔉 EXTREMAMENTE baixo
 
-// 🔘 FUNÇÃO DE FADE (transição suave)
+let volumeInterval = null;
+
+// 🔘 FUNÇÃO DE FADE REAL (sem conflito)
 function fadeVolume(target) {
   if (!ringtone) return;
 
-  const step = target > ringtone.volume ? 0.05 : -0.05;
+  // 🔥 cancela qualquer fade anterior
+  if (volumeInterval) {
+    clearInterval(volumeInterval);
+    volumeInterval = null;
+  }
 
-  const interval = setInterval(() => {
-    ringtone.volume = Math.max(0, Math.min(1, ringtone.volume + step));
+  volumeInterval = setInterval(() => {
+    if (!ringtone) return;
 
-    if (
-      (step > 0 && ringtone.volume >= target) ||
-      (step < 0 && ringtone.volume <= target)
-    ) {
+    const current = ringtone.volume;
+
+    if (Math.abs(current - target) < 0.01) {
       ringtone.volume = target;
-      clearInterval(interval);
+      clearInterval(volumeInterval);
+      volumeInterval = null;
+      return;
     }
-  }, 30);
+
+    if (current < target) {
+      ringtone.volume = Math.min(target, current + 0.08);
+    } else {
+      ringtone.volume = Math.max(target, current - 0.08);
+    }
+
+  }, 40);
 }
 
-// 🔘 TOGGLE SPEAKER
+// 🔘 TOGGLE SPEAKER (100% confiável)
 setTimeout(() => {
   document.querySelectorAll('.call-btn').forEach(btn => {
     const action = btn.getAttribute('data-action');
@@ -859,11 +873,11 @@ setTimeout(() => {
         if (active) {
           // 🔊 SPEAKER ON
           circle.style.background = "#0a84ff";
-          fadeVolume(1);
+          fadeVolume(1); // volume máximo
         } else {
           // 🔉 SPEAKER OFF
           circle.style.background = "#2c2c2e";
-          fadeVolume(0.02);
+          fadeVolume(0.01); // quase mudo
         }
       };
     }
