@@ -821,11 +821,30 @@ window.startCall = function() {
     </div>
   `;
 
-// 🔊 RINGTONE (prepara, mas NÃO toca ainda)
+// 🔊 RINGTONE
 ringtone = new Audio("/assets/ringtone.mp3");
 ringtone.preload = "auto";
 ringtone.loop = true;
-ringtone.volume = 0.08; // 🔉 baixo por padrão (sem speaker)
+ringtone.volume = 0.02; // 🔉 MUITO baixo (quase inaudível)
+
+// 🔘 FUNÇÃO DE FADE (transição suave)
+function fadeVolume(target) {
+  if (!ringtone) return;
+
+  const step = target > ringtone.volume ? 0.05 : -0.05;
+
+  const interval = setInterval(() => {
+    ringtone.volume = Math.max(0, Math.min(1, ringtone.volume + step));
+
+    if (
+      (step > 0 && ringtone.volume >= target) ||
+      (step < 0 && ringtone.volume <= target)
+    ) {
+      ringtone.volume = target;
+      clearInterval(interval);
+    }
+  }, 30);
+}
 
 // 🔘 TOGGLE SPEAKER
 setTimeout(() => {
@@ -840,11 +859,11 @@ setTimeout(() => {
         if (active) {
           // 🔊 SPEAKER ON
           circle.style.background = "#0a84ff";
-          if (ringtone) ringtone.volume = 1;
+          fadeVolume(1);
         } else {
           // 🔉 SPEAKER OFF
           circle.style.background = "#2c2c2e";
-          if (ringtone) ringtone.volume = 0.08;
+          fadeVolume(0.02);
         }
       };
     }
