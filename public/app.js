@@ -999,31 +999,40 @@ function stopRingtone() {
   }
 }
 
-function callBtn(icon, label, action) {
+function callBtn(icon, label, action = "", disabled = false) {
   return `
-    <div data-action="${action}" class="call-btn" style="
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      cursor:pointer;
-    ">
+    <div 
+      class="call-btn"
+      data-action="${action}"
+      style="
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        gap:8px;
+        ${disabled ? "opacity:0.4; pointer-events:none;" : "cursor:pointer;"}
+      "
+    >
+      
       <div class="call-btn-circle" style="
         width:65px;
         height:65px;
-        background:#2c2c2e;
+        background:#3a3a3c;
         border-radius:50%;
         display:flex;
         align-items:center;
         justify-content:center;
-        transition:.2s;
       ">
         ${icon}
       </div>
-      <span style="font-size:13px;color:rgba(255,255,255,0.85);">
+
+      <span style="
+        font-size:13px;
+        color:rgba(255,255,255,0.85);
+        font-weight:400;
+      ">
         ${label}
       </span>
+
     </div>
   `;
 }
