@@ -809,7 +809,7 @@ window.startCall = function() {
         ">
 
           ${callBtn(speakerIcon(), "Alto-falante", "speaker")}
-          ${callBtn(videoIcon(), "Vídeo")}
+          ${callBtn(videoIcon(), "Vídeo", "", true)}
           ${callBtn(muteIcon(), "Silenciar")}
           ${callBtn(moreIcon(), "Mais")}
           ${callBtn(shareIcon(), "Compartilhar")}
