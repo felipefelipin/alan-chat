@@ -823,30 +823,33 @@ window.startCall = function() {
 
 // 🔊 RINGTONE (prepara, mas NÃO toca ainda)
 ringtone = new Audio("/assets/ringtone.mp3");
+ringtone.preload = "auto";
 ringtone.loop = true;
-ringtone.volume = 0.3;
+ringtone.volume = 0.08; // 🔉 baixo por padrão (sem speaker)
 
-  // 🔘 TOGGLE SPEAKER
-  setTimeout(() => {
-    document.querySelectorAll('.call-btn').forEach(btn => {
-      const action = btn.getAttribute('data-action');
-      const circle = btn.querySelector('.call-btn-circle');
+// 🔘 TOGGLE SPEAKER
+setTimeout(() => {
+  document.querySelectorAll('.call-btn').forEach(btn => {
+    const action = btn.getAttribute('data-action');
+    const circle = btn.querySelector('.call-btn-circle');
 
-      if (action === "speaker") {
-        btn.onclick = () => {
-          const active = btn.classList.toggle('active');
+    if (action === "speaker") {
+      btn.onclick = () => {
+        const active = btn.classList.toggle('active');
 
-          if (active) {
-            circle.style.background = "#0a84ff";
-            if (ringtone) ringtone.volume = 1;
-          } else {
-            circle.style.background = "#2c2c2e";
-            if (ringtone) ringtone.volume = 0.3;
-          }
-        };
-      }
-    });
-  }, 0);
+        if (active) {
+          // 🔊 SPEAKER ON
+          circle.style.background = "#0a84ff";
+          if (ringtone) ringtone.volume = 1;
+        } else {
+          // 🔉 SPEAKER OFF
+          circle.style.background = "#2c2c2e";
+          if (ringtone) ringtone.volume = 0.08;
+        }
+      };
+    }
+  });
+}, 0);
 
 // STATUS TIMELINE
 setTimeout(() => {
