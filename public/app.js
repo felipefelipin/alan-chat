@@ -1009,26 +1009,28 @@ function callBtn(icon, label, action = "", disabled = false) {
         flex-direction:column;
         align-items:center;
         gap:8px;
-        ${disabled ? "opacity:0.4; pointer-events:none;" : "cursor:pointer;"}
+        ${disabled ? "pointer-events:none;" : "cursor:pointer;"}
       "
     >
       
       <div class="call-btn-circle" style="
         width:65px;
         height:65px;
-        background:#3a3a3c;
+        background:${disabled ? "#3a3a3c" : "#2c2c2e"};
         border-radius:50%;
         display:flex;
         align-items:center;
         justify-content:center;
       ">
-        ${icon}
+        <div style="${disabled ? "opacity:0.35;" : ""}">
+          ${icon}
+        </div>
       </div>
 
       <span style="
         font-size:13px;
-        color:rgba(255,255,255,0.85);
         font-weight:400;
+        color:${disabled ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.85)"};
       ">
         ${label}
       </span>
