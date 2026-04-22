@@ -806,7 +806,6 @@ window.startCall = function() {
           display:grid;
           grid-template-columns:repeat(3,1fr);
           gap:26px;
-          margin-bottom:20px;
         ">
 
           ${callBtn(speakerIcon(), "Alto-falante")}
@@ -814,17 +813,8 @@ window.startCall = function() {
           ${callBtn(muteIcon(), "Silenciar")}
           ${callBtn(moreIcon(), "Mais")}
           ${callBtn(shareIcon(), "Compartilhar")}
-          ${callBtn(videoIcon(), "Vídeo")}
-
-        </div>
-
-        <!-- BOTÃO ENCERRAR -->
-        <div style="
-          display:flex;
-          justify-content:center;
-          margin-top:10px;
-        ">
           ${endCallBtn()}
+
         </div>
 
       </div>
@@ -890,15 +880,28 @@ function endCallBtn() {
   return `
     <div onclick="endCall(false)" style="
       display:flex;
+      flex-direction:column;
       align-items:center;
       justify-content:center;
-      background:#ff3b30;
-      border-radius:50%;
-      width:70px;
-      height:70px;
-      margin:auto;
+      gap:8px;
     ">
-      ${endIcon()}
+      <div style="
+        width:65px;
+        height:65px;
+        background:#ff3b30;
+        border-radius:50%;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+      ">
+        ${endIcon()}
+      </div>
+      <span style="
+        font-size:13px;
+        color:#fff;
+      ">
+        Encerrar
+      </span>
     </div>
   `;
 }
@@ -916,32 +919,26 @@ function stopRingtone() {
   }
 }
 
-function callBtn(label) {
+function callBtn(icon, label) {
   return `
     <div style="
       display:flex;
       flex-direction:column;
       align-items:center;
+      justify-content:center;
       gap:8px;
     ">
-      
       <div style="
         width:65px;
         height:65px;
-        background:#3a3a3c;
+        background:#2c2c2e;
         border-radius:50%;
         display:flex;
         align-items:center;
         justify-content:center;
       ">
-        <div style="
-          width:22px;
-          height:22px;
-          background:rgba(255,255,255,0.85);
-          border-radius:50%;
-        "></div>
+        ${icon}
       </div>
-
       <span style="
         font-size:13px;
         color:rgba(255,255,255,0.85);
@@ -949,7 +946,6 @@ function callBtn(label) {
       ">
         ${label}
       </span>
-
     </div>
   `;
 }
