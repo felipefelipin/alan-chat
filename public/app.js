@@ -846,11 +846,10 @@ fetch("/assets/ringtone.mp3")
     source.start(0);
   });
 
-// 🔘 SPEAKER TOGGLE REAL
+// 🔘 SPEAKER TOGGLE REAL (com cor branca + ícone preto)
 setTimeout(() => {
   document.querySelectorAll('.call-btn').forEach(btn => {
     const action = btn.getAttribute('data-action');
-    const circle = btn.querySelector('.call-btn-circle');
 
     if (action === "speaker") {
       btn.onclick = () => {
@@ -858,13 +857,29 @@ setTimeout(() => {
 
         if (!gainNode) return;
 
+        const circle = btn.querySelector('.call-btn-circle');
+        const svg = btn.querySelector("svg");
+
         if (active) {
-          // 🔊 SPEAKER ON
-          circle.style.background = "#0a84ff";
+          // 🔊 ATIVO → fundo branco + ícone preto
+          circle.style.background = "#ffffff";
+
+          if (svg) {
+            svg.style.stroke = "#000";
+            svg.style.fill = "#000";
+          }
+
           gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.1);
+
         } else {
-          // 🔉 SPEAKER OFF
+          // 🔉 INATIVO → fundo padrão + ícone branco
           circle.style.background = "#2c2c2e";
+
+          if (svg) {
+            svg.style.stroke = "#fff";
+            svg.style.fill = "#fff";
+          }
+
           gainNode.gain.setTargetAtTime(0.08, audioCtx.currentTime, 0.1);
         }
       };
