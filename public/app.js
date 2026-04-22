@@ -821,46 +821,32 @@ window.startCall = function() {
     </div>
   `;
 
-// 🔊 RINGTONE
-ringtone = new Audio("/assets/ringtone.mp3");
-ringtone.preload = "auto";
-ringtone.loop = true;
-ringtone.volume = 0.01; // 🔉 EXTREMAMENTE baixo
+// 🔊 AUDIO CONTEXT (controle real de volume)
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let source;
+let gainNode;
 
-let volumeInterval = null;
+// 🔊 carregar áudio
+fetch("/assets/ringtone.mp3")
+  .then(res => res.arrayBuffer())
+  .then(buffer => audioCtx.decodeAudioData(buffer))
+  .then(decoded => {
+    source = audioCtx.createBufferSource();
+    gainNode = audioCtx.createGain();
 
-// 🔘 FUNÇÃO DE FADE REAL (sem conflito)
-function fadeVolume(target) {
-  if (!ringtone) return;
+    source.buffer = decoded;
+    source.loop = true;
 
-  // 🔥 cancela qualquer fade anterior
-  if (volumeInterval) {
-    clearInterval(volumeInterval);
-    volumeInterval = null;
-  }
+    source.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
 
-  volumeInterval = setInterval(() => {
-    if (!ringtone) return;
+    // 🔉 começa MUITO baixo
+    gainNode.gain.value = 0.02;
 
-    const current = ringtone.volume;
+    source.start(0);
+  });
 
-    if (Math.abs(current - target) < 0.01) {
-      ringtone.volume = target;
-      clearInterval(volumeInterval);
-      volumeInterval = null;
-      return;
-    }
-
-    if (current < target) {
-      ringtone.volume = Math.min(target, current + 0.08);
-    } else {
-      ringtone.volume = Math.max(target, current - 0.08);
-    }
-
-  }, 40);
-}
-
-// 🔘 TOGGLE SPEAKER (100% confiável)
+// 🔘 SPEAKER TOGGLE REAL
 setTimeout(() => {
   document.querySelectorAll('.call-btn').forEach(btn => {
     const action = btn.getAttribute('data-action');
@@ -870,14 +856,16 @@ setTimeout(() => {
       btn.onclick = () => {
         const active = btn.classList.toggle('active');
 
+        if (!gainNode) return;
+
         if (active) {
-          // 🔊 SPEAKER ON
+          // 🔊 ALTO
           circle.style.background = "#0a84ff";
-          fadeVolume(1); // volume máximo
+          gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.1);
         } else {
-          // 🔉 SPEAKER OFF
+          // 🔉 BAIXO REAL
           circle.style.background = "#2c2c2e";
-          fadeVolume(0.01); // quase mudo
+          gainNode.gain.setTargetAtTime(0.02, audioCtx.currentTime, 0.1);
         }
       };
     }
