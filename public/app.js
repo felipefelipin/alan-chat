@@ -847,7 +847,6 @@ fetch("/assets/ringtone.mp3")
     source.start(0);
   });
 
-// 🔘 SPEAKER TOGGLE REAL (com cor branca + ícone preto)
 // 🔘 TOGGLES DOS BOTÕES
 setTimeout(() => {
   document.querySelectorAll('.call-btn').forEach(btn => {
