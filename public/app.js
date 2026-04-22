@@ -840,8 +840,8 @@ fetch("/assets/ringtone.mp3")
     source.connect(gainNode);
     gainNode.connect(audioCtx.destination);
 
-    // 🔉 começa MUITO baixo
-    gainNode.gain.value = 0.02;
+    // 🔉 volume base (baixo, mas audível)
+    gainNode.gain.value = 0.08;
 
     source.start(0);
   });
@@ -859,18 +859,35 @@ setTimeout(() => {
         if (!gainNode) return;
 
         if (active) {
-          // 🔊 ALTO
+          // 🔊 SPEAKER ON
           circle.style.background = "#0a84ff";
           gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.1);
         } else {
-          // 🔉 BAIXO REAL
+          // 🔉 SPEAKER OFF
           circle.style.background = "#2c2c2e";
-          gainNode.gain.setTargetAtTime(0.02, audioCtx.currentTime, 0.1);
+          gainNode.gain.setTargetAtTime(0.08, audioCtx.currentTime, 0.1);
         }
       };
     }
   });
 }, 0);
+
+// ⏱️ ENCERRAR CHAMADA COM FADE OUT (40s)
+setTimeout(() => {
+  if (gainNode) {
+    // 🔻 fade gradual
+    gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2);
+
+    // 🛑 parar completamente após fade
+    setTimeout(() => {
+      if (source) {
+        try { source.stop(0); } catch {}
+      }
+    }, 600);
+  }
+
+  mountChat();
+}, 40000);
 
 // STATUS TIMELINE
 setTimeout(() => {
