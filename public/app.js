@@ -799,7 +799,7 @@ window.startCall = function() {
         flex-direction:column;
         align-items:center;
       ">
-
+      
         <!-- GRID BOTÕES -->
         <div style="
           width:100%;
@@ -811,16 +811,74 @@ window.startCall = function() {
           ${callBtn(speakerIcon(), "Alto-falante", "speaker")}
           ${callBtn(videoIcon(), "Vídeo", "", true)}
           ${callBtn(muteIcon(), "Silenciar", "mute")}
-          ${callBtn(moreIcon(), "Mais")}
+          ${callBtn(moreIcon(), "Mais", "more")}
           ${callBtn(shareIcon(), "Compartilhar")}
           ${endCallBtn()}
 
         </div>
 
       </div>
+
+      <!-- OVERLAY MAIS -->
+      <div id="callMoreOverlay" style="
+        position:fixed;
+        bottom:0;
+        left:0;
+        width:100%;
+        background:rgba(28,28,30,0.95);
+        backdrop-filter:blur(20px);
+        padding:20px;
+        display:none;
+        flex-direction:column;
+        gap:16px;
+        border-top-left-radius:20px;
+        border-top-right-radius:20px;
+      ">
+
+        <div style="
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          color:#fff;
+          font-size:16px;
+        ">
+          <div style="display:flex;align-items:center;gap:10px;">
+            🔒 Protegida com a criptografia de ponta a ponta
+          </div>
+
+          <div id="closeMore" style="
+            width:34px;
+            height:34px;
+            border-radius:50%;
+            background:#3a3a3c;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:18px;
+            cursor:pointer;
+          ">
+            ✕
+          </div>
+        </div>
+
+        <div style="
+          background:#2c2c2e;
+          border-radius:14px;
+          padding:16px;
+          color:#fff;
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          font-size:16px;
+        ">
+          Enviar mensagem
+          💬
+        </div>
+
+      </div>
+
     </div>
   `;
-
 
 // 🔊 AUDIO CONTEXT (controle real de volume)
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -841,7 +899,6 @@ fetch("/assets/ringtone.mp3")
     source.connect(gainNode);
     gainNode.connect(audioCtx.destination);
 
-    // 🔉 volume base (baixo, mas audível)
     gainNode.gain.value = 0.08;
 
     source.start(0);
@@ -880,7 +937,7 @@ setTimeout(() => {
       };
     }
 
-    // 🔇 MUTE (VOCÊ ADICIONA AQUI 👇)
+    // 🔇 MUTE
     if (action === "mute") {
       btn.onclick = () => {
         const active = btn.classList.toggle('active');
@@ -901,16 +958,31 @@ setTimeout(() => {
       };
     }
 
+    // ➕ MORE
+    if (action === "more") {
+      btn.onclick = () => {
+        const overlay = document.getElementById("callMoreOverlay");
+        if (overlay) overlay.style.display = "flex";
+      };
+    }
+
   });
+
+  const close = document.getElementById("closeMore");
+  if (close) {
+    close.onclick = () => {
+      const overlay = document.getElementById("callMoreOverlay");
+      if (overlay) overlay.style.display = "none";
+    };
+  }
+
 }, 0);
 
 // ⏱️ ENCERRAR CHAMADA COM FADE OUT (40s)
 setTimeout(() => {
   if (gainNode) {
-    // 🔻 fade gradual
     gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2);
 
-    // 🛑 parar completamente após fade
     setTimeout(() => {
       if (source) {
         try { source.stop(0); } catch {}
@@ -927,7 +999,6 @@ setTimeout(() => {
 
   if (el) el.textContent = "Chamando...";
 
-  // 🔥 TOCA AQUI (igual WhatsApp)
   if (ringtone) {
     ringtone.currentTime = 0;
     ringtone.play().catch(() => {});
