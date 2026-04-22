@@ -835,43 +835,43 @@ window.startCall = function() {
 
 const speakerIcon = () => `
 <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
-stroke="white" stroke-width="1.6" stroke-linecap="round">
-  <path d="M11 5L6 9H3v6h3l5 4V5z"/>
-  <path d="M15 9.5a3.5 3.5 0 0 1 0 5"/>
+stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M5 10h3l4-3v10l-4-3H5z"/>
+  <path d="M15 9c1.2 1.2 1.2 4.8 0 6"/>
 </svg>`;
 
 const videoIcon = () => `
 <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
-stroke="white" stroke-width="1.6" stroke-linecap="round">
-  <rect x="3" y="6" width="13" height="12" rx="3"/>
-  <path d="M16 10l5-3v10l-5-3z"/>
+stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="3" y="6.5" width="13" height="11" rx="3"/>
+  <path d="M16 10l4-2v8l-4-2z"/>
 </svg>`;
 
 const muteIcon = () => `
 <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
-stroke="white" stroke-width="1.6" stroke-linecap="round">
-  <path d="M11 5L6 9H3v6h3l5 4V5z"/>
-  <line x1="23" y1="9" x2="17" y2="15"/>
-  <line x1="17" y1="9" x2="23" y2="15"/>
+stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M5 10h3l4-3v10l-4-3H5z"/>
+  <line x1="17" y1="9" x2="21" y2="15"/>
+  <line x1="21" y1="9" x2="17" y2="15"/>
 </svg>`;
 
 const moreIcon = () => `
-<svg width="26" height="26" viewBox="0 0 24 24" fill="white">
-  <circle cx="6" cy="12" r="1.5"/>
-  <circle cx="12" cy="12" r="1.5"/>
-  <circle cx="18" cy="12" r="1.5"/>
+<svg width="26" height="26" viewBox="0 0 24 24" fill="#fff">
+  <circle cx="6" cy="12" r="1.6"/>
+  <circle cx="12" cy="12" r="1.6"/>
+  <circle cx="18" cy="12" r="1.6"/>
 </svg>`;
 
 const shareIcon = () => `
 <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
-stroke="white" stroke-width="1.6" stroke-linecap="round">
-  <rect x="2" y="7" width="14" height="10" rx="2"/>
-  <path d="M16 11l6-4v10l-6-4z"/>
+stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="3" y="7" width="12" height="10" rx="2.5"/>
+  <path d="M15 10l5-3v10l-5-3z"/>
 </svg>`;
 
 const endIcon = () => `
-<svg width="26" height="26" viewBox="0 0 24 24" fill="white">
-  <path d="M6.6 10.8c3.6-3.2 7.2-3.2 10.8 0l-1.6 2c-2.6-2.2-5-2.2-7.6 0l-1.6-2z"/>
+<svg width="26" height="26" viewBox="0 0 24 24" fill="#fff">
+  <path d="M6 10.5c4-3 8-3 12 0l-1.8 2c-2.8-2-5.6-2-8.4 0l-1.8-2z"/>
 </svg>`;
 
 let ringtone;
