@@ -821,34 +821,6 @@ window.startCall = function() {
     </div>
   `;
 
-  // 🔘 MUTE TOGGLE (apenas visual)
-if (action === "mute") {
-  btn.onclick = () => {
-    const active = btn.classList.toggle('active');
-
-    const circle = btn.querySelector('.call-btn-circle');
-    const svg = btn.querySelector("svg");
-
-    if (active) {
-      // 🔇 ATIVO → branco + ícone preto
-      circle.style.background = "#ffffff";
-
-      if (svg) {
-        svg.style.stroke = "#000";
-        svg.style.fill = "#000";
-      }
-
-    } else {
-      // 🔊 INATIVO → cinza + ícone branco
-      circle.style.background = "#2c2c2e";
-
-      if (svg) {
-        svg.style.stroke = "#fff";
-        svg.style.fill = "#fff";
-      }
-    }
-  };
-}
 
 // 🔊 AUDIO CONTEXT (controle real de volume)
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -876,43 +848,60 @@ fetch("/assets/ringtone.mp3")
   });
 
 // 🔘 SPEAKER TOGGLE REAL (com cor branca + ícone preto)
+// 🔘 TOGGLES DOS BOTÕES
 setTimeout(() => {
   document.querySelectorAll('.call-btn').forEach(btn => {
     const action = btn.getAttribute('data-action');
 
+    const circle = btn.querySelector('.call-btn-circle');
+    const svg = btn.querySelector("svg");
+
+    // 🔊 SPEAKER
     if (action === "speaker") {
       btn.onclick = () => {
         const active = btn.classList.toggle('active');
 
         if (!gainNode) return;
 
-        const circle = btn.querySelector('.call-btn-circle');
-        const svg = btn.querySelector("svg");
-
         if (active) {
-          // 🔊 ATIVO → fundo branco + ícone preto
           circle.style.background = "#ffffff";
-
           if (svg) {
             svg.style.stroke = "#000";
             svg.style.fill = "#000";
           }
-
           gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.1);
-
         } else {
-          // 🔉 INATIVO → fundo padrão + ícone branco
           circle.style.background = "#2c2c2e";
-
           if (svg) {
             svg.style.stroke = "#fff";
             svg.style.fill = "#fff";
           }
-
           gainNode.gain.setTargetAtTime(0.08, audioCtx.currentTime, 0.1);
         }
       };
     }
+
+    // 🔇 MUTE (VOCÊ ADICIONA AQUI 👇)
+    if (action === "mute") {
+      btn.onclick = () => {
+        const active = btn.classList.toggle('active');
+
+        if (active) {
+          circle.style.background = "#ffffff";
+          if (svg) {
+            svg.style.stroke = "#000";
+            svg.style.fill = "#000";
+          }
+        } else {
+          circle.style.background = "#2c2c2e";
+          if (svg) {
+            svg.style.stroke = "#fff";
+            svg.style.fill = "#fff";
+          }
+        }
+      };
+    }
+
   });
 }, 0);
 
