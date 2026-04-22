@@ -808,7 +808,7 @@ window.startCall = function() {
           gap:26px;
         ">
 
-          ${callBtn(speakerIcon(), "Alto-falante")}
+          ${callBtn(speakerIcon(), "Alto-falante", "speaker")}
           ${callBtn(videoIcon(), "Vídeo")}
           ${callBtn(muteIcon(), "Silenciar")}
           ${callBtn(moreIcon(), "Mais")}
@@ -821,6 +821,34 @@ window.startCall = function() {
     </div>
   `;
 
+  // 🔊 RINGTONE
+  ringtone = new Audio("ringtone.mp3");
+  ringtone.loop = true;
+  ringtone.volume = 0.3;
+  ringtone.play().catch(() => {});
+
+  // 🔘 TOGGLE SPEAKER
+  setTimeout(() => {
+    document.querySelectorAll('.call-btn').forEach(btn => {
+      const action = btn.getAttribute('data-action');
+      const circle = btn.querySelector('.call-btn-circle');
+
+      if (action === "speaker") {
+        btn.onclick = () => {
+          const active = btn.classList.toggle('active');
+
+          if (active) {
+            circle.style.background = "#0a84ff";
+            if (ringtone) ringtone.volume = 1;
+          } else {
+            circle.style.background = "#2c2c2e";
+            if (ringtone) ringtone.volume = 0.3;
+          }
+        };
+      }
+    });
+  }, 0);
+
   // STATUS TIMELINE
   setTimeout(() => {
     const el = document.getElementById("callStatus");
@@ -831,7 +859,7 @@ window.startCall = function() {
   setTimeout(() => {
     mountChat();
   }, 30000);
-}
+};
 
 const speakerIcon = () => `
 <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
@@ -919,16 +947,17 @@ function stopRingtone() {
   }
 }
 
-function callBtn(icon, label) {
+function callBtn(icon, label, action) {
   return `
-    <div style="
+    <div data-action="${action}" class="call-btn" style="
       display:flex;
       flex-direction:column;
       align-items:center;
       justify-content:center;
       gap:8px;
+      cursor:pointer;
     ">
-      <div style="
+      <div class="call-btn-circle" style="
         width:65px;
         height:65px;
         background:#2c2c2e;
@@ -936,14 +965,11 @@ function callBtn(icon, label) {
         display:flex;
         align-items:center;
         justify-content:center;
+        transition:.2s;
       ">
         ${icon}
       </div>
-      <span style="
-        font-size:13px;
-        color:rgba(255,255,255,0.85);
-        font-weight:400;
-      ">
+      <span style="font-size:13px;color:rgba(255,255,255,0.85);">
         ${label}
       </span>
     </div>
