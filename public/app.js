@@ -821,12 +821,10 @@ window.startCall = function() {
     </div>
   `;
 
-// 🔊 RINGTONE
+// 🔊 RINGTONE (prepara, mas NÃO toca ainda)
 ringtone = new Audio("/assets/ringtone.mp3");
-  ringtone.loop = true;
-  ringtone.volume = 0.3;
-  
-  ringtone.play().catch(() => {});
+ringtone.loop = true;
+ringtone.volume = 0.3;
 
   // 🔘 TOGGLE SPEAKER
   setTimeout(() => {
@@ -850,17 +848,19 @@ ringtone = new Audio("/assets/ringtone.mp3");
     });
   }, 0);
 
-  // STATUS TIMELINE
-  setTimeout(() => {
-    const el = document.getElementById("callStatus");
-    if (el) el.textContent = "Chamando...";
-  }, 2000);
+// STATUS TIMELINE
+setTimeout(() => {
+  const el = document.getElementById("callStatus");
 
-  // ENCERRA AUTOMATICAMENTE
-  setTimeout(() => {
-    mountChat();
-  }, 30000);
-};
+  if (el) el.textContent = "Chamando...";
+
+  // 🔥 TOCA AQUI (igual WhatsApp)
+  if (ringtone) {
+    ringtone.currentTime = 0;
+    ringtone.play().catch(() => {});
+  }
+
+}, 2000);
 
 const speakerIcon = () => `
 <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
