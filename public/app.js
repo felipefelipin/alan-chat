@@ -821,10 +821,11 @@ window.startCall = function() {
     </div>
   `;
 
-  // 🔊 RINGTONE
-  ringtone = new Audio("ringtone.mp3");
+// 🔊 RINGTONE
+ringtone = new Audio("/assets/ringtone.mp3");
   ringtone.loop = true;
   ringtone.volume = 0.3;
+  
   ringtone.play().catch(() => {});
 
   // 🔘 TOGGLE SPEAKER
@@ -932,12 +933,6 @@ function endCallBtn() {
       </span>
     </div>
   `;
-}
-
-function playRingtone() {
-  ringtone = new Audio("/assets/ringtone.mp3");
-  ringtone.loop = true;
-  ringtone.play().catch(() => {});
 }
 
 function stopRingtone() {
