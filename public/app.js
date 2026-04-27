@@ -3036,18 +3036,17 @@ function openNotificationsScreen() {
           </div>
         </div>
 
-        <!-- TOQUE -->
-        <div style="
-          display:flex;
-          justify-content:space-between;
-          padding:16px;
-        ">
-          <div>Toque de alerta</div>
+<div style="
+  display:flex;
+  justify-content:space-between;
+  padding:16px;
+">
+  <div>Toque de alerta</div>
 
-          <div style="color:rgba(255,255,255,0.5);">
-            Padrão (Nota) ›
-          </div>
-        </div>
+  <div style="color:rgba(255,255,255,0.5);">
+    Padrão (Nota)
+  </div>
+</div>
 
       </div>
 
