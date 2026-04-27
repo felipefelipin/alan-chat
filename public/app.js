@@ -2554,8 +2554,14 @@ function openProfile() {
         margin-top:28px;
       ">
 
-<div style="margin-top:20px;">
-  
+<!-- AVATAR -->
+<div style="
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  margin-top:28px;
+">
+
   <div onclick="showStories()" style="
     width:120px;
     height:120px;
@@ -2563,7 +2569,7 @@ function openProfile() {
     border:3px solid #25D366;
     padding:3px;
     box-sizing:border-box;
-    margin:auto;
+    cursor:pointer;
   ">
     
     <img src="${ASSETS.avatar}" style="
