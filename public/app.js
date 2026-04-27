@@ -2576,6 +2576,37 @@ function openProfile() {
 
       </div>
 
+      <!-- NOME / SUB / BIO -->
+      <div style="
+        text-align:center;
+        margin-top:14px;
+      ">
+
+        <div style="
+          font-size:26px;
+          font-weight:600;
+        ">
+          ${contact.title}
+        </div>
+
+        <div style="
+          margin-top:6px;
+          font-size:17px;
+          color:rgba(255,255,255,0.6);
+        ">
+          ~${contact.title}
+        </div>
+
+        <div style="
+          margin-top:10px;
+          font-size:17px;
+          color:rgba(255,255,255,0.5);
+        ">
+          Deus seja sempre louvado 🙏
+        </div>
+
+      </div>
+
       <!-- BOTÕES -->
       <div style="
         display:grid;
