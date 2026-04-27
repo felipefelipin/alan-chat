@@ -2679,7 +2679,6 @@ function openProfile() {
 
       <!-- GRUPO -->
       <div style="margin:16px 14px 8px;color:rgba(255,255,255,0.6);font-size:13px;">
-        1 grupo em comum
       </div>
 
       <div style="margin:12px;background:#111;border-radius:14px;overflow:hidden;">
