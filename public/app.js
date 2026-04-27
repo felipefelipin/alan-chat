@@ -2623,7 +2623,7 @@ letter-spacing:-0.3px;
 
       <!-- BLOCO -->
       <div style="margin:0 12px;background:#111;border-radius:14px;overflow:hidden;">
-        ${item(iconMedia(),"Mídia, links e docs","8")}
+        ${item(iconMedia(),"Mídia, links e docs","8","openMediaScreen")}
         ${item(iconStorage(),"Gerenciar armazenamento","14,9 MB")}
         ${item(iconSaved(),"Mensagens salvas","Nenhuma")}
       </div>
@@ -2666,6 +2666,111 @@ letter-spacing:-0.3px;
       </div>
 
       <div style="height:40px;"></div>
+    </div>
+  `;
+}
+
+function openMediaScreen() {
+  const contact = CONTACT;
+
+  app.innerHTML = `
+    <div style="
+      background:#000;
+      color:#fff;
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+      font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+    ">
+
+      <!-- HEADER -->
+      <div style="
+        height:56px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        position:relative;
+        background:#111;
+      ">
+
+        <span onclick="openProfile()" style="
+          position:absolute;
+          left:16px;
+          font-size:28px;
+          color:#fff;
+          cursor:pointer;
+        ">‹</span>
+
+        <!-- TABS -->
+        <div style="
+          display:flex;
+          background:#2c2c2e;
+          border-radius:10px;
+          overflow:hidden;
+        ">
+          <div style="
+            padding:6px 14px;
+            background:#3a3a3c;
+            font-size:14px;
+            font-weight:500;
+          ">Mídia</div>
+
+          <div style="
+            padding:6px 14px;
+            font-size:14px;
+            color:rgba(255,255,255,0.6);
+          ">Links</div>
+
+          <div style="
+            padding:6px 14px;
+            font-size:14px;
+            color:rgba(255,255,255,0.6);
+          ">Docs</div>
+        </div>
+
+      </div>
+
+      <!-- CONTENT -->
+      <div style="
+        flex:1;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        text-align:center;
+        padding:20px;
+      ">
+
+        <!-- ICON -->
+        <div style="
+          font-size:40px;
+          opacity:0.4;
+          margin-bottom:16px;
+        ">
+          🖼️
+        </div>
+
+        <!-- TITLE -->
+        <div style="
+          font-size:20px;
+          font-weight:600;
+          margin-bottom:8px;
+        ">
+          Nenhuma mídia
+        </div>
+
+        <!-- DESC -->
+        <div style="
+          font-size:15px;
+          color:rgba(255,255,255,0.6);
+          max-width:280px;
+          line-height:1.4;
+        ">
+          Toque no "+" em uma conversa para compartilhar fotos e vídeos com ~${contact.title}
+        </div>
+
+      </div>
+
     </div>
   `;
 }
