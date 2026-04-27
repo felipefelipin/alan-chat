@@ -2629,9 +2629,9 @@ letter-spacing:-0.3px;
         <div onclick="openStorageScreen()">
   ${item(iconStorage(),"Gerenciar armazenamento")}
 </div>
-        ${item(iconSaved(),"Mensagens salvas","Nenhuma")}
-      </div>
-
+     <div onclick="openSavedMessages()">
+  ${item(iconSaved(),"Mensagens salvas","Nenhuma")}
+</div>
       <div style="margin:12px;background:#111;border-radius:14px;overflow:hidden;">
         ${item(iconBell(),"Notificações")}
         ${item(iconTheme(),"Tema da conversa")}
@@ -2854,6 +2854,98 @@ function openStorageScreen() {
         </div>
 
       </div>
+  `;
+}
+
+function openSavedMessages() {
+  app.innerHTML = `
+    <div style="
+      background:#000;
+      color:#fff;
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+      font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+    ">
+
+      <!-- HEADER -->
+      <div style="
+        height:56px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        position:relative;
+        background:#000;
+      ">
+
+        <span onclick="openProfile()" style="
+          position:absolute;
+          left:16px;
+          font-size:28px;
+          color:#fff;
+          cursor:pointer;
+        ">‹</span>
+
+        <div style="
+          font-size:17px;
+          font-weight:600;
+        ">
+          Favoritas
+        </div>
+
+      </div>
+
+      <!-- CONTENT -->
+      <div style="
+        flex:1;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        text-align:center;
+        padding:20px;
+      ">
+
+        <!-- ICON -->
+        <div style="
+          width:80px;
+          height:80px;
+          border-radius:50%;
+          background:#25D366;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          margin-bottom:20px;
+        ">
+
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15 9 22 9 17 14 19 22 12 18 5 22 7 14 2 9 9 9 12 2"/>
+          </svg>
+
+        </div>
+
+        <!-- TITLE -->
+        <div style="
+          font-size:20px;
+          font-weight:600;
+          margin-bottom:10px;
+        ">
+          Nenhuma mensagem favorita
+        </div>
+
+        <!-- DESC -->
+        <div style="
+          font-size:15px;
+          color:rgba(255,255,255,0.6);
+          max-width:280px;
+          line-height:1.4;
+        ">
+          Toque e segure qualquer mensagem para marcá-la como favorita e encontrá-la facilmente mais tarde.
+        </div>
+
+      </div>
+
+    </div>
   `;
 }
 
