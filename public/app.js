@@ -2854,43 +2854,6 @@ function openStorageScreen() {
         </div>
 
       </div>
-
-      <!-- FOOTER -->
-      <div style="
-        height:70px;
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        padding:0 20px;
-      ">
-
-        <!-- ICON -->
-        <div style="
-          width:36px;
-          height:36px;
-          border-radius:50%;
-          border:1px solid rgba(255,255,255,0.3);
-          display:flex;
-          align-items:center;
-          justify-content:center;
-        ">
-          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;">
-            <polyline points="7 7 12 12 7 17"></polyline>
-            <polyline points="17 7 12 12 17 17"></polyline>
-          </svg>
-        </div>
-
-        <!-- SIZE -->
-        <div style="
-          font-size:16px;
-          color:rgba(255,255,255,0.8);
-        ">
-          48 KB
-        </div>
-
-      </div>
-
-    </div>
   `;
 }
 
