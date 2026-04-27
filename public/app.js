@@ -2560,8 +2560,8 @@ function openProfile() {
           width:110px;
           height:110px;
           border-radius:50%;
-          border:3px solid #25D366;
-          padding:3px;
+border:6px solid #25D366;
+padding:3px;
           box-sizing:border-box;
           cursor:pointer;
         ">
@@ -2577,9 +2577,10 @@ function openProfile() {
         <!-- NOME -->
         <div style="
           margin-top:14px;
-          font-size:22px;
-          font-weight:600;
-          letter-spacing:-0.2px;
+          font-size:26px;
+font-weight:700;
+color:#fff;
+letter-spacing:-0.3px;
         ">
           ${contact.name || contact.title}
         </div>
@@ -2597,7 +2598,7 @@ function openProfile() {
         <div style="
           margin-top:8px;
           font-size:15px;
-          color:rgba(255,255,255,0.45);
+          color:rgba(255,255,255,0.55);
           text-align:center;
           max-width:280px;
           line-height:1.3;
