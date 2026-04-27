@@ -2624,9 +2624,11 @@ letter-spacing:-0.3px;
       <!-- BLOCO -->
       <div style="margin:0 12px;background:#111;border-radius:14px;overflow:hidden;">
         <div onclick="openMediaScreen()">
-  ${item(iconMedia(),"Mídia, links e docs","8")}
+  ${item(iconMedia(),"Mídia, links e docs")}
 </div>
-        ${item(iconStorage(),"Gerenciar armazenamento","14,9 MB")}
+        <div onclick="openStorageScreen()">
+  ${item(iconStorage(),"Gerenciar armazenamento")}
+</div>
         ${item(iconSaved(),"Mensagens salvas","Nenhuma")}
       </div>
 
@@ -2776,6 +2778,114 @@ function openMediaScreen() {
           line-height:1.4;
         ">
           Toque no "+" em uma conversa para compartilhar fotos e vídeos com ~${contact.title}
+        </div>
+
+      </div>
+
+    </div>
+  `;
+}
+
+function openStorageScreen() {
+  const contact = CONTACT;
+
+  app.innerHTML = `
+    <div style="
+      background:#000;
+      color:#fff;
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+      font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+    ">
+
+      <!-- HEADER -->
+      <div style="
+        height:56px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        position:relative;
+        background:#111;
+      ">
+
+        <span onclick="openProfile()" style="
+          position:absolute;
+          left:16px;
+          font-size:28px;
+          color:#fff;
+          cursor:pointer;
+        ">‹</span>
+
+        <div style="
+          font-size:17px;
+          font-weight:600;
+        ">
+          ${contact.phone || "+55 33 99830-5589"}
+        </div>
+
+      </div>
+
+      <!-- SUB -->
+      <div style="
+        padding:10px 16px;
+        font-size:13px;
+        color:rgba(255,255,255,0.6);
+      ">
+        Tamanho
+      </div>
+
+      <!-- CONTENT -->
+      <div style="
+        flex:1;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        text-align:center;
+        padding:20px;
+      ">
+
+        <div style="
+          font-size:20px;
+          font-weight:600;
+          color:#fff;
+        ">
+          Nenhuma mídia nesta conversa.
+        </div>
+
+      </div>
+
+      <!-- FOOTER -->
+      <div style="
+        height:70px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        padding:0 20px;
+      ">
+
+        <!-- ICON -->
+        <div style="
+          width:36px;
+          height:36px;
+          border-radius:50%;
+          border:1px solid rgba(255,255,255,0.3);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        ">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;">
+            <polyline points="7 7 12 12 7 17"></polyline>
+            <polyline points="17 7 12 12 17 17"></polyline>
+          </svg>
+        </div>
+
+        <!-- SIZE -->
+        <div style="
+          font-size:16px;
+          color:rgba(255,255,255,0.8);
+        ">
+          48 KB
         </div>
 
       </div>
