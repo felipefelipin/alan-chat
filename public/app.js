@@ -2633,7 +2633,9 @@ letter-spacing:-0.3px;
   ${item(iconSaved(),"Mensagens salvas","Nenhuma")}
 </div>
       <div style="margin:12px;background:#111;border-radius:14px;overflow:hidden;">
-        ${item(iconBell(),"Notificações")}
+        <div onclick="openNotificationsScreen()">
+  ${item(iconBell(),"Notificações")}
+</div>
         ${item(iconTheme(),"Tema da conversa")}
         ${item(iconDownload(),"Salvar no Fotos","Desativado")}
       </div>
@@ -2941,6 +2943,131 @@ function openSavedMessages() {
           line-height:1.4;
         ">
           Toque e segure qualquer mensagem para marcá-la como favorita e encontrá-la facilmente mais tarde.
+        </div>
+
+      </div>
+
+    </div>
+  `;
+}
+
+function openNotificationsScreen() {
+  const contact = CONTACT;
+
+  app.innerHTML = `
+    <div style="
+      background:#000;
+      color:#fff;
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+      font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+    ">
+
+      <!-- HEADER -->
+      <div style="
+        height:56px;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        position:relative;
+        background:#000;
+      ">
+
+        <span onclick="openProfile()" style="
+          position:absolute;
+          left:16px;
+          top:50%;
+          transform:translateY(-50%);
+          font-size:28px;
+          color:#fff;
+          cursor:pointer;
+        ">‹</span>
+
+        <div style="
+          font-size:17px;
+          font-weight:600;
+        ">
+          Notificações
+        </div>
+
+        <div style="
+          font-size:13px;
+          color:rgba(255,255,255,0.6);
+          margin-top:2px;
+        ">
+          ${contact.phone || "+55 33 99830-5589"}
+        </div>
+
+      </div>
+
+      <!-- SECTION TITLE -->
+      <div style="
+        padding:16px;
+        font-size:13px;
+        color:rgba(255,255,255,0.5);
+      ">
+        Mensagens
+      </div>
+
+      <!-- CARD -->
+      <div style="
+        margin:0 12px;
+        background:#111;
+        border-radius:14px;
+        overflow:hidden;
+      ">
+
+        <!-- ITEM 1 -->
+        <div style="
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          padding:16px;
+          border-bottom:1px solid rgba(255,255,255,0.05);
+        ">
+
+          <div style="font-size:16px;">
+            Silenciar notificações
+          </div>
+
+          <div style="
+            display:flex;
+            align-items:center;
+            gap:6px;
+            color:rgba(255,255,255,0.5);
+            font-size:15px;
+          ">
+            Não
+            <span style="font-size:18px;">›</span>
+          </div>
+
+        </div>
+
+        <!-- ITEM 2 -->
+        <div style="
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          padding:16px;
+        ">
+
+          <div style="font-size:16px;">
+            Toque de alerta
+          </div>
+
+          <div style="
+            display:flex;
+            align-items:center;
+            gap:6px;
+            color:rgba(255,255,255,0.5);
+            font-size:15px;
+          ">
+            Padrão (Nota)
+            <span style="font-size:18px;">›</span>
+          </div>
+
         </div>
 
       </div>
