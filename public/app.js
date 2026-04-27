@@ -2997,12 +2997,12 @@ function openNotificationsScreen() {
           color:rgba(255,255,255,0.6);
           margin-top:2px;
         ">
-          ${contact.phone || "+55 33 99830-5589"}
+          ${contact.phone || "+55 33 99831-0431"}
         </div>
 
       </div>
 
-      <!-- SECTION TITLE -->
+      <!-- SECTION -->
       <div style="
         padding:16px;
         font-size:13px;
@@ -3019,15 +3019,15 @@ function openNotificationsScreen() {
         overflow:hidden;
       ">
 
-        <!-- ITEM 1 -->
-        <div style="
+        <!-- SILENCIAR -->
+        <div onclick="openMuteOptions()" style="
           display:flex;
           align-items:center;
           justify-content:space-between;
           padding:16px;
           border-bottom:1px solid rgba(255,255,255,0.05);
+          cursor:pointer;
         ">
-
           <div style="font-size:16px;">
             Silenciar notificações
           </div>
@@ -3042,17 +3042,15 @@ function openNotificationsScreen() {
             Não
             <span style="font-size:18px;">›</span>
           </div>
-
         </div>
 
-        <!-- ITEM 2 -->
+        <!-- TOQUE -->
         <div style="
           display:flex;
           align-items:center;
           justify-content:space-between;
           padding:16px;
         ">
-
           <div style="font-size:16px;">
             Toque de alerta
           </div>
@@ -3067,13 +3065,106 @@ function openNotificationsScreen() {
             Padrão (Nota)
             <span style="font-size:18px;">›</span>
           </div>
-
         </div>
 
       </div>
 
     </div>
   `;
+}
+
+function openMuteOptions() {
+  const overlay = document.createElement("div");
+
+  overlay.style = `
+    position:fixed;
+    bottom:0;
+    left:0;
+    width:100%;
+    background:#1c1c1e;
+    border-top-left-radius:20px;
+    border-top-right-radius:20px;
+    padding:20px;
+    z-index:999;
+    animation:slideUp 0.25s ease;
+  `;
+
+  overlay.innerHTML = `
+    <div style="
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:16px;
+      color:#fff;
+      font-size:18px;
+      font-weight:600;
+    ">
+      Silenciar notificações
+
+      <div onclick="this.parentElement.parentElement.remove()" style="
+        width:34px;
+        height:34px;
+        border-radius:50%;
+        background:#3a3a3c;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        cursor:pointer;
+      ">
+        ✕
+      </div>
+    </div>
+
+    <div style="
+      background:#2c2c2e;
+      border-radius:14px;
+      padding:14px;
+      font-size:14px;
+      color:rgba(255,255,255,0.8);
+      margin-bottom:16px;
+      line-height:1.4;
+    ">
+      As outras pessoas não saberão que você silenciou a conversa. Você continuará recebendo notificações se alguém mencionar você.
+    </div>
+
+    <div style="
+      background:#2c2c2e;
+      border-radius:14px;
+      overflow:hidden;
+    ">
+
+      <div onclick="selectMute('8 horas')" style="
+        padding:16px;
+        border-bottom:1px solid rgba(255,255,255,0.05);
+        cursor:pointer;
+      ">
+        8 horas
+      </div>
+
+      <div onclick="selectMute('1 semana')" style="
+        padding:16px;
+        border-bottom:1px solid rgba(255,255,255,0.05);
+        cursor:pointer;
+      ">
+        1 semana
+      </div>
+
+      <div onclick="selectMute('Sempre')" style="
+        padding:16px;
+        cursor:pointer;
+      ">
+        Sempre
+      </div>
+
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+}
+
+function selectMute(option) {
+  document.querySelectorAll("div[style*='position:fixed']").forEach(el => el.remove());
+  console.log("Silenciado:", option);
 }
 
 function actionBtnSVG(icon, label, action = "") {
