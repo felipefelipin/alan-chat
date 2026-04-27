@@ -1322,14 +1322,15 @@ function endCallBtn() {
         display:flex;
         flex-direction:column;
         align-items:center;
-        gap:8px;
+        justify-content:center;
         cursor:pointer;
+        background:transparent;
       "
     >
       
       <div class="call-btn-circle" style="
-        width:65px;
-        height:65px;
+        width:58px;
+        height:58px;
         background:#ff3b30;
         border-radius:50%;
         display:flex;
@@ -1338,13 +1339,6 @@ function endCallBtn() {
       ">
         ${endIcon()}
       </div>
-
-      <span style="
-        font-size:13px;
-        color:rgba(255,255,255,0.85);
-      ">
-        Encerrar
-      </span>
 
     </div>
   `;
@@ -1367,6 +1361,9 @@ function callBtn(icon, label, action = "", disabled = false) {
         flex-direction:column;
         align-items:center;
         justify-content:center;
+        background:transparent;
+        border:none;
+        outline:none;
         ${disabled ? "pointer-events:none;" : "cursor:pointer;"}
       "
     >
@@ -1380,7 +1377,12 @@ function callBtn(icon, label, action = "", disabled = false) {
         align-items:center;
         justify-content:center;
       ">
-        <div style="${disabled ? "opacity:0.35;" : ""}">
+        <div style="
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          ${disabled ? "opacity:0.35;" : ""}
+        ">
           ${icon}
         </div>
       </div>
