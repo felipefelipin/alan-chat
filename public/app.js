@@ -2558,30 +2558,22 @@ function openProfile() {
   width:110px;
   height:110px;
   border-radius:50%;
-  background:#000;
+  border:3px solid #25D366;
+  padding:3px;
+  box-sizing:border-box;
   display:flex;
   align-items:center;
   justify-content:center;
+  cursor:pointer;
 ">
-  <div style="
+
+  <img src="${ASSETS.avatar}" style="
     width:100%;
     height:100%;
     border-radius:50%;
-    border:3px solid #25D366;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    object-fit:cover;
   ">
-    <div style="
-      width:96px;
-      height:96px;
-      border-radius:50%;
-      overflow:hidden;
-    ">
-      <img src="${ASSETS.avatar}"
-        style="width:100%;height:100%;object-fit:cover;" />
-    </div>
-  </div>
+
 </div>
 
       <!-- BOTÕES -->
