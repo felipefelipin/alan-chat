@@ -2636,7 +2636,19 @@ letter-spacing:-0.3px;
         <div onclick="openNotificationsScreen()">
   ${item(iconBell(),"Notificações")}
 </div>
-        ${item(iconTheme(),"Tema da conversa")}
+        <div style="
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:16px;
+">
+
+  <div style="display:flex;align-items:center;gap:12px;">
+    ${iconTheme()}
+    <span>Tema da conversa</span>
+  </div>
+
+</div>
         ${item(iconDownload(),"Salvar no Fotos","Desativado")}
       </div>
 
