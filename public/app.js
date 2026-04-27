@@ -2555,13 +2555,12 @@ function openProfile() {
         margin-top:24px;
       ">
 
-        <!-- AVATAR -->
         <div onclick="showStories()" style="
           width:110px;
           height:110px;
           border-radius:50%;
-border:4px solid #25D366;
-padding:3px;
+          border:4px solid #25D366;
+          padding:3px;
           box-sizing:border-box;
           cursor:pointer;
         ">
@@ -2570,22 +2569,19 @@ padding:3px;
             height:100%;
             border-radius:50%;
             object-fit:cover;
-            display:block;
           ">
         </div>
 
-        <!-- NOME -->
         <div style="
           margin-top:14px;
           font-size:26px;
-font-weight:700;
-color:#fff;
-letter-spacing:-0.3px;
+          font-weight:700;
+          color:#fff;
+          letter-spacing:-0.3px;
         ">
           ${contact.name || contact.title}
         </div>
 
-        <!-- USERNAME -->
         <div style="
           margin-top:4px;
           font-size:15px;
@@ -2594,14 +2590,12 @@ letter-spacing:-0.3px;
           @${contact.username || contact.title}
         </div>
 
-        <!-- BIO -->
         <div style="
           margin-top:8px;
           font-size:15px;
           color:rgba(255,255,255,0.55);
           text-align:center;
           max-width:280px;
-          line-height:1.3;
         ">
           ${contact.bio || "Deus seja sempre louvado 🙏"}
         </div>
@@ -2621,69 +2615,66 @@ letter-spacing:-0.3px;
         ${actionBtnSVG(iconSearch(), "Pesquisar", "search")}
       </div>
 
-      <!-- BLOCO -->
-      <div style="margin:0 12px;background:#111;border-radius:14px;overflow:hidden;">
-        <div onclick="openMediaScreen()">
-  ${item(iconMedia(),"Mídia, links e docs")}
-</div>
-        <div onclick="openStorageScreen()">
-  ${item(iconStorage(),"Gerenciar armazenamento")}
-</div>
-     <div onclick="openSavedMessages()">
-  ${item(iconSaved(),"Mensagens salvas","Nenhuma")}
-</div>
+      <!-- BLOCO 1 -->
       <div style="margin:12px;background:#111;border-radius:14px;overflow:hidden;">
-        <div onclick="openNotificationsScreen()">
-  ${item(iconBell(),"Notificações")}
-</div>
-        <div style="
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:16px;
-">
+        <div onclick="openMediaScreen()">${item(iconMedia(),"Mídia, links e docs")}</div>
+        <div onclick="openStorageScreen()">${item(iconStorage(),"Gerenciar armazenamento")}</div>
+        <div onclick="openSavedMessages()">${item(iconSaved(),"Mensagens salvas","Nenhuma")}</div>
+      </div>
 
-  <div style="display:flex;align-items:center;gap:12px;">
-    ${iconTheme()}
-    <span>Tema da conversa</span>
-  </div>
-
-</div>
-<div style="display:flex;align-items:center;justify-content:space-between;padding:16px;">
-  <div style="display:flex;align-items:center;gap:12px;">
-    ${iconDownload()}
-    <span>Salvar no Fotos</span>
-  </div>
-  <span style="color:rgba(255,255,255,0.5);">Desativado</span>
-</div>
-
+      <!-- BLOCO 2 -->
       <div style="margin:12px;background:#111;border-radius:14px;overflow:hidden;">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;">
-  <div style="display:flex;align-items:center;gap:12px;">
-    ${iconTimer()}
-    <span>Mensagens temporárias</span>
-  </div>
-  <span style="color:rgba(255,255,255,0.5);">24 horas</span>
-</div>
-       <div style="display:flex;align-items:center;padding:16px;">
-  <div style="display:flex;align-items:center;gap:12px;">
-    ${iconLock()}
-    <span>Trancar conversa</span>
-  </div>
-</div>
-       <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;">
-  <div style="display:flex;align-items:center;gap:12px;">
-    ${iconShield()}
-    <span>Privacidade avançada da conversa</span>
-  </div>
-  <span style="color:rgba(255,255,255,0.5);">Desativada</span>
-</div>
-<div style="display:flex;align-items:center;padding:16px;">
-  <div style="display:flex;align-items:center;gap:12px;">
-    ${iconCrypto()}
-    <span>Criptografia</span>
-  </div>
-</div>
+        <div onclick="openNotificationsScreen()">${item(iconBell(),"Notificações")}</div>
+
+        <div style="display:flex;align-items:center;padding:16px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            ${iconTheme()}
+            <span>Tema da conversa</span>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;padding:16px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            ${iconDownload()}
+            <span>Salvar no Fotos</span>
+          </div>
+          <span style="color:rgba(255,255,255,0.5);">Desativado</span>
+        </div>
+      </div>
+
+      <!-- BLOCO 3 -->
+      <div style="margin:12px;background:#111;border-radius:14px;overflow:hidden;">
+
+        <div style="display:flex;justify-content:space-between;padding:16px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            ${iconTimer()}
+            <span>Mensagens temporárias</span>
+          </div>
+          <span style="color:rgba(255,255,255,0.5);">24 horas</span>
+        </div>
+
+        <div style="display:flex;align-items:center;padding:16px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            ${iconLock()}
+            <span>Trancar conversa</span>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;padding:16px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            ${iconShield()}
+            <span>Privacidade avançada da conversa</span>
+          </div>
+          <span style="color:rgba(255,255,255,0.5);">Desativada</span>
+        </div>
+
+        <div style="display:flex;align-items:center;padding:16px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            ${iconCrypto()}
+            <span>Criptografia</span>
+          </div>
+        </div>
+
       </div>
 
       <!-- GRUPO -->
@@ -2691,19 +2682,20 @@ letter-spacing:-0.3px;
         1 grupo em comum
       </div>
 
-      <div style="margin:0 12px;background:#111;border-radius:14px;overflow:hidden;">
+      <div style="margin:12px;background:#111;border-radius:14px;overflow:hidden;">
         <div style="display:flex;align-items:center;padding:16px;">
-  <div style="display:flex;align-items:center;gap:12px;">
-    ${iconPlus()}
-    <span>Criar grupo com ~Cleitin</span>
-  </div>
-</div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            ${iconPlus()}
+            <span>Criar grupo com ~Cleitin</span>
+          </div>
+        </div>
+
         <div style="display:flex;align-items:center;padding:16px;">
-  <div style="display:flex;align-items:center;gap:12px;">
-    ${iconGroup()}
-    <span>${contact.title}</span>
-  </div>
-</div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            ${iconGroup()}
+            <span>${contact.title}</span>
+          </div>
+        </div>
       </div>
 
       <!-- AÇÕES -->
