@@ -2743,13 +2743,20 @@ function openMediaScreen() {
         padding:20px;
       ">
 
-        <!-- ICON -->
+        <!-- ICON SVG -->
         <div style="
-          font-size:40px;
+          width:46px;
+          height:46px;
           opacity:0.4;
           margin-bottom:16px;
         ">
-          🖼️
+          <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%;">
+            
+            <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+            <path d="M3 15l5-5 4 4 3-3 6 6"></path>
+            <circle cx="8.5" cy="9" r="1.5"></circle>
+
+          </svg>
         </div>
 
         <!-- TITLE -->
