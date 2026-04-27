@@ -2553,11 +2553,12 @@ function openProfile() {
         align-items:center;
         margin-top:28px;
       ">
-        <img src="${ASSETS.avatar}" style="
-          width:110px;
-          height:110px;
-          border-radius:50%;
-          object-fit:cover;
+<img src="${ASSETS.avatar}" onclick="showStories()" style="
+  width:120px;
+  height:120px;
+  border-radius:50%;
+  object-fit:cover;
+  cursor:pointer;
         "/>
 
         <div style="margin-top:16px;font-size:22px;font-weight:600;">
