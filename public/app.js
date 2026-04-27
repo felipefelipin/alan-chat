@@ -50,10 +50,11 @@ async function fadeVolume(audio, from, to, ms = 700) {
 }
 
 const CONTACT = {
-  title: "Gisa",
-  subtitle: "online agora",
-  number: "+55 33 99848-1169",
-};
+  name: "Gisa",
+  username: "gisa",
+  bio: "Deus seja sempre louvado 🙏",
+  title: "Gisa"
+}
 
 const PERSIST_KEY = "gisa_webapp_state_v6";
 const CHECKOUT_URL = "/checkout";
@@ -2521,7 +2522,7 @@ function openProfile() {
       color:#fff;
       height:100vh;
       overflow:auto;
-      font-family:-apple-system, BlinkMacSystemFont;
+      font-family:-apple-system, BlinkMacSystemFont, sans-serif;
     ">
 
       <!-- HEADER -->
@@ -2546,24 +2547,24 @@ function openProfile() {
         Dados do contato
       </div>
 
-      <!-- AVATAR -->
+      <!-- AVATAR + INFO -->
       <div style="
         display:flex;
         flex-direction:column;
         align-items:center;
-        margin-top:28px;
+        margin-top:24px;
       ">
 
+        <!-- AVATAR -->
         <div onclick="showStories()" style="
-          width:120px;
-          height:120px;
+          width:110px;
+          height:110px;
           border-radius:50%;
           border:3px solid #25D366;
           padding:3px;
           box-sizing:border-box;
           cursor:pointer;
         ">
-          
           <img src="${ASSETS.avatar}" style="
             width:100%;
             height:100%;
@@ -2571,38 +2572,37 @@ function openProfile() {
             object-fit:cover;
             display:block;
           ">
-        
         </div>
 
-      </div>
-
-      <!-- NOME / SUB / BIO -->
-      <div style="
-        text-align:center;
-        margin-top:14px;
-      ">
-
+        <!-- NOME -->
         <div style="
-          font-size:26px;
+          margin-top:14px;
+          font-size:22px;
           font-weight:600;
+          letter-spacing:-0.2px;
         ">
-          ${contact.title}
+          ${contact.name || contact.title}
         </div>
 
+        <!-- USERNAME -->
         <div style="
-          margin-top:6px;
-          font-size:17px;
-          color:rgba(255,255,255,0.6);
+          margin-top:4px;
+          font-size:15px;
+          color:rgba(255,255,255,0.55);
         ">
-          ~${contact.title}
+          @${contact.username || contact.title}
         </div>
 
+        <!-- BIO -->
         <div style="
-          margin-top:10px;
-          font-size:17px;
-          color:rgba(255,255,255,0.5);
+          margin-top:8px;
+          font-size:15px;
+          color:rgba(255,255,255,0.45);
+          text-align:center;
+          max-width:280px;
+          line-height:1.3;
         ">
-          Deus seja sempre louvado 🙏
+          ${contact.bio || "Deus seja sempre louvado 🙏"}
         </div>
 
       </div>
@@ -2611,15 +2611,13 @@ function openProfile() {
       <div style="
         display:grid;
         grid-template-columns:repeat(4,1fr);
-        padding:20px 14px 10px;
+        padding:22px 14px 12px;
         gap:12px;
       ">
-
         ${actionBtnSVG(iconCall(), "Ligar", "startCall")}
         ${actionBtnSVG(iconVideo(), "Vídeo", "startVideoCall")}
         ${actionBtnSVG(iconPix(), "Pix", "showPixAlert")}
         ${actionBtnSVG(iconSearch(), "Pesquisar", "search")}
-
       </div>
 
       <!-- BLOCO -->
