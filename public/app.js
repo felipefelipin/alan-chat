@@ -2560,7 +2560,7 @@ function openProfile() {
           width:110px;
           height:110px;
           border-radius:50%;
-border:6px solid #25D366;
+border:4px solid #25D366;
 padding:3px;
           box-sizing:border-box;
           cursor:pointer;
