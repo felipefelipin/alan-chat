@@ -1153,9 +1153,9 @@ window.startVideoCall = async function() {
       ">
 
         <div style="
-          background:rgba(255,255,255,0.08);
-          backdrop-filter:blur(25px);
-          -webkit-backdrop-filter:blur(25px);
+background:rgba(28,28,30,0.35);
+backdrop-filter:blur(18px);
+-webkit-backdrop-filter:blur(18px);
           border-radius:30px;
           padding:10px 14px;
           display:flex;
