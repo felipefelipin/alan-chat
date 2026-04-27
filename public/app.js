@@ -1111,6 +1111,7 @@ window.startVideoCall = async function() {
       height:100vh;
       background:#000;
       overflow:hidden;
+      font-family:-apple-system,BlinkMacSystemFont;
     ">
 
       <!-- VIDEO -->
@@ -1128,7 +1129,6 @@ window.startVideoCall = async function() {
         width:100%;
         text-align:center;
         color:#fff;
-        font-family:-apple-system;
       ">
         <div style="font-size:20px;font-weight:600;">
           ${CONTACT.title}
@@ -1146,18 +1146,20 @@ window.startVideoCall = async function() {
       <!-- CONTROLES -->
       <div style="
         position:absolute;
-        bottom:40px;
+        bottom:30px;
         width:100%;
         display:flex;
         justify-content:center;
       ">
+
         <div style="
-          background:rgba(28,28,30,0.85);
-          backdrop-filter:blur(20px);
-          border-radius:40px;
-          padding:12px 18px;
+          background:rgba(255,255,255,0.08);
+          backdrop-filter:blur(25px);
+          -webkit-backdrop-filter:blur(25px);
+          border-radius:30px;
+          padding:10px 14px;
           display:flex;
-          gap:18px;
+          gap:14px;
           align-items:center;
         ">
 
@@ -1168,6 +1170,7 @@ window.startVideoCall = async function() {
           ${endCallBtn()}
 
         </div>
+
       </div>
 
     </div>
@@ -1184,10 +1187,31 @@ window.startVideoCall = async function() {
     if (video) {
       video.srcObject = stream;
     }
-
   } catch (err) {
     console.error("Erro ao acessar câmera:", err);
   }
+
+  // 🔊 SPEAKER JÁ ATIVO
+  setTimeout(() => {
+    const speakerBtn = document.querySelector('[data-action="speaker"]');
+
+    if (speakerBtn) {
+      speakerBtn.classList.add("active");
+
+      const circle = speakerBtn.querySelector('.call-btn-circle');
+      const svg = speakerBtn.querySelector("svg");
+
+      if (circle) circle.style.background = "#ffffff";
+      if (svg) {
+        svg.style.stroke = "#000";
+        svg.style.fill = "#000";
+      }
+
+      if (gainNode) {
+        gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.1);
+      }
+    }
+  }, 0);
 };
 
 function endCallBtn() {
