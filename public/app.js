@@ -2554,41 +2554,34 @@ function openProfile() {
         margin-top:28px;
       ">
 
-<!-- AVATAR -->
-<div style="
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  margin-top:28px;
-">
+        <div onclick="showStories()" style="
+          width:120px;
+          height:120px;
+          border-radius:50%;
+          border:3px solid #25D366;
+          padding:3px;
+          box-sizing:border-box;
+          cursor:pointer;
+        ">
+          
+          <img src="${ASSETS.avatar}" style="
+            width:100%;
+            height:100%;
+            border-radius:50%;
+            object-fit:cover;
+            display:block;
+          ">
+        
+        </div>
 
-  <div onclick="showStories()" style="
-    width:120px;
-    height:120px;
-    border-radius:50%;
-    border:3px solid #25D366;
-    padding:3px;
-    box-sizing:border-box;
-    cursor:pointer;
-  ">
-    
-    <img src="${ASSETS.avatar}" style="
-      width:100%;
-      height:100%;
-      border-radius:50%;
-      object-fit:cover;
-      display:block;
-    ">
-  
-  </div>
-
-</div>
+      </div>
 
       <!-- BOTÕES -->
       <div style="
-        display:flex;
+        display:grid;
+        grid-template-columns:repeat(4,1fr);
         padding:20px 14px 10px;
-        gap:10px;
+        gap:12px;
       ">
 
         ${actionBtnSVG(iconCall(), "Ligar", "startCall")}
@@ -2646,7 +2639,6 @@ function openProfile() {
     </div>
   `;
 }
-
 
 function actionBtnSVG(icon, label, action = "") {
   return `
