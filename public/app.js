@@ -1366,14 +1366,14 @@ function callBtn(icon, label, action = "", disabled = false) {
         display:flex;
         flex-direction:column;
         align-items:center;
-        gap:8px;
+        justify-content:center;
         ${disabled ? "pointer-events:none;" : "cursor:pointer;"}
       "
     >
       
       <div class="call-btn-circle" style="
-        width:65px;
-        height:65px;
+        width:58px;
+        height:58px;
         background:${disabled ? "#3a3a3c" : "#2c2c2e"};
         border-radius:50%;
         display:flex;
@@ -1385,13 +1385,14 @@ function callBtn(icon, label, action = "", disabled = false) {
         </div>
       </div>
 
+      ${label ? `
       <span style="
+        margin-top:6px;
         font-size:13px;
-        font-weight:400;
         color:${disabled ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.85)"};
       ">
         ${label}
-      </span>
+      </span>` : ""}
 
     </div>
   `;
