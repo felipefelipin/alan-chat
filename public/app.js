@@ -1344,6 +1344,85 @@ function endCallBtn() {
   `;
 }
 
+function showPixAlert() {
+  const overlay = document.createElement("div");
+
+  overlay.style = `
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.4);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:9999;
+  `;
+
+  overlay.innerHTML = `
+    <div style="
+      width:270px;
+      background:#2c2c2e;
+      border-radius:14px;
+      overflow:hidden;
+      font-family:-apple-system,BlinkMacSystemFont;
+      color:#fff;
+      text-align:center;
+    ">
+
+      <div style="
+        padding:18px 16px;
+        font-size:16px;
+        line-height:1.3;
+      ">
+        A chave Pix de Alana Lemes não está disponível.
+      </div>
+
+      <div style="
+        display:flex;
+        border-top:1px solid rgba(255,255,255,0.1);
+      ">
+        
+        <div id="pixLearnMore" style="
+          flex:1;
+          padding:14px 0;
+          color:#34c759;
+          font-weight:500;
+          cursor:pointer;
+        ">
+          Saiba mais
+        </div>
+
+        <div style="
+          width:1px;
+          background:rgba(255,255,255,0.1);
+        "></div>
+
+        <div id="pixOk" style="
+          flex:1;
+          padding:14px 0;
+          color:#34c759;
+          font-weight:600;
+          cursor:pointer;
+        ">
+          OK
+        </div>
+
+      </div>
+
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  // fechar
+  overlay.querySelector("#pixOk").onclick = () => {
+    document.body.removeChild(overlay);
+  };
+
+  overlay.querySelector("#pixLearnMore").onclick = () => {
+    document.body.removeChild(overlay);
+  };
+}
+
 function stopRingtone() {
   if (ringtone) {
     ringtone.pause();
@@ -2499,7 +2578,7 @@ function openProfile() {
 
         ${actionBtnSVG(iconCall(), "Ligar", "startCall")}
         ${actionBtnSVG(iconVideo(), "Vídeo", "startVideoCall")}
-        ${actionBtnSVG(iconPix(), "Pix", "pix")}
+        ${actionBtnSVG(iconPix(), "Pix", "showPixAlert")}
         ${actionBtnSVG(iconSearch(), "Pesquisar", "search")}
 
       </div>
