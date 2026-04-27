@@ -2649,14 +2649,41 @@ letter-spacing:-0.3px;
   </div>
 
 </div>
-        ${item(iconDownload(),"Salvar no Fotos","Desativado")}
-      </div>
+<div style="display:flex;align-items:center;justify-content:space-between;padding:16px;">
+  <div style="display:flex;align-items:center;gap:12px;">
+    ${iconDownload()}
+    <span>Salvar no Fotos</span>
+  </div>
+  <span style="color:rgba(255,255,255,0.5);">Desativado</span>
+</div>
 
       <div style="margin:12px;background:#111;border-radius:14px;overflow:hidden;">
-        ${item(iconTimer(),"Mensagens temporárias","24 horas")}
-        ${item(iconLock(),"Trancar conversa")}
-        ${item(iconShield(),"Privacidade avançada da conversa","Desativada")}
-        ${item(iconCrypto(),"Criptografia")}
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;">
+  <div style="display:flex;align-items:center;gap:12px;">
+    ${iconTimer()}
+    <span>Mensagens temporárias</span>
+  </div>
+  <span style="color:rgba(255,255,255,0.5);">24 horas</span>
+</div>
+       <div style="display:flex;align-items:center;padding:16px;">
+  <div style="display:flex;align-items:center;gap:12px;">
+    ${iconLock()}
+    <span>Trancar conversa</span>
+  </div>
+</div>
+       <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;">
+  <div style="display:flex;align-items:center;gap:12px;">
+    ${iconShield()}
+    <span>Privacidade avançada da conversa</span>
+  </div>
+  <span style="color:rgba(255,255,255,0.5);">Desativada</span>
+</div>
+<div style="display:flex;align-items:center;padding:16px;">
+  <div style="display:flex;align-items:center;gap:12px;">
+    ${iconCrypto()}
+    <span>Criptografia</span>
+  </div>
+</div>
       </div>
 
       <!-- GRUPO -->
@@ -2665,8 +2692,18 @@ letter-spacing:-0.3px;
       </div>
 
       <div style="margin:0 12px;background:#111;border-radius:14px;overflow:hidden;">
-        ${item(iconPlus(),"Criar grupo com ~Cleitin")}
-        ${item(iconGroup(),contact.title)}
+        <div style="display:flex;align-items:center;padding:16px;">
+  <div style="display:flex;align-items:center;gap:12px;">
+    ${iconPlus()}
+    <span>Criar grupo com ~Cleitin</span>
+  </div>
+</div>
+        <div style="display:flex;align-items:center;padding:16px;">
+  <div style="display:flex;align-items:center;gap:12px;">
+    ${iconGroup()}
+    <span>${contact.title}</span>
+  </div>
+</div>
       </div>
 
       <!-- AÇÕES -->
