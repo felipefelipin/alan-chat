@@ -812,7 +812,7 @@ window.startCall = function() {
           ${callBtn(videoIcon(), "Vídeo", "", true)}
           ${callBtn(muteIcon(), "Silenciar", "mute")}
           ${callBtn(moreIcon(), "Mais", "more")}
-          ${callBtn(shareIcon(), "Compartilhar")}
+          ${callBtn(shareIcon(), "Compartilhar", "", true)}
           ${endCallBtn()}
 
         </div>
