@@ -2951,6 +2951,12 @@ function openSavedMessages() {
   `;
 }
 
+// 🔔 ESTADO GLOBAL
+let isMuted = false;
+
+
+
+// 🔔 TELA DE NOTIFICAÇÕES
 function openNotificationsScreen() {
   const contact = CONTACT;
 
@@ -2997,7 +3003,7 @@ function openNotificationsScreen() {
           color:rgba(255,255,255,0.6);
           margin-top:2px;
         ">
-          ${contact.phone || "+55 33 99831-0431"}
+          ${contact.phone || "+55 21 99531-0431"}
         </div>
 
       </div>
@@ -3039,7 +3045,7 @@ function openNotificationsScreen() {
             color:rgba(255,255,255,0.5);
             font-size:15px;
           ">
-            Não
+            ${isMuted ? "Sim" : "Não"}
             <span style="font-size:18px;">›</span>
           </div>
         </div>
@@ -3073,6 +3079,9 @@ function openNotificationsScreen() {
   `;
 }
 
+
+
+// 🔔 MODAL DE SILENCIAR
 function openMuteOptions() {
   const overlay = document.createElement("div");
 
@@ -3090,6 +3099,7 @@ function openMuteOptions() {
   `;
 
   overlay.innerHTML = `
+
     <div style="
       display:flex;
       justify-content:space-between;
@@ -3133,38 +3143,32 @@ function openMuteOptions() {
       overflow:hidden;
     ">
 
-      <div onclick="selectMute('8 horas')" style="
-        padding:16px;
-        border-bottom:1px solid rgba(255,255,255,0.05);
-        cursor:pointer;
-      ">
-        8 horas
-      </div>
-
-      <div onclick="selectMute('1 semana')" style="
-        padding:16px;
-        border-bottom:1px solid rgba(255,255,255,0.05);
-        cursor:pointer;
-      ">
-        1 semana
-      </div>
-
-      <div onclick="selectMute('Sempre')" style="
+      <div onclick="confirmMute()" style="
         padding:16px;
         cursor:pointer;
+        font-size:16px;
       ">
-        Sempre
+        Sim, silenciar notificações
       </div>
 
     </div>
+
   `;
 
   document.body.appendChild(overlay);
 }
 
-function selectMute(option) {
+
+
+// 🔔 CONFIRMAR
+function confirmMute() {
+  isMuted = true;
+
+  // remove modal
   document.querySelectorAll("div[style*='position:fixed']").forEach(el => el.remove());
-  console.log("Silenciado:", option);
+
+  // re-render
+  openNotificationsScreen();
 }
 
 function actionBtnSVG(icon, label, action = "") {
