@@ -3060,6 +3060,7 @@ function openNotificationsScreen() {
 // 🔔 MODAL
 function openMuteOptions() {
   const overlay = document.createElement("div");
+  overlay.id = "muteModal";
 
   overlay.style = `
     position:fixed;
@@ -3116,7 +3117,7 @@ function openMuteOptions() {
       overflow:hidden;
     ">
 
-      <div onclick="toggleMute()" style="
+      <div onclick="toggleMute(this)" style="
         padding:16px;
         cursor:pointer;
       ">
@@ -3132,19 +3133,28 @@ function openMuteOptions() {
 
 
 
-// 🔔 TOGGLE
-function toggleMute() {
+// 🔔 TOGGLE REAL
+function toggleMute(el) {
   isMuted = !isMuted;
 
-  closeMuteModal();
-  openNotificationsScreen();
+  // muda texto na hora
+  el.textContent = isMuted
+    ? "Não silenciar notificações"
+    : "Sim, silenciar notificações";
+
+  // fecha depois (efeito real)
+  setTimeout(() => {
+    closeMuteModal();
+    openNotificationsScreen();
+  }, 120);
 }
 
 
 
 // 🔔 FECHAR MODAL
 function closeMuteModal() {
-  document.querySelectorAll("div[style*='position:fixed']").forEach(el => el.remove());
+  const modal = document.getElementById("muteModal");
+  if (modal) modal.remove();
 }
 
 function actionBtnSVG(icon, label, action = "") {
