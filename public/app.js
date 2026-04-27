@@ -2951,12 +2951,12 @@ function openSavedMessages() {
   `;
 }
 
-// 🔔 ESTADO GLOBAL
+// 🔔 ESTADO
 let isMuted = false;
 
 
 
-// 🔔 TELA DE NOTIFICAÇÕES
+// 🔔 TELA
 function openNotificationsScreen() {
   const contact = CONTACT;
 
@@ -2987,14 +2987,9 @@ function openNotificationsScreen() {
           top:50%;
           transform:translateY(-50%);
           font-size:28px;
-          color:#fff;
-          cursor:pointer;
         ">‹</span>
 
-        <div style="
-          font-size:17px;
-          font-weight:600;
-        ">
+        <div style="font-size:17px;font-weight:600;">
           Notificações
         </div>
 
@@ -3003,7 +2998,7 @@ function openNotificationsScreen() {
           color:rgba(255,255,255,0.6);
           margin-top:2px;
         ">
-          ${contact.phone || "+55 21 99531-0431"}
+          ${contact.phone}
         </div>
 
       </div>
@@ -3028,48 +3023,27 @@ function openNotificationsScreen() {
         <!-- SILENCIAR -->
         <div onclick="openMuteOptions()" style="
           display:flex;
-          align-items:center;
           justify-content:space-between;
           padding:16px;
           border-bottom:1px solid rgba(255,255,255,0.05);
           cursor:pointer;
         ">
-          <div style="font-size:16px;">
-            Silenciar notificações
-          </div>
+          <div>Silenciar notificações</div>
 
-          <div style="
-            display:flex;
-            align-items:center;
-            gap:6px;
-            color:rgba(255,255,255,0.5);
-            font-size:15px;
-          ">
-            ${isMuted ? "Sim" : "Não"}
-            <span style="font-size:18px;">›</span>
+          <div style="color:rgba(255,255,255,0.5);">
+            ${isMuted ? "Sim" : "Não"} ›
           </div>
         </div>
 
         <!-- TOQUE -->
         <div style="
           display:flex;
-          align-items:center;
           justify-content:space-between;
           padding:16px;
         ">
-          <div style="font-size:16px;">
-            Toque de alerta
-          </div>
-
-          <div style="
-            display:flex;
-            align-items:center;
-            gap:6px;
-            color:rgba(255,255,255,0.5);
-            font-size:15px;
-          ">
-            Padrão (Nota)
-            <span style="font-size:18px;">›</span>
+          <div>Toque de alerta</div>
+          <div style="color:rgba(255,255,255,0.5);">
+            Padrão (Nota) ›
           </div>
         </div>
 
@@ -3081,7 +3055,7 @@ function openNotificationsScreen() {
 
 
 
-// 🔔 MODAL DE SILENCIAR
+// 🔔 MODAL DINÂMICO
 function openMuteOptions() {
   const overlay = document.createElement("div");
 
@@ -3095,23 +3069,22 @@ function openMuteOptions() {
     border-top-right-radius:20px;
     padding:20px;
     z-index:999;
-    animation:slideUp 0.25s ease;
   `;
 
   overlay.innerHTML = `
 
+    <!-- HEADER -->
     <div style="
       display:flex;
       justify-content:space-between;
       align-items:center;
       margin-bottom:16px;
-      color:#fff;
       font-size:18px;
       font-weight:600;
     ">
       Silenciar notificações
 
-      <div onclick="this.parentElement.parentElement.remove()" style="
+      <div onclick="closeMuteModal()" style="
         width:34px;
         height:34px;
         border-radius:50%;
@@ -3125,6 +3098,7 @@ function openMuteOptions() {
       </div>
     </div>
 
+    <!-- INFO -->
     <div style="
       background:#2c2c2e;
       border-radius:14px;
@@ -3132,27 +3106,25 @@ function openMuteOptions() {
       font-size:14px;
       color:rgba(255,255,255,0.8);
       margin-bottom:16px;
-      line-height:1.4;
     ">
-      As outras pessoas não saberão que você silenciou a conversa. Você continuará recebendo notificações se alguém mencionar você.
+      As outras pessoas não saberão que você silenciou a conversa.
     </div>
 
+    <!-- BOTÃO -->
     <div style="
       background:#2c2c2e;
       border-radius:14px;
       overflow:hidden;
     ">
 
-      <div onclick="confirmMute()" style="
+      <div onclick="toggleMute()" style="
         padding:16px;
         cursor:pointer;
-        font-size:16px;
       ">
-        Sim, silenciar notificações
+        ${isMuted ? "Não silenciar notificações" : "Sim, silenciar notificações"}
       </div>
 
     </div>
-
   `;
 
   document.body.appendChild(overlay);
@@ -3160,15 +3132,19 @@ function openMuteOptions() {
 
 
 
-// 🔔 CONFIRMAR
-function confirmMute() {
-  isMuted = true;
+// 🔔 TOGGLE
+function toggleMute() {
+  isMuted = !isMuted;
 
-  // remove modal
-  document.querySelectorAll("div[style*='position:fixed']").forEach(el => el.remove());
-
-  // re-render
+  closeMuteModal();
   openNotificationsScreen();
+}
+
+
+
+// 🔔 FECHAR
+function closeMuteModal() {
+  document.querySelectorAll("div[style*='position:fixed']").forEach(el => el.remove());
 }
 
 function actionBtnSVG(icon, label, action = "") {
