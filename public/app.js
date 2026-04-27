@@ -2951,12 +2951,12 @@ function openSavedMessages() {
   `;
 }
 
-// 🔔 ESTADO
+// 🔔 ESTADO GLOBAL
 let isMuted = false;
 
 
 
-// 🔔 TELA
+// 🔔 TELA DE NOTIFICAÇÕES
 function openNotificationsScreen() {
   const contact = CONTACT;
 
@@ -2987,6 +2987,7 @@ function openNotificationsScreen() {
           top:50%;
           transform:translateY(-50%);
           font-size:28px;
+          cursor:pointer;
         ">‹</span>
 
         <div style="font-size:17px;font-weight:600;">
@@ -3042,6 +3043,7 @@ function openNotificationsScreen() {
           padding:16px;
         ">
           <div>Toque de alerta</div>
+
           <div style="color:rgba(255,255,255,0.5);">
             Padrão (Nota) ›
           </div>
@@ -3055,7 +3057,7 @@ function openNotificationsScreen() {
 
 
 
-// 🔔 MODAL DINÂMICO
+// 🔔 MODAL
 function openMuteOptions() {
   const overlay = document.createElement("div");
 
@@ -3073,7 +3075,6 @@ function openMuteOptions() {
 
   overlay.innerHTML = `
 
-    <!-- HEADER -->
     <div style="
       display:flex;
       justify-content:space-between;
@@ -3098,7 +3099,6 @@ function openMuteOptions() {
       </div>
     </div>
 
-    <!-- INFO -->
     <div style="
       background:#2c2c2e;
       border-radius:14px;
@@ -3110,7 +3110,6 @@ function openMuteOptions() {
       As outras pessoas não saberão que você silenciou a conversa.
     </div>
 
-    <!-- BOTÃO -->
     <div style="
       background:#2c2c2e;
       border-radius:14px;
@@ -3125,6 +3124,7 @@ function openMuteOptions() {
       </div>
 
     </div>
+
   `;
 
   document.body.appendChild(overlay);
@@ -3142,7 +3142,7 @@ function toggleMute() {
 
 
 
-// 🔔 FECHAR
+// 🔔 FECHAR MODAL
 function closeMuteModal() {
   document.querySelectorAll("div[style*='position:fixed']").forEach(el => el.remove());
 }
