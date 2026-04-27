@@ -1104,14 +1104,13 @@ const endIcon = () => `
 
 let ringtone;
 
-window.startVideoCall = function() {
+window.startVideoCall = async function() {
   app.innerHTML = `
     <div style="
       position:relative;
       height:100vh;
       background:#000;
       overflow:hidden;
-      font-family:-apple-system,BlinkMacSystemFont;
     ">
 
       <!-- VIDEO -->
@@ -1122,13 +1121,6 @@ window.startVideoCall = function() {
         object-fit:cover;
       "></video>
 
-      <!-- OVERLAY ESCURO -->
-      <div style="
-        position:absolute;
-        inset:0;
-        background:rgba(0,0,0,0.3);
-      "></div>
-
       <!-- TOPO -->
       <div style="
         position:absolute;
@@ -1136,122 +1128,66 @@ window.startVideoCall = function() {
         width:100%;
         text-align:center;
         color:#fff;
+        font-family:-apple-system;
       ">
         <div style="font-size:20px;font-weight:600;">
           ${CONTACT.title}
         </div>
-        <div style="opacity:0.7;">
+
+        <div style="
+          margin-top:6px;
+          font-size:14px;
+          color:rgba(255,255,255,0.7);
+        ">
           Chamando...
         </div>
       </div>
 
-      <!-- BOTÕES LATERAIS -->
-      <div style="
-        position:absolute;
-        right:20px;
-        top:120px;
-        display:flex;
-        flex-direction:column;
-        gap:14px;
-      ">
-        <div style="
-          width:48px;height:48px;
-          background:rgba(60,60,60,0.6);
-          border-radius:50%;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-        ">👤</div>
-
-        <div style="
-          width:48px;height:48px;
-          background:rgba(60,60,60,0.6);
-          border-radius:50%;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-        ">🔄</div>
-      </div>
-
-      <!-- BOTTOM CONTROLS -->
+      <!-- CONTROLES -->
       <div style="
         position:absolute;
         bottom:40px;
-        left:50%;
-        transform:translateX(-50%);
+        width:100%;
         display:flex;
-        gap:14px;
-        background:rgba(60,60,60,0.4);
-        padding:10px 16px;
-        border-radius:30px;
-        backdrop-filter:blur(10px);
+        justify-content:center;
       ">
-
         <div style="
-          width:55px;height:55px;
-          background:#3a3a3c;
-          border-radius:50%;
+          background:rgba(28,28,30,0.85);
+          backdrop-filter:blur(20px);
+          border-radius:40px;
+          padding:12px 18px;
           display:flex;
+          gap:18px;
           align-items:center;
-          justify-content:center;
-        ">⋯</div>
+        ">
 
-        <div style="
-          width:55px;height:55px;
-          background:#fff;
-          border-radius:50%;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          color:#000;
-        ">🔊</div>
+          ${callBtn(moreIcon(), "", "")}
+          ${callBtn(speakerIcon(), "", "speaker")}
+          ${callBtn(videoIcon(), "", "", true)}
+          ${callBtn(muteIcon(), "", "mute")}
+          ${endCallBtn()}
 
-        <div style="
-          width:55px;height:55px;
-          background:#3a3a3c;
-          border-radius:50%;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-        ">🎥</div>
-
-        <div style="
-          width:55px;height:55px;
-          background:#3a3a3c;
-          border-radius:50%;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-        ">🎤</div>
-
-        <div id="endVideoCall" style="
-          width:55px;height:55px;
-          background:#ff3b30;
-          border-radius:50%;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-        ">📞</div>
-
+        </div>
       </div>
 
     </div>
   `;
 
-  // 🎥 TENTAR ATIVAR CÂMERA
-  navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-    .then(stream => {
-      const video = document.getElementById("localVideo");
-      if (video) video.srcObject = stream;
-    })
-    .catch(() => {
-      console.log("camera não disponível no webview");
+  // 🎥 ATIVAR CÂMERA
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true
     });
 
-  // ❌ ENCERRAR
-  document.getElementById("endVideoCall").onclick = () => {
-    openProfile();
-  };
+    const video = document.getElementById("localVideo");
+    if (video) {
+      video.srcObject = stream;
+    }
+
+  } catch (err) {
+    console.error("Erro ao acessar câmera:", err);
+  }
 };
 
 function endCallBtn() {
@@ -2436,7 +2372,7 @@ function openProfile() {
       ">
 
         ${actionBtnSVG(iconCall(), "Ligar", "startCall")}
-        ${actionBtnSVG(iconVideo(), "Vídeo", "video")}
+        ${actionBtnSVG(iconVideo(), "Vídeo", "startVideoCall")}
         ${actionBtnSVG(iconPix(), "Pix", "pix")}
         ${actionBtnSVG(iconSearch(), "Pesquisar", "search")}
 
