@@ -1014,6 +1014,12 @@ if (action === "end") {
   };
 }
 
+if (action === "video") {
+  btn.onclick = () => {
+    startVideoCall();
+  };
+}
+
   });
 
   const close = document.getElementById("closeMore");
@@ -1097,6 +1103,156 @@ const endIcon = () => `
 </svg>`;
 
 let ringtone;
+
+window.startVideoCall = function() {
+  app.innerHTML = `
+    <div style="
+      position:relative;
+      height:100vh;
+      background:#000;
+      overflow:hidden;
+      font-family:-apple-system,BlinkMacSystemFont;
+    ">
+
+      <!-- VIDEO -->
+      <video id="localVideo" autoplay playsinline style="
+        position:absolute;
+        width:100%;
+        height:100%;
+        object-fit:cover;
+      "></video>
+
+      <!-- OVERLAY ESCURO -->
+      <div style="
+        position:absolute;
+        inset:0;
+        background:rgba(0,0,0,0.3);
+      "></div>
+
+      <!-- TOPO -->
+      <div style="
+        position:absolute;
+        top:60px;
+        width:100%;
+        text-align:center;
+        color:#fff;
+      ">
+        <div style="font-size:20px;font-weight:600;">
+          ${CONTACT.title}
+        </div>
+        <div style="opacity:0.7;">
+          Chamando...
+        </div>
+      </div>
+
+      <!-- BOTÕES LATERAIS -->
+      <div style="
+        position:absolute;
+        right:20px;
+        top:120px;
+        display:flex;
+        flex-direction:column;
+        gap:14px;
+      ">
+        <div style="
+          width:48px;height:48px;
+          background:rgba(60,60,60,0.6);
+          border-radius:50%;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        ">👤</div>
+
+        <div style="
+          width:48px;height:48px;
+          background:rgba(60,60,60,0.6);
+          border-radius:50%;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        ">🔄</div>
+      </div>
+
+      <!-- BOTTOM CONTROLS -->
+      <div style="
+        position:absolute;
+        bottom:40px;
+        left:50%;
+        transform:translateX(-50%);
+        display:flex;
+        gap:14px;
+        background:rgba(60,60,60,0.4);
+        padding:10px 16px;
+        border-radius:30px;
+        backdrop-filter:blur(10px);
+      ">
+
+        <div style="
+          width:55px;height:55px;
+          background:#3a3a3c;
+          border-radius:50%;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        ">⋯</div>
+
+        <div style="
+          width:55px;height:55px;
+          background:#fff;
+          border-radius:50%;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          color:#000;
+        ">🔊</div>
+
+        <div style="
+          width:55px;height:55px;
+          background:#3a3a3c;
+          border-radius:50%;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        ">🎥</div>
+
+        <div style="
+          width:55px;height:55px;
+          background:#3a3a3c;
+          border-radius:50%;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        ">🎤</div>
+
+        <div id="endVideoCall" style="
+          width:55px;height:55px;
+          background:#ff3b30;
+          border-radius:50%;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        ">📞</div>
+
+      </div>
+
+    </div>
+  `;
+
+  // 🎥 TENTAR ATIVAR CÂMERA
+  navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+    .then(stream => {
+      const video = document.getElementById("localVideo");
+      if (video) video.srcObject = stream;
+    })
+    .catch(() => {
+      console.log("camera não disponível no webview");
+    });
+
+  // ❌ ENCERRAR
+  document.getElementById("endVideoCall").onclick = () => {
+    openProfile();
+  };
+};
 
 function endCallBtn() {
   return `
