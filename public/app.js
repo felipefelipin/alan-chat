@@ -2623,7 +2623,9 @@ letter-spacing:-0.3px;
 
       <!-- BLOCO -->
       <div style="margin:0 12px;background:#111;border-radius:14px;overflow:hidden;">
-        ${item(iconMedia(),"Mídia, links e docs","8","openMediaScreen")}
+        <div onclick="openMediaScreen()">
+  ${item(iconMedia(),"Mídia, links e docs","8")}
+</div>
         ${item(iconStorage(),"Gerenciar armazenamento","14,9 MB")}
         ${item(iconSaved(),"Mensagens salvas","Nenhuma")}
       </div>
