@@ -1163,7 +1163,7 @@ window.startVideoCall = async function() {
           align-items:center;
         ">
 
-          ${callBtn(moreIcon(), "", "")}
+          ${callBtn(moreIcon(), "", "", true)}
           ${callBtn(speakerIcon(), "", "speaker")}
           ${callBtn(videoIcon(), "", "", true)}
           ${callBtn(muteIcon(), "", "mute")}
@@ -1211,6 +1211,105 @@ window.startVideoCall = async function() {
         gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.1);
       }
     }
+  }, 0);
+
+  // 🔘 EVENTOS DOS BOTÕES
+  setTimeout(() => {
+    document.querySelectorAll('.call-btn').forEach(btn => {
+      const action = btn.getAttribute('data-action');
+      const circle = btn.querySelector('.call-btn-circle');
+      const svg = btn.querySelector("svg");
+
+      // 🔊 SPEAKER TOGGLE
+      if (action === "speaker") {
+        btn.onclick = () => {
+          const active = btn.classList.toggle('active');
+
+          if (!gainNode) return;
+
+          if (active) {
+            circle.style.background = "#ffffff";
+            if (svg) {
+              svg.style.stroke = "#000";
+              svg.style.fill = "#000";
+            }
+            gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.1);
+          } else {
+            circle.style.background = "#2c2c2e";
+            if (svg) {
+              svg.style.stroke = "#fff";
+              svg.style.fill = "#fff";
+            }
+            gainNode.gain.setTargetAtTime(0.08, audioCtx.currentTime, 0.1);
+          }
+        };
+      }
+
+      // 🔇 MUTE (visual)
+      if (action === "mute") {
+        btn.onclick = () => {
+          const active = btn.classList.toggle('active');
+
+          if (active) {
+            circle.style.background = "#ffffff";
+            if (svg) {
+              svg.style.stroke = "#000";
+              svg.style.fill = "#000";
+            }
+          } else {
+            circle.style.background = "#2c2c2e";
+            if (svg) {
+              svg.style.stroke = "#fff";
+              svg.style.fill = "#fff";
+            }
+          }
+        };
+      }
+
+      // 📞 ENCERRAR
+      if (action === "end") {
+        btn.onclick = () => {
+
+          // vibração
+          if (navigator.vibrate) navigator.vibrate(200);
+
+          // overlay fade
+          const overlay = document.createElement("div");
+          overlay.style = `
+            position:fixed;
+            inset:0;
+            background:#000;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#fff;
+            font-size:20px;
+            opacity:0;
+            transition:opacity 0.4s ease;
+            z-index:9999;
+          `;
+          overlay.innerHTML = "Ligação encerrada";
+          document.body.appendChild(overlay);
+
+          setTimeout(() => {
+            overlay.style.opacity = "1";
+          }, 10);
+
+          // parar câmera
+          const video = document.getElementById("localVideo");
+          if (video && video.srcObject) {
+            video.srcObject.getTracks().forEach(track => track.stop());
+          }
+
+          // voltar
+          setTimeout(() => {
+            document.body.removeChild(overlay);
+            openProfile();
+          }, 700);
+        };
+      }
+
+    });
   }, 0);
 };
 
