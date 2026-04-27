@@ -876,6 +876,30 @@ window.startCall = function() {
         </div>
 
       </div>
+    <!-- OVERLAY ENCERRAR -->
+    <div id="callEndOverlay" style="
+      position:fixed;
+      inset:0;
+      background:#000;
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-direction:column;
+      font-size:18px;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity 0.4s ease;
+      z-index:9999;
+    ">
+      <div style="font-size:22px;margin-bottom:6px;">
+        ${CONTACT.title}
+      </div>
+
+      <div style="opacity:0.6;">
+        Ligação encerrada
+      </div>
+    </div>
 
     </div>
   `;
@@ -965,6 +989,30 @@ setTimeout(() => {
         if (overlay) overlay.style.display = "flex";
       };
     }
+    // 📞 END CALL
+if (action === "end") {
+  btn.onclick = () => {
+    const overlay = document.getElementById("callEndOverlay");
+
+    if (overlay) {
+      overlay.style.opacity = "1";
+    }
+
+    // 🔻 fade do áudio
+    if (gainNode) {
+      gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2);
+    }
+
+    // ⏳ delay antes de sair
+    setTimeout(() => {
+      if (source) {
+        try { source.stop(0); } catch {}
+      }
+
+      openProfile(); // volta pro contato
+    }, 1200);
+  };
+}
 
   });
 
@@ -1052,14 +1100,19 @@ let ringtone;
 
 function endCallBtn() {
   return `
-    <div onclick="endCall(false)" style="
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-    ">
-      <div style="
+    <div 
+      class="call-btn"
+      data-action="end"
+      style="
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        gap:8px;
+        cursor:pointer;
+      "
+    >
+      
+      <div class="call-btn-circle" style="
         width:65px;
         height:65px;
         background:#ff3b30;
@@ -1070,12 +1123,14 @@ function endCallBtn() {
       ">
         ${endIcon()}
       </div>
+
       <span style="
         font-size:13px;
-        color:#fff;
+        color:rgba(255,255,255,0.85);
       ">
         Encerrar
       </span>
+
     </div>
   `;
 }
