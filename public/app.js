@@ -2553,34 +2553,36 @@ function openProfile() {
         align-items:center;
         margin-top:28px;
       ">
-      
+
 <div onclick="showStories()" style="
-  width:130px;
-  height:130px;
+  width:110px;
+  height:110px;
   border-radius:50%;
-  padding:3px;
-  background:linear-gradient(45deg,#25d366,#25d366);
+  background:#000;
   display:flex;
   align-items:center;
   justify-content:center;
-  cursor:pointer;
 ">
-
-  <img src="${ASSETS.avatar}" style="
+  <div style="
     width:100%;
     height:100%;
     border-radius:50%;
-    object-fit:cover;
-        "/>
-
-        <div style="margin-top:16px;font-size:22px;font-weight:600;">
-          ${contact.title}
-        </div>
-
-        <div style="margin-top:4px;font-size:15px;color:rgba(255,255,255,0.6);">
-          Alana Lemes
-        </div>
-      </div>
+    border:3px solid #25D366;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  ">
+    <div style="
+      width:96px;
+      height:96px;
+      border-radius:50%;
+      overflow:hidden;
+    ">
+      <img src="${ASSETS.avatar}"
+        style="width:100%;height:100%;object-fit:cover;" />
+    </div>
+  </div>
+</div>
 
       <!-- BOTÕES -->
       <div style="
