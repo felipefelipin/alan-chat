@@ -56,6 +56,8 @@ const CONTACT = {
   title: "Gisa"
 }
 
+let mediaTab = "media";
+
 const PERSIST_KEY = "gisa_webapp_state_v6";
 const CHECKOUT_URL = "/checkout";
 
@@ -138,6 +140,11 @@ function nowTime() {
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+function changeTab(tab) {
+  mediaTab = tab;
+  openMediaScreen();
 }
 
 function rand(min, max) {
@@ -1103,6 +1110,26 @@ const endIcon = () => `
   <path d="M6 10.5c4-3 8-3 12 0l-1.8 2c-2.8-2-5.6-2-8.4 0l-1.8-2z"/>
 </svg>`;
 
+function iconLinkSVG() {
+  return `
+    <svg width="46" height="46" viewBox="0 0 24 24" fill="none">
+      <path d="M10 14L14 10M7 17a4 4 0 010-6l3-3a4 4 0 016 6l-1 1"
+        stroke="white" stroke-opacity="0.5" stroke-width="1.5"
+        stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
+}
+
+function iconDocSVG() {
+  return `
+    <svg width="46" height="46" viewBox="0 0 24 24" fill="none">
+      <path d="M7 3h7l5 5v13H7z"
+        stroke="white" stroke-opacity="0.5" stroke-width="1.5"
+        stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
+}
+
 let ringtone;
 
 window.startVideoCall = async function() {
@@ -1684,6 +1711,71 @@ function renderItem(item, animated = false) {
   const row = wrapper.firstElementChild;
   if (row) state.chatEl.appendChild(row);
   return row;
+}
+
+function renderMediaContent(contact) {
+
+  if (mediaTab === "links") {
+    return `
+      <div style="opacity:0.4;margin-bottom:16px;">
+        ${iconLinkSVG()}
+      </div>
+
+      <div style="font-size:20px;font-weight:600;margin-bottom:8px;">
+        Nenhum link
+      </div>
+
+      <div style="
+        font-size:15px;
+        color:rgba(255,255,255,0.6);
+        max-width:280px;
+        line-height:1.4;
+      ">
+        Links enviados e recebidos na conversa com ~${contact.title} aparecerão nesta tela.
+      </div>
+    `;
+  }
+
+  if (mediaTab === "docs") {
+    return `
+      <div style="opacity:0.4;margin-bottom:16px;">
+        ${iconDocSVG()}
+      </div>
+
+      <div style="font-size:20px;font-weight:600;margin-bottom:8px;">
+        Nenhum documento
+      </div>
+
+      <div style="
+        font-size:15px;
+        color:rgba(255,255,255,0.6);
+        max-width:280px;
+        line-height:1.4;
+      ">
+        Toque em + para compartilhar documentos com ~${contact.title}
+      </div>
+    `;
+  }
+
+  // MEDIA (default)
+  return `
+    <div style="opacity:0.4;margin-bottom:16px;">
+      ${iconMediaSVG()}
+    </div>
+
+    <div style="font-size:20px;font-weight:600;margin-bottom:8px;">
+      Nenhuma mídia
+    </div>
+
+    <div style="
+      font-size:15px;
+      color:rgba(255,255,255,0.6);
+      max-width:280px;
+      line-height:1.4;
+    ">
+      Toque no "+" em uma conversa para compartilhar fotos e vídeos com ~${contact.title}
+    </div>
+  `;
 }
 
 function rerenderHistory() {
@@ -2754,24 +2846,26 @@ function openMediaScreen() {
           border-radius:10px;
           overflow:hidden;
         ">
-          <div style="
+
+          <div onclick="changeTab('media')" style="
             padding:6px 14px;
-            background:#3a3a3c;
             font-size:14px;
             font-weight:500;
+            ${mediaTab === "media" ? "background:#3a3a3c;color:#fff;" : "color:rgba(255,255,255,0.6);"}
           ">Mídia</div>
 
-          <div style="
+          <div onclick="changeTab('links')" style="
             padding:6px 14px;
             font-size:14px;
-            color:rgba(255,255,255,0.6);
+            ${mediaTab === "links" ? "background:#3a3a3c;color:#fff;" : "color:rgba(255,255,255,0.6);"}
           ">Links</div>
 
-          <div style="
+          <div onclick="changeTab('docs')" style="
             padding:6px 14px;
             font-size:14px;
-            color:rgba(255,255,255,0.6);
+            ${mediaTab === "docs" ? "background:#3a3a3c;color:#fff;" : "color:rgba(255,255,255,0.6);"}
           ">Docs</div>
+
         </div>
 
       </div>
@@ -2787,40 +2881,7 @@ function openMediaScreen() {
         padding:20px;
       ">
 
-        <!-- ICON SVG -->
-        <div style="
-          width:46px;
-          height:46px;
-          opacity:0.4;
-          margin-bottom:16px;
-        ">
-          <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%;">
-            
-            <rect x="3" y="5" width="18" height="14" rx="2"></rect>
-            <path d="M3 15l5-5 4 4 3-3 6 6"></path>
-            <circle cx="8.5" cy="9" r="1.5"></circle>
-
-          </svg>
-        </div>
-
-        <!-- TITLE -->
-        <div style="
-          font-size:20px;
-          font-weight:600;
-          margin-bottom:8px;
-        ">
-          Nenhuma mídia
-        </div>
-
-        <!-- DESC -->
-        <div style="
-          font-size:15px;
-          color:rgba(255,255,255,0.6);
-          max-width:280px;
-          line-height:1.4;
-        ">
-          Toque no "+" em uma conversa para compartilhar fotos e vídeos com ~${contact.title}
-        </div>
+        ${renderMediaContent(contact)}
 
       </div>
 
