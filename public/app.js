@@ -51,7 +51,7 @@ async function fadeVolume(audio, from, to, ms = 700) {
 
 const CONTACT = {
 name: "Alana Lemes",
-  username: "Alana Lemes",
+  username: "AlanaLemes",
   bio: "Aqui você faz o que quiser comigo... 🔥",
   title: "Alana Lemes",
 }
@@ -2043,7 +2043,7 @@ function showStories() {
         left:14px;
         right:14px;
         display:flex;
-        align-items:flex-start;
+        align-items:center;
         z-index:30;
       ">
 
@@ -2057,14 +2057,14 @@ function showStories() {
           line-height:1;
         ">‹</button>
 
-        <div style="
-          width:42px;
-          height:42px;
-          margin-right:10px;
-          border-radius:50%;
-          overflow:hidden;
-          flex-shrink:0;
-        ">
+<div style="
+  width:32px;
+  height:32px;
+  margin-right:10px;
+  border-radius:50%;
+  overflow:hidden;
+  flex-shrink:0;
+">
           <img
             src="${ASSETS.avatar}?v=1"
             style="
@@ -2680,7 +2680,7 @@ function openProfile() {
         <div style="display:flex;align-items:center;padding:16px;">
           <div style="display:flex;align-items:center;gap:12px;">
             ${iconPlus()}
-            <span>Criar grupo com ~Cleitin</span>
+            <span>Criar grupo com ~Alana Lemes</span>
           </div>
         </div>
 
