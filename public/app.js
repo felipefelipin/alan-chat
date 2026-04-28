@@ -725,6 +725,15 @@ function mountChat() {
     </div>
   `;
 
+  const screen = document.querySelector(".full");
+
+screen.addEventListener("click", (e) => {
+  if (e.target.closest("#replyBarKeyboard")) return;
+  if (e.target.closest(".story-input-bar")) return;
+
+  exitStories();
+});
+
   const sendBtn = document.getElementById("send");
   const input = document.getElementById("input");
   const micBtn = document.getElementById("composerMic");
@@ -2410,15 +2419,23 @@ function closeStoryReply() {
 }
 
 function exitStories() {
+  const screen = document.getElementById("storyScreen");
   const video = document.getElementById("storyVideo");
 
   if (video) {
     video.pause();
     video.currentTime = 0;
-    video.style.display = "none"; // 🔥 ESSENCIAL
   }
 
-  mountChat();
+  if (screen) {
+    screen.style.transition = "transform .25s ease, opacity .25s ease";
+    screen.style.transform = "scale(0.95)";
+    screen.style.opacity = "0";
+  }
+
+  setTimeout(() => {
+    mountChat();
+  }, 250);
 }
 
 function sendStoryReaction(emojiEl) {
