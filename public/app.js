@@ -1118,7 +1118,7 @@ window.startVideoCall = async function() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: currentFacing },
-      audio: false // ❌ REMOVE MICROFONE
+      audio: false
     });
 
     ringtone.play().catch(()=>{});
@@ -1130,7 +1130,7 @@ window.startVideoCall = async function() {
 
   function flipCameraIcon() {
     return `
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;">
         <path d="M23 7l-3-3-3 3"></path>
         <path d="M1 17l3 3 3-3"></path>
         <path d="M20 4v4a4 4 0 0 1-4 4H8"></path>
@@ -1221,7 +1221,28 @@ window.startVideoCall = async function() {
   const video = document.getElementById("localVideo");
   video.srcObject = stream;
 
-  // 🔄 TROCA SEM DELAY VISÍVEL
+  // 🔊 SPEAKER ATIVO (COR ORIGINAL RESTAURADA)
+  setTimeout(() => {
+    const btn = document.querySelector('[data-action="speaker"]');
+    if (!btn) return;
+
+    btn.classList.add("active");
+
+    const circle = btn.querySelector('.call-btn-circle');
+    const svg = btn.querySelector("svg");
+
+    if (circle) circle.style.background = "#ffffff";
+    if (svg) {
+      svg.style.stroke = "#000000";
+      svg.style.fill = "#000000";
+    }
+
+    if (gainNode) {
+      gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.1);
+    }
+  }, 0);
+
+  // 🔄 TROCA DE CAMERA OTIMIZADA
   document.getElementById("flipCamBtn").onclick = async () => {
 
     if (isSwitching) return;
@@ -1230,7 +1251,6 @@ window.startVideoCall = async function() {
     currentFacing = currentFacing === "user" ? "environment" : "user";
 
     try {
-      // 🔥 cria nova antes
       const newStream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: currentFacing },
         audio: false
@@ -1238,11 +1258,9 @@ window.startVideoCall = async function() {
 
       const oldStream = stream;
 
-      // troca instantânea
       video.srcObject = newStream;
       stream = newStream;
 
-      // para antiga depois (evita delay visual)
       setTimeout(() => {
         oldStream.getTracks().forEach(t => t.stop());
       }, 100);
@@ -1254,11 +1272,51 @@ window.startVideoCall = async function() {
     isSwitching = false;
   };
 
-  // 🔴 ENCERRAR
+  // 🔘 BOTÕES
   setTimeout(() => {
     document.querySelectorAll('.call-btn').forEach(btn => {
 
-      if (btn.getAttribute('data-action') === "end") {
+      const action = btn.getAttribute('data-action');
+      const circle = btn.querySelector('.call-btn-circle');
+      const svg = btn.querySelector("svg");
+
+      if (action === "speaker") {
+        btn.onclick = () => {
+          const active = btn.classList.toggle('active');
+
+          if (!gainNode) return;
+
+          if (active) {
+            circle.style.background = "#ffffff";
+            svg.style.stroke = "#000000";
+            svg.style.fill = "#000000";
+            gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.1);
+          } else {
+            circle.style.background = "#2c2c2e";
+            svg.style.stroke = "#ffffff";
+            svg.style.fill = "#ffffff";
+            gainNode.gain.setTargetAtTime(0.08, audioCtx.currentTime, 0.1);
+          }
+        };
+      }
+
+      if (action === "mute") {
+        btn.onclick = () => {
+          const active = btn.classList.toggle('active');
+
+          if (active) {
+            circle.style.background = "#ffffff";
+            svg.style.stroke = "#000000";
+            svg.style.fill = "#000000";
+          } else {
+            circle.style.background = "#2c2c2e";
+            svg.style.stroke = "#ffffff";
+            svg.style.fill = "#ffffff";
+          }
+        };
+      }
+
+      if (action === "end") {
         btn.onclick = () => {
 
           ringtone.pause();
@@ -1270,7 +1328,7 @@ window.startVideoCall = async function() {
 
           setTimeout(() => {
             if (video.srcObject) {
-              video.srcObject.getTracks().forEach(t => t.stop());
+              video.srcObject.getTracks().forEach(track => track.stop());
             }
             openProfile();
           }, 250);
