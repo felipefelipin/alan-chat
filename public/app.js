@@ -1686,70 +1686,6 @@ function renderItem(item, animated = false) {
   return row;
 }
 
-function renderMediaContent(contact) {
-
-  if (mediaTab === "links") {
-    return `
-      <div style="opacity:0.4;margin-bottom:16px;">
-        ${iconLinkSVG()}
-      </div>
-
-      <div style="font-size:20px;font-weight:600;margin-bottom:8px;">
-        Nenhum link
-      </div>
-
-      <div style="
-        font-size:15px;
-        color:rgba(255,255,255,0.6);
-        max-width:280px;
-        line-height:1.4;
-      ">
-        Links enviados e recebidos na conversa com ~${contact.title} aparecerão nesta tela.
-      </div>
-    `;
-  }
-
-  if (mediaTab === "docs") {
-    return `
-      <div style="opacity:0.4;margin-bottom:16px;">
-        ${iconDocSVG()}
-      </div>
-
-      <div style="font-size:20px;font-weight:600;margin-bottom:8px;">
-        Nenhum documento
-      </div>
-
-      <div style="
-        font-size:15px;
-        color:rgba(255,255,255,0.6);
-        max-width:280px;
-        line-height:1.4;
-      ">
-        Toque em + para compartilhar documentos com ~${contact.title}
-      </div>
-    `;
-  }
-
-  // MEDIA (default)
-  return `
-    <div style="opacity:0.4;margin-bottom:16px;">
-      ${iconMediaSVG()}
-    </div>
-
-    <div style="font-size:20px;font-weight:600;margin-bottom:8px;">
-      Nenhuma mídia
-    </div>
-
-    <div style="
-      font-size:15px;
-      color:rgba(255,255,255,0.6);
-      max-width:280px;
-      line-height:1.4;
-    ">
-      Toque no "+" em uma conversa para compartilhar fotos e vídeos com ~${contact.title}
-    </div>
-  `;
-}
 
 function rerenderHistory() {
   if (!state.chatEl) return;
@@ -2682,7 +2618,9 @@ function openProfile() {
 
       <!-- BLOCO 1 -->
       <div style="margin:12px;background:#111;border-radius:14px;overflow:hidden;">
-        <div onclick="openMediaScreen()">${item(iconMedia(),"Mídia, links e docs")}</div>
+        <div onclick="openMediaScreen()" style="cursor:pointer;">
+  ${item(iconMedia(),"Mídia, links e docs")}
+</div>
         <div onclick="openStorageScreen()">${item(iconStorage(),"Gerenciar armazenamento")}</div>
         <div onclick="openSavedMessages()">${item(iconSaved(),"Mensagens salvas","Nenhuma")}</div>
       </div>
