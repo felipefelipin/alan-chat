@@ -1109,37 +1109,29 @@ window.startVideoCall = async function() {
 
   let stream;
   let currentFacing = "user";
-  let videoTrack;
 
-  // 🎥 PEDIR PERMISSÃO
   try {
     stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: currentFacing },
       audio: true
     });
-
-    videoTrack = stream.getVideoTracks()[0];
-
   } catch (err) {
     console.log("Permissão negada");
     return;
   }
 
-  // 🎨 SVG FLIP (CORRETO)
+  // 🔥 SVG IGUAL WHATSAPP (CORRIGIDO)
   function flipCameraIcon() {
     return `
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px;">
-        <rect x="3" y="7" width="18" height="12" rx="3"></rect>
-        <circle cx="12" cy="13" r="3"></circle>
-        <path d="M8 5v3h3"></path>
-        <path d="M16 19v-3h-3"></path>
-        <path d="M11 5c3 0 5 2 5 5"></path>
-        <path d="M13 19c-3 0-5-2-5-5"></path>
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;">
+        <path d="M23 7l-3-3-3 3"></path>
+        <path d="M1 17l3 3 3-3"></path>
+        <path d="M20 4v4a4 4 0 0 1-4 4H8"></path>
+        <path d="M4 20v-4a4 4 0 0 1 4-4h8"></path>
       </svg>
     `;
   }
 
-  // 🎬 UI
   app.innerHTML = `
     <div id="callScreen" style="
       position:relative;
@@ -1168,33 +1160,27 @@ window.startVideoCall = async function() {
         <div style="font-size:20px;font-weight:600;">
           ${CONTACT.title}
         </div>
-        <div style="
-          margin-top:6px;
-          font-size:14px;
-          color:rgba(255,255,255,0.7);
-        ">
+        <div style="font-size:14px;color:rgba(255,255,255,0.7);margin-top:6px;">
           Chamando...
         </div>
       </div>
 
-      <!-- BOTÃO VIRAR -->
-      <div style="
+      <!-- BOTÃO VIRAR (POSIÇÃO CORRETA) -->
+      <div id="flipCamBtn" style="
         position:absolute;
         right:16px;
         top:140px;
+        width:56px;
+        height:56px;
+        border-radius:50%;
+        background:rgba(60,60,60,0.55);
+        backdrop-filter:blur(20px);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        transition:transform 0.15s ease;
       ">
-        <div id="flipCamBtn" style="
-          width:52px;
-          height:52px;
-          border-radius:50%;
-          background:rgba(60,60,60,0.55);
-          backdrop-filter:blur(20px);
-          display:flex;
-          align-items:center;
-          justify-content:center;
-        ">
-          ${flipCameraIcon()}
-        </div>
+        ${flipCameraIcon()}
       </div>
 
       <!-- CONTROLES -->
@@ -1227,56 +1213,54 @@ window.startVideoCall = async function() {
     </div>
   `;
 
-  // 🎥 SET VIDEO
   const video = document.getElementById("localVideo");
-  if (video) video.srcObject = stream;
+  video.srcObject = stream;
 
-  // 🔊 SPEAKER ATIVO
-  setTimeout(() => {
-    const speakerBtn = document.querySelector('[data-action="speaker"]');
-    if (!speakerBtn) return;
+  // 🔥 VIRAR CÂMERA (SEM BUG)
+  document.getElementById("flipCamBtn").onclick = async (e) => {
 
-    speakerBtn.classList.add("active");
-
-    const circle = speakerBtn.querySelector('.call-btn-circle');
-    const svg = speakerBtn.querySelector("svg");
-
-    if (circle) circle.style.background = "#ffffff";
-    if (svg) {
-      svg.style.stroke = "#000";
-      svg.style.fill = "#000";
-    }
-
-    if (gainNode) {
-      gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.1);
-    }
-  }, 0);
-
-  // 🔄 VIRAR CAMERA SEM DELAY (🔥 AQUI ESTÁ O SEGREDO)
-  document.getElementById("flipCamBtn").onclick = async () => {
+    // animação clique
+    e.currentTarget.style.transform = "scale(0.85)";
+    setTimeout(() => e.currentTarget.style.transform = "scale(1)", 150);
 
     currentFacing = currentFacing === "user" ? "environment" : "user";
 
+    // 🔥 FORÇAR TROCA (100% FUNCIONAL)
+    stream.getTracks().forEach(track => track.stop());
+
     try {
-      await videoTrack.applyConstraints({
-        facingMode: currentFacing
-      });
-    } catch (err) {
-      console.log("fallback troca completa");
-
-      stream.getTracks().forEach(t => t.stop());
-
       stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: currentFacing },
         audio: true
       });
 
       video.srcObject = stream;
-      videoTrack = stream.getVideoTracks()[0];
+
+    } catch (err) {
+      console.log("Erro ao trocar câmera");
     }
   };
 
-  // 🔘 BOTÕES
+  // 🔥 SPEAKER DEFAULT ATIVO
+  setTimeout(() => {
+    const btn = document.querySelector('[data-action="speaker"]');
+    if (!btn) return;
+
+    btn.classList.add("active");
+
+    const circle = btn.querySelector('.call-btn-circle');
+    const svg = btn.querySelector("svg");
+
+    circle.style.background = "#fff";
+    svg.style.stroke = "#000";
+    svg.style.fill = "#000";
+
+    if (gainNode) {
+      gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.1);
+    }
+  }, 0);
+
+  // 🔥 BOTÕES
   setTimeout(() => {
     document.querySelectorAll('.call-btn').forEach(btn => {
 
@@ -1284,58 +1268,42 @@ window.startVideoCall = async function() {
       const circle = btn.querySelector('.call-btn-circle');
       const svg = btn.querySelector("svg");
 
-      if (action === "speaker") {
-        btn.onclick = () => {
-          const active = btn.classList.toggle('active');
-
-          if (!gainNode) return;
-
-          if (active) {
-            circle.style.background = "#fff";
-            svg.style.stroke = "#000";
-            svg.style.fill = "#000";
-            gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.1);
-          } else {
-            circle.style.background = "#2c2c2e";
-            svg.style.stroke = "#fff";
-            svg.style.fill = "#fff";
-            gainNode.gain.setTargetAtTime(0.08, audioCtx.currentTime, 0.1);
-          }
-        };
-      }
-
       if (action === "mute") {
         btn.onclick = () => {
           const active = btn.classList.toggle('active');
 
-          if (active) {
-            circle.style.background = "#fff";
-            svg.style.stroke = "#000";
-            svg.style.fill = "#000";
-          } else {
-            circle.style.background = "#2c2c2e";
-            svg.style.stroke = "#fff";
-            svg.style.fill = "#fff";
+          circle.style.background = active ? "#fff" : "#2c2c2e";
+          svg.style.stroke = active ? "#000" : "#fff";
+          svg.style.fill = active ? "#000" : "#fff";
+        };
+      }
+
+      if (action === "speaker") {
+        btn.onclick = () => {
+          const active = btn.classList.toggle('active');
+
+          circle.style.background = active ? "#fff" : "#2c2c2e";
+          svg.style.stroke = active ? "#000" : "#fff";
+          svg.style.fill = active ? "#000" : "#fff";
+
+          if (gainNode) {
+            gainNode.gain.setTargetAtTime(active ? 1 : 0.08, audioCtx.currentTime, 0.1);
           }
         };
       }
 
-      // 🔥 ANIMAÇÃO AO ENCERRAR
+      // 🔥 ENCERRAR COM ANIMAÇÃO
       if (action === "end") {
         btn.onclick = () => {
 
           const screen = document.getElementById("callScreen");
 
-          if (screen) {
-            screen.style.opacity = "0";
-            screen.style.transform = "scale(0.95)";
-          }
+          screen.style.opacity = "0";
+          screen.style.transform = "scale(0.9)";
 
           setTimeout(() => {
 
-            if (navigator.vibrate) navigator.vibrate(200);
-
-            if (video && video.srcObject) {
+            if (video.srcObject) {
               video.srcObject.getTracks().forEach(track => track.stop());
             }
 
