@@ -56,8 +56,6 @@ const CONTACT = {
   title: "Gisa"
 }
 
-let mediaTab = "media";
-
 const PERSIST_KEY = "gisa_webapp_state_v6";
 const CHECKOUT_URL = "/checkout";
 
@@ -140,11 +138,6 @@ function nowTime() {
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
-}
-
-function changeTab(tab) {
-  mediaTab = tab;
-  openMediaScreen();
 }
 
 function rand(min, max) {
@@ -1109,26 +1102,6 @@ const endIcon = () => `
 <svg width="26" height="26" viewBox="0 0 24 24" fill="#fff">
   <path d="M6 10.5c4-3 8-3 12 0l-1.8 2c-2.8-2-5.6-2-8.4 0l-1.8-2z"/>
 </svg>`;
-
-function iconLinkSVG() {
-  return `
-    <svg width="46" height="46" viewBox="0 0 24 24" fill="none">
-      <path d="M10 14L14 10M7 17a4 4 0 010-6l3-3a4 4 0 016 6l-1 1"
-        stroke="white" stroke-opacity="0.5" stroke-width="1.5"
-        stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  `;
-}
-
-function iconDocSVG() {
-  return `
-    <svg width="46" height="46" viewBox="0 0 24 24" fill="none">
-      <path d="M7 3h7l5 5v13H7z"
-        stroke="white" stroke-opacity="0.5" stroke-width="1.5"
-        stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  `;
-}
 
 let ringtone;
 
@@ -2957,8 +2930,6 @@ function openStorageScreen() {
         </div>
 
       </div>
-
-    </div>
   `;
 }
 
