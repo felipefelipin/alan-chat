@@ -1975,90 +1975,29 @@ function showIncomingCall() {
 function showStories() {
   console.log("📸 Stories aberto");
 
-  const video = document.getElementById("storyVideo");
-
-  // 🔥 TRAVA ALTURA ORIGINAL UMA ÚNICA VEZ
-  if (!window.__storyHeight) {
-    window.__storyHeight = window.innerHeight;
-  }
-
-  const realHeight = window.__storyHeight;
-
-  // 🔥 NÃO troca src (ESSENCIAL PRO ZERO DELAY)
-  if (!video.src) {
-    video.src = "/assets/story-video.mp4";
-  }
-
-  const screen = document.querySelector(".full");
-
-let startY = 0;
-let currentY = 0;
-let dragging = false;
-
-screen.addEventListener("touchstart", (e) => {
-  startY = e.touches[0].clientY;
-  dragging = true;
-});
-
-screen.addEventListener("touchmove", (e) => {
-  if (!dragging) return;
-
-  currentY = e.touches[0].clientY;
-  const diff = currentY - startY;
-
-  if (diff < 0) return;
-
-  const scale = 1 - diff / 1000;
-
-  screen.style.transition = "none";
-  screen.style.transform = `translateY(${diff}px) scale(${scale})`;
-});
-
-screen.addEventListener("touchend", () => {
-  dragging = false;
-
-  const diff = currentY - startY;
-
-  // ❌ cancelou (volta)
-  if (diff < 120) {
-    screen.style.transition = "transform .25s ease";
-    screen.style.transform = "translateY(0) scale(1)";
-    return;
-  }
-
-  // ✅ sair (animação circular)
-  closeStoryCircle(screen);
-});
-
-  video.style.display = "block";
-  video.currentTime = 0;
-
-  video.style.position = "fixed";
-  video.style.top = "0";
-  video.style.left = "0";
-  video.style.width = "100vw";
-  video.style.height = realHeight + "px";
-  video.style.objectFit = "cover";
-  video.style.zIndex = "0";
-  video.style.transform = "translateZ(0)";
-  video.style.willChange = "transform";
-
-  // 🔥 play só depois que pode tocar (evita tela preta)
-  if (video.readyState >= 2) {
-    video.play().catch(() => {});
-  } else {
-    video.oncanplay = () => {
-      video.play().catch(() => {});
-    };
-  }
+  const realHeight = window.innerHeight;
 
   app.innerHTML = `
-    <div class="full" style="
-      background:transparent;
-      position:relative;
-      overflow:hidden;
+    <div id="storyScreen" style="
+      position:fixed;
+      top:0;
+      left:0;
+      width:100vw;
       height:${realHeight}px;
+      background:#000;
+      overflow:hidden;
+      z-index:9999;
     ">
+
+      <!-- VIDEO -->
+      <video id="storyVideo" autoplay playsinline muted style="
+        position:absolute;
+        width:100%;
+        height:100%;
+        object-fit:cover;
+      ">
+        <source src="/assets/story-video.mp4" type="video/mp4">
+      </video>
 
       <!-- PROGRESS -->
       <div style="
@@ -2080,7 +2019,7 @@ screen.addEventListener("touchend", () => {
       <!-- HEADER -->
       <div style="
         position:absolute;
-        top:8px;
+        top:14px;
         left:14px;
         right:14px;
         display:flex;
@@ -2098,30 +2037,26 @@ screen.addEventListener("touchend", () => {
           line-height:1;
         ">‹</button>
 
-<div style="
-  width:32px;
-  height:32px;
-  margin-right:10px;
-  border-radius:50%;
-  overflow:hidden;
-  flex-shrink:0;
-">
-          <img
-            src="${ASSETS.avatar}?v=1"
-            style="
-              width:100%;
-              height:100%;
-              object-fit:cover;
-            "
-          />
+        <div style="
+          width:32px;
+          height:32px;
+          margin-right:10px;
+          border-radius:50%;
+          overflow:hidden;
+          flex-shrink:0;
+        ">
+          <img src="${ASSETS.avatar}" style="
+            width:100%;
+            height:100%;
+            object-fit:cover;
+          ">
         </div>
 
-        <div style="margin-top:1px;">
+        <div>
           <div style="
             color:#fff;
             font-weight:600;
             font-size:15px;
-            line-height:1.1;
           ">
             ${CONTACT.title}
           </div>
@@ -2130,7 +2065,6 @@ screen.addEventListener("touchend", () => {
             color:rgba(255,255,255,0.85);
             font-size:12px;
             margin-top:2px;
-            line-height:1;
           ">
             12h
           </div>
@@ -2157,60 +2091,40 @@ screen.addEventListener("touchend", () => {
           align-items:center;
         ">
           <span style="flex:1;">Responder...</span>
+
           <div style="
-  width:48px;
-  height:48px;
-  margin-left:10px;
-  border-radius:50%;
-  background:rgba(255,255,255,0.12);
-  backdrop-filter:blur(10px);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-">
-
-  <svg viewBox="0 0 24 24"
-    fill="none"
-    stroke="white"
-    stroke-width="1.8"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    style="width:22px;height:22px;">
-    
-    <path d="M20.4 4.6c-1.4-1.5-3.7-1.5-5.1 0L12 7.7l-3.3-3.1c-1.4-1.5-3.7-1.5-5.1 0-1.5 1.5-1.5 3.9 0 5.4L12 20l8.4-10c1.5-1.5 1.5-3.9 0-5.4z"/>
-  
-  </svg>
-
-</div>
-      </div>
-
-      <!-- PRELOAD TURBO INPUT -->
-      <div id="storyReplyTurbo" style="
-        position:absolute;
-        opacity:0;
-        pointer-events:none;
-        left:-9999px;
-        top:-9999px;
-        z-index:-1;
-      ">
-        <input
-          id="storyTurboInput"
-          type="text"
-          autocomplete="off"
-          autocorrect="off"
-          autocapitalize="off"
-          spellcheck="false"
-        />
+            width:48px;
+            height:48px;
+            margin-left:10px;
+            border-radius:50%;
+            background:rgba(255,255,255,0.12);
+            backdrop-filter:blur(10px);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+          ">
+            <svg viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              style="width:22px;height:22px;">
+              <path d="M20.4 4.6c-1.4-1.5-3.7-1.5-5.1 0L12 7.7l-3.3-3.1c-1.4-1.5-3.7-1.5-5.1 0-1.5 1.5-1.5 3.9 0 5.4L12 20l8.4-10c1.5-1.5 1.5-3.9 0-5.4z"/>
+            </svg>
+          </div>
+        </div>
       </div>
 
     </div>
   `;
 
+  const video = document.getElementById("storyVideo");
   const progress = document.getElementById("progressBar");
 
   let progressInterval = null;
 
-  // 🔥 progresso sincronizado
+  // 🔥 PROGRESSO
   video.onplay = () => {
     clearInterval(progressInterval);
 
@@ -2231,7 +2145,7 @@ screen.addEventListener("touchend", () => {
 
   video.onended = () => {
     clearInterval(progressInterval);
-    exitStories();
+    exitStories(); // fade
   };
 }
 
