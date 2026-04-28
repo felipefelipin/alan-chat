@@ -1108,9 +1108,9 @@ let ringtone;
 window.startVideoCall = async function() {
 
   let stream;
-  let currentFacing = "user"; // front camera
+  let currentFacing = "user";
 
-  // 🚫 PRIMEIRO PEDE PERMISSÃO (ANTES DE ABRIR TELA)
+  // 🚫 PEDE PERMISSÃO PRIMEIRO
   try {
     stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: currentFacing },
@@ -1118,10 +1118,10 @@ window.startVideoCall = async function() {
     });
   } catch (err) {
     console.log("Permissão negada");
-    return; // 🔥 NÃO entra na chamada
+    return;
   }
 
-  // ✅ SÓ ENTRA SE PERMITIU
+  // ✅ UI ORIGINAL (MANTIDA)
   app.innerHTML = `
     <div style="
       position:relative;
@@ -1160,6 +1160,32 @@ window.startVideoCall = async function() {
         </div>
       </div>
 
+      <!-- BOTÕES DIREITA (IGUAL WHATSAPP) -->
+      <div style="
+        position:absolute;
+        right:16px;
+        top:140px;
+        display:flex;
+        flex-direction:column;
+        gap:16px;
+      ">
+
+        <!-- virar câmera -->
+        <div id="flipCamBtn" style="
+          width:48px;
+          height:48px;
+          border-radius:50%;
+          background:rgba(80,80,80,0.6);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          backdrop-filter:blur(10px);
+        ">
+          ${videoIcon()}
+        </div>
+
+      </div>
+
       <!-- CONTROLES -->
       <div style="
         position:absolute;
@@ -1168,7 +1194,6 @@ window.startVideoCall = async function() {
         display:flex;
         justify-content:center;
       ">
-
         <div style="
           background:rgba(28,28,30,0.35);
           backdrop-filter:blur(18px);
@@ -1181,53 +1206,69 @@ window.startVideoCall = async function() {
 
           ${callBtn(moreIcon(), "", "", true)}
           ${callBtn(speakerIcon(), "", "speaker")}
-          ${callBtn(videoIcon(), "", "flip")} <!-- 🔥 BOTÃO VIRAR -->
+          ${callBtn(videoIcon(), "", "", true)}
           ${callBtn(muteIcon(), "", "mute")}
           ${endCallBtn()}
 
         </div>
-
       </div>
 
     </div>
   `;
 
-  // 🎥 SET VIDEO
+  // 🎥 VIDEO
   const video = document.getElementById("localVideo");
-  if (video) {
-    video.srcObject = stream;
-  }
+  if (video) video.srcObject = stream;
 
-  // 🔘 EVENTOS
+  // 🔊 SPEAKER ATIVO (VOLTA COMO ERA)
+  setTimeout(() => {
+    const speakerBtn = document.querySelector('[data-action="speaker"]');
+
+    if (speakerBtn) {
+      speakerBtn.classList.add("active");
+
+      const circle = speakerBtn.querySelector('.call-btn-circle');
+      const svg = speakerBtn.querySelector("svg");
+
+      if (circle) circle.style.background = "#ffffff";
+      if (svg) {
+        svg.style.stroke = "#000";
+        svg.style.fill = "#000";
+      }
+
+      if (gainNode) {
+        gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.1);
+      }
+    }
+  }, 0);
+
+  // 🔄 VIRAR CÂMERA (BOTÃO DIREITA)
+  document.getElementById("flipCamBtn").onclick = async () => {
+
+    currentFacing = currentFacing === "user" ? "environment" : "user";
+
+    stream.getTracks().forEach(track => track.stop());
+
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: currentFacing },
+        audio: true
+      });
+
+      if (video) video.srcObject = stream;
+
+    } catch (err) {
+      console.log("Erro ao trocar câmera");
+    }
+  };
+
+  // 🔘 BOTÕES INFERIORES (MANTIDOS)
   setTimeout(() => {
     document.querySelectorAll('.call-btn').forEach(btn => {
 
       const action = btn.getAttribute('data-action');
       const circle = btn.querySelector('.call-btn-circle');
       const svg = btn.querySelector("svg");
-
-      // 🔄 VIRAR CÂMERA
-      if (action === "flip") {
-        btn.onclick = async () => {
-
-          currentFacing = currentFacing === "user" ? "environment" : "user";
-
-          // parar câmera atual
-          stream.getTracks().forEach(track => track.stop());
-
-          try {
-            stream = await navigator.mediaDevices.getUserMedia({
-              video: { facingMode: currentFacing },
-              audio: true
-            });
-
-            if (video) video.srcObject = stream;
-
-          } catch (err) {
-            console.log("Erro ao virar câmera");
-          }
-        };
-      }
 
       // 🔊 SPEAKER
       if (action === "speaker") {
@@ -1238,17 +1279,13 @@ window.startVideoCall = async function() {
 
           if (active) {
             circle.style.background = "#ffffff";
-            if (svg) {
-              svg.style.stroke = "#000";
-              svg.style.fill = "#000";
-            }
+            svg.style.stroke = "#000";
+            svg.style.fill = "#000";
             gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.1);
           } else {
             circle.style.background = "#2c2c2e";
-            if (svg) {
-              svg.style.stroke = "#fff";
-              svg.style.fill = "#fff";
-            }
+            svg.style.stroke = "#fff";
+            svg.style.fill = "#fff";
             gainNode.gain.setTargetAtTime(0.08, audioCtx.currentTime, 0.1);
           }
         };
@@ -1261,16 +1298,12 @@ window.startVideoCall = async function() {
 
           if (active) {
             circle.style.background = "#ffffff";
-            if (svg) {
-              svg.style.stroke = "#000";
-              svg.style.fill = "#000";
-            }
+            svg.style.stroke = "#000";
+            svg.style.fill = "#000";
           } else {
             circle.style.background = "#2c2c2e";
-            if (svg) {
-              svg.style.stroke = "#fff";
-              svg.style.fill = "#fff";
-            }
+            svg.style.stroke = "#fff";
+            svg.style.fill = "#fff";
           }
         };
       }
@@ -1281,7 +1314,6 @@ window.startVideoCall = async function() {
 
           if (navigator.vibrate) navigator.vibrate(200);
 
-          // parar câmera
           if (video && video.srcObject) {
             video.srcObject.getTracks().forEach(track => track.stop());
           }
