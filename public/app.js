@@ -725,7 +725,6 @@ function mountChat() {
     </div>
   `;
 
-  
   const sendBtn = document.getElementById("send");
   const input = document.getElementById("input");
   const micBtn = document.getElementById("composerMic");
@@ -1990,6 +1989,47 @@ function showStories() {
     video.src = "/assets/story-video.mp4";
   }
 
+  const screen = document.querySelector(".full");
+
+let startY = 0;
+let currentY = 0;
+let dragging = false;
+
+screen.addEventListener("touchstart", (e) => {
+  startY = e.touches[0].clientY;
+  dragging = true;
+});
+
+screen.addEventListener("touchmove", (e) => {
+  if (!dragging) return;
+
+  currentY = e.touches[0].clientY;
+  const diff = currentY - startY;
+
+  if (diff < 0) return;
+
+  const scale = 1 - diff / 1000;
+
+  screen.style.transition = "none";
+  screen.style.transform = `translateY(${diff}px) scale(${scale})`;
+});
+
+screen.addEventListener("touchend", () => {
+  dragging = false;
+
+  const diff = currentY - startY;
+
+  // ❌ cancelou (volta)
+  if (diff < 120) {
+    screen.style.transition = "transform .25s ease";
+    screen.style.transform = "translateY(0) scale(1)";
+    return;
+  }
+
+  // ✅ sair (animação circular)
+  closeStoryCircle(screen);
+});
+
   video.style.display = "block";
   video.currentTime = 0;
 
@@ -2410,24 +2450,43 @@ function closeStoryReply() {
   }
 }
 
-function exitStories() {
-  const screen = document.getElementById("storyScreen");
-  const video = document.getElementById("storyVideo");
+function exitStories(type = "fade") {
+  const screen = document.querySelector(".full");
+  if (!screen) return;
 
-  if (video) {
-    video.pause();
-    video.currentTime = 0;
-  }
-
-  if (screen) {
-    screen.style.transition = "transform .25s ease, opacity .25s ease";
-    screen.style.transform = "scale(0.95)";
+  if (type === "fade") {
+    screen.style.transition = "opacity .25s ease";
     screen.style.opacity = "0";
+
+    setTimeout(() => {
+      mountChat();
+    }, 250);
   }
+}
+
+function closeStoryCircle(screen) {
+  const avatar = document.querySelector("[data-avatar]");
+
+  if (!avatar) {
+    mountChat();
+    return;
+  }
+
+  const rect = avatar.getBoundingClientRect();
+
+  screen.style.transition = "all .35s ease";
+  screen.style.borderRadius = "50%";
+
+  screen.style.transform = `
+    translate(${rect.left}px, ${rect.top}px)
+    scale(0.2)
+  `;
+
+  screen.style.opacity = "0.6";
 
   setTimeout(() => {
     mountChat();
-  }, 250);
+  }, 350);
 }
 
 function sendStoryReaction(emojiEl) {
