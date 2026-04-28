@@ -725,15 +725,7 @@ function mountChat() {
     </div>
   `;
 
-  const screen = document.querySelector(".full");
-
-screen.addEventListener("click", (e) => {
-  if (e.target.closest("#replyBarKeyboard")) return;
-  if (e.target.closest(".story-input-bar")) return;
-
-  exitStories();
-});
-
+  
   const sendBtn = document.getElementById("send");
   const input = document.getElementById("input");
   const micBtn = document.getElementById("composerMic");
