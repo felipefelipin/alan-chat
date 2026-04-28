@@ -52,7 +52,7 @@ async function fadeVolume(audio, from, to, ms = 700) {
 const CONTACT = {
   name: "Gisa",
   username: "gisa",
-  bio: "Deus seja sempre louvado 🙏",
+  bio: "Aqui você faz o que quiser comigo... 👀🔥",
   title: "Gisa"
 }
 
@@ -1111,7 +1111,6 @@ window.startVideoCall = async function() {
   let currentFacing = "user";
   let isSwitching = false;
 
-  // 🔊 SOM DE CHAMADA
   const ringtone = new Audio("assets/call.mp3");
   ringtone.loop = true;
 
@@ -1146,10 +1145,12 @@ window.startVideoCall = async function() {
       background:#000;
       overflow:hidden;
       font-family:-apple-system,BlinkMacSystemFont;
-      transition:opacity .25s ease, transform .25s ease;
+      opacity:0;
+      transform:scale(1.02);
+      transition:opacity .2s ease, transform .2s ease;
     ">
 
-      <video id="localVideo" autoplay playsinline style="
+      <video id="localVideo" autoplay playsinline muted style="
         position:absolute;
         width:100%;
         height:100%;
@@ -1171,7 +1172,6 @@ window.startVideoCall = async function() {
         </div>
       </div>
 
-      <!-- BOTÃO FLIP -->
       <div id="flipCamBtn" style="
         position:absolute;
         right:16px;
@@ -1188,7 +1188,6 @@ window.startVideoCall = async function() {
         ${flipCameraIcon()}
       </div>
 
-      <!-- CONTROLES -->
       <div style="
         position:absolute;
         bottom:30px;
@@ -1219,9 +1218,21 @@ window.startVideoCall = async function() {
   `;
 
   const video = document.getElementById("localVideo");
+  const screen = document.getElementById("callScreen");
+
   video.srcObject = stream;
 
-  // 🔊 SPEAKER ATIVO (COR ORIGINAL RESTAURADA)
+  // 🔥 AQUI REMOVE O BUG VISUAL
+  video.onloadedmetadata = () => {
+    video.play();
+
+    requestAnimationFrame(() => {
+      screen.style.opacity = "1";
+      screen.style.transform = "scale(1)";
+    });
+  };
+
+  // 🔊 SPEAKER
   setTimeout(() => {
     const btn = document.querySelector('[data-action="speaker"]');
     if (!btn) return;
@@ -1231,18 +1242,16 @@ window.startVideoCall = async function() {
     const circle = btn.querySelector('.call-btn-circle');
     const svg = btn.querySelector("svg");
 
-    if (circle) circle.style.background = "#ffffff";
-    if (svg) {
-      svg.style.stroke = "#000000";
-      svg.style.fill = "#000000";
-    }
+    circle.style.background = "#ffffff";
+    svg.style.stroke = "#000000";
+    svg.style.fill = "#000000";
 
     if (gainNode) {
       gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.1);
     }
   }, 0);
 
-  // 🔄 TROCA DE CAMERA OTIMIZADA
+  // 🔄 CAMERA
   document.getElementById("flipCamBtn").onclick = async () => {
 
     if (isSwitching) return;
@@ -1265,64 +1274,21 @@ window.startVideoCall = async function() {
         oldStream.getTracks().forEach(t => t.stop());
       }, 100);
 
-    } catch (err) {
-      console.log("Erro ao trocar câmera");
-    }
+    } catch (err) {}
 
     isSwitching = false;
   };
 
-  // 🔘 BOTÕES
+  // 🔴 ENCERRAR
   setTimeout(() => {
     document.querySelectorAll('.call-btn').forEach(btn => {
 
-      const action = btn.getAttribute('data-action');
-      const circle = btn.querySelector('.call-btn-circle');
-      const svg = btn.querySelector("svg");
-
-      if (action === "speaker") {
-        btn.onclick = () => {
-          const active = btn.classList.toggle('active');
-
-          if (!gainNode) return;
-
-          if (active) {
-            circle.style.background = "#ffffff";
-            svg.style.stroke = "#000000";
-            svg.style.fill = "#000000";
-            gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.1);
-          } else {
-            circle.style.background = "#2c2c2e";
-            svg.style.stroke = "#ffffff";
-            svg.style.fill = "#ffffff";
-            gainNode.gain.setTargetAtTime(0.08, audioCtx.currentTime, 0.1);
-          }
-        };
-      }
-
-      if (action === "mute") {
-        btn.onclick = () => {
-          const active = btn.classList.toggle('active');
-
-          if (active) {
-            circle.style.background = "#ffffff";
-            svg.style.stroke = "#000000";
-            svg.style.fill = "#000000";
-          } else {
-            circle.style.background = "#2c2c2e";
-            svg.style.stroke = "#ffffff";
-            svg.style.fill = "#ffffff";
-          }
-        };
-      }
-
-      if (action === "end") {
+      if (btn.getAttribute('data-action') === "end") {
         btn.onclick = () => {
 
           ringtone.pause();
           ringtone.currentTime = 0;
 
-          const screen = document.getElementById("callScreen");
           screen.style.opacity = "0";
           screen.style.transform = "scale(0.9)";
 
@@ -1331,7 +1297,7 @@ window.startVideoCall = async function() {
               video.srcObject.getTracks().forEach(track => track.stop());
             }
             openProfile();
-          }, 250);
+          }, 200);
         };
       }
 
@@ -2624,7 +2590,7 @@ function openProfile() {
           text-align:center;
           max-width:280px;
         ">
-          ${contact.bio || "Deus seja sempre louvado 🙏"}
+          ${contact.bio || "Aqui você faz o que quiser comigo... 👀🔥"}
         </div>
 
       </div>
