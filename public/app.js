@@ -1106,6 +1106,22 @@ const endIcon = () => `
 let ringtone;
 
 window.startVideoCall = async function() {
+
+  let stream;
+  let currentFacing = "user"; // front camera
+
+  // 🚫 PRIMEIRO PEDE PERMISSÃO (ANTES DE ABRIR TELA)
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: currentFacing },
+      audio: true
+    });
+  } catch (err) {
+    console.log("Permissão negada");
+    return; // 🔥 NÃO entra na chamada
+  }
+
+  // ✅ SÓ ENTRA SE PERMITIU
   app.innerHTML = `
     <div style="
       position:relative;
@@ -1154,9 +1170,8 @@ window.startVideoCall = async function() {
       ">
 
         <div style="
-background:rgba(28,28,30,0.35);
-backdrop-filter:blur(18px);
--webkit-backdrop-filter:blur(18px);
+          background:rgba(28,28,30,0.35);
+          backdrop-filter:blur(18px);
           border-radius:30px;
           padding:10px 14px;
           display:flex;
@@ -1166,7 +1181,7 @@ backdrop-filter:blur(18px);
 
           ${callBtn(moreIcon(), "", "", true)}
           ${callBtn(speakerIcon(), "", "speaker")}
-          ${callBtn(videoIcon(), "", "", true)}
+          ${callBtn(videoIcon(), "", "flip")} <!-- 🔥 BOTÃO VIRAR -->
           ${callBtn(muteIcon(), "", "mute")}
           ${endCallBtn()}
 
@@ -1177,51 +1192,44 @@ backdrop-filter:blur(18px);
     </div>
   `;
 
-  // 🎥 ATIVAR CÂMERA
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: true
-    });
-
-    const video = document.getElementById("localVideo");
-    if (video) {
-      video.srcObject = stream;
-    }
-  } catch (err) {
-    console.error("Erro ao acessar câmera:", err);
+  // 🎥 SET VIDEO
+  const video = document.getElementById("localVideo");
+  if (video) {
+    video.srcObject = stream;
   }
 
-  // 🔊 SPEAKER JÁ ATIVO
-  setTimeout(() => {
-    const speakerBtn = document.querySelector('[data-action="speaker"]');
-
-    if (speakerBtn) {
-      speakerBtn.classList.add("active");
-
-      const circle = speakerBtn.querySelector('.call-btn-circle');
-      const svg = speakerBtn.querySelector("svg");
-
-      if (circle) circle.style.background = "#ffffff";
-      if (svg) {
-        svg.style.stroke = "#000";
-        svg.style.fill = "#000";
-      }
-
-      if (gainNode) {
-        gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.1);
-      }
-    }
-  }, 0);
-
-  // 🔘 EVENTOS DOS BOTÕES
+  // 🔘 EVENTOS
   setTimeout(() => {
     document.querySelectorAll('.call-btn').forEach(btn => {
+
       const action = btn.getAttribute('data-action');
       const circle = btn.querySelector('.call-btn-circle');
       const svg = btn.querySelector("svg");
 
-      // 🔊 SPEAKER TOGGLE
+      // 🔄 VIRAR CÂMERA
+      if (action === "flip") {
+        btn.onclick = async () => {
+
+          currentFacing = currentFacing === "user" ? "environment" : "user";
+
+          // parar câmera atual
+          stream.getTracks().forEach(track => track.stop());
+
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: { facingMode: currentFacing },
+              audio: true
+            });
+
+            if (video) video.srcObject = stream;
+
+          } catch (err) {
+            console.log("Erro ao virar câmera");
+          }
+        };
+      }
+
+      // 🔊 SPEAKER
       if (action === "speaker") {
         btn.onclick = () => {
           const active = btn.classList.toggle('active');
@@ -1246,7 +1254,7 @@ backdrop-filter:blur(18px);
         };
       }
 
-      // 🔇 MUTE (visual)
+      // 🔇 MUTE
       if (action === "mute") {
         btn.onclick = () => {
           const active = btn.classList.toggle('active');
@@ -1271,42 +1279,14 @@ backdrop-filter:blur(18px);
       if (action === "end") {
         btn.onclick = () => {
 
-          // vibração
           if (navigator.vibrate) navigator.vibrate(200);
 
-          // overlay fade
-          const overlay = document.createElement("div");
-          overlay.style = `
-            position:fixed;
-            inset:0;
-            background:#000;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            color:#fff;
-            font-size:20px;
-            opacity:0;
-            transition:opacity 0.4s ease;
-            z-index:9999;
-          `;
-          overlay.innerHTML = "Ligação encerrada";
-          document.body.appendChild(overlay);
-
-          setTimeout(() => {
-            overlay.style.opacity = "1";
-          }, 10);
-
           // parar câmera
-          const video = document.getElementById("localVideo");
           if (video && video.srcObject) {
             video.srcObject.getTracks().forEach(track => track.stop());
           }
 
-          // voltar
-          setTimeout(() => {
-            document.body.removeChild(overlay);
-            openProfile();
-          }, 700);
+          openProfile();
         };
       }
 
