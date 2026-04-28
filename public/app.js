@@ -50,10 +50,10 @@ async function fadeVolume(audio, from, to, ms = 700) {
 }
 
 const CONTACT = {
-  name: "Gisa",
-  username: "gisa",
-  bio: "Aqui você faz o que quiser comigo... 👀🔥",
-  title: "Gisa"
+name: "Alana Lemes",
+  username: "Alana Lemes",
+  bio: "Aqui você faz o que quiser comigo... 🔥",
+  title: "Alana Lemes",
 }
 
 const PERSIST_KEY = "gisa_webapp_state_v6";
@@ -2590,7 +2590,7 @@ function openProfile() {
           text-align:center;
           max-width:280px;
         ">
-          ${contact.bio || "Aqui você faz o que quiser comigo... 👀🔥"}
+          ${contact.bio || "Aqui você faz o que quiser comigo... 🔥"}
         </div>
 
       </div>
