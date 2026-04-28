@@ -1109,29 +1109,47 @@ window.startVideoCall = async function() {
 
   let stream;
   let currentFacing = "user";
+  let videoTrack;
 
-  // 🚫 PEDE PERMISSÃO PRIMEIRO
+  // 🎥 PEDIR PERMISSÃO
   try {
     stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: currentFacing },
       audio: true
     });
+
+    videoTrack = stream.getVideoTracks()[0];
+
   } catch (err) {
     console.log("Permissão negada");
     return;
   }
 
-  // ✅ UI ORIGINAL (MANTIDA)
+  // 🎨 SVG FLIP (CORRETO)
+  function flipCameraIcon() {
+    return `
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px;">
+        <rect x="3" y="7" width="18" height="12" rx="3"></rect>
+        <circle cx="12" cy="13" r="3"></circle>
+        <path d="M8 5v3h3"></path>
+        <path d="M16 19v-3h-3"></path>
+        <path d="M11 5c3 0 5 2 5 5"></path>
+        <path d="M13 19c-3 0-5-2-5-5"></path>
+      </svg>
+    `;
+  }
+
+  // 🎬 UI
   app.innerHTML = `
-    <div style="
+    <div id="callScreen" style="
       position:relative;
       height:100vh;
       background:#000;
       overflow:hidden;
       font-family:-apple-system,BlinkMacSystemFont;
+      transition:opacity 0.25s ease, transform 0.25s ease;
     ">
 
-      <!-- VIDEO -->
       <video id="localVideo" autoplay playsinline style="
         position:absolute;
         width:100%;
@@ -1150,7 +1168,6 @@ window.startVideoCall = async function() {
         <div style="font-size:20px;font-weight:600;">
           ${CONTACT.title}
         </div>
-
         <div style="
           margin-top:6px;
           font-size:14px;
@@ -1160,30 +1177,24 @@ window.startVideoCall = async function() {
         </div>
       </div>
 
-      <!-- BOTÕES DIREITA (IGUAL WHATSAPP) -->
+      <!-- BOTÃO VIRAR -->
       <div style="
         position:absolute;
         right:16px;
         top:140px;
-        display:flex;
-        flex-direction:column;
-        gap:16px;
       ">
-
-        <!-- virar câmera -->
         <div id="flipCamBtn" style="
-          width:48px;
-          height:48px;
+          width:52px;
+          height:52px;
           border-radius:50%;
-          background:rgba(80,80,80,0.6);
+          background:rgba(60,60,60,0.55);
+          backdrop-filter:blur(20px);
           display:flex;
           align-items:center;
           justify-content:center;
-          backdrop-filter:blur(10px);
         ">
-          ${videoIcon()}
+          ${flipCameraIcon()}
         </div>
-
       </div>
 
       <!-- CONTROLES -->
@@ -1216,53 +1227,56 @@ window.startVideoCall = async function() {
     </div>
   `;
 
-  // 🎥 VIDEO
+  // 🎥 SET VIDEO
   const video = document.getElementById("localVideo");
   if (video) video.srcObject = stream;
 
-  // 🔊 SPEAKER ATIVO (VOLTA COMO ERA)
+  // 🔊 SPEAKER ATIVO
   setTimeout(() => {
     const speakerBtn = document.querySelector('[data-action="speaker"]');
+    if (!speakerBtn) return;
 
-    if (speakerBtn) {
-      speakerBtn.classList.add("active");
+    speakerBtn.classList.add("active");
 
-      const circle = speakerBtn.querySelector('.call-btn-circle');
-      const svg = speakerBtn.querySelector("svg");
+    const circle = speakerBtn.querySelector('.call-btn-circle');
+    const svg = speakerBtn.querySelector("svg");
 
-      if (circle) circle.style.background = "#ffffff";
-      if (svg) {
-        svg.style.stroke = "#000";
-        svg.style.fill = "#000";
-      }
+    if (circle) circle.style.background = "#ffffff";
+    if (svg) {
+      svg.style.stroke = "#000";
+      svg.style.fill = "#000";
+    }
 
-      if (gainNode) {
-        gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.1);
-      }
+    if (gainNode) {
+      gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.1);
     }
   }, 0);
 
-  // 🔄 VIRAR CÂMERA (BOTÃO DIREITA)
+  // 🔄 VIRAR CAMERA SEM DELAY (🔥 AQUI ESTÁ O SEGREDO)
   document.getElementById("flipCamBtn").onclick = async () => {
 
     currentFacing = currentFacing === "user" ? "environment" : "user";
 
-    stream.getTracks().forEach(track => track.stop());
-
     try {
+      await videoTrack.applyConstraints({
+        facingMode: currentFacing
+      });
+    } catch (err) {
+      console.log("fallback troca completa");
+
+      stream.getTracks().forEach(t => t.stop());
+
       stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: currentFacing },
         audio: true
       });
 
-      if (video) video.srcObject = stream;
-
-    } catch (err) {
-      console.log("Erro ao trocar câmera");
+      video.srcObject = stream;
+      videoTrack = stream.getVideoTracks()[0];
     }
   };
 
-  // 🔘 BOTÕES INFERIORES (MANTIDOS)
+  // 🔘 BOTÕES
   setTimeout(() => {
     document.querySelectorAll('.call-btn').forEach(btn => {
 
@@ -1270,7 +1284,6 @@ window.startVideoCall = async function() {
       const circle = btn.querySelector('.call-btn-circle');
       const svg = btn.querySelector("svg");
 
-      // 🔊 SPEAKER
       if (action === "speaker") {
         btn.onclick = () => {
           const active = btn.classList.toggle('active');
@@ -1278,7 +1291,7 @@ window.startVideoCall = async function() {
           if (!gainNode) return;
 
           if (active) {
-            circle.style.background = "#ffffff";
+            circle.style.background = "#fff";
             svg.style.stroke = "#000";
             svg.style.fill = "#000";
             gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.1);
@@ -1291,13 +1304,12 @@ window.startVideoCall = async function() {
         };
       }
 
-      // 🔇 MUTE
       if (action === "mute") {
         btn.onclick = () => {
           const active = btn.classList.toggle('active');
 
           if (active) {
-            circle.style.background = "#ffffff";
+            circle.style.background = "#fff";
             svg.style.stroke = "#000";
             svg.style.fill = "#000";
           } else {
@@ -1308,17 +1320,28 @@ window.startVideoCall = async function() {
         };
       }
 
-      // 📞 ENCERRAR
+      // 🔥 ANIMAÇÃO AO ENCERRAR
       if (action === "end") {
         btn.onclick = () => {
 
-          if (navigator.vibrate) navigator.vibrate(200);
+          const screen = document.getElementById("callScreen");
 
-          if (video && video.srcObject) {
-            video.srcObject.getTracks().forEach(track => track.stop());
+          if (screen) {
+            screen.style.opacity = "0";
+            screen.style.transform = "scale(0.95)";
           }
 
-          openProfile();
+          setTimeout(() => {
+
+            if (navigator.vibrate) navigator.vibrate(200);
+
+            if (video && video.srcObject) {
+              video.srcObject.getTracks().forEach(track => track.stop());
+            }
+
+            openProfile();
+
+          }, 250);
         };
       }
 
