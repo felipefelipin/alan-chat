@@ -2957,6 +2957,8 @@ function openStorageScreen() {
         </div>
 
       </div>
+
+    </div>
   `;
 }
 
