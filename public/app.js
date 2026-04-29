@@ -572,7 +572,7 @@ function mountChat() {
           </button>
 
           <!-- AVATAR COM STORY -->
-          <div onclick="showStories()" style="
+          <div id="storyAvatar" onclick="showStories()" style="
             width:40px;
             height:40px;
             border-radius:50%;
@@ -2010,7 +2010,7 @@ function showStories() {
 
   app.innerHTML = `
     <div class="full" style="
-      background:transparent;
+      background: rgba(0,0,0,0.95);
       position:relative;
       overflow:hidden;
       height:${realHeight}px;
@@ -2129,27 +2129,26 @@ function showStories() {
 
   video.onended = () => {
     clearInterval(progressInterval);
-
-    // 🔥 MARCA COMO VISTO
     window.storyViewed = true;
-
     exitStories();
   };
 
-  // =====================
   // CLICK
-  // =====================
   screen.addEventListener("click", (e) => {
     if (e.target.closest("#replyBar")) return;
     if (e.target.closest("button")) return;
 
-    window.storyViewed = true; // 🔥 ADICIONADO
+    window.storyViewed = true;
     exitStories();
   });
 
   // =====================
-  // SWIPE + HOLD (UNIFICADO)
+  // SWIPE IOS
   // =====================
+
+  const avatar = document.getElementById("storyAvatar");
+  let avatarRect = avatar ? avatar.getBoundingClientRect() : null;
+
   let startY = 0;
   let currentY = 0;
   let dragging = false;
@@ -2176,15 +2175,27 @@ function showStories() {
 
     if (diff < 0) return;
 
-    const scale = 1 - diff / 900;
+    const progress = Math.min(diff / 300, 1);
+    const scale = 1 - progress * 0.6;
+    const opacity = 1 - progress;
 
-screen.style.transition = "none";
-screen.style.transform = `translateY(${diff}px) scale(${scale})`;
+    let translateX = 0;
+    let translateY = diff;
 
-// 🔥 FAZ O VÍDEO ACOMPANHAR
-if (video) {
-  video.style.transform = `translateY(${diff}px) scale(${scale})`;
-}
+    if (avatarRect) {
+      const targetX = avatarRect.left + avatarRect.width / 2 - window.innerWidth / 2;
+      const targetY = avatarRect.top + avatarRect.height / 2 - window.innerHeight / 2;
+
+      translateX = targetX * progress;
+      translateY = diff + (targetY - diff) * progress;
+    }
+
+    screen.style.transition = "none";
+    screen.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+    screen.style.opacity = opacity;
+
+    video.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+    video.style.borderRadius = `${progress * 50}%`;
   });
 
   screen.addEventListener("touchend", () => {
@@ -2201,20 +2212,34 @@ if (video) {
 
     const diff = currentY - startY;
 
-if (diff < 120) {
-  screen.style.transition = "transform .25s ease";
-  screen.style.transform = "translateY(0) scale(1)";
+    if (diff < 120) {
+      screen.style.transition = "all .25s ease";
+      screen.style.transform = "translate(0,0) scale(1)";
+      screen.style.opacity = "1";
 
-  // 🔥 RESET DO VÍDEO TAMBÉM
-  if (video) {
-    video.style.transform = "translateY(0) scale(1)";
-  }
+      video.style.transform = "translate(0,0) scale(1)";
+      video.style.borderRadius = "0px";
+      return;
+    }
 
-  return;
-}
+    window.storyViewed = true;
 
-    window.storyViewed = true; // 🔥 ADICIONADO
-    exitStories();
+    screen.style.transition = "all .25s ease";
+    screen.style.opacity = "0";
+
+    if (avatarRect) {
+      const targetX = avatarRect.left + avatarRect.width / 2 - window.innerWidth / 2;
+      const targetY = avatarRect.top + avatarRect.height / 2 - window.innerHeight / 2;
+
+      screen.style.transform = `translate(${targetX}px, ${targetY}px) scale(0.4)`;
+
+      video.style.transform = `translate(${targetX}px, ${targetY}px) scale(0.4)`;
+      video.style.borderRadius = "50%";
+    }
+
+    setTimeout(() => {
+      exitStories();
+    }, 250);
   });
 }
 
