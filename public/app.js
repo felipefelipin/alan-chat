@@ -2411,18 +2411,40 @@ function closeStoryReply() {
   }
 }
 
-function exitStories(type = "fade") {
-  const screen = document.querySelector(".full");
-  if (!screen) return;
+function exitStories() {
+  const video = document.getElementById("storyVideo");
 
-  if (type === "fade") {
-    screen.style.transition = "opacity .25s ease";
-    screen.style.opacity = "0";
+  if (video) {
+    // 🔥 PARA O VIDEO
+    video.pause();
+    video.currentTime = 0;
 
-    setTimeout(() => {
-      mountChat();
-    }, 250);
+    // 🔥 ESCONDE COMPLETAMENTE
+    video.style.display = "none";
+
+    // 🔥 RESETA ESTILOS (IMPORTANTÍSSIMO)
+    video.style.position = "";
+    video.style.top = "";
+    video.style.left = "";
+    video.style.width = "";
+    video.style.height = "";
+    video.style.objectFit = "";
+    video.style.zIndex = "";
+    video.style.transform = "";
+    video.style.willChange = "";
+
+    // 🔥 REMOVE EVENTOS (EVITA BUG)
+    video.onplay = null;
+    video.onpause = null;
+    video.onended = null;
+    video.oncanplay = null;
   }
+
+  // 🔥 LIMPA UI
+  app.innerHTML = "";
+
+  // 🔥 VOLTA PRO CHAT
+  mountChat();
 }
 
 function closeStoryCircle(screen) {
