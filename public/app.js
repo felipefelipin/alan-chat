@@ -2178,8 +2178,13 @@ function showStories() {
 
     const scale = 1 - diff / 900;
 
-    screen.style.transition = "none";
-    screen.style.transform = `translateY(${diff}px) scale(${scale})`;
+screen.style.transition = "none";
+screen.style.transform = `translateY(${diff}px) scale(${scale})`;
+
+// 🔥 FAZ O VÍDEO ACOMPANHAR
+if (video) {
+  video.style.transform = `translateY(${diff}px) scale(${scale})`;
+}
   });
 
   screen.addEventListener("touchend", () => {
@@ -2196,11 +2201,17 @@ function showStories() {
 
     const diff = currentY - startY;
 
-    if (diff < 120) {
-      screen.style.transition = "transform .25s ease";
-      screen.style.transform = "translateY(0) scale(1)";
-      return;
-    }
+if (diff < 120) {
+  screen.style.transition = "transform .25s ease";
+  screen.style.transform = "translateY(0) scale(1)";
+
+  // 🔥 RESET DO VÍDEO TAMBÉM
+  if (video) {
+    video.style.transform = "translateY(0) scale(1)";
+  }
+
+  return;
+}
 
     window.storyViewed = true; // 🔥 ADICIONADO
     exitStories();
