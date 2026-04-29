@@ -2208,6 +2208,72 @@ screen.addEventListener("click", (e) => {
   }
 });
 
+const screen = document.querySelector(".full");
+const video = document.getElementById("storyVideo");
+
+let startY = 0;
+let currentY = 0;
+let dragging = false;
+
+screen.addEventListener("touchstart", (e) => {
+  startY = e.touches[0].clientY;
+  dragging = true;
+});
+
+screen.addEventListener("touchmove", (e) => {
+  if (!dragging) return;
+
+  currentY = e.touches[0].clientY;
+  const diff = currentY - startY;
+
+  if (diff < 0) return;
+
+  const scale = 1 - diff / 900;
+
+  screen.style.transition = "none";
+  screen.style.transform = `translateY(${diff}px) scale(${scale})`;
+});
+
+screen.addEventListener("touchend", () => {
+  dragging = false;
+
+  const diff = currentY - startY;
+
+  // ❌ volta pro lugar
+  if (diff < 120) {
+    screen.style.transition = "transform .25s ease";
+    screen.style.transform = "translateY(0) scale(1)";
+    return;
+  }
+
+  // ✅ fecha
+  exitStories();
+});
+
+let holdTimer = null;
+let isHolding = false;
+
+screen.addEventListener("touchstart", () => {
+  holdTimer = setTimeout(() => {
+    isHolding = true;
+    if (video) video.pause();
+  }, 180);
+});
+
+screen.addEventListener("touchend", () => {
+  clearTimeout(holdTimer);
+
+  if (isHolding) {
+    if (video) video.play();
+  }
+
+  isHolding = false;
+});
+
+screen.addEventListener("touchmove", () => {
+  clearTimeout(holdTimer);
+});
+
   video.onpause = () => {
     clearInterval(progressInterval);
   };
