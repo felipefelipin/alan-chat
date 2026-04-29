@@ -1975,29 +1975,49 @@ function showIncomingCall() {
 function showStories() {
   console.log("📸 Stories aberto");
 
-  const realHeight = window.innerHeight;
+  const video = document.getElementById("storyVideo");
+
+  // 🔥 TRAVA ALTURA ORIGINAL UMA ÚNICA VEZ
+  if (!window.__storyHeight) {
+    window.__storyHeight = window.innerHeight;
+  }
+
+  const realHeight = window.__storyHeight;
+
+  // 🔥 NÃO troca src (ESSENCIAL PRO ZERO DELAY)
+  if (!video.src) {
+    video.src = "/assets/story-video.mp4";
+  }
+
+  video.style.display = "block";
+  video.currentTime = 0;
+
+  video.style.position = "fixed";
+  video.style.top = "0";
+  video.style.left = "0";
+  video.style.width = "100vw";
+  video.style.height = realHeight + "px";
+  video.style.objectFit = "cover";
+  video.style.zIndex = "0";
+  video.style.transform = "translateZ(0)";
+  video.style.willChange = "transform";
+
+  // 🔥 play só depois que pode tocar (evita tela preta)
+  if (video.readyState >= 2) {
+    video.play().catch(() => {});
+  } else {
+    video.oncanplay = () => {
+      video.play().catch(() => {});
+    };
+  }
 
   app.innerHTML = `
-    <div id="storyScreen" style="
-      position:fixed;
-      top:0;
-      left:0;
-      width:100vw;
-      height:${realHeight}px;
-      background:#000;
+    <div class="full" style="
+      background:transparent;
+      position:relative;
       overflow:hidden;
-      z-index:9999;
+      height:${realHeight}px;
     ">
-
-      <!-- VIDEO -->
-      <video id="storyVideo" playsinline muted style="
-        position:absolute;
-        width:100%;
-        height:100%;
-        object-fit:cover;
-      ">
-        <source src="/assets/story-video.mp4" type="video/mp4">
-      </video>
 
       <!-- PROGRESS -->
       <div style="
@@ -2019,7 +2039,7 @@ function showStories() {
       <!-- HEADER -->
       <div style="
         position:absolute;
-        top:14px;
+        top:8px;
         left:14px;
         right:14px;
         display:flex;
@@ -2055,7 +2075,7 @@ function showStories() {
           />
         </div>
 
-        <div>
+        <div style="margin-top:1px;">
           <div style="
             color:#fff;
             font-weight:600;
@@ -2069,6 +2089,7 @@ function showStories() {
             color:rgba(255,255,255,0.85);
             font-size:12px;
             margin-top:2px;
+            line-height:1;
           ">
             12h
           </div>
@@ -2095,7 +2116,6 @@ function showStories() {
           align-items:center;
         ">
           <span style="flex:1;">Responder...</span>
-
           <div style="
             width:48px;
             height:48px;
@@ -2107,6 +2127,7 @@ function showStories() {
             align-items:center;
             justify-content:center;
           ">
+
             <svg viewBox="0 0 24 24"
               fill="none"
               stroke="white"
@@ -2114,13 +2135,17 @@ function showStories() {
               stroke-linecap="round"
               stroke-linejoin="round"
               style="width:22px;height:22px;">
+              
               <path d="M20.4 4.6c-1.4-1.5-3.7-1.5-5.1 0L12 7.7l-3.3-3.1c-1.4-1.5-3.7-1.5-5.1 0-1.5 1.5-1.5 3.9 0 5.4L12 20l8.4-10c1.5-1.5 1.5-3.9 0-5.4z"/>
+            
             </svg>
+
           </div>
         </div>
+
       </div>
 
-      <!-- INPUT TURBO -->
+      <!-- PRELOAD TURBO INPUT -->
       <div id="storyReplyTurbo" style="
         position:absolute;
         opacity:0;
@@ -2142,17 +2167,11 @@ function showStories() {
     </div>
   `;
 
-  const video = document.getElementById("storyVideo");
   const progress = document.getElementById("progressBar");
 
   let progressInterval = null;
 
-  // 🔥 PLAY SEGURO (SEM GLITCH)
-  video.onloadedmetadata = () => {
-    video.play().catch(() => {});
-  };
-
-  // 🔥 PROGRESSO
+  // 🔥 progresso sincronizado
   video.onplay = () => {
     clearInterval(progressInterval);
 
@@ -2173,7 +2192,7 @@ function showStories() {
 
   video.onended = () => {
     clearInterval(progressInterval);
-    exitStories(); // saída normal (fade)
+    exitStories();
   };
 }
 
