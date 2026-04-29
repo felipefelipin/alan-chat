@@ -2010,7 +2010,7 @@ function showStories() {
 
   app.innerHTML = `
     <div class="full" style="
-      background: rgba(0,0,0,0.95);
+      background:transparent;
       position:relative;
       overflow:hidden;
       height:${realHeight}px;
@@ -2130,7 +2130,7 @@ function showStories() {
   video.onended = () => {
     clearInterval(progressInterval);
 
-    // 🔥 MARCA COMO VISTO
+    // 🔥 MARCA COMO VISTO (ESSA É A ALTERAÇÃO)
     window.storyViewed = true;
 
     exitStories();
@@ -2142,8 +2142,6 @@ function showStories() {
   screen.addEventListener("click", (e) => {
     if (e.target.closest("#replyBar")) return;
     if (e.target.closest("button")) return;
-
-    window.storyViewed = true; // 🔥 ADICIONADO
     exitStories();
   });
 
@@ -2178,13 +2176,8 @@ function showStories() {
 
     const scale = 1 - diff / 900;
 
-screen.style.transition = "none";
-screen.style.transform = `translateY(${diff}px) scale(${scale})`;
-
-// 🔥 FAZ O VÍDEO ACOMPANHAR
-if (video) {
-  video.style.transform = `translateY(${diff}px) scale(${scale})`;
-}
+    screen.style.transition = "none";
+    screen.style.transform = `translateY(${diff}px) scale(${scale})`;
   });
 
   screen.addEventListener("touchend", () => {
@@ -2201,19 +2194,12 @@ if (video) {
 
     const diff = currentY - startY;
 
-if (diff < 120) {
-  screen.style.transition = "transform .25s ease";
-  screen.style.transform = "translateY(0) scale(1)";
+    if (diff < 120) {
+      screen.style.transition = "transform .25s ease";
+      screen.style.transform = "translateY(0) scale(1)";
+      return;
+    }
 
-  // 🔥 RESET DO VÍDEO TAMBÉM
-  if (video) {
-    video.style.transform = "translateY(0) scale(1)";
-  }
-
-  return;
-}
-
-    window.storyViewed = true; // 🔥 ADICIONADO
     exitStories();
   });
 }
