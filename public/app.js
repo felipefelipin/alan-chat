@@ -587,7 +587,7 @@ function mountChat() {
               width:100%;
               height:100%;
               border-radius:50%;
-              border:2px solid #25D366;
+              border:2px solid ${window.storyViewed ? "#2c2c2e" : "#25D366"};
               display:flex;
               align-items:center;
               justify-content:center;
@@ -2130,7 +2130,7 @@ function showStories() {
   video.onended = () => {
     clearInterval(progressInterval);
 
-    // 🔥 MARCA COMO VISTO (ESSA É A ALTERAÇÃO)
+    // 🔥 MARCA COMO VISTO
     window.storyViewed = true;
 
     exitStories();
@@ -2142,6 +2142,8 @@ function showStories() {
   screen.addEventListener("click", (e) => {
     if (e.target.closest("#replyBar")) return;
     if (e.target.closest("button")) return;
+
+    window.storyViewed = true; // 🔥 ADICIONADO
     exitStories();
   });
 
@@ -2200,6 +2202,7 @@ function showStories() {
       return;
     }
 
+    window.storyViewed = true; // 🔥 ADICIONADO
     exitStories();
   });
 }
