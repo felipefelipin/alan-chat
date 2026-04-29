@@ -2129,6 +2129,10 @@ function showStories() {
 
   video.onended = () => {
     clearInterval(progressInterval);
+
+    // 🔥 MARCA COMO VISTO (ESSA É A ALTERAÇÃO)
+    window.storyViewed = true;
+
     exitStories();
   };
 
