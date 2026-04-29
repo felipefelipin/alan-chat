@@ -1990,7 +1990,7 @@ function showStories() {
     ">
 
       <!-- VIDEO -->
-      <video id="storyVideo" autoplay playsinline muted style="
+      <video id="storyVideo" playsinline muted style="
         position:absolute;
         width:100%;
         height:100%;
@@ -2045,11 +2045,14 @@ function showStories() {
           overflow:hidden;
           flex-shrink:0;
         ">
-          <img src="${ASSETS.avatar}" style="
-            width:100%;
-            height:100%;
-            object-fit:cover;
-          ">
+          <img
+            src="${ASSETS.avatar}?v=1"
+            style="
+              width:100%;
+              height:100%;
+              object-fit:cover;
+            "
+          />
         </div>
 
         <div>
@@ -2057,6 +2060,7 @@ function showStories() {
             color:#fff;
             font-weight:600;
             font-size:15px;
+            line-height:1.1;
           ">
             ${CONTACT.title}
           </div>
@@ -2116,6 +2120,25 @@ function showStories() {
         </div>
       </div>
 
+      <!-- INPUT TURBO -->
+      <div id="storyReplyTurbo" style="
+        position:absolute;
+        opacity:0;
+        pointer-events:none;
+        left:-9999px;
+        top:-9999px;
+        z-index:-1;
+      ">
+        <input
+          id="storyTurboInput"
+          type="text"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+        />
+      </div>
+
     </div>
   `;
 
@@ -2123,6 +2146,11 @@ function showStories() {
   const progress = document.getElementById("progressBar");
 
   let progressInterval = null;
+
+  // 🔥 PLAY SEGURO (SEM GLITCH)
+  video.onloadedmetadata = () => {
+    video.play().catch(() => {});
+  };
 
   // 🔥 PROGRESSO
   video.onplay = () => {
@@ -2145,7 +2173,7 @@ function showStories() {
 
   video.onended = () => {
     clearInterval(progressInterval);
-    exitStories(); // fade
+    exitStories(); // saída normal (fade)
   };
 }
 
