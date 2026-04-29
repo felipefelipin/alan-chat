@@ -1977,14 +1977,12 @@ function showStories() {
 
   const video = document.getElementById("storyVideo");
 
-  // 🔥 TRAVA ALTURA ORIGINAL UMA ÚNICA VEZ
   if (!window.__storyHeight) {
     window.__storyHeight = window.innerHeight;
   }
 
   const realHeight = window.__storyHeight;
 
-  // 🔥 NÃO troca src (ESSENCIAL PRO ZERO DELAY)
   if (!video.src) {
     video.src = "/assets/story-video.mp4";
   }
@@ -2002,7 +2000,6 @@ function showStories() {
   video.style.transform = "translateZ(0)";
   video.style.willChange = "transform";
 
-  // 🔥 play só depois que pode tocar (evita tela preta)
   if (video.readyState >= 2) {
     video.play().catch(() => {});
   } else {
@@ -2019,7 +2016,6 @@ function showStories() {
       height:${realHeight}px;
     ">
 
-      <!-- PROGRESS -->
       <div style="
         position:absolute;
         top:0;
@@ -2036,7 +2032,6 @@ function showStories() {
         "></div>
       </div>
 
-      <!-- HEADER -->
       <div style="
         position:absolute;
         top:8px;
@@ -2065,14 +2060,11 @@ function showStories() {
           overflow:hidden;
           flex-shrink:0;
         ">
-          <img
-            src="${ASSETS.avatar}?v=1"
-            style="
-              width:100%;
-              height:100%;
-              object-fit:cover;
-            "
-          />
+          <img src="${ASSETS.avatar}?v=1" style="
+            width:100%;
+            height:100%;
+            object-fit:cover;
+          "/>
         </div>
 
         <div style="margin-top:1px;">
@@ -2080,7 +2072,6 @@ function showStories() {
             color:#fff;
             font-weight:600;
             font-size:15px;
-            line-height:1.1;
           ">
             ${CONTACT.title}
           </div>
@@ -2089,7 +2080,6 @@ function showStories() {
             color:rgba(255,255,255,0.85);
             font-size:12px;
             margin-top:2px;
-            line-height:1;
           ">
             12h
           </div>
@@ -2097,7 +2087,6 @@ function showStories() {
 
       </div>
 
-      <!-- RESPOSTA -->
       <div id="replyBar" style="
         position:absolute;
         bottom:0;
@@ -2116,149 +2105,99 @@ function showStories() {
           align-items:center;
         ">
           <span style="flex:1;">Responder...</span>
-          <div style="
-            width:48px;
-            height:48px;
-            margin-left:10px;
-            border-radius:50%;
-            background:rgba(255,255,255,0.12);
-            backdrop-filter:blur(10px);
-            display:flex;
-            align-items:center;
-            justify-content:center;
-          ">
-
-            <svg viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              style="width:22px;height:22px;">
-              
-              <path d="M20.4 4.6c-1.4-1.5-3.7-1.5-5.1 0L12 7.7l-3.3-3.1c-1.4-1.5-3.7-1.5-5.1 0-1.5 1.5-1.5 3.9 0 5.4L12 20l8.4-10c1.5-1.5 1.5-3.9 0-5.4z"/>
-            
-            </svg>
-
-          </div>
         </div>
-
-      </div>
-
-      <!-- PRELOAD TURBO INPUT -->
-      <div id="storyReplyTurbo" style="
-        position:absolute;
-        opacity:0;
-        pointer-events:none;
-        left:-9999px;
-        top:-9999px;
-        z-index:-1;
-      ">
-        <input
-          id="storyTurboInput"
-          type="text"
-          autocomplete="off"
-          autocorrect="off"
-          autocapitalize="off"
-          spellcheck="false"
-        />
       </div>
 
     </div>
   `;
 
   const progress = document.getElementById("progressBar");
+  const screen = document.querySelector(".full");
 
   let progressInterval = null;
 
-  // 🔥 progresso sincronizado
   video.onplay = () => {
     clearInterval(progressInterval);
 
     progressInterval = setInterval(() => {
       if (!video.duration) return;
-
-      const percent = (video.currentTime / video.duration) * 100;
-
-      if (progress) {
-        progress.style.width = percent + "%";
-      }
+      progress.style.width = (video.currentTime / video.duration) * 100 + "%";
     }, 50);
   };
 
-  const screen = document.querySelector(".full");
-
-screen.addEventListener("click", (e) => {
-
-  // não interferir no botão ou reply
-  if (e.target.closest("#replyBar")) return;
-  if (e.target.closest("button")) return;
-
-  const x = e.clientX;
-  const width = window.innerWidth;
-
-  // 👉 lado direito (próximo / sair)
-  if (x > width * 0.5) {
-    exitStories();
-  }
-
-  // 👉 lado esquerdo (voltar / sair)
-  else {
-    exitStories();
-  }
-});
-
-const screen = document.querySelector(".full");
-const video = document.getElementById("storyVideo");
-
-let startY = 0;
-let currentY = 0;
-let dragging = false;
-
-screen.addEventListener("touchstart", (e) => {
-  startY = e.touches[0].clientY;
-  dragging = true;
-});
-
-screen.addEventListener("touchmove", (e) => {
-  if (!dragging) return;
-
-  currentY = e.touches[0].clientY;
-  const diff = currentY - startY;
-
-  if (diff < 0) return;
-
-  const scale = 1 - diff / 900;
-
-  screen.style.transition = "none";
-  screen.style.transform = `translateY(${diff}px) scale(${scale})`;
-});
-
-screen.addEventListener("touchend", () => {
-  dragging = false;
-
-  const diff = currentY - startY;
-
-  // ❌ volta pro lugar
-  if (diff < 120) {
-    screen.style.transition = "transform .25s ease";
-    screen.style.transform = "translateY(0) scale(1)";
-    return;
-  }
-
-  // ✅ fecha
-  exitStories();
-});
-
-
-  video.onpause = () => {
-    clearInterval(progressInterval);
-  };
+  video.onpause = () => clearInterval(progressInterval);
 
   video.onended = () => {
     clearInterval(progressInterval);
     exitStories();
   };
+
+  // =====================
+  // CLICK
+  // =====================
+  screen.addEventListener("click", (e) => {
+    if (e.target.closest("#replyBar")) return;
+    if (e.target.closest("button")) return;
+    exitStories();
+  });
+
+  // =====================
+  // SWIPE + HOLD (UNIFICADO)
+  // =====================
+  let startY = 0;
+  let currentY = 0;
+  let dragging = false;
+  let holdTimer = null;
+  let isHolding = false;
+
+  screen.addEventListener("touchstart", (e) => {
+    startY = e.touches[0].clientY;
+    dragging = true;
+
+    holdTimer = setTimeout(() => {
+      isHolding = true;
+      video.pause();
+    }, 180);
+  });
+
+  screen.addEventListener("touchmove", (e) => {
+    clearTimeout(holdTimer);
+
+    if (!dragging) return;
+
+    currentY = e.touches[0].clientY;
+    const diff = currentY - startY;
+
+    if (diff < 0) return;
+
+    const scale = 1 - diff / 900;
+
+    screen.style.transition = "none";
+    screen.style.transform = `translateY(${diff}px) scale(${scale})`;
+  });
+
+  screen.addEventListener("touchend", () => {
+    clearTimeout(holdTimer);
+
+    if (isHolding) {
+      video.play().catch(()=>{});
+      isHolding = false;
+      dragging = false;
+      return;
+    }
+
+    dragging = false;
+
+    const diff = currentY - startY;
+
+    if (diff < 120) {
+      screen.style.transition = "transform .25s ease";
+      screen.style.transform = "translateY(0) scale(1)";
+      return;
+    }
+
+    exitStories();
+  });
 }
 
 function openStoryReply() {
