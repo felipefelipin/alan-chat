@@ -2186,6 +2186,28 @@ function showStories() {
     }, 50);
   };
 
+  const screen = document.querySelector(".full");
+
+screen.addEventListener("click", (e) => {
+
+  // não interferir no botão ou reply
+  if (e.target.closest("#replyBar")) return;
+  if (e.target.closest("button")) return;
+
+  const x = e.clientX;
+  const width = window.innerWidth;
+
+  // 👉 lado direito (próximo / sair)
+  if (x > width * 0.5) {
+    exitStories();
+  }
+
+  // 👉 lado esquerdo (voltar / sair)
+  else {
+    exitStories();
+  }
+});
+
   video.onpause = () => {
     clearInterval(progressInterval);
   };
@@ -2412,39 +2434,41 @@ function closeStoryReply() {
 }
 
 function exitStories() {
+  const screen = document.querySelector(".full");
   const video = document.getElementById("storyVideo");
 
-  if (video) {
-    // 🔥 PARA O VIDEO
-    video.pause();
-    video.currentTime = 0;
-
-    // 🔥 ESCONDE COMPLETAMENTE
-    video.style.display = "none";
-
-    // 🔥 RESETA ESTILOS (IMPORTANTÍSSIMO)
-    video.style.position = "";
-    video.style.top = "";
-    video.style.left = "";
-    video.style.width = "";
-    video.style.height = "";
-    video.style.objectFit = "";
-    video.style.zIndex = "";
-    video.style.transform = "";
-    video.style.willChange = "";
-
-    // 🔥 REMOVE EVENTOS (EVITA BUG)
-    video.onplay = null;
-    video.onpause = null;
-    video.onended = null;
-    video.oncanplay = null;
+  if (screen) {
+    screen.style.transition = "opacity .25s ease, transform .25s ease";
+    screen.style.opacity = "0";
+    screen.style.transform = "scale(0.96)";
   }
 
-  // 🔥 LIMPA UI
-  app.innerHTML = "";
+  setTimeout(() => {
+    if (video) {
+      video.pause();
+      video.currentTime = 0;
+      video.style.display = "none";
 
-  // 🔥 VOLTA PRO CHAT
-  mountChat();
+      video.style.position = "";
+      video.style.top = "";
+      video.style.left = "";
+      video.style.width = "";
+      video.style.height = "";
+      video.style.objectFit = "";
+      video.style.zIndex = "";
+      video.style.transform = "";
+      video.style.willChange = "";
+
+      video.onplay = null;
+      video.onpause = null;
+      video.onended = null;
+      video.oncanplay = null;
+    }
+
+    app.innerHTML = "";
+    mountChat();
+
+  }, 250);
 }
 
 function closeStoryCircle(screen) {
