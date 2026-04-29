@@ -2250,29 +2250,6 @@ screen.addEventListener("touchend", () => {
   exitStories();
 });
 
-let holdTimer = null;
-let isHolding = false;
-
-screen.addEventListener("touchstart", () => {
-  holdTimer = setTimeout(() => {
-    isHolding = true;
-    if (video) video.pause();
-  }, 180);
-});
-
-screen.addEventListener("touchend", () => {
-  clearTimeout(holdTimer);
-
-  if (isHolding) {
-    if (video) video.play();
-  }
-
-  isHolding = false;
-});
-
-screen.addEventListener("touchmove", () => {
-  clearTimeout(holdTimer);
-});
 
   video.onpause = () => {
     clearInterval(progressInterval);
