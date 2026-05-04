@@ -543,19 +543,21 @@ function endCallBtn() {
   `;
 }
 
-// ==================== FIX #3: startCall RE-ADICIONADO ====================
+// =============================================================================
+// SUBSTITUA window.startVideoCall NO SEU app.js POR ESTA FUNÇÃO INTEIRA
+// =============================================================================
+
 window.startVideoCall = async function () {
- 
+
   let stream;
   let currentFacing = "user";
   let isSwitching   = false;
-  let isMutedVC     = true;   // começa mutado (igual à foto)
+  let isMutedVC     = false;  // começa NORMAL (não mutado)
   let isSpeakerVC   = true;   // speaker ativo por padrão
-  let isVideoOff    = true;   // câmera apagada por padrão (igual à foto)
- 
+
   const ringtoneVC = new Audio("/assets/ringtone.mp3");
   ringtoneVC.loop = true;
- 
+
   try {
     stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: currentFacing },
@@ -566,108 +568,119 @@ window.startVideoCall = async function () {
     console.warn("Permissão de câmera negada");
     return;
   }
- 
-  // ── ícones idênticos à foto ────────────────────────────────────────────────
- 
-  // ··· Mais — 3 pontos pequenos
-  const icoMore = `
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="rgba(255,255,255,0.85)">
-      <circle cx="5"  cy="12" r="2.2"/>
-      <circle cx="12" cy="12" r="2.2"/>
-      <circle cx="19" cy="12" r="2.2"/>
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ÍCONES — desenhados pixel a pixel iguais à foto
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ··· Mais
+  const ICO_MORE = `
+    <svg width="24" height="8" viewBox="0 0 24 8" fill="rgba(255,255,255,0.9)">
+      <circle cx="2"  cy="4" r="2.2"/>
+      <circle cx="12" cy="4" r="2.2"/>
+      <circle cx="22" cy="4" r="2.2"/>
     </svg>`;
- 
-  // 🔊 Speaker ATIVO — cone preenchido + 3 ondas (preto, para fundo branco)
-  const icoSpeakerOn = `
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-      <path d="M11 5L6 9H2v6h4l5 4V5z" fill="#111"/>
-      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"
+
+  // 🔊 Speaker ATIVO — cone preenchido + 3 ondas, PRETO (fundo branco)
+  const ICO_SPEAKER_ON = `
+    <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+      <!-- cone do alto-falante -->
+      <path d="M6 11.5H9.5L15 7V23L9.5 18.5H6V11.5Z" fill="#111"/>
+      <!-- onda pequena -->
+      <path d="M18 12.5C18.8 13.3 18.8 16.7 18 17.5"
             stroke="#111" stroke-width="2" stroke-linecap="round" fill="none"/>
-      <path d="M19.07 4.93a10 10 0 0 1 0 14.14"
+      <!-- onda média -->
+      <path d="M20.5 10C22.5 12 22.5 18 20.5 20"
+            stroke="#111" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <!-- onda grande -->
+      <path d="M23 7.5C26 10.5 26 19.5 23 22.5"
             stroke="#111" stroke-width="2" stroke-linecap="round" fill="none"/>
     </svg>`;
- 
-  // 🔇 Speaker INATIVO — cone + X (branco, para fundo escuro)
-  const icoSpeakerOff = `
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-      <path d="M11 5L6 9H2v6h4l5 4V5z" fill="rgba(255,255,255,0.9)"/>
-      <line x1="23" y1="9" x2="17" y2="15" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round"/>
-      <line x1="17" y1="9" x2="23" y2="15" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round"/>
+
+  // 🔇 Speaker INATIVO (fundo escuro)
+  const ICO_SPEAKER_OFF = `
+    <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+      <path d="M6 11.5H9.5L15 7V23L9.5 18.5H6V11.5Z" fill="rgba(255,255,255,0.85)"/>
+      <line x1="19" y1="11" x2="25" y2="19" stroke="rgba(255,255,255,0.85)" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="25" y1="11" x2="19" y2="19" stroke="rgba(255,255,255,0.85)" stroke-width="2.2" stroke-linecap="round"/>
     </svg>`;
- 
-  // 📷 Câmera LIGADA — preenchida, branca (fundo escuro)
-  const icoCamOn = `
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-      <rect x="2" y="7" width="14" height="11" rx="2.5" fill="rgba(255,255,255,0.85)"/>
-      <path d="M22 8l-6 4 6 4V8z" fill="rgba(255,255,255,0.85)"/>
+
+  // 📷 Câmera — cinza claro sobre cinza médio, IDÊNTICA À FOTO, não clicável
+  const ICO_CAM = `
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+      <!-- corpo retangular arredondado -->
+      <rect x="2" y="9" width="20" height="14" rx="3.5" fill="rgba(210,205,205,0.80)"/>
+      <!-- triângulo lateral (lente) -->
+      <path d="M22 13.5L29 10V22L22 18.5V13.5Z" fill="rgba(210,205,205,0.80)"/>
     </svg>`;
- 
-  // 📷 Câmera DESLIGADA — igual à foto (cinza médio, fundo cinza escuro)
-  const icoCamOff = `
+
+  // 🎤 Mic NORMAL — preenchido branco, fundo escuro
+  const ICO_MIC_ON = `
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-      <rect x="2" y="7" width="14" height="11" rx="2.5" fill="rgba(200,190,190,0.75)"/>
-      <path d="M22 8l-6 4 6 4V8z" fill="rgba(200,190,190,0.75)"/>
+      <rect x="9" y="2" width="6" height="12" rx="3"
+            fill="rgba(255,255,255,0.9)"/>
+      <path d="M5 10a7 7 0 0 0 14 0"
+            stroke="rgba(255,255,255,0.9)" stroke-width="2"
+            stroke-linecap="round" fill="none"/>
+      <line x1="12" y1="17" x2="12" y2="21"
+            stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round"/>
+      <line x1="9"  y1="21" x2="15" y2="21"
+            stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round"/>
     </svg>`;
- 
-  // 🎤 Mic NORMAL — preenchido, branco (fundo escuro)
-  const icoMicOn = `
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-      <rect x="9" y="2" width="6" height="12" rx="3" fill="rgba(255,255,255,0.9)"/>
-      <path d="M5 10a7 7 0 0 0 14 0" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" fill="none"/>
-      <line x1="12" y1="17" x2="12" y2="21" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round"/>
-      <line x1="9"  y1="21" x2="15" y2="21" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round"/>
-    </svg>`;
- 
-  // 🎤 Mic MUTADO — microfone riscado em VERMELHO, fundo BRANCO (idêntico à foto)
-  const icoMicMuted = `
+
+  // 🎤 Mic MUTADO — VERMELHO + riscado diagonal, fundo BRANCO (idêntico à foto)
+  const ICO_MIC_MUTED = `
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
       <!-- corpo do microfone -->
-      <rect x="9" y="2" width="6" height="12" rx="3" fill="#d32f2f"/>
-      <!-- linha diagonal riscando -->
-      <line x1="3" y1="3" x2="21" y2="21"
-            stroke="#d32f2f" stroke-width="2.2" stroke-linecap="round"/>
-      <!-- arco inferior e haste -->
+      <rect x="9" y="2" width="6" height="12" rx="3" fill="#c62828"/>
+      <!-- arco -->
       <path d="M5 10a7 7 0 0 0 14 0"
-            stroke="#d32f2f" stroke-width="2" stroke-linecap="round" fill="none"/>
+            stroke="#c62828" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <!-- haste + base -->
       <line x1="12" y1="17" x2="12" y2="21"
-            stroke="#d32f2f" stroke-width="2" stroke-linecap="round"/>
+            stroke="#c62828" stroke-width="2" stroke-linecap="round"/>
       <line x1="9"  y1="21" x2="15" y2="21"
-            stroke="#d32f2f" stroke-width="2" stroke-linecap="round"/>
+            stroke="#c62828" stroke-width="2" stroke-linecap="round"/>
+      <!-- linha diagonal riscando -->
+      <line x1="4" y1="4" x2="20" y2="20"
+            stroke="#c62828" stroke-width="2.2" stroke-linecap="round"/>
     </svg>`;
- 
-  // 📞 Encerrar — telefone inclinado, branco, idêntico à foto
-  const icoEnd = `
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-      <path d="M6.6 10.8c1.4-1.4 3-2.1 4.9-2.1s3.5.7 4.9 2.1l1.4-1.4C16 7.6 14.1 6.7 12 6.7S8 7.6 6.2 9.4l-1.4 1.4 1.8 1zM12 4C8.7 4 5.8 5.3 3.7 7.4L2 9l1.8 1.8 1.4-1.4C7 7.6 9.4 6.5 12 6.5s5 1.1 6.8 2.9l1.4 1.4L22 9l-1.7-1.6C18.2 5.3 15.3 4 12 4z"
-            fill="none"/>
-      <!-- ícone telefone simples inclinado -->
-      <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.12-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"
+
+  // 📞 Encerrar — telefone inclinado branco, IDÊNTICO À FOTO
+  // (receiver curvado, inclinado ~45°, linha fina em cima)
+  const ICO_END = `
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+      <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2
+               c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20
+               c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5
+               c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"
             fill="white"/>
     </svg>`;
- 
-  // ── helper: cria botão ─────────────────────────────────────────────────────
-  const vcBtn = (id, bg, icon, size = "62px") => `
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HELPER — cria botão
+  // ═══════════════════════════════════════════════════════════════════════════
+  const mkBtn = (id, bg, icon, clickable = true) => `
     <div id="${id}" style="
       display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
+      ${clickable ? "cursor:pointer;" : "pointer-events:none;"}
       user-select: none;
       -webkit-tap-highlight-color: transparent;
       flex-shrink: 0;
     ">
-      <div class="vc-circle" id="${id}-circle" style="
-        width: ${size};
-        height: ${size};
+      <div id="${id}-bg" style="
+        width: 64px;
+        height: 64px;
         border-radius: 50%;
         background: ${bg};
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: background 0.18s ease, transform 0.1s ease;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+        transition: background 0.18s ease, transform 0.12s ease;
       ">
-        <div class="vc-icon" id="${id}-icon" style="
+        <div id="${id}-icon" style="
           display: flex;
           align-items: center;
           justify-content: center;
@@ -677,110 +690,101 @@ window.startVideoCall = async function () {
         </div>
       </div>
     </div>`;
- 
-  // ── HTML da tela ───────────────────────────────────────────────────────────
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HTML DA TELA
+  // ═══════════════════════════════════════════════════════════════════════════
   app.innerHTML = `
     <div id="vcScreen" style="
       position: relative;
       height: 100dvh;
-      background: #2a1a1a;
+      background: #3d2020;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, sans-serif;
       opacity: 0;
       transform: scale(1.03);
       transition: opacity .22s ease, transform .22s ease;
     ">
- 
-      <!-- vídeo -->
+
+      <!-- vídeo (sempre ligado, câmera começa ativa) -->
       <video id="vcVideo" autoplay playsinline muted style="
         position: absolute;
         inset: 0;
         width: 100%;
         height: 100%;
         object-fit: cover;
-        opacity: ${isVideoOff ? 0 : 1};
-        transition: opacity 0.3s ease;
       "></video>
- 
+
       <!-- gradiente topo -->
       <div style="
         position:absolute;top:0;left:0;right:0;height:200px;
         background:linear-gradient(to bottom,rgba(0,0,0,.6),transparent);
         pointer-events:none;z-index:2;
       "></div>
- 
+
       <!-- nome + status -->
       <div style="position:absolute;top:54px;width:100%;text-align:center;z-index:3;">
         <div style="font-size:22px;font-weight:700;color:#fff;letter-spacing:-.3px;">
           ${CONTACT.title}
         </div>
-        <div id="vcStatus" style="margin-top:5px;font-size:15px;color:rgba(255,255,255,.7);">
+        <div style="margin-top:5px;font-size:15px;color:rgba(255,255,255,.7);">
           Chamando...
         </div>
       </div>
- 
+
       <!-- botão girar câmera -->
       <div id="vcFlip" style="
         position:absolute;right:18px;top:130px;
         width:48px;height:48px;border-radius:50%;
-        background:rgba(60,45,45,.6);
+        background:rgba(70,50,50,.55);
         backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
         display:flex;align-items:center;justify-content:center;
         z-index:10;cursor:pointer;
       ">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-            stroke="rgba(255,255,255,.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+            stroke="rgba(255,255,255,.9)" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 4v6h-6"/>
+          <path d="M1 20v-6h6"/>
           <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/>
           <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"/>
         </svg>
       </div>
- 
+
       <!-- gradiente baixo -->
       <div style="
         position:absolute;bottom:0;left:0;right:0;height:240px;
-        background:linear-gradient(to top,rgba(0,0,0,.75),transparent);
+        background:linear-gradient(to top,rgba(0,0,0,.7),transparent);
         pointer-events:none;z-index:2;
       "></div>
- 
-      <!-- ── BARRA DE CONTROLES — idêntica à foto ── -->
+
+      <!-- ═══ BARRA DE CONTROLES ═══ -->
       <div style="
         position: absolute;
-        bottom: 40px;
+        bottom: 44px;
         left: 0; right: 0;
         display: flex;
         justify-content: center;
         z-index: 10;
       ">
         <div style="
-          background: rgba(55,40,40,0.48);
-          backdrop-filter: blur(22px);
-          -webkit-backdrop-filter: blur(22px);
-          border-radius: 50px;
-          padding: 12px 18px;
+          background: rgba(60,40,40,0.45);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          border-radius: 52px;
+          padding: 12px 16px;
           display: flex;
-          gap: 14px;
+          gap: 12px;
           align-items: center;
         ">
- 
-          <!-- Mais -->
-          ${vcBtn("vcMore",    "rgba(100,80,80,0.75)", icoMore)}
- 
-          <!-- Speaker — branco (ativo) -->
-          ${vcBtn("vcSpeaker", "#ffffff",              icoSpeakerOn)}
- 
-          <!-- Câmera — escuro (desligada) -->
-          ${vcBtn("vcCam",     "rgba(110,95,95,0.72)", icoCamOff)}
- 
-          <!-- Mic — branco + ícone vermelho (mutado) igual à foto -->
-          ${vcBtn("vcMic",     "#ffffff",              icoMicMuted)}
- 
-          <!-- Encerrar -->
-          ${vcBtn("vcEnd",     "#d9252a",              icoEnd)}
- 
+          ${mkBtn("vcMore",    "rgba(110,85,85,0.80)", ICO_MORE,       true)}
+          ${mkBtn("vcSpeaker", "#ffffff",               ICO_SPEAKER_ON, true)}
+          ${mkBtn("vcCam",     "rgba(115,105,105,0.75)", ICO_CAM,       false)}
+          ${mkBtn("vcMic",     "rgba(110,85,85,0.80)", ICO_MIC_ON,     true)}
+          ${mkBtn("vcEnd",     "#e5252a",               ICO_END,        true)}
         </div>
       </div>
- 
+
       <!-- overlay encerrado -->
       <div id="vcEndOverlay" style="
         position:fixed;inset:0;background:#000;color:#fff;
@@ -790,19 +794,15 @@ window.startVideoCall = async function () {
         <div style="font-size:22px;font-weight:600;">${CONTACT.title}</div>
         <div style="font-size:15px;opacity:.6;">Chamada encerrada</div>
       </div>
- 
+
     </div>
   `;
- 
+
   // ── conecta vídeo ──────────────────────────────────────────────────────────
   const vcVideo  = document.getElementById("vcVideo");
   const vcScreen = document.getElementById("vcScreen");
- 
+
   vcVideo.srcObject = stream;
- 
-  // desativa tracks de vídeo se câmera inicia desligada
-  if (isVideoOff) stream.getVideoTracks().forEach(t => { t.enabled = false; });
- 
   vcVideo.onloadedmetadata = () => {
     vcVideo.play();
     requestAnimationFrame(() => {
@@ -810,64 +810,55 @@ window.startVideoCall = async function () {
       vcScreen.style.transform = "scale(1)";
     });
   };
- 
-  // ── helpers de toggle ─────────────────────────────────────────────────────
-  function setBg(id, color)   { const el = document.getElementById(id + "-circle"); if (el) el.style.background = color; }
-  function setIcon(id, html)  { const el = document.getElementById(id + "-icon");   if (el) el.innerHTML = html; }
-  function pulse(id) {
-    const el = document.getElementById(id + "-circle");
-    if (!el) return;
-    el.style.transform = "scale(0.88)";
-    setTimeout(() => { el.style.transform = "scale(1)"; }, 120);
+
+  // ── helpers ────────────────────────────────────────────────────────────────
+  function setBg(id, color) {
+    const el = document.getElementById(id + "-bg");
+    if (el) el.style.background = color;
   }
- 
+  function setIcon(id, html) {
+    const el = document.getElementById(id + "-icon");
+    if (el) el.innerHTML = html;
+  }
+  function pulse(id) {
+    const el = document.getElementById(id + "-bg");
+    if (!el) return;
+    el.style.transform = "scale(0.87)";
+    setTimeout(() => { el.style.transform = "scale(1)"; }, 130);
+  }
+
   // ── SPEAKER ───────────────────────────────────────────────────────────────
   document.getElementById("vcSpeaker").onclick = () => {
     pulse("vcSpeaker");
     isSpeakerVC = !isSpeakerVC;
     if (isSpeakerVC) {
-      setBg("vcSpeaker",  "#ffffff");
-      setIcon("vcSpeaker", icoSpeakerOn);
+      setBg("vcSpeaker", "#ffffff");
+      setIcon("vcSpeaker", ICO_SPEAKER_ON);
     } else {
-      setBg("vcSpeaker",  "rgba(100,80,80,0.75)");
-      setIcon("vcSpeaker", icoSpeakerOff);
+      setBg("vcSpeaker", "rgba(110,85,85,0.80)");
+      setIcon("vcSpeaker", ICO_SPEAKER_OFF);
     }
   };
- 
-  // ── CÂMERA ────────────────────────────────────────────────────────────────
-  document.getElementById("vcCam").onclick = () => {
-    pulse("vcCam");
-    isVideoOff = !isVideoOff;
-    stream.getVideoTracks().forEach(t => { t.enabled = !isVideoOff; });
-    vcVideo.style.opacity = isVideoOff ? "0" : "1";
-    if (isVideoOff) {
-      setBg("vcCam",  "rgba(110,95,95,0.72)");
-      setIcon("vcCam", icoCamOff);
-    } else {
-      setBg("vcCam",  "#ffffff");
-      setIcon("vcCam", icoCamOn);
-    }
-  };
- 
-  // ── MIC ───────────────────────────────────────────────────────────────────
+
+  // ── MIC ── começa NORMAL, só muta ao clicar ───────────────────────────────
   document.getElementById("vcMic").onclick = () => {
     pulse("vcMic");
     isMutedVC = !isMutedVC;
     if (isMutedVC) {
-      // MUTADO: fundo branco + ícone vermelho riscado
-      setBg("vcMic",  "#ffffff");
-      setIcon("vcMic", icoMicMuted);
+      // MUTADO: fundo branco + ícone vermelho riscado (igual à foto)
+      setBg("vcMic", "#ffffff");
+      setIcon("vcMic", ICO_MIC_MUTED);
     } else {
       // NORMAL: fundo escuro + ícone branco
-      setBg("vcMic",  "rgba(100,80,80,0.75)");
-      setIcon("vcMic", icoMicOn);
+      setBg("vcMic", "rgba(110,85,85,0.80)");
+      setIcon("vcMic", ICO_MIC_ON);
     }
   };
- 
-  // ── MAIS (···) ────────────────────────────────────────────────────────────
+
+  // ── MAIS ─────────────────────────────────────────────────────────────────
   document.getElementById("vcMore").onclick = () => { pulse("vcMore"); };
- 
-  // ── GIRAR CÂMERA ──────────────────────────────────────────────────────────
+
+  // ── GIRAR CÂMERA ─────────────────────────────────────────────────────────
   document.getElementById("vcFlip").onclick = async () => {
     if (isSwitching) return;
     isSwitching = true;
@@ -884,8 +875,8 @@ window.startVideoCall = async function () {
     } catch {}
     isSwitching = false;
   };
- 
-  // ── ENCERRAR ──────────────────────────────────────────────────────────────
+
+  // ── ENCERRAR ─────────────────────────────────────────────────────────────
   document.getElementById("vcEnd").onclick = () => {
     ringtoneVC.pause();
     ringtoneVC.currentTime = 0;
@@ -898,7 +889,7 @@ window.startVideoCall = async function () {
       openProfile();
     }, 380);
   };
- 
+
   // encerra automaticamente após 40s
   setTimeout(() => {
     ringtoneVC.pause();
