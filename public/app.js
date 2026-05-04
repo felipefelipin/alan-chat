@@ -1656,6 +1656,11 @@ function showStories() {
 // =============================================================================
 
 
+// =============================================================================
+// SUBSTITUA ESTAS 3 FUNÇÕES NO SEU app.js
+// =============================================================================
+
+
 // ─── openStoryReply ───────────────────────────────────────────────────────────
 function openStoryReply() {
   if (document.getElementById("storyReplyOverlay")) return;
@@ -1666,20 +1671,52 @@ function openStoryReply() {
   if (oldBar) oldBar.style.display = "none";
   document.body.style.overflow = "hidden";
 
-  // ── Ghost input: abre teclado ANTES de qualquer DOM insert ──────────────
+  // injeta CSS global uma única vez
+  if (!document.getElementById("storyReplyCSS")) {
+    const style = document.createElement("style");
+    style.id = "storyReplyCSS";
+    style.textContent = `
+      /* iOS 15+ keyboard-inset-height — zero delay, nativo */
+      @supports (height: env(keyboard-inset-height)) {
+        #replyBarKeyboard {
+          bottom: env(keyboard-inset-height) !important;
+          transition: none !important;
+        }
+        #storyEmojiBlock {
+          bottom: calc(env(keyboard-inset-height) + 72px) !important;
+          transition: none !important;
+        }
+      }
+
+      /* Fallback: usa interactive-widget para empurrar o layout */
+      @media (max-height: 700px) {
+        #storyEmojiBlock { top: auto !important; }
+      }
+
+      #storyReplyOverlay * {
+        box-sizing: border-box;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // ghost input na base da tela — abre teclado SEM delay
   const ghost = document.createElement("input");
   ghost.type = "text";
   ghost.setAttribute("autocomplete", "off");
   ghost.style.cssText = [
     "position:fixed",
     "left:0",
-    "bottom:0",          // fica na base para o teclado abrir subindo de lá
-    "opacity:0",
+    "bottom:0",
     "width:100%",
-    "height:1px",
-    "font-size:16px",    // font-size >= 16px evita zoom no iOS
+    "height:44px",     // altura suficiente para o iOS reconhecer
+    "opacity:0",
+    "font-size:16px",  // >= 16px evita zoom automático no iOS
     "pointer-events:none",
     "z-index:-1",
+    "border:none",
+    "outline:none",
+    "background:transparent",
   ].join(";");
   document.body.appendChild(ghost);
   ghost.focus();
@@ -1687,27 +1724,34 @@ function openStoryReply() {
   document.body.insertAdjacentHTML("beforeend", `
     <div id="storyReplyOverlay" style="
       position:fixed;inset:0;z-index:9999;
-      pointer-events:none;
     ">
 
-      <!-- emojis: position fixed no centro vertical da tela,
-           independente do teclado -->
+      <!-- dismiss: cobre tudo, fica atrás dos elementos interativos -->
+      <div id="storyReplyDismiss" style="
+        position:absolute;inset:0;
+        z-index:1;
+      "></div>
+
+      <!-- emojis: position fixed, bottom dinâmico via CSS/JS
+           na foto: ficam logo acima do input, ~110px do topo do teclado -->
       <div id="storyEmojiBlock" style="
         position:fixed;
         left:0;right:0;
-        top:38%;
+        bottom:72px;
+        z-index:10001;
         display:flex;flex-direction:column;
         align-items:center;justify-content:center;
-        gap:12px;
+        gap:14px;
+        padding:0 20px;
         pointer-events:auto;
       ">
-        <div style="display:flex;gap:22px;align-items:center;justify-content:center;">
+        <div style="display:flex;gap:26px;align-items:center;justify-content:center;width:100%;">
           <span onclick="sendStoryReaction(this)" style="font-size:40px;cursor:pointer;line-height:1;user-select:none;-webkit-tap-highlight-color:transparent;">😍</span>
           <span onclick="sendStoryReaction(this)" style="font-size:40px;cursor:pointer;line-height:1;user-select:none;-webkit-tap-highlight-color:transparent;">😂</span>
           <span onclick="sendStoryReaction(this)" style="font-size:40px;cursor:pointer;line-height:1;user-select:none;-webkit-tap-highlight-color:transparent;">😮</span>
           <span onclick="sendStoryReaction(this)" style="font-size:40px;cursor:pointer;line-height:1;user-select:none;-webkit-tap-highlight-color:transparent;">😢</span>
         </div>
-        <div style="display:flex;gap:22px;align-items:center;justify-content:center;">
+        <div style="display:flex;gap:26px;align-items:center;justify-content:center;width:100%;">
           <span onclick="sendStoryReaction(this)" style="font-size:40px;cursor:pointer;line-height:1;user-select:none;-webkit-tap-highlight-color:transparent;">🙏</span>
           <span onclick="sendStoryReaction(this)" style="font-size:40px;cursor:pointer;line-height:1;user-select:none;-webkit-tap-highlight-color:transparent;">👏</span>
           <span onclick="sendStoryReaction(this)" style="font-size:40px;cursor:pointer;line-height:1;user-select:none;-webkit-tap-highlight-color:transparent;">🎉</span>
@@ -1715,17 +1759,17 @@ function openStoryReply() {
         </div>
       </div>
 
-      <!-- input bar: position fixed, bottom = altura do teclado
-           → fica COLADO no topo do teclado sem nenhum delay -->
+      <!-- input bar: position fixed, bottom=0 por padrão,
+           o CSS acima via env(keyboard-inset-height) o move sem delay -->
       <div id="replyBarKeyboard" style="
         position:fixed;
         left:0;right:0;
         bottom:0;
+        z-index:10002;
         display:flex;align-items:center;gap:10px;
         padding:8px 12px 10px;
         background:#000;
         pointer-events:auto;
-        z-index:10000;
       ">
         <div style="
           flex:1;
@@ -1760,59 +1804,54 @@ function openStoryReply() {
         </div>
       </div>
 
-      <!-- overlay dismiss: cobre tudo exceto input e emojis -->
-      <div id="storyReplyDismiss" style="
-        position:fixed;inset:0;
-        z-index:9998;
-        pointer-events:auto;
-      "></div>
-
     </div>
   `);
 
   const overlay  = document.getElementById("storyReplyOverlay");
   const input    = document.getElementById("storyReplyInput");
   const bar      = document.getElementById("replyBarKeyboard");
+  const emojis   = document.getElementById("storyEmojiBlock");
   const dismiss  = document.getElementById("storyReplyDismiss");
   const sendBtn  = document.getElementById("storyReplySend");
 
-  // eleva emojis e input acima do dismiss
-  document.getElementById("storyEmojiBlock").style.zIndex = "10001";
-  bar.style.zIndex = "10002";
-
-  // ── transfere foco do ghost para o input real ────────────────────────────
+  // transfere foco
   ghost.addEventListener("blur", () => ghost.remove());
   input.focus();
   if (window.Telegram?.WebApp) Telegram.WebApp.expand();
 
-  // ── visualViewport: move a barra SEM delay usando bottom dinâmico ────────
-  // Em vez de translateY (que pode ter lag), usamos `bottom` que o browser
-  // já sabe calcular junto com o layout do teclado
+  // ── fallback JS para browsers sem suporte a keyboard-inset-height ────────
+  // (Android, versões antigas do iOS, Telegram WebView)
+  // Usa visualViewport como fallback — mesmo com pequeno delay é melhor que nada
   const applyVP = () => {
     if (!window.visualViewport) return;
+
+    // verifica se o CSS nativo está funcionando
+    // se keyboard-inset-height for suportado, o CSS cuida — não precisa de JS
+    const supported = CSS.supports("height", "env(keyboard-inset-height)");
+    if (supported) return;
+
     const kbHeight = Math.max(
       window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop,
       0
     );
-    // seta bottom como a altura do teclado — o elemento fica no topo dele
-    bar.style.bottom = kbHeight + "px";
+    bar.style.bottom    = kbHeight + "px";
+    emojis.style.bottom = (kbHeight + 72) + "px";
   };
 
   if (window.visualViewport) {
-    // passive:true para não bloquear scroll, garante execução no mesmo frame
     window.visualViewport.addEventListener("resize", applyVP, { passive: true });
     window.visualViewport.addEventListener("scroll", applyVP, { passive: true });
     applyVP();
   }
   overlay._vpHandler = applyVP;
 
-  // ── Enter envia ──────────────────────────────────────────────────────────
+  // Enter envia
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") { e.preventDefault(); sendStoryTextReply(); }
   });
   sendBtn.onclick = sendStoryTextReply;
 
-  // ── dismiss fecha (mas não intercepta emojis nem input) ─────────────────
+  // dismiss
   dismiss.addEventListener("click", closeStoryReply);
 }
 
@@ -1853,8 +1892,8 @@ function closeStoryReply() {
     window.visualViewport.removeEventListener("scroll", overlay._vpHandler);
   }
 
-  // remove qualquer ghost restante
-  document.querySelectorAll("input[style*='left:0'][style*='bottom:0'][style*='opacity:0']")
+  // remove ghosts
+  document.querySelectorAll("input[style*='pointer-events:none'][style*='opacity:0']")
     .forEach(e => e.remove());
 
   overlay.remove();
