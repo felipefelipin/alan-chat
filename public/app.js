@@ -1355,91 +1355,180 @@ function markStoryAsViewed() {
 function exitStories(fromSwipe = false, swipeScreen = null) {
   if (_storyExiting) return;
   _storyExiting = true;
-
+ 
   const video  = document.getElementById("storyVideo");
   const screen = swipeScreen || document.querySelector(".full");
-
+ 
   if (!screen) { _storyExiting = false; return; }
-
-  if (window.storyViewed) markStoryAsViewed();
-
+ 
+  // marca como visto apenas na primeira vez
+  if (!window.storyEverViewed) {
+    window.storyEverViewed = true;
+    markStoryAsViewed();
+  }
+ 
   const origin = getAvatarOrigin();
-
   screen.style.transformOrigin = `${origin.x} ${origin.y}`;
-  screen.style.transition      = `transform ${STORY_DURATION}ms ${STORY_EASING}, opacity ${STORY_DURATION}ms ${STORY_EASING}`;
-  screen.style.transform       = fromSwipe ? "scale(0) translateY(0)" : "scale(0.04)";
-  screen.style.opacity         = "0";
-
+  screen.style.transition = `transform ${STORY_DURATION}ms ${STORY_EASING}, opacity ${STORY_DURATION}ms ${STORY_EASING}`;
+  screen.style.transform  = fromSwipe ? "scale(0) translateY(0)" : "scale(0.04)";
+  screen.style.opacity    = "0";
+ 
   setTimeout(() => {
-    video.pause(); video.src = ""; video.style.display = "none";
-    video.oncanplay = null; video.onplay = null; video.onpause = null; video.onended = null;
+    // ✅ NUNCA limpa video.src — só pausa e esconde
+    video.pause();
+    video.style.display = "none";
+    video.oncanplay = null;
+    video.onplay    = null;
+    video.onpause   = null;
+    video.onended   = null;
+ 
     _storyExiting = false;
-    mountChat(); // ← FIX #4: era showHome()
+    mountChat();
   }, STORY_DURATION + 30);
 }
 
 function showStories() {
   console.log("📸 Stories aberto");
-  _storyExiting = false; window.storyViewed = false;
-
+ 
+  // reseta estado da sessão (NÃO reseta storyEverViewed)
+  _storyExiting      = false;
+  window.storyViewed = false;
+ 
   const video = document.getElementById("storyVideo");
+ 
   if (!window.__storyHeight) window.__storyHeight = window.innerHeight;
   const realHeight = window.__storyHeight;
-
-  if (!video.src) video.src = "/assets/story-video.mp4";
-
-  Object.assign(video.style, {
-    display:"block", position:"fixed", top:"0", left:"0",
-    width:"100vw", height:realHeight+"px", objectFit:"cover",
-    zIndex:"0", transform:"translateZ(0)", willChange:"transform",
-  });
+ 
+  // ✅ FIX: garante src correto e recarrega sempre
+  const STORY_SRC = "/assets/story-video.mp4";
+  video.src         = STORY_SRC;   // força reassign — reseta o estado interno
   video.currentTime = 0;
-
-  if (video.readyState >= 2) video.play().catch(() => {});
-  else video.oncanplay = () => { video.play().catch(() => {}); };
-
+ 
+  Object.assign(video.style, {
+    display:    "block",
+    position:   "fixed",
+    top:        "0",
+    left:       "0",
+    width:      "100vw",
+    height:     realHeight + "px",
+    objectFit:  "cover",
+    zIndex:     "0",
+    transform:  "translateZ(0)",
+    willChange: "transform",
+  });
+ 
+  // ✅ Define handler ANTES de load() para não perder o evento
+  video.oncanplay = () => { video.play().catch(() => {}); };
+  video.load();   // força reload completo — resolve race condition
+ 
   const origin = getAvatarOrigin();
-
+ 
   app.innerHTML = `
     <div class="full" style="
-      background:transparent;position:relative;overflow:hidden;height:${realHeight}px;
-      transform-origin:${origin.x} ${origin.y};transform:scale(0.04);opacity:0;
+      background:transparent;position:relative;overflow:hidden;
+      height:${realHeight}px;
+      transform-origin:${origin.x} ${origin.y};
+      transform:scale(0.04);opacity:0;
       will-change:transform,opacity;
     ">
-      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:rgba(255,255,255,0.22);z-index:20;">
-        <div id="progressBar" style="height:100%;width:0%;background:#fff;"></div>
+ 
+      <!-- progresso -->
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;
+                  background:rgba(255,255,255,0.22);z-index:20;">
+        <div id="progressBar" style="height:100%;width:0%;background:#fff;
+                                      transition:width .1s linear;"></div>
       </div>
-
-      <div style="position:absolute;top:8px;left:14px;right:14px;display:flex;align-items:center;z-index:30;">
-        <button onclick="exitStories()" style="background:none;border:0;color:#fff;font-size:34px;margin-right:10px;padding:0;line-height:1;cursor:pointer;">‹</button>
-        <div style="width:32px;height:32px;margin-right:10px;border-radius:50%;overflow:hidden;flex-shrink:0;">
-          <img src="${ASSETS.avatar}?v=1" style="width:100%;height:100%;object-fit:cover;"/>
+ 
+      <!-- header -->
+      <div style="position:absolute;top:8px;left:14px;right:14px;
+                  display:flex;align-items:center;z-index:30;">
+        <button onclick="exitStories()" style="
+          background:none;border:0;color:#fff;font-size:34px;
+          margin-right:10px;padding:0;line-height:1;cursor:pointer;">‹</button>
+        <div style="width:32px;height:32px;margin-right:10px;border-radius:50%;
+                    overflow:hidden;flex-shrink:0;">
+          <img src="${ASSETS.avatar}?v=1"
+               style="width:100%;height:100%;object-fit:cover;"/>
         </div>
         <div style="margin-top:1px;">
           <div style="color:#fff;font-weight:600;font-size:15px;">${CONTACT.title}</div>
           <div style="color:rgba(255,255,255,0.85);font-size:12px;margin-top:2px;">12h</div>
         </div>
       </div>
-
-      <div id="replyBar" style="position:absolute;bottom:0;left:0;right:0;padding:12px 16px 20px;background:linear-gradient(to top,rgba(0,0,0,.92),transparent);z-index:40;">
-        <div onclick="openStoryReply()" style="background:rgba(255,255,255,.14);border-radius:30px;padding:14px 20px;color:#fff;display:flex;align-items:center;cursor:pointer;">
-          <span style="flex:1;">Responder...</span>
+ 
+      <!-- barra de resposta -->
+      <div id="replyBar" style="
+        position:absolute;bottom:0;left:0;right:0;
+        padding:12px 16px 28px;
+        background:linear-gradient(to top,rgba(0,0,0,.88),transparent);
+        z-index:40;
+      ">
+        <div style="display:flex;align-items:center;gap:10px;">
+ 
+          <!-- campo de texto -->
+          <div onclick="openStoryReply()" style="
+            flex:1;
+            background:rgba(255,255,255,.13);
+            border:1px solid rgba(255,255,255,.25);
+            border-radius:28px;
+            padding:11px 18px;
+            color:rgba(255,255,255,0.7);
+            font-size:15px;
+            cursor:text;
+          ">Responder...</div>
+ 
+          <!-- botão câmera -->
+          <div id="storyBtnCamera" style="
+            width:44px;height:44px;border-radius:50%;
+            background:rgba(255,255,255,0.15);
+            display:flex;align-items:center;justify-content:center;
+            cursor:pointer;flex-shrink:0;
+          ">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                stroke="#fff" stroke-width="1.8" stroke-linecap="round"
+                stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8
+                       a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+          </div>
+ 
+          <!-- botão gravador de voz -->
+          <div id="storyBtnVoice" style="
+            width:44px;height:44px;border-radius:50%;
+            background:rgba(255,255,255,0.15);
+            display:flex;align-items:center;justify-content:center;
+            cursor:pointer;flex-shrink:0;
+          ">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                stroke="#fff" stroke-width="1.8" stroke-linecap="round"
+                stroke-linejoin="round">
+              <rect x="9" y="2" width="6" height="12" rx="3"/>
+              <path d="M19 10a7 7 0 0 1-14 0"/>
+              <line x1="12" y1="19" x2="12" y2="23"/>
+              <line x1="8"  y1="23" x2="16" y2="23"/>
+            </svg>
+          </div>
+ 
         </div>
       </div>
+ 
     </div>
   `;
-
+ 
   const screen = document.querySelector(".full");
-
+ 
+  // animação de entrada
   requestAnimationFrame(() => requestAnimationFrame(() => {
     screen.style.transition = `transform ${STORY_DURATION}ms ${STORY_EASING}, opacity ${STORY_DURATION}ms ${STORY_EASING}`;
     screen.style.transform  = "scale(1)";
     screen.style.opacity    = "1";
   }));
-
+ 
+  // progress bar
   const progress = document.getElementById("progressBar");
   let progressInterval = null;
-
+ 
   video.onplay = () => {
     clearInterval(progressInterval);
     progressInterval = setInterval(() => {
@@ -1447,43 +1536,307 @@ function showStories() {
       progress.style.width = (video.currentTime / video.duration) * 100 + "%";
     }, 50);
   };
-  video.onpause  = () => clearInterval(progressInterval);
-  video.onended  = () => { clearInterval(progressInterval); window.storyViewed = true; exitStories(); };
-
+  video.onpause = () => clearInterval(progressInterval);
+  video.onended = () => {
+    clearInterval(progressInterval);
+    window.storyViewed = true;
+    exitStories();
+  };
+ 
+  // click para sair
   screen.addEventListener("click", (e) => {
     if (e.target.closest("#replyBar") || e.target.closest("button") || _storyExiting) return;
-    window.storyViewed = true; exitStories();
+    window.storyViewed = true;
+    exitStories();
   });
-
-  let startY = 0, startX = 0, currentY = 0, dragging = false, isHolding = false, holdTimer = null, swipeCommitted = false;
-
+ 
+  // ── botão câmera ────────────────────────────────────────────────────────
+  document.getElementById("storyBtnCamera").onclick = async (e) => {
+    e.stopPropagation();
+    video.pause();
+ 
+    // pede permissão de câmera e abre captura nativa
+    try {
+      // tenta input file nativo (funciona em iOS/Android dentro do Telegram)
+      const input = document.createElement("input");
+      input.type    = "file";
+      input.accept  = "image/*,video/*";
+      input.capture = "environment"; // câmera traseira
+      input.style.display = "none";
+      document.body.appendChild(input);
+ 
+      input.onchange = () => {
+        const file = input.files?.[0];
+        document.body.removeChild(input);
+        if (!file) { video.play().catch(() => {}); return; }
+ 
+        // pré-visualiza o arquivo capturado
+        const url  = URL.createObjectURL(file);
+        const isVid = file.type.startsWith("video");
+ 
+        const preview = document.createElement("div");
+        preview.style = `
+          position:fixed;inset:0;background:#000;z-index:9999;
+          display:flex;flex-direction:column;align-items:center;justify-content:center;
+        `;
+        preview.innerHTML = isVid
+          ? `<video src="${url}" autoplay playsinline controls
+               style="max-width:100%;max-height:80vh;border-radius:12px;"></video>`
+          : `<img src="${url}" style="max-width:100%;max-height:80vh;border-radius:12px;object-fit:contain;">`;
+ 
+        const closeBtn = document.createElement("div");
+        closeBtn.textContent = "✕ Fechar";
+        closeBtn.style = `
+          margin-top:20px;padding:10px 28px;border-radius:999px;
+          background:rgba(255,255,255,0.15);color:#fff;font-size:15px;cursor:pointer;
+        `;
+        closeBtn.onclick = () => {
+          URL.revokeObjectURL(url);
+          preview.remove();
+          video.play().catch(() => {});
+        };
+        preview.appendChild(closeBtn);
+        document.body.appendChild(preview);
+      };
+ 
+      input.oncancel = () => {
+        document.body.removeChild(input);
+        video.play().catch(() => {});
+      };
+ 
+      input.click();
+    } catch {
+      video.play().catch(() => {});
+    }
+  };
+ 
+  // ── botão gravador de voz ────────────────────────────────────────────────
+  let mediaRecorder  = null;
+  let audioChunks    = [];
+  let isRecording    = false;
+  let recordTimer    = null;
+  let timerInterval  = null;
+  const voiceBtn     = document.getElementById("storyBtnVoice");
+ 
+  voiceBtn.onclick = async (e) => {
+    e.stopPropagation();
+ 
+    if (!isRecording) {
+      // ── inicia gravação ──────────────────────────────────────────
+      try {
+        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioChunks = [];
+        mediaRecorder = new MediaRecorder(audioStream);
+ 
+        mediaRecorder.ondataavailable = (ev) => {
+          if (ev.data.size > 0) audioChunks.push(ev.data);
+        };
+ 
+        mediaRecorder.onstop = () => {
+          audioStream.getTracks().forEach(t => t.stop());
+          const blob = new Blob(audioChunks, { type: "audio/webm" });
+          const url  = URL.createObjectURL(blob);
+ 
+          // exibe player de áudio sobre o story
+          const player = document.createElement("div");
+          player.id = "storyAudioPlayer";
+          player.style = `
+            position:fixed;bottom:100px;left:50%;transform:translateX(-50%);
+            background:rgba(20,20,20,0.92);border-radius:40px;
+            padding:10px 18px;display:flex;align-items:center;gap:12px;
+            z-index:9999;min-width:220px;
+            box-shadow:0 4px 24px rgba(0,0,0,0.4);
+          `;
+          player.innerHTML = `
+            <audio id="storyAudioEl" src="${url}" preload="auto"></audio>
+            <div id="storyPlayBtn" style="
+              width:36px;height:36px;border-radius:50%;background:#25D366;
+              display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
+            ">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff">
+                <polygon points="5,3 19,12 5,21"/>
+              </svg>
+            </div>
+            <div style="flex:1;">
+              <div style="height:3px;background:rgba(255,255,255,0.2);border-radius:2px;">
+                <div id="storyAudioProgress" style="height:100%;width:0%;background:#25D366;border-radius:2px;transition:width .1s linear;"></div>
+              </div>
+              <div id="storyAudioTime" style="color:rgba(255,255,255,0.6);font-size:11px;margin-top:4px;">0:00</div>
+            </div>
+            <div id="storyAudioClose" style="color:rgba(255,255,255,0.5);font-size:20px;cursor:pointer;padding:4px;">✕</div>
+          `;
+          document.body.appendChild(player);
+ 
+          const audioEl  = document.getElementById("storyAudioEl");
+          const playBtn  = document.getElementById("storyPlayBtn");
+          const progBar  = document.getElementById("storyAudioProgress");
+          const timeEl   = document.getElementById("storyAudioTime");
+          const closeEl  = document.getElementById("storyAudioClose");
+ 
+          let playing = false;
+          let progInt  = null;
+ 
+          const fmt = (s) => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,"0")}`;
+ 
+          playBtn.onclick = () => {
+            if (playing) {
+              audioEl.pause();
+              playing = false;
+              clearInterval(progInt);
+              playBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><polygon points="5,3 19,12 5,21"/></svg>`;
+            } else {
+              audioEl.play();
+              playing = true;
+              progInt = setInterval(() => {
+                if (!audioEl.duration) return;
+                progBar.style.width = (audioEl.currentTime / audioEl.duration) * 100 + "%";
+                timeEl.textContent  = fmt(audioEl.currentTime);
+              }, 100);
+              playBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
+            }
+          };
+ 
+          audioEl.onended = () => {
+            playing = false;
+            clearInterval(progInt);
+            progBar.style.width = "0%";
+            timeEl.textContent  = fmt(audioEl.duration || 0);
+            playBtn.innerHTML   = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><polygon points="5,3 19,12 5,21"/></svg>`;
+          };
+ 
+          closeEl.onclick = () => {
+            clearInterval(progInt);
+            URL.revokeObjectURL(url);
+            player.remove();
+          };
+        };
+ 
+        mediaRecorder.start();
+        isRecording = true;
+ 
+        // feedback visual: botão fica vermelho pulsando
+        voiceBtn.style.background = "#e8242a";
+        voiceBtn.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:center;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                stroke="#fff" stroke-width="1.8" stroke-linecap="round"
+                stroke-linejoin="round">
+              <rect x="9" y="2" width="6" height="12" rx="3"/>
+              <path d="M19 10a7 7 0 0 1-14 0"/>
+              <line x1="12" y1="19" x2="12" y2="23"/>
+              <line x1="8"  y1="23" x2="16" y2="23"/>
+            </svg>
+          </div>
+        `;
+ 
+        // timer visual na barra de reply
+        let secs = 0;
+        const timerEl = document.createElement("div");
+        timerEl.id = "recTimer";
+        timerEl.style = `
+          position:fixed;top:48px;left:50%;transform:translateX(-50%);
+          background:rgba(232,36,42,0.9);color:#fff;border-radius:999px;
+          padding:4px 16px;font-size:13px;font-weight:600;z-index:9999;
+          display:flex;align-items:center;gap:6px;
+        `;
+        timerEl.innerHTML = `
+          <div style="width:8px;height:8px;border-radius:50%;background:#fff;
+                      animation:recPulse 1s infinite;"></div>
+          <span id="recTimerTxt">0:00</span>
+          <style>
+            @keyframes recPulse {
+              0%,100%{opacity:1} 50%{opacity:0.3}
+            }
+          </style>
+        `;
+        document.body.appendChild(timerEl);
+ 
+        timerInterval = setInterval(() => {
+          secs++;
+          const txt = document.getElementById("recTimerTxt");
+          if (txt) txt.textContent = `${Math.floor(secs/60)}:${String(secs%60).padStart(2,"0")}`;
+          // máx 60s
+          if (secs >= 60) voiceBtn.click();
+        }, 1000);
+ 
+      } catch {
+        // sem permissão — mostra toast
+        const t = document.createElement("div");
+        t.textContent = "Permissão de microfone negada";
+        Object.assign(t.style, {
+          position:"fixed", bottom:"120px", left:"50%",
+          transform:"translateX(-50%)",
+          background:"rgba(20,20,20,.9)", color:"#fff",
+          padding:"10px 20px", borderRadius:"999px",
+          fontSize:"13px", zIndex:"9999",
+        });
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 2500);
+      }
+ 
+    } else {
+      // ── para gravação ────────────────────────────────────────────
+      isRecording = false;
+      clearInterval(timerInterval);
+ 
+      const timerEl = document.getElementById("recTimer");
+      if (timerEl) timerEl.remove();
+ 
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+      }
+ 
+      // restaura botão
+      voiceBtn.style.background = "rgba(255,255,255,0.15)";
+      voiceBtn.innerHTML = `
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="#fff" stroke-width="1.8" stroke-linecap="round"
+            stroke-linejoin="round">
+          <rect x="9" y="2" width="6" height="12" rx="3"/>
+          <path d="M19 10a7 7 0 0 1-14 0"/>
+          <line x1="12" y1="19" x2="12" y2="23"/>
+          <line x1="8"  y1="23" x2="16" y2="23"/>
+        </svg>
+      `;
+    }
+  };
+ 
+  // swipe down + hold
+  let startY = 0, startX = 0, currentY = 0;
+  let dragging = false, isHolding = false, holdTimer = null, swipeCommitted = false;
+ 
   screen.addEventListener("touchstart", (e) => {
     if (_storyExiting) return;
     startY = e.touches[0].clientY; startX = e.touches[0].clientX;
     currentY = startY; dragging = true; swipeCommitted = false; isHolding = false;
-    holdTimer = setTimeout(() => { if (!swipeCommitted) { isHolding = true; video.pause(); } }, 180);
+    holdTimer = setTimeout(() => {
+      if (!swipeCommitted) { isHolding = true; video.pause(); }
+    }, 180);
   }, { passive: true });
-
+ 
   screen.addEventListener("touchmove", (e) => {
     if (_storyExiting || !dragging || isHolding) return;
     clearTimeout(holdTimer);
-    const touchY = e.touches[0].clientY, touchX = e.touches[0].clientX;
-    const diffY = touchY - startY, diffX = Math.abs(touchX - startX);
+    const touchY = e.touches[0].clientY;
+    const touchX = e.touches[0].clientX;
+    const diffY  = touchY - startY;
+    const diffX  = Math.abs(touchX - startX);
     if (diffX > diffY || diffY <= 0) return;
     currentY = touchY;
     const prog2  = Math.min(diffY / (realHeight * 0.55), 1);
-    const scale  = 1 - prog2 * 0.46;
-    const transY = diffY * 0.65;
-    const opac   = 1 - prog2 * 0.65;
     screen.style.transition      = "none";
     screen.style.transformOrigin = `${origin.x} ${origin.y}`;
-    screen.style.transform       = `translateY(${transY}px) scale(${scale})`;
-    screen.style.opacity         = String(Math.max(opac, 0.35));
+    screen.style.transform       = `translateY(${diffY * 0.65}px) scale(${1 - prog2 * 0.46})`;
+    screen.style.opacity         = String(Math.max(1 - prog2 * 0.65, 0.35));
   }, { passive: true });
-
+ 
   screen.addEventListener("touchend", () => {
     clearTimeout(holdTimer);
-    if (isHolding) { isHolding = false; dragging = false; video.play().catch(() => {}); return; }
+    if (isHolding) {
+      isHolding = false; dragging = false;
+      video.play().catch(() => {});
+      return;
+    }
     dragging = false;
     if (_storyExiting) return;
     const diffY = currentY - startY;
@@ -1494,7 +1847,8 @@ function showStories() {
       screen.style.opacity         = "1";
       return;
     }
-    swipeCommitted = true; window.storyViewed = true;
+    swipeCommitted = true;
+    window.storyViewed = true;
     exitStories(true, screen);
   });
 }
@@ -1502,88 +1856,181 @@ function showStories() {
 // ==================== STORY REPLY ====================
 function openStoryReply() {
   if (document.getElementById("storyReplyOverlay")) return;
+ 
   const video  = document.getElementById("storyVideo");
   const oldBar = document.getElementById("replyBar");
   if (video) video.pause();
   if (oldBar) oldBar.style.display = "none";
   document.body.style.overflow = "hidden";
-
+ 
+  const emojis = ["❤️","😂","😮","😢","🙏","👏","🎉","💯"];
+ 
   document.body.insertAdjacentHTML("beforeend", `
-    <div id="storyReplyOverlay" style="position:fixed;inset:0;z-index:9999;">
-      <div class="story-hint">Toque para enviar</div>
-      <div class="story-emojis">
-        <div class="emoji-row">
-          <span onclick="sendStoryReaction(this)">😍</span>
-          <span onclick="sendStoryReaction(this)">😂</span>
-          <span onclick="sendStoryReaction(this)">😮</span>
-          <span onclick="sendStoryReaction(this)">😢</span>
-        </div>
-        <div class="emoji-row">
-          <span onclick="sendStoryReaction(this)">🙏</span>
-          <span onclick="sendStoryReaction(this)">👏</span>
-          <span onclick="sendStoryReaction(this)">🎉</span>
-          <span onclick="sendStoryReaction(this)">💯</span>
+    <div id="storyReplyOverlay" style="
+      position:fixed;inset:0;z-index:9999;
+      display:flex;flex-direction:column;justify-content:flex-end;
+    ">
+ 
+      <!-- emojis -->
+      <div style="padding:0 8px 14px;display:flex;justify-content:center;">
+        <div style="
+          display:flex;gap:4px;align-items:center;
+          background:rgba(28,28,28,0.75);
+          backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+          border-radius:40px;padding:8px 10px;
+        ">
+          ${emojis.map(em => `
+            <div onclick="sendStoryReaction(this)" data-emoji="${em}" style="
+              width:42px;height:42px;border-radius:50%;
+              display:flex;align-items:center;justify-content:center;
+              font-size:25px;cursor:pointer;
+              transition:transform .15s cubic-bezier(.34,1.56,.64,1);
+              -webkit-tap-highlight-color:transparent;user-select:none;
+            "
+            onpointerdown="this.style.transform='scale(1.38)'"
+            onpointerup="this.style.transform='scale(1)'"
+            onpointerleave="this.style.transform='scale(1)'"
+            >${em}</div>
+          `).join("")}
+          <div style="
+            width:42px;height:42px;border-radius:50%;
+            background:rgba(255,255,255,0.14);
+            display:flex;align-items:center;justify-content:center;cursor:pointer;
+          ">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="rgba(255,255,255,0.8)" stroke-width="2.3" stroke-linecap="round">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+          </div>
         </div>
       </div>
-      <div class="story-input-bar" id="replyBarKeyboard">
-        <span class="plus-btn">＋</span>
-        <div class="story-input-wrap">
-          <input id="storyReplyInput" type="text" placeholder="" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+ 
+      <!-- input bar -->
+      <div id="replyBarKeyboard" style="
+        display:flex;align-items:center;gap:10px;
+        padding:10px 14px 28px;
+        background:rgba(16,16,16,0.6);
+        backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+      ">
+ 
+        <!-- avatar -->
+        <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;">
+          <img src="${ASSETS.avatar}?v=1" style="width:100%;height:100%;object-fit:cover;"/>
         </div>
-        <span class="side-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 7h4l2-2h4l2 2h4v12H4z"/><circle cx="12" cy="13" r="3.5"/>
+ 
+        <!-- campo texto -->
+        <div style="
+          flex:1;background:rgba(255,255,255,0.12);
+          border-radius:24px;padding:10px 16px;
+          display:flex;align-items:center;
+        ">
+          <input id="storyReplyInput" type="text"
+            placeholder="Enviar mensagem..."
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+            style="
+              background:transparent;border:none;outline:none;
+              color:#fff;font-size:15px;width:100%;
+              font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+            "
+          />
+        </div>
+ 
+        <!-- botão enviar -->
+        <div onclick="sendStoryTextReply()" style="
+          width:40px;height:40px;border-radius:50%;background:#25D366;
+          display:flex;align-items:center;justify-content:center;
+          cursor:pointer;flex-shrink:0;
+          box-shadow:0 2px 10px rgba(37,211,102,0.4);
+        ">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="#fff" stroke-width="2.4" stroke-linecap="round"
+              stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
           </svg>
-        </span>
-        <span class="side-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="9" y="3" width="6" height="12" rx="3"/>
-            <path d="M6 11a6 6 0 0 0 12 0"/><path d="M12 17v4"/>
-          </svg>
-        </span>
+        </div>
+ 
       </div>
     </div>
   `);
-
+ 
   const overlay  = document.getElementById("storyReplyOverlay");
   const input    = document.getElementById("storyReplyInput");
   const replyBar = document.getElementById("replyBarKeyboard");
-
-  replyBar.style.opacity = "1"; replyBar.style.bottom = "10px"; replyBar.style.transform = "translateY(0)";
-  input.focus(); input.click();
-  try { input.setSelectionRange(input.value.length, input.value.length); } catch {}
+ 
+  setTimeout(() => { input.focus(); }, 60);
   if (window.Telegram?.WebApp) Telegram.WebApp.expand();
-  requestAnimationFrame(() => { input.focus({ preventScroll: true }); input.click(); });
-
-  let keyboardOpen = false;
-  const handleViewport = () => {
-    const vh   = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    const kb   = window.innerHeight - vh;
-    if (kb > 120 && !keyboardOpen) { keyboardOpen = true; replyBar.style.transition = "none"; replyBar.style.transform = "translateY(-320px)"; }
-    if (kb < 80  && keyboardOpen)  { keyboardOpen = false; replyBar.style.transition = "none"; replyBar.style.transform = "translateY(0)"; }
+ 
+  // detector de teclado
+  let kbOpen = false;
+  const onVP = () => {
+    const vh = window.visualViewport?.height ?? window.innerHeight;
+    const kb = window.innerHeight - vh;
+    if (kb > 100 && !kbOpen) { kbOpen = true;  replyBar.style.paddingBottom = "10px"; }
+    if (kb < 60  && kbOpen)  { kbOpen = false; replyBar.style.paddingBottom = "28px"; }
   };
-  window.visualViewport?.addEventListener("resize", handleViewport);
-  overlay._viewportHandler = handleViewport;
-  overlay.addEventListener("click", (e) => { if (e.target.id === "storyReplyOverlay") closeStoryReply(); });
+  window.visualViewport?.addEventListener("resize", onVP);
+  overlay._vpHandler = onVP;
+ 
+  overlay.addEventListener("click", (e) => {
+    if (e.target.id === "storyReplyOverlay") closeStoryReply();
+  });
 }
-
+ 
+ 
+// ─── sendStoryTextReply ───────────────────────────────────────────────────────
+function sendStoryTextReply() {
+  const input = document.getElementById("storyReplyInput");
+  const text  = input?.value?.trim() ?? "";
+  closeStoryReply();
+  if (!text) return;
+  const t = document.createElement("div");
+  t.textContent = "Mensagem enviada ✓";
+  Object.assign(t.style, {
+    position:"fixed", left:"50%", bottom:"90px",
+    transform:"translateX(-50%)",
+    background:"rgba(18,18,18,.92)", color:"#fff",
+    padding:"11px 22px", borderRadius:"999px",
+    fontSize:"14px", fontWeight:"500",
+    zIndex:"999999", opacity:"0",
+    transition:"opacity .25s ease",
+    whiteSpace:"nowrap",
+  });
+  document.body.appendChild(t);
+  requestAnimationFrame(() => { t.style.opacity = "1"; });
+  setTimeout(() => { t.style.opacity = "0"; }, 1800);
+  setTimeout(() => t.remove(), 2200);
+}
+ 
+ 
+// ─── closeStoryReply ─────────────────────────────────────────────────────────
 function closeStoryReply() {
   const overlay = document.getElementById("storyReplyOverlay");
-  if (overlay) {
-    if (overlay._viewportHandler && window.visualViewport) window.visualViewport.removeEventListener("resize", overlay._viewportHandler);
-    overlay.remove();
-  }
+  if (!overlay) return;
+  if (overlay._vpHandler && window.visualViewport)
+    window.visualViewport.removeEventListener("resize", overlay._vpHandler);
+  overlay.remove();
+ 
   const input = document.getElementById("storyReplyInput");
   if (input) input.blur();
+ 
   document.body.style.overflow = "";
+  window.scrollTo(0, 0);
+ 
   const oldBar = document.getElementById("replyBar");
-  if (oldBar) { oldBar.style.display = "block"; oldBar.style.opacity = "1"; oldBar.style.transform = "translateY(0)"; }
-  window.scrollTo(0,0);
-  setTimeout(() => window.scrollTo(0,0), 30);
-  setTimeout(() => window.scrollTo(0,0), 120);
+  if (oldBar) {
+    oldBar.style.display  = "";
+    oldBar.style.opacity  = "1";
+    oldBar.style.transform = "translateY(0)";
+  }
+ 
   const video = document.getElementById("storyVideo");
   if (video) {
-    Object.assign(video.style, { position:"fixed", top:"0", left:"0", width:"100vw", height:window.__storyHeight+"px", objectFit:"cover", transform:"translateZ(0)", willChange:"transform" });
+    Object.assign(video.style, {
+      position:"fixed", top:"0", left:"0",
+      width:"100vw", height:window.__storyHeight + "px",
+      objectFit:"cover", transform:"translateZ(0)", willChange:"transform",
+    });
     video.play().catch(() => {});
   }
 }
