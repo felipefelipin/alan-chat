@@ -1972,6 +1972,49 @@ function showIncomingCall() {
   video.load();
 })();
 
+// ─── CONFIGURAÇÃO DA TRANSIÇÃO (estilo WhatsApp) ────────────────────────────
+const STORY_EASING   = "cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+const STORY_DURATION = 350; // ms
+
+// ─── HELPER: calcula o centro do avatar relativo à janela ───────────────────
+// Adicione data-story-avatar no elemento de avatar da tela anterior.
+// Exemplo: <img data-story-avatar src="..." />
+function getAvatarOrigin() {
+  const avatarEl = document.querySelector("[data-story-avatar]");
+  if (!avatarEl) return { x: "50%", y: "50%" };
+  const r = avatarEl.getBoundingClientRect();
+  return {
+    x: Math.round(r.left + r.width  / 2) + "px",
+    y: Math.round(r.top  + r.height / 2) + "px",
+  };
+}
+
+// ─── EXIT STORIES ────────────────────────────────────────────────────────────
+function exitStories() {
+  const screen = document.querySelector(".full");
+  const video  = document.getElementById("storyVideo");
+
+  if (!screen) return; // proteção: já saiu
+
+  const origin = getAvatarOrigin();
+
+  screen.style.transformOrigin = `${origin.x} ${origin.y}`;
+  screen.style.transition      = `transform ${STORY_DURATION}ms ${STORY_EASING},
+                                   opacity  ${STORY_DURATION}ms ${STORY_EASING}`;
+  screen.style.transform       = "scale(0.05)";
+  screen.style.opacity         = "0";
+
+  setTimeout(() => {
+    video.pause();
+    video.src           = "";
+    video.style.display = "none";
+
+    // ⚠️ Troque showHome() pela função que renderiza sua tela anterior
+    showHome();
+  }, STORY_DURATION + 20);
+}
+
+// ─── SHOW STORIES ────────────────────────────────────────────────────────────
 function showStories() {
   console.log("📸 Stories aberto");
 
@@ -1987,26 +2030,26 @@ function showStories() {
     video.src = "/assets/story-video.mp4";
   }
 
-  video.style.display = "block";
-  video.currentTime = 0;
-
-  video.style.position = "fixed";
-  video.style.top = "0";
-  video.style.left = "0";
-  video.style.width = "100vw";
-  video.style.height = realHeight + "px";
-  video.style.objectFit = "cover";
-  video.style.zIndex = "0";
-  video.style.transform = "translateZ(0)";
+  video.style.display    = "block";
+  video.currentTime      = 0;
+  video.style.position   = "fixed";
+  video.style.top        = "0";
+  video.style.left       = "0";
+  video.style.width      = "100vw";
+  video.style.height     = realHeight + "px";
+  video.style.objectFit  = "cover";
+  video.style.zIndex     = "0";
+  video.style.transform  = "translateZ(0)";
   video.style.willChange = "transform";
 
   if (video.readyState >= 2) {
     video.play().catch(() => {});
   } else {
-    video.oncanplay = () => {
-      video.play().catch(() => {});
-    };
+    video.oncanplay = () => { video.play().catch(() => {}); };
   }
+
+  // Captura o origin ANTES de destruir o DOM atual
+  const origin = getAvatarOrigin();
 
   app.innerHTML = `
     <div class="full" style="
@@ -2014,6 +2057,9 @@ function showStories() {
       position:relative;
       overflow:hidden;
       height:${realHeight}px;
+      transform-origin:${origin.x} ${origin.y};
+      transform:scale(0.05);
+      opacity:0;
     ">
 
       <div style="
@@ -2111,14 +2157,24 @@ function showStories() {
     </div>
   `;
 
-  const progress = document.getElementById("progressBar");
+  // ── Anima entrada após o browser pintar o estado inicial (scale 0.05 → 1) ──
   const screen = document.querySelector(".full");
 
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      screen.style.transition = `transform ${STORY_DURATION}ms ${STORY_EASING},
+                                  opacity  ${STORY_DURATION}ms ${STORY_EASING}`;
+      screen.style.transform  = "scale(1)";
+      screen.style.opacity    = "1";
+    });
+  });
+
+  // ── Progress bar ─────────────────────────────────────────────────────────
+  const progress = document.getElementById("progressBar");
   let progressInterval = null;
 
   video.onplay = () => {
     clearInterval(progressInterval);
-
     progressInterval = setInterval(() => {
       if (!video.duration) return;
       progress.style.width = (video.currentTime / video.duration) * 100 + "%";
@@ -2129,33 +2185,26 @@ function showStories() {
 
   video.onended = () => {
     clearInterval(progressInterval);
-
-    // 🔥 MARCA COMO VISTO (ESSA É A ALTERAÇÃO)
-    window.storyViewed = true;
-
+    window.storyViewed = true; // 🔥 marca como visto
     exitStories();
   };
 
-  // =====================
-  // CLICK
-  // =====================
+  // ── Click ─────────────────────────────────────────────────────────────────
   screen.addEventListener("click", (e) => {
     if (e.target.closest("#replyBar")) return;
-    if (e.target.closest("button")) return;
+    if (e.target.closest("button"))   return;
     exitStories();
   });
 
-  // =====================
-  // SWIPE + HOLD (UNIFICADO)
-  // =====================
-  let startY = 0;
-  let currentY = 0;
-  let dragging = false;
+  // ── Swipe + Hold ──────────────────────────────────────────────────────────
+  let startY    = 0;
+  let currentY  = 0;
+  let dragging  = false;
   let holdTimer = null;
   let isHolding = false;
 
   screen.addEventListener("touchstart", (e) => {
-    startY = e.touches[0].clientY;
+    startY   = e.touches[0].clientY;
     dragging = true;
 
     holdTimer = setTimeout(() => {
@@ -2166,41 +2215,45 @@ function showStories() {
 
   screen.addEventListener("touchmove", (e) => {
     clearTimeout(holdTimer);
-
     if (!dragging) return;
 
     currentY = e.touches[0].clientY;
-    const diff = currentY - startY;
-
+    const diff  = currentY - startY;
     if (diff < 0) return;
 
     const scale = 1 - diff / 900;
-
     screen.style.transition = "none";
-    screen.style.transform = `translateY(${diff}px) scale(${scale})`;
+    screen.style.transform  = `translateY(${diff}px) scale(${scale})`;
   });
 
   screen.addEventListener("touchend", () => {
     clearTimeout(holdTimer);
 
     if (isHolding) {
-      video.play().catch(()=>{});
+      video.play().catch(() => {});
       isHolding = false;
-      dragging = false;
+      dragging  = false;
       return;
     }
 
     dragging = false;
-
     const diff = currentY - startY;
 
     if (diff < 120) {
+      // Swipe pequeno: volta ao normal
       screen.style.transition = "transform .25s ease";
-      screen.style.transform = "translateY(0) scale(1)";
+      screen.style.transform  = "translateY(0) scale(1)";
       return;
     }
 
-    exitStories();
+    // Swipe confirmado: anima saída estilo WhatsApp
+    screen.style.transformOrigin = `${origin.x} ${origin.y}`;
+    screen.style.transition      = `transform ${STORY_DURATION}ms ${STORY_EASING},
+                                     opacity  ${STORY_DURATION}ms ${STORY_EASING}`;
+    screen.style.transform       = "scale(0.05)";
+    screen.style.opacity         = "0";
+
+    setTimeout(() => exitStories(), STORY_DURATION + 20);
   });
 }
 
