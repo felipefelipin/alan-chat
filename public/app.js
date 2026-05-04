@@ -1647,200 +1647,151 @@ function showStories() {
   });
 }
 
+// =============================================================================
+// SUBSTITUA ESTAS 3 FUNÇÕES NO SEU app.js
+// =============================================================================
+
 
 // ─── openStoryReply ───────────────────────────────────────────────────────────
 function openStoryReply() {
   if (document.getElementById("storyReplyOverlay")) return;
- 
+
   const video  = document.getElementById("storyVideo");
   const oldBar = document.getElementById("replyBar");
   if (video) video.pause();
   if (oldBar) oldBar.style.display = "none";
   document.body.style.overflow = "hidden";
- 
-  // ── cria um input FORA do overlay e foca ANTES de qualquer DOM ──────────
-  // Isso garante abertura de teclado sem delay no iOS/Telegram
-  const earlyInput = document.createElement("input");
-  earlyInput.setAttribute("type", "text");
-  earlyInput.setAttribute("autocomplete", "off");
-  earlyInput.style.cssText = `
-    position:fixed;left:-9999px;top:50%;
-    opacity:0;width:1px;height:1px;font-size:16px;
-  `;
-  document.body.appendChild(earlyInput);
-  earlyInput.focus();
- 
+
+  // ── INPUT FANTASMA: abre teclado ANTES de qualquer DOM ──────────────────
+  const ghost = document.createElement("input");
+  ghost.type = "text";
+  ghost.setAttribute("autocomplete", "off");
+  ghost.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0;width:1px;height:1px;font-size:16px;pointer-events:none;";
+  document.body.appendChild(ghost);
+  ghost.focus();
+
   document.body.insertAdjacentHTML("beforeend", `
     <div id="storyReplyOverlay" style="
       position:fixed;inset:0;z-index:9999;
       display:flex;flex-direction:column;
-      justify-content:flex-end;
     ">
- 
-      <!-- topo clicável fecha -->
-      <div id="storyReplyDismiss" style="
-        position:absolute;inset:0;
-        z-index:0;
-      "></div>
- 
-      <!-- emojis — centralizados horizontalmente, acima do input -->
-      <div id="storyEmojiBlock" style="
-        position:relative;z-index:1;
+
+      <!-- área superior transparente — clique fecha -->
+      <div id="storyReplyDismiss" style="flex:1;cursor:default;"></div>
+
+      <!-- BLOCO INFERIOR: emojis + input colados juntos, sem espaço -->
+      <div id="storyBottomBlock" style="
         display:flex;flex-direction:column;
-        align-items:center;justify-content:center;
-        gap:18px;
-        padding:0 0 20px;
+        will-change:transform;
       ">
-        <div style="display:flex;gap:28px;align-items:center;justify-content:center;">
-          <span onclick="sendStoryReaction(this)" style="font-size:46px;cursor:pointer;line-height:1;">😍</span>
-          <span onclick="sendStoryReaction(this)" style="font-size:46px;cursor:pointer;line-height:1;">😂</span>
-          <span onclick="sendStoryReaction(this)" style="font-size:46px;cursor:pointer;line-height:1;">😮</span>
-          <span onclick="sendStoryReaction(this)" style="font-size:46px;cursor:pointer;line-height:1;">😢</span>
-        </div>
-        <div style="display:flex;gap:28px;align-items:center;justify-content:center;">
-          <span onclick="sendStoryReaction(this)" style="font-size:46px;cursor:pointer;line-height:1;">🙏</span>
-          <span onclick="sendStoryReaction(this)" style="font-size:46px;cursor:pointer;line-height:1;">👏</span>
-          <span onclick="sendStoryReaction(this)" style="font-size:46px;cursor:pointer;line-height:1;">🎉</span>
-          <span onclick="sendStoryReaction(this)" style="font-size:46px;cursor:pointer;line-height:1;">💯</span>
-        </div>
-      </div>
- 
-      <!-- input bar — fundo preto, só campo + botão verde -->
-      <div id="replyBarKeyboard" style="
-        position:relative;z-index:1;
-        display:flex;align-items:center;gap:10px;
-        padding:10px 14px 36px;
-        background:#000;
-      ">
-        <!-- campo de texto -->
+
+        <!-- emojis: 2 linhas centralizadas, tamanho igual à foto 2 -->
         <div style="
-          flex:1;
-          background:rgba(255,255,255,0.1);
-          border-radius:24px;
-          padding:11px 18px;
-          display:flex;align-items:center;
+          display:flex;flex-direction:column;
+          align-items:center;justify-content:center;
+          gap:10px;
+          padding:16px 24px 14px;
         ">
-          <input id="storyReplyInput" type="text"
-            placeholder="Enviar mensagem..."
-            autocomplete="off" autocorrect="off"
-            autocapitalize="off" spellcheck="false"
-            style="
-              background:transparent;border:none;outline:none;
-              color:#fff;font-size:16px;width:100%;
-              font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-            "
-          />
+          <div style="display:flex;gap:20px;align-items:center;justify-content:center;width:100%;">
+            <span onclick="sendStoryReaction(this)" style="font-size:38px;cursor:pointer;line-height:1;user-select:none;">😍</span>
+            <span onclick="sendStoryReaction(this)" style="font-size:38px;cursor:pointer;line-height:1;user-select:none;">😂</span>
+            <span onclick="sendStoryReaction(this)" style="font-size:38px;cursor:pointer;line-height:1;user-select:none;">😮</span>
+            <span onclick="sendStoryReaction(this)" style="font-size:38px;cursor:pointer;line-height:1;user-select:none;">😢</span>
+          </div>
+          <div style="display:flex;gap:20px;align-items:center;justify-content:center;width:100%;">
+            <span onclick="sendStoryReaction(this)" style="font-size:38px;cursor:pointer;line-height:1;user-select:none;">🙏</span>
+            <span onclick="sendStoryReaction(this)" style="font-size:38px;cursor:pointer;line-height:1;user-select:none;">👏</span>
+            <span onclick="sendStoryReaction(this)" style="font-size:38px;cursor:pointer;line-height:1;user-select:none;">🎉</span>
+            <span onclick="sendStoryReaction(this)" style="font-size:38px;cursor:pointer;line-height:1;user-select:none;">💯</span>
+          </div>
         </div>
- 
-        <!-- botão enviar verde -->
-        <div id="storyReplySend" style="
-          width:44px;height:44px;border-radius:50%;
-          background:#25D366;flex-shrink:0;
-          display:flex;align-items:center;justify-content:center;
-          cursor:pointer;
-          box-shadow:0 2px 10px rgba(37,211,102,0.35);
+
+        <!-- input: fundo preto, campo menor + botão verde, SEM padding extra embaixo -->
+        <div id="replyBarKeyboard" style="
+          display:flex;align-items:center;gap:10px;
+          padding:8px 12px 10px;
+          background:#000;
         ">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-              stroke="#fff" stroke-width="2.4"
-              stroke-linecap="round" stroke-linejoin="round">
-            <line x1="22" y1="2" x2="11" y2="13"/>
-            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-          </svg>
+          <!-- campo de texto -->
+          <div style="
+            flex:1;
+            background:#1c1c1e;
+            border-radius:22px;
+            padding:9px 16px;
+            display:flex;align-items:center;
+          ">
+            <input id="storyReplyInput" type="text"
+              placeholder="Enviar mensagem..."
+              autocomplete="off" autocorrect="off"
+              autocapitalize="off" spellcheck="false"
+              style="
+                background:transparent;border:none;outline:none;
+                color:#fff;font-size:15px;width:100%;
+                font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+              "
+            />
+          </div>
+          <!-- botão verde -->
+          <div id="storyReplySend" style="
+            width:38px;height:38px;border-radius:50%;
+            background:#25D366;flex-shrink:0;
+            display:flex;align-items:center;justify-content:center;
+            cursor:pointer;
+          ">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="#fff" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </div>
         </div>
-      </div>
- 
+
+      </div><!-- /storyBottomBlock -->
+
     </div>
   `);
- 
-  const overlay    = document.getElementById("storyReplyOverlay");
-  const input      = document.getElementById("storyReplyInput");
-  const replyBar   = document.getElementById("replyBarKeyboard");
-  const emojiBlock = document.getElementById("storyEmojiBlock");
-  const dismiss    = document.getElementById("storyReplyDismiss");
-  const sendBtn    = document.getElementById("storyReplySend");
- 
-  // ── transfere foco do earlyInput para o input real ──────────────────────
-  // sem nenhum setTimeout — transição instantânea de foco
-  earlyInput.addEventListener("blur", () => {
-    earlyInput.remove();
-  });
+
+  const overlay     = document.getElementById("storyReplyOverlay");
+  const input       = document.getElementById("storyReplyInput");
+  const bottomBlock = document.getElementById("storyBottomBlock");
+  const dismiss     = document.getElementById("storyReplyDismiss");
+  const sendBtn     = document.getElementById("storyReplySend");
+
+  // ── transfere foco do ghost para o input real ────────────────────────────
+  ghost.addEventListener("blur", () => { ghost.remove(); });
   input.focus();
- 
   if (window.Telegram?.WebApp) Telegram.WebApp.expand();
- 
-  // ── visualViewport: move barra + emojis junto com teclado ───────────────
-  // transition:0s — segue frame a frame, zero delay perceptível
-  const onVP = () => {
+
+  // ── visualViewport: bloco inteiro sobe junto com o teclado ──────────────
+  // Usa position fixed + bottom dinâmico para COLAR no topo do teclado
+  // sem nenhum espaço preto
+  const applyVP = () => {
     if (!window.visualViewport) return;
-    const kbHeight = Math.max(
-      window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop,
-      0
-    );
-    replyBar.style.cssText += `transform:translateY(-${kbHeight}px);transition:none;`;
-    emojiBlock.style.cssText += `transform:translateY(-${kbHeight}px);transition:none;`;
+    // altura do teclado = diferença entre innerHeight e viewport height
+    const kbHeight = window.innerHeight - window.visualViewport.height;
+    // desloca o bloco para cima exatamente a altura do teclado
+    bottomBlock.style.transform  = `translateY(-${Math.max(kbHeight, 0)}px)`;
+    bottomBlock.style.transition = "none";
   };
- 
+
   if (window.visualViewport) {
-    window.visualViewport.addEventListener("resize", onVP, { passive: true });
-    window.visualViewport.addEventListener("scroll", onVP, { passive: true });
-    // dispara uma vez para pegar posição inicial
-    onVP();
+    window.visualViewport.addEventListener("resize", applyVP, { passive: true });
+    window.visualViewport.addEventListener("scroll", applyVP, { passive: true });
+    applyVP(); // aplica imediatamente
   }
-  overlay._vpHandler = onVP;
- 
-  // ── enviar com Enter ────────────────────────────────────────────────────
+  overlay._vpHandler = applyVP;
+
+  // ── enviar com Enter ─────────────────────────────────────────────────────
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") { e.preventDefault(); sendStoryTextReply(); }
   });
- 
-  // ── botão verde ─────────────────────────────────────────────────────────
   sendBtn.onclick = sendStoryTextReply;
- 
-  // ── fechar ao clicar no fundo ───────────────────────────────────────────
+
+  // ── fechar clicando acima ────────────────────────────────────────────────
   dismiss.addEventListener("click", closeStoryReply);
 }
 
-function closeStoryReply() {
-  const overlay = document.getElementById("storyReplyOverlay");
-  if (!overlay) return;
- 
-  if (overlay._vpHandler && window.visualViewport) {
-    window.visualViewport.removeEventListener("resize", overlay._vpHandler);
-    window.visualViewport.removeEventListener("scroll", overlay._vpHandler);
-  }
- 
-  // remove input fantasma se ainda existir
-  const earlyInput = document.body.querySelector("input[style*='-9999px']");
-  if (earlyInput) earlyInput.remove();
- 
-  overlay.remove();
- 
-  document.body.style.overflow = "";
-  window.scrollTo(0, 0);
-  setTimeout(() => window.scrollTo(0, 0), 30);
- 
-  const oldBar = document.getElementById("replyBar");
-  if (oldBar) {
-    oldBar.style.display   = "";
-    oldBar.style.opacity   = "1";
-    oldBar.style.transform = "translateY(0)";
-  }
- 
-  const video = document.getElementById("storyVideo");
-  if (video) {
-    Object.assign(video.style, {
-      position:   "fixed",
-      top:        "0",
-      left:       "0",
-      width:      "100vw",
-      height:     (window.__storyHeight || window.innerHeight) + "px",
-      objectFit:  "cover",
-      transform:  "translateZ(0)",
-      willChange: "transform",
-    });
-    video.play().catch(() => {});
-  }
-}
 
 // ─── sendStoryTextReply ───────────────────────────────────────────────────────
 function sendStoryTextReply() {
@@ -1848,14 +1799,14 @@ function sendStoryTextReply() {
   const text  = input?.value?.trim() ?? "";
   closeStoryReply();
   if (!text) return;
- 
+
   const t = document.createElement("div");
   t.textContent = "Mensagem enviada ✓";
   Object.assign(t.style, {
     position:"fixed", left:"50%", bottom:"90px",
     transform:"translateX(-50%)",
     background:"rgba(18,18,18,.92)", color:"#fff",
-    padding:"11px 22px", borderRadius:"999px",
+    padding:"10px 20px", borderRadius:"999px",
     fontSize:"14px", fontWeight:"500",
     zIndex:"999999", opacity:"0",
     transition:"opacity .25s ease",
@@ -1865,6 +1816,46 @@ function sendStoryTextReply() {
   requestAnimationFrame(() => { t.style.opacity = "1"; });
   setTimeout(() => { t.style.opacity = "0"; }, 1800);
   setTimeout(() => t.remove(), 2200);
+}
+
+
+// ─── closeStoryReply ─────────────────────────────────────────────────────────
+function closeStoryReply() {
+  const overlay = document.getElementById("storyReplyOverlay");
+  if (!overlay) return;
+
+  if (overlay._vpHandler && window.visualViewport) {
+    window.visualViewport.removeEventListener("resize", overlay._vpHandler);
+    window.visualViewport.removeEventListener("scroll", overlay._vpHandler);
+  }
+
+  // limpa qualquer ghost que reste
+  document.querySelectorAll("input[style*='-9999px']").forEach(e => e.remove());
+
+  overlay.remove();
+  document.body.style.overflow = "";
+  window.scrollTo(0, 0);
+  setTimeout(() => window.scrollTo(0, 0), 30);
+
+  const oldBar = document.getElementById("replyBar");
+  if (oldBar) {
+    oldBar.style.display   = "";
+    oldBar.style.opacity   = "1";
+    oldBar.style.transform = "translateY(0)";
+  }
+
+  const video = document.getElementById("storyVideo");
+  if (video) {
+    Object.assign(video.style, {
+      position:"fixed", top:"0", left:"0",
+      width:"100vw",
+      height:(window.__storyHeight || window.innerHeight) + "px",
+      objectFit:"cover",
+      transform:"translateZ(0)",
+      willChange:"transform",
+    });
+    video.play().catch(() => {});
+  }
 }
 
 function sendStoryReaction(emojiEl) {
