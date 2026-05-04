@@ -2355,23 +2355,6 @@ function showStories() {
   });
 }
 
-
-// ─────────────────────────────────────────────────────────────────────────────
-// CSS — cole no seu arquivo de estilos
-// ─────────────────────────────────────────────────────────────────────────────
-//
-// [data-story-avatar] {
-//   border: 2.5px solid #25D366;            /* verde = story não visto */
-//   border-radius: 50%;
-//   transition: border-color 0.4s ease;
-// }
-//
-// [data-story-avatar].story-viewed {
-//   border-color: rgba(255,255,255,0.25);   /* cinza = story já visto */
-// }
-//
-// ─────────────────────────────────────────────────────────────────────────────
-
 function openStoryReply() {
   // evita duplicação
   if (document.getElementById("storyReplyOverlay")) return;
