@@ -753,379 +753,395 @@ function mountChat() {
   }, 30000);
 }
 
-window.startCall = function() {
-  app.innerHTML = `
-    <div style="
-      height:100vh;
-      background:#0b0b0b url('https://www.transparenttextures.com/patterns/asfalt-dark.png');
-      color:#fff;
+// ─────────────────────────────────────────────────────────────────────────────
+// SUBSTITUA A FUNÇÃO startVideoCall INTEIRA POR ESTA NO SEU app.js
+// ─────────────────────────────────────────────────────────────────────────────
+
+window.startVideoCall = async function () {
+
+  let stream;
+  let currentFacing = "user";
+  let isSwitching   = false;
+  let isMuted       = false;
+  let isSpeaker     = true;  // alto-falante ligado por padrão no WhatsApp
+  let isVideoOff    = false;
+
+  // ── Ringtone ───────────────────────────────────────────────────────────────
+  const ringtone = new Audio("/assets/call.mp3");
+  ringtone.loop = true;
+
+  // ── Pede câmera ────────────────────────────────────────────────────────────
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: currentFacing },
+      audio: false,
+    });
+    ringtone.play().catch(() => {});
+  } catch {
+    console.warn("Permissão de câmera negada");
+    return;
+  }
+
+  // ── SVG ICONS (idênticos ao WhatsApp) ─────────────────────────────────────
+
+  // ··· Mais
+  const svgMore = (color = "#fff") => `
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="${color}">
+      <circle cx="5"  cy="12" r="2"/>
+      <circle cx="12" cy="12" r="2"/>
+      <circle cx="19" cy="12" r="2"/>
+    </svg>`;
+
+  // 🔊 Speaker — com ondas (ativo) / sem ondas (inativo)
+  const svgSpeaker = (active, color = "#000") => active
+    ? `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+          stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+         <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+         <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+       </svg>`
+    : `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+          stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+         <line x1="23" y1="9" x2="17" y2="15"/>
+         <line x1="17" y1="9" x2="23" y2="15"/>
+       </svg>`;
+
+  // 📷 Câmera (vídeo ligado / desligado)
+  const svgVideo = (off, color = "#fff") => off
+    ? `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+          stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+         <line x1="1" y1="1" x2="23" y2="23"/>
+         <path d="M21 21H3a2 2 0 0 1-2-2V8"/>
+         <path d="M10.66 6H14a2 2 0 0 1 2 2v2.34"/>
+         <path d="M22 8l-6 4 6 4V8z"/>
+       </svg>`
+    : `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+          stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+         <rect x="2" y="7" width="14" height="11" rx="2.5"/>
+         <path d="M22 8l-6 4 6 4V8z"/>
+       </svg>`;
+
+  // 🎤 Mic — riscado em vermelho quando mudo
+  const svgMic = (muted) => muted
+    ? `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+          stroke="#c0392b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+         <line x1="1" y1="1" x2="23" y2="23"/>
+         <path d="M9 9v3a3 3 0 0 0 5.12 2.12"/>
+         <path d="M15 9.34V5a3 3 0 0 0-5.94-.6"/>
+         <path d="M17 16.95A7 7 0 0 1 5 12v-2"/>
+         <path d="M19 12a7 7 0 0 1-.11 1.23"/>
+         <line x1="12" y1="19" x2="12" y2="23"/>
+         <line x1="8"  y1="23" x2="16" y2="23"/>
+       </svg>`
+    : `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+          stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+         <rect x="9" y="2" width="6" height="12" rx="3"/>
+         <path d="M19 10a7 7 0 0 1-14 0"/>
+         <line x1="12" y1="19" x2="12" y2="23"/>
+         <line x1="8"  y1="23" x2="16" y2="23"/>
+       </svg>`;
+
+  // 📞 Encerrar
+  const svgEnd = `
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none"
+        stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45
+               c.97.37 2 .57 3.07.57a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2
+               C8.98 22 2 14.84 2 6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2
+               c0 1.06.2 2.1.57 3.07a2 2 0 0 1-.46 2.11l-1 1z"
+            transform="rotate(135 12 12)"/>
+    </svg>`;
+
+  // ── Helper: cria botão ─────────────────────────────────────────────────────
+  // bg: cor do círculo | iconHtml | id para querySelector depois
+  const btn = (id, bg, iconHtml, label = "") => `
+    <div id="${id}" style="
       display:flex;
       flex-direction:column;
       align-items:center;
-      justify-content:space-between;
-      font-family:-apple-system,BlinkMacSystemFont;
+      gap:6px;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
+    ">
+      <div class="vc-circle" style="
+        width:62px;
+        height:62px;
+        border-radius:50%;
+        background:${bg};
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        transition:background .18s ease, transform .1s ease;
+      ">
+        ${iconHtml}
+      </div>
+      ${label ? `<span style="font-size:12px;color:rgba(255,255,255,.75);font-weight:500;">${label}</span>` : ""}
+    </div>`;
+
+  // ── HTML da tela ───────────────────────────────────────────────────────────
+  app.innerHTML = `
+    <div id="vcScreen" style="
+      position:relative;
+      height:100dvh;
+      background:#1a0a0a;
+      overflow:hidden;
+      font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+      opacity:0;
+      transform:scale(1.03);
+      transition:opacity .22s ease,transform .22s ease;
     ">
 
-      <!-- TOPO -->
-      <div style="margin-top:60px;text-align:center;">
-        <div style="font-size:22px;font-weight:600;">
+      <!-- VÍDEO LOCAL (câmera) -->
+      <video id="vcVideo" autoplay playsinline muted style="
+        position:absolute;
+        inset:0;
+        width:100%;
+        height:100%;
+        object-fit:cover;
+      "></video>
+
+      <!-- GRADIENTE TOPO -->
+      <div style="
+        position:absolute;
+        top:0;left:0;right:0;
+        height:180px;
+        background:linear-gradient(to bottom,rgba(0,0,0,.55),transparent);
+        pointer-events:none;
+        z-index:2;
+      "></div>
+
+      <!-- NOME + STATUS -->
+      <div style="
+        position:absolute;
+        top:54px;
+        width:100%;
+        text-align:center;
+        z-index:3;
+      ">
+        <div style="font-size:22px;font-weight:700;color:#fff;letter-spacing:-.3px;">
           ${CONTACT.title}
         </div>
-
-        <div id="callStatus" style="
-          margin-top:6px;
-          font-size:16px;
-          color:rgba(255,255,255,0.6);
+        <div id="vcStatus" style="
+          margin-top:5px;
+          font-size:15px;
+          color:rgba(255,255,255,.7);
         ">
-          Ligando...
+          Chamando...
         </div>
       </div>
 
-      <!-- FOTO -->
-      <img src="${ASSETS.avatar}" style="
-        width:180px;
-        height:180px;
+      <!-- BOTÃO GIRAR CÂMERA -->
+      <div id="vcFlip" style="
+        position:absolute;
+        right:18px;
+        top:130px;
+        width:52px;
+        height:52px;
         border-radius:50%;
-        object-fit:cover;
+        background:rgba(50,50,50,.55);
+        backdrop-filter:blur(16px);
+        -webkit-backdrop-filter:blur(16px);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        z-index:10;
+        cursor:pointer;
       ">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 4v6h-6"/>
+          <path d="M1 20v-6h6"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/>
+          <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"/>
+        </svg>
+      </div>
 
-      <!-- BOTTOM SHEET -->
+      <!-- GRADIENTE BAIXO -->
       <div style="
-        width:100%;
-        padding:24px 20px 30px;
-        background:#1c1c1e;
-        border-top-left-radius:28px;
-        border-top-right-radius:28px;
+        position:absolute;
+        bottom:0;left:0;right:0;
+        height:220px;
+        background:linear-gradient(to top,rgba(0,0,0,.7),transparent);
+        pointer-events:none;
+        z-index:2;
+      "></div>
+
+      <!-- BARRA DE CONTROLES -->
+      <div style="
+        position:absolute;
+        bottom:36px;
+        left:0;right:0;
+        display:flex;
+        justify-content:center;
+        z-index:10;
+      ">
+        <div id="vcControls" style="
+          background:rgba(28,28,30,.42);
+          backdrop-filter:blur(20px);
+          -webkit-backdrop-filter:blur(20px);
+          border-radius:40px;
+          padding:14px 20px;
+          display:flex;
+          gap:16px;
+          align-items:center;
+        ">
+
+          ${btn("vcMore",    "rgba(100,100,105,.8)", svgMore())}
+          ${btn("vcSpeaker", "#ffffff",              svgSpeaker(true, "#000"))}
+          ${btn("vcVideo",   "rgba(100,100,105,.8)", svgVideo(false, "#fff"))}
+          ${btn("vcMic",     "rgba(100,100,105,.8)", svgMic(false))}
+          ${btn("vcEnd",     "#ff3b30",              svgEnd)}
+
+        </div>
+      </div>
+
+      <!-- OVERLAY ENCERRADO -->
+      <div id="vcEndOverlay" style="
+        position:fixed;
+        inset:0;
+        background:#000;
+        color:#fff;
         display:flex;
         flex-direction:column;
         align-items:center;
+        justify-content:center;
+        gap:8px;
+        opacity:0;
+        pointer-events:none;
+        transition:opacity .35s ease;
+        z-index:999;
       ">
-      
-        <!-- GRID BOTÕES -->
-        <div style="
-          width:100%;
-          display:grid;
-          grid-template-columns:repeat(3,1fr);
-          gap:26px;
-        ">
-
-          ${callBtn(speakerIcon(), "Alto-falante", "speaker")}
-          ${callBtn(videoIcon(), "Vídeo", "", true)}
-          ${callBtn(muteIcon(), "Silenciar", "mute")}
-          ${callBtn(moreIcon(), "Mais", "more")}
-          ${callBtn(shareIcon(), "Compartilhar", "", true)}
-          ${endCallBtn()}
-
-        </div>
-
+        <div style="font-size:22px;font-weight:600;">${CONTACT.title}</div>
+        <div style="font-size:15px;opacity:.6;">Chamada encerrada</div>
       </div>
-
-      <!-- OVERLAY MAIS -->
-      <div id="callMoreOverlay" style="
-        position:fixed;
-        bottom:0;
-        left:0;
-        width:100%;
-        background:rgba(28,28,30,0.95);
-        backdrop-filter:blur(20px);
-        padding:20px;
-        display:none;
-        flex-direction:column;
-        gap:16px;
-        border-top-left-radius:20px;
-        border-top-right-radius:20px;
-      ">
-
-        <div style="
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          color:#fff;
-          font-size:16px;
-        ">
-          <div style="display:flex;align-items:center;gap:10px;">
-            🔒 Protegida com a criptografia de ponta a ponta
-          </div>
-
-          <div id="closeMore" style="
-            width:34px;
-            height:34px;
-            border-radius:50%;
-            background:#3a3a3c;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:18px;
-            cursor:pointer;
-          ">
-            ✕
-          </div>
-        </div>
-
-        <div style="
-          background:#2c2c2e;
-          border-radius:14px;
-          padding:16px;
-          color:#fff;
-          display:flex;
-          justify-content:space-between;
-          align-items:center;
-          font-size:16px;
-        ">
-          Enviar mensagem
-          💬
-        </div>
-
-      </div>
-    <!-- OVERLAY ENCERRAR -->
-    <div id="callEndOverlay" style="
-      position:fixed;
-      inset:0;
-      background:#000;
-      color:#fff;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      flex-direction:column;
-      font-size:18px;
-      opacity:0;
-      pointer-events:none;
-      transition:opacity 0.4s ease;
-      z-index:9999;
-    ">
-      <div style="font-size:22px;margin-bottom:6px;">
-        ${CONTACT.title}
-      </div>
-
-      <div style="opacity:0.6;">
-        Ligação encerrada
-      </div>
-    </div>
 
     </div>
   `;
 
-// 🔊 AUDIO CONTEXT (controle real de volume)
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-let source;
-let gainNode;
+  // ── Conecta vídeo ──────────────────────────────────────────────────────────
+  const vcVideo  = document.getElementById("vcVideo");
+  const vcScreen = document.getElementById("vcScreen");
 
-// 🔊 carregar áudio
-fetch("/assets/ringtone.mp3")
-  .then(res => res.arrayBuffer())
-  .then(buffer => audioCtx.decodeAudioData(buffer))
-  .then(decoded => {
-    source = audioCtx.createBufferSource();
-    gainNode = audioCtx.createGain();
+  vcVideo.srcObject = stream;
 
-    source.buffer = decoded;
-    source.loop = true;
-
-    source.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-
-    gainNode.gain.value = 0.08;
-
-    source.start(0);
-  });
-
-// 🔘 TOGGLES DOS BOTÕES
-setTimeout(() => {
-  document.querySelectorAll('.call-btn').forEach(btn => {
-    const action = btn.getAttribute('data-action');
-
-    const circle = btn.querySelector('.call-btn-circle');
-    const svg = btn.querySelector("svg");
-
-    // 🔊 SPEAKER
-    if (action === "speaker") {
-      btn.onclick = () => {
-        const active = btn.classList.toggle('active');
-
-        if (!gainNode) return;
-
-        if (active) {
-          circle.style.background = "#ffffff";
-          if (svg) {
-            svg.style.stroke = "#000";
-            svg.style.fill = "#000";
-          }
-          gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.1);
-        } else {
-          circle.style.background = "#2c2c2e";
-          if (svg) {
-            svg.style.stroke = "#fff";
-            svg.style.fill = "#fff";
-          }
-          gainNode.gain.setTargetAtTime(0.08, audioCtx.currentTime, 0.1);
-        }
-      };
-    }
-
-    // 🔇 MUTE
-    if (action === "mute") {
-      btn.onclick = () => {
-        const active = btn.classList.toggle('active');
-
-        if (active) {
-          circle.style.background = "#ffffff";
-          if (svg) {
-            svg.style.stroke = "#000";
-            svg.style.fill = "#000";
-          }
-        } else {
-          circle.style.background = "#2c2c2e";
-          if (svg) {
-            svg.style.stroke = "#fff";
-            svg.style.fill = "#fff";
-          }
-        }
-      };
-    }
-
-    // ➕ MORE
-    if (action === "more") {
-      btn.onclick = () => {
-        const overlay = document.getElementById("callMoreOverlay");
-        if (overlay) overlay.style.display = "flex";
-      };
-    }
-    // 📞 END CALL
-if (action === "end") {
-  btn.onclick = () => {
-    const overlay = document.getElementById("callEndOverlay");
-
-    if (overlay) {
-      overlay.style.opacity = "1";
-    }
-
-    // 🔻 fade do áudio
-    if (gainNode) {
-      gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2);
-    }
-
-    // ⏳ delay antes de sair
-    setTimeout(() => {
-      if (source) {
-        try { source.stop(0); } catch {}
-      }
-
-      openProfile(); // volta pro contato
-    }, 1200);
-  };
-}
-
-if (action === "video") {
-  btn.onclick = () => {
-    startVideoCall();
-  };
-}
-
-  });
-
-  const close = document.getElementById("closeMore");
-  if (close) {
-    close.onclick = () => {
-      const overlay = document.getElementById("callMoreOverlay");
-      if (overlay) overlay.style.display = "none";
-    };
-  }
-
-}, 0);
-
-// ⏱️ ENCERRAR CHAMADA COM FADE OUT (40s)
-setTimeout(() => {
-  if (gainNode) {
-    gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2);
-
-    setTimeout(() => {
-      if (source) {
-        try { source.stop(0); } catch {}
-      }
-    }, 600);
-  }
-
-  mountChat();
-}, 40000);
-
-// STATUS TIMELINE
-setTimeout(() => {
-  const el = document.getElementById("callStatus");
-
-  if (el) el.textContent = "Chamando...";
-
-  if (ringtone) {
-    ringtone.currentTime = 0;
-    ringtone.play().catch(() => {});
-  }
-
-}, 2000);
-};
-
-const speakerIcon = () => `
-<svg width="26" height="26" viewBox="0 0 24 24" fill="none"
-stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M5 10h3l4-3v10l-4-3H5z"/>
-  <path d="M15 9c1.2 1.2 1.2 4.8 0 6"/>
-</svg>`;
-
-const videoIcon = () => `
-<svg width="26" height="26" viewBox="0 0 24 24" fill="none"
-stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-  <rect x="3" y="6.5" width="13" height="11" rx="3"/>
-  <path d="M16 10l4-2v8l-4-2z"/>
-</svg>`;
-
-const muteIcon = () => `
-<svg width="26" height="26" viewBox="0 0 24 24" fill="none"
-stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M5 10h3l4-3v10l-4-3H5z"/>
-  <line x1="17" y1="9" x2="21" y2="15"/>
-  <line x1="21" y1="9" x2="17" y2="15"/>
-</svg>`;
-
-const moreIcon = () => `
-<svg width="26" height="26" viewBox="0 0 24 24" fill="#fff">
-  <circle cx="6" cy="12" r="1.6"/>
-  <circle cx="12" cy="12" r="1.6"/>
-  <circle cx="18" cy="12" r="1.6"/>
-</svg>`;
-
-const shareIcon = () => `
-<svg width="26" height="26" viewBox="0 0 24 24" fill="none"
-stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-  <rect x="3" y="7" width="12" height="10" rx="2.5"/>
-  <path d="M15 10l5-3v10l-5-3z"/>
-</svg>`;
-
-const endIcon = () => `
-<svg width="26" height="26" viewBox="0 0 24 24" fill="#fff">
-  <path d="M6 10.5c4-3 8-3 12 0l-1.8 2c-2.8-2-5.6-2-8.4 0l-1.8-2z"/>
-</svg>`;
-
-let ringtone;
-
-window.startVideoCall = async function() {
-
-  let stream;
-  let currentFacing = "user";
-  let isSwitching = false;
-
-  const ringtone = new Audio("assets/call.mp3");
-  ringtone.loop = true;
-
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: currentFacing },
-      audio: false
+  vcVideo.onloadedmetadata = () => {
+    vcVideo.play();
+    requestAnimationFrame(() => {
+      vcScreen.style.opacity   = "1";
+      vcScreen.style.transform = "scale(1)";
     });
+  };
 
-    ringtone.play().catch(()=>{});
+  // ── Funções de toggle ──────────────────────────────────────────────────────
 
-  } catch (err) {
-    console.log("Permissão negada");
-    return;
+  function setCircleBg(id, color) {
+    const el = document.querySelector(`#${id} .vc-circle`);
+    if (el) el.style.background = color;
   }
+
+  function setCircleIcon(id, html) {
+    const el = document.querySelector(`#${id} .vc-circle`);
+    if (el) el.innerHTML = html;
+  }
+
+  // SPEAKER
+  document.getElementById("vcSpeaker").onclick = () => {
+    isSpeaker = !isSpeaker;
+    if (isSpeaker) {
+      setCircleBg("vcSpeaker", "#ffffff");
+      setCircleIcon("vcSpeaker", svgSpeaker(true, "#000"));
+    } else {
+      setCircleBg("vcSpeaker", "rgba(100,100,105,.8)");
+      setCircleIcon("vcSpeaker", svgSpeaker(false, "#fff"));
+    }
+  };
+
+  // VÍDEO
+  document.getElementById("vcVideo").onclick = () => {
+    isVideoOff = !isVideoOff;
+
+    stream.getVideoTracks().forEach(t => { t.enabled = !isVideoOff; });
+
+    if (isVideoOff) {
+      setCircleBg("vcVideo", "#ffffff");
+      setCircleIcon("vcVideo", svgVideo(true, "#000"));
+    } else {
+      setCircleBg("vcVideo", "rgba(100,100,105,.8)");
+      setCircleIcon("vcVideo", svgVideo(false, "#fff"));
+    }
+  };
+
+  // MIC
+  document.getElementById("vcMic").onclick = () => {
+    isMuted = !isMuted;
+    if (isMuted) {
+      setCircleBg("vcMic", "#ffffff");
+      setCircleIcon("vcMic", svgMic(true));
+    } else {
+      setCircleBg("vcMic", "rgba(100,100,105,.8)");
+      setCircleIcon("vcMic", svgMic(false));
+    }
+  };
+
+  // MAIS (···)
+  document.getElementById("vcMore").onclick = () => {
+    // Pode abrir um sheet se quiser — por ora apenas feedback visual
+    const el = document.querySelector("#vcMore .vc-circle");
+    if (!el) return;
+    el.style.transform = "scale(.88)";
+    setTimeout(() => { el.style.transform = "scale(1)"; }, 120);
+  };
+
+  // GIRAR CÂMERA
+  document.getElementById("vcFlip").onclick = async () => {
+    if (isSwitching) return;
+    isSwitching = true;
+
+    currentFacing = currentFacing === "user" ? "environment" : "user";
+
+    try {
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: currentFacing },
+        audio: false,
+      });
+
+      const old = stream;
+      vcVideo.srcObject = newStream;
+      stream = newStream;
+
+      setTimeout(() => old.getTracks().forEach(t => t.stop()), 120);
+    } catch {}
+
+    isSwitching = false;
+  };
+
+  // ENCERRAR
+  document.getElementById("vcEnd").onclick = () => {
+    ringtone.pause();
+    ringtone.currentTime = 0;
+
+    const overlay = document.getElementById("vcEndOverlay");
+    if (overlay) overlay.style.opacity = "1";
+
+    vcScreen.style.opacity   = "0";
+    vcScreen.style.transform = "scale(.96)";
+
+    setTimeout(() => {
+      stream.getTracks().forEach(t => t.stop());
+      openProfile();
+    }, 380);
+  };
+
+  // ── Encerra automaticamente após 40s ──────────────────────────────────────
+  setTimeout(() => {
+    ringtone.pause();
+    stream.getTracks().forEach(t => t.stop());
+    openProfile();
+  }, 40000);
+};
+// ─────────────────────────────────────────────────────────────────────────────
 
   function flipCameraIcon() {
     return `
@@ -1303,7 +1319,6 @@ window.startVideoCall = async function() {
 
     });
   }, 0);
-};
 
 
 function endCallBtn() {
