@@ -1651,15 +1651,6 @@ function showStories() {
 // SUBSTITUA ESTAS 3 FUNÇÕES NO SEU app.js
 // =============================================================================
 
-// =============================================================================
-// SUBSTITUA ESTAS 3 FUNÇÕES NO SEU app.js
-// =============================================================================
-
-
-// =============================================================================
-// SUBSTITUA ESTAS 3 FUNÇÕES NO SEU app.js
-// =============================================================================
-
 
 // ─── openStoryReply ───────────────────────────────────────────────────────────
 function openStoryReply() {
@@ -1671,53 +1662,43 @@ function openStoryReply() {
   if (oldBar) oldBar.style.display = "none";
   document.body.style.overflow = "hidden";
 
-  // injeta CSS global uma única vez
+  // injeta CSS uma única vez
   if (!document.getElementById("storyReplyCSS")) {
     const style = document.createElement("style");
     style.id = "storyReplyCSS";
     style.textContent = `
-      /* iOS 15+ keyboard-inset-height — zero delay, nativo */
-      @supports (height: env(keyboard-inset-height)) {
-        #replyBarKeyboard {
-          bottom: env(keyboard-inset-height) !important;
-          transition: none !important;
-        }
-        #storyEmojiBlock {
-          bottom: calc(env(keyboard-inset-height) + 72px) !important;
-          transition: none !important;
-        }
+      /* iOS 15+ — teclado move o layout nativamente via interactive-widget */
+      #replyBarKeyboard {
+        position: fixed;
+        left: 0; right: 0;
+        bottom: 0;
+        z-index: 10002;
       }
 
-      /* Fallback: usa interactive-widget para empurrar o layout */
-      @media (max-height: 700px) {
-        #storyEmojiBlock { top: auto !important; }
-      }
-
-      #storyReplyOverlay * {
-        box-sizing: border-box;
+      /* emojis: ficam no centro do espaço disponível acima do input
+         = metade da altura visível acima da barra (~56px) menos metade do bloco de emojis */
+      #storyEmojiBlock {
+        position: fixed;
+        left: 0; right: 0;
+        bottom: 72px; /* logo acima da barra de input */
+        z-index: 10001;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 14px;
+        padding: 0 20px;
+        pointer-events: auto;
       }
     `;
     document.head.appendChild(style);
   }
 
-  // ghost input na base da tela — abre teclado SEM delay
+  // ghost input — abre teclado imediatamente
   const ghost = document.createElement("input");
   ghost.type = "text";
   ghost.setAttribute("autocomplete", "off");
-  ghost.style.cssText = [
-    "position:fixed",
-    "left:0",
-    "bottom:0",
-    "width:100%",
-    "height:44px",     // altura suficiente para o iOS reconhecer
-    "opacity:0",
-    "font-size:16px",  // >= 16px evita zoom automático no iOS
-    "pointer-events:none",
-    "z-index:-1",
-    "border:none",
-    "outline:none",
-    "background:transparent",
-  ].join(";");
+  ghost.style.cssText = "position:fixed;left:0;bottom:0;width:100%;height:44px;opacity:0;font-size:16px;pointer-events:none;z-index:-1;border:none;outline:none;background:transparent;";
   document.body.appendChild(ghost);
   ghost.focus();
 
@@ -1726,25 +1707,13 @@ function openStoryReply() {
       position:fixed;inset:0;z-index:9999;
     ">
 
-      <!-- dismiss: cobre tudo, fica atrás dos elementos interativos -->
+      <!-- dismiss -->
       <div id="storyReplyDismiss" style="
-        position:absolute;inset:0;
-        z-index:1;
+        position:absolute;inset:0;z-index:1;
       "></div>
 
-      <!-- emojis: position fixed, bottom dinâmico via CSS/JS
-           na foto: ficam logo acima do input, ~110px do topo do teclado -->
-      <div id="storyEmojiBlock" style="
-        position:fixed;
-        left:0;right:0;
-        bottom:72px;
-        z-index:10001;
-        display:flex;flex-direction:column;
-        align-items:center;justify-content:center;
-        gap:14px;
-        padding:0 20px;
-        pointer-events:auto;
-      ">
+      <!-- emojis -->
+      <div id="storyEmojiBlock">
         <div style="display:flex;gap:26px;align-items:center;justify-content:center;width:100%;">
           <span onclick="sendStoryReaction(this)" style="font-size:40px;cursor:pointer;line-height:1;user-select:none;-webkit-tap-highlight-color:transparent;">😍</span>
           <span onclick="sendStoryReaction(this)" style="font-size:40px;cursor:pointer;line-height:1;user-select:none;-webkit-tap-highlight-color:transparent;">😂</span>
@@ -1759,24 +1728,16 @@ function openStoryReply() {
         </div>
       </div>
 
-      <!-- input bar: position fixed, bottom=0 por padrão,
-           o CSS acima via env(keyboard-inset-height) o move sem delay -->
+      <!-- input bar -->
       <div id="replyBarKeyboard" style="
-        position:fixed;
-        left:0;right:0;
-        bottom:0;
-        z-index:10002;
         display:flex;align-items:center;gap:10px;
         padding:8px 12px 10px;
         background:#000;
         pointer-events:auto;
       ">
         <div style="
-          flex:1;
-          background:#1c1c1e;
-          border-radius:22px;
-          padding:9px 16px;
-          display:flex;align-items:center;
+          flex:1;background:#1c1c1e;border-radius:22px;
+          padding:9px 16px;display:flex;align-items:center;
         ">
           <input id="storyReplyInput" type="text"
             placeholder="Enviar mensagem..."
@@ -1793,7 +1754,7 @@ function openStoryReply() {
           width:38px;height:38px;border-radius:50%;
           background:#25D366;flex-shrink:0;
           display:flex;align-items:center;justify-content:center;
-          cursor:pointer;
+          cursor:pointer;pointer-events:auto;
         ">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
               stroke="#fff" stroke-width="2.5"
@@ -1807,51 +1768,48 @@ function openStoryReply() {
     </div>
   `);
 
-  const overlay  = document.getElementById("storyReplyOverlay");
-  const input    = document.getElementById("storyReplyInput");
-  const bar      = document.getElementById("replyBarKeyboard");
-  const emojis   = document.getElementById("storyEmojiBlock");
-  const dismiss  = document.getElementById("storyReplyDismiss");
-  const sendBtn  = document.getElementById("storyReplySend");
+  const overlay = document.getElementById("storyReplyOverlay");
+  const input   = document.getElementById("storyReplyInput");
+  const bar     = document.getElementById("replyBarKeyboard");
+  const emojis  = document.getElementById("storyEmojiBlock");
+  const dismiss = document.getElementById("storyReplyDismiss");
+  const sendBtn = document.getElementById("storyReplySend");
 
   // transfere foco
   ghost.addEventListener("blur", () => ghost.remove());
   input.focus();
   if (window.Telegram?.WebApp) Telegram.WebApp.expand();
 
-  // ── fallback JS para browsers sem suporte a keyboard-inset-height ────────
-  // (Android, versões antigas do iOS, Telegram WebView)
-  // Usa visualViewport como fallback — mesmo com pequeno delay é melhor que nada
-  const applyVP = () => {
-    if (!window.visualViewport) return;
+  // ── posiciona emojis no centro do espaço visível acima do input ──────────
+  // Com interactive-widget=resizes-content o viewport já foi redimensionado,
+  // então window.innerHeight já é a área visível acima do teclado.
+  // Os emojis ficam no centro dessa área: top = (innerHeight - barHeight - emojiBlockHeight) / 2
+  const INPUT_BAR_H = 60; // altura aproximada da barra
 
-    // verifica se o CSS nativo está funcionando
-    // se keyboard-inset-height for suportado, o CSS cuida — não precisa de JS
-    const supported = CSS.supports("height", "env(keyboard-inset-height)");
-    if (supported) return;
-
-    const kbHeight = Math.max(
-      window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop,
-      0
-    );
-    bar.style.bottom    = kbHeight + "px";
-    emojis.style.bottom = (kbHeight + 72) + "px";
+  const repositionEmojis = () => {
+    const visibleH    = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    const emojiH      = emojis.offsetHeight || 110;
+    const topPos      = Math.max((visibleH - INPUT_BAR_H - emojiH) / 2, 8);
+    emojis.style.top    = topPos + "px";
+    emojis.style.bottom = "auto";
   };
 
+  // aguarda o teclado abrir para calcular a posição correta
   if (window.visualViewport) {
-    window.visualViewport.addEventListener("resize", applyVP, { passive: true });
-    window.visualViewport.addEventListener("scroll", applyVP, { passive: true });
-    applyVP();
+    window.visualViewport.addEventListener("resize", repositionEmojis, { passive: true });
+    // calcula imediatamente e também após um tick (teclado pode não ter aberto ainda)
+    repositionEmojis();
+    setTimeout(repositionEmojis, 350);
+  } else {
+    repositionEmojis();
   }
-  overlay._vpHandler = applyVP;
+  overlay._vpHandler = repositionEmojis;
 
   // Enter envia
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") { e.preventDefault(); sendStoryTextReply(); }
   });
   sendBtn.onclick = sendStoryTextReply;
-
-  // dismiss
   dismiss.addEventListener("click", closeStoryReply);
 }
 
@@ -1887,12 +1845,9 @@ function closeStoryReply() {
   const overlay = document.getElementById("storyReplyOverlay");
   if (!overlay) return;
 
-  if (overlay._vpHandler && window.visualViewport) {
+  if (overlay._vpHandler && window.visualViewport)
     window.visualViewport.removeEventListener("resize", overlay._vpHandler);
-    window.visualViewport.removeEventListener("scroll", overlay._vpHandler);
-  }
 
-  // remove ghosts
   document.querySelectorAll("input[style*='pointer-events:none'][style*='opacity:0']")
     .forEach(e => e.remove());
 
