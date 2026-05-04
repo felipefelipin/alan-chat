@@ -552,8 +552,8 @@ window.startVideoCall = async function () {
   let stream;
   let currentFacing = "user";
   let isSwitching   = false;
-  let isMutedVC     = false;  // começa NORMAL (não mutado)
-  let isSpeakerVC   = true;   // speaker ativo por padrão
+  let isMutedVC     = false;  // mic começa NORMAL
+  let isSpeakerVC   = true;   // speaker ATIVO por padrão
 
   const ringtoneVC = new Audio("/assets/ringtone.mp3");
   ringtoneVC.loop = true;
@@ -569,180 +569,152 @@ window.startVideoCall = async function () {
     return;
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // ÍCONES — desenhados pixel a pixel iguais à foto
-  // ═══════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════
+  // SVG ICONS — pixel a pixel iguais às fotos
+  // ═══════════════════════════════════════════════════════════════
 
-  // ··· Mais
   const ICO_MORE = `
-    <svg width="24" height="8" viewBox="0 0 24 8" fill="rgba(255,255,255,0.9)">
-      <circle cx="2"  cy="4" r="2.2"/>
-      <circle cx="12" cy="4" r="2.2"/>
-      <circle cx="22" cy="4" r="2.2"/>
+    <svg width="20" height="6" viewBox="0 0 20 6" fill="rgba(255,255,255,0.88)">
+      <circle cx="2"  cy="3" r="2.1"/>
+      <circle cx="10" cy="3" r="2.1"/>
+      <circle cx="18" cy="3" r="2.1"/>
     </svg>`;
 
-  // 🔊 Speaker ATIVO — cone preenchido + 3 ondas, PRETO (fundo branco)
   const ICO_SPEAKER_ON = `
     <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
-      <!-- cone do alto-falante -->
-      <path d="M6 11.5H9.5L15 7V23L9.5 18.5H6V11.5Z" fill="#111"/>
-      <!-- onda pequena -->
-      <path d="M18 12.5C18.8 13.3 18.8 16.7 18 17.5"
-            stroke="#111" stroke-width="2" stroke-linecap="round" fill="none"/>
-      <!-- onda média -->
-      <path d="M20.5 10C22.5 12 22.5 18 20.5 20"
-            stroke="#111" stroke-width="2" stroke-linecap="round" fill="none"/>
-      <!-- onda grande -->
-      <path d="M23 7.5C26 10.5 26 19.5 23 22.5"
-            stroke="#111" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <path d="M5 11H9L15 6.5V23.5L9 19H5V11Z" fill="#111"/>
+      <path d="M18.5 11.5C19.6 12.6 19.6 17.4 18.5 18.5"
+            stroke="#111" stroke-width="2.1" stroke-linecap="round" fill="none"/>
+      <path d="M21.5 9C23.8 11.3 23.8 18.7 21.5 21"
+            stroke="#111" stroke-width="2.1" stroke-linecap="round" fill="none"/>
+      <path d="M24.5 6.5C28 10 28 20 24.5 23.5"
+            stroke="#111" stroke-width="2.1" stroke-linecap="round" fill="none"/>
     </svg>`;
 
-  // 🔇 Speaker INATIVO (fundo escuro)
   const ICO_SPEAKER_OFF = `
     <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
-      <path d="M6 11.5H9.5L15 7V23L9.5 18.5H6V11.5Z" fill="rgba(255,255,255,0.85)"/>
-      <line x1="19" y1="11" x2="25" y2="19" stroke="rgba(255,255,255,0.85)" stroke-width="2.2" stroke-linecap="round"/>
-      <line x1="25" y1="11" x2="19" y2="19" stroke="rgba(255,255,255,0.85)" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M5 11H9L15 6.5V23.5L9 19H5V11Z" fill="rgba(255,255,255,0.88)"/>
+      <line x1="19" y1="10" x2="26" y2="20" stroke="rgba(255,255,255,0.88)" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="26" y1="10" x2="19" y2="20" stroke="rgba(255,255,255,0.88)" stroke-width="2.2" stroke-linecap="round"/>
     </svg>`;
 
-  // 📷 Câmera — cinza claro sobre cinza médio, IDÊNTICA À FOTO, não clicável
+  // câmera — cinza sobre cinza, não clicável
   const ICO_CAM = `
     <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-      <!-- corpo retangular arredondado -->
-      <rect x="2" y="9" width="20" height="14" rx="3.5" fill="rgba(210,205,205,0.80)"/>
-      <!-- triângulo lateral (lente) -->
-      <path d="M22 13.5L29 10V22L22 18.5V13.5Z" fill="rgba(210,205,205,0.80)"/>
+      <rect x="2" y="9" width="20" height="14" rx="3.5" fill="rgba(205,198,198,0.78)"/>
+      <path d="M22 13.5L29.5 10V22L22 18.5V13.5Z" fill="rgba(205,198,198,0.78)"/>
     </svg>`;
 
-  // 🎤 Mic NORMAL — preenchido branco, fundo escuro
+  // mic normal — branco, fundo escuro
   const ICO_MIC_ON = `
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-      <rect x="9" y="2" width="6" height="12" rx="3"
-            fill="rgba(255,255,255,0.9)"/>
-      <path d="M5 10a7 7 0 0 0 14 0"
-            stroke="rgba(255,255,255,0.9)" stroke-width="2"
+      <rect x="9" y="2" width="6" height="12" rx="3" fill="rgba(255,255,255,0.88)"/>
+      <path d="M5 11a7 7 0 0 0 14 0"
+            stroke="rgba(255,255,255,0.88)" stroke-width="2"
             stroke-linecap="round" fill="none"/>
-      <line x1="12" y1="17" x2="12" y2="21"
-            stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round"/>
-      <line x1="9"  y1="21" x2="15" y2="21"
-            stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round"/>
+      <line x1="12" y1="18" x2="12" y2="22"
+            stroke="rgba(255,255,255,0.88)" stroke-width="2" stroke-linecap="round"/>
+      <line x1="9"  y1="22" x2="15" y2="22"
+            stroke="rgba(255,255,255,0.88)" stroke-width="2" stroke-linecap="round"/>
     </svg>`;
 
-  // 🎤 Mic MUTADO — VERMELHO + riscado diagonal, fundo BRANCO (idêntico à foto)
+  // mic mutado — vermelho + riscado, fundo branco
   const ICO_MIC_MUTED = `
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-      <!-- corpo do microfone -->
       <rect x="9" y="2" width="6" height="12" rx="3" fill="#c62828"/>
-      <!-- arco -->
-      <path d="M5 10a7 7 0 0 0 14 0"
-            stroke="#c62828" stroke-width="2" stroke-linecap="round" fill="none"/>
-      <!-- haste + base -->
-      <line x1="12" y1="17" x2="12" y2="21"
+      <path d="M5 11a7 7 0 0 0 14 0"
+            stroke="#c62828" stroke-width="2"
+            stroke-linecap="round" fill="none"/>
+      <line x1="12" y1="18" x2="12" y2="22"
             stroke="#c62828" stroke-width="2" stroke-linecap="round"/>
-      <line x1="9"  y1="21" x2="15" y2="21"
+      <line x1="9"  y1="22" x2="15" y2="22"
             stroke="#c62828" stroke-width="2" stroke-linecap="round"/>
-      <!-- linha diagonal riscando -->
-      <line x1="4" y1="4" x2="20" y2="20"
-            stroke="#c62828" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="3.5" y1="3.5" x2="20.5" y2="20.5"
+            stroke="#c62828" stroke-width="2.3" stroke-linecap="round"/>
     </svg>`;
 
-  // 📞 Encerrar — telefone inclinado branco, IDÊNTICO À FOTO
-  // (receiver curvado, inclinado ~45°, linha fina em cima)
+  // desligar — receiver clássico branco
   const ICO_END = `
-    <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
       <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2
-               c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20
-               c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5
-               c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"
-            fill="white"/>
+               c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57
+               .55 0 1 .45 1 1V20c0 .55-.45 1-1 1
+               C10.29 21 3 13.71 3 4.99 3 4.44 3.45 4 4 4h3.5
+               c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57
+               .11.35.03.74-.25 1.02l-2.2 2.2z"/>
     </svg>`;
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // HELPER — cria botão
-  // ═══════════════════════════════════════════════════════════════════════════
-  const mkBtn = (id, bg, icon, clickable = true) => `
+  // ═══════════════════════════════════════════════════════════════
+  // HELPER — botão circular
+  // ═══════════════════════════════════════════════════════════════
+  const mkBtn = (id, bg, icon, clickable = true, size = "66px") => `
     <div id="${id}" style="
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display:flex;align-items:center;justify-content:center;
+      flex-direction:column;gap:6px;flex-shrink:0;
       ${clickable ? "cursor:pointer;" : "pointer-events:none;"}
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      flex-shrink: 0;
+      user-select:none;-webkit-tap-highlight-color:transparent;
     ">
       <div id="${id}-bg" style="
-        width: 64px;
-        height: 64px;
-        border-radius: 50%;
-        background: ${bg};
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background 0.18s ease, transform 0.12s ease;
+        width:${size};height:${size};border-radius:50%;
+        background:${bg};
+        display:flex;align-items:center;justify-content:center;
+        transition:background .18s ease, transform .12s cubic-bezier(.34,1.56,.64,1);
+        box-shadow: 0 4px 18px rgba(0,0,0,0.28);
       ">
         <div id="${id}-icon" style="
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          line-height: 0;
-        ">
-          ${icon}
-        </div>
+          display:flex;align-items:center;justify-content:center;line-height:0;
+        ">${icon}</div>
       </div>
     </div>`;
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // HTML DA TELA
-  // ═══════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════
+  // HTML
+  // ═══════════════════════════════════════════════════════════════
   app.innerHTML = `
     <div id="vcScreen" style="
-      position: relative;
-      height: 100dvh;
-      background: #3d2020;
-      overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      opacity: 0;
-      transform: scale(1.03);
-      transition: opacity .22s ease, transform .22s ease;
+      position:relative;height:100dvh;
+      background:#3a2020;overflow:hidden;
+      font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+      opacity:0;transform:scale(1.03);
+      transition:opacity .22s ease,transform .22s ease;
     ">
 
-      <!-- vídeo (sempre ligado, câmera começa ativa) -->
+      <!-- vídeo sempre ativo -->
       <video id="vcVideo" autoplay playsinline muted style="
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+        position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
       "></video>
 
       <!-- gradiente topo -->
       <div style="
-        position:absolute;top:0;left:0;right:0;height:200px;
-        background:linear-gradient(to bottom,rgba(0,0,0,.6),transparent);
+        position:absolute;top:0;left:0;right:0;height:220px;
+        background:linear-gradient(to bottom,rgba(0,0,0,.65),transparent);
         pointer-events:none;z-index:2;
       "></div>
 
       <!-- nome + status -->
-      <div style="position:absolute;top:54px;width:100%;text-align:center;z-index:3;">
-        <div style="font-size:22px;font-weight:700;color:#fff;letter-spacing:-.3px;">
+      <div style="position:absolute;top:52px;width:100%;text-align:center;z-index:3;">
+        <div style="font-size:23px;font-weight:700;color:#fff;letter-spacing:-.4px;
+                    text-shadow:0 1px 8px rgba(0,0,0,0.4);">
           ${CONTACT.title}
         </div>
-        <div style="margin-top:5px;font-size:15px;color:rgba(255,255,255,.7);">
+        <div style="margin-top:6px;font-size:14px;color:rgba(255,255,255,.65);
+                    letter-spacing:.2px;">
           Chamando...
         </div>
       </div>
 
       <!-- botão girar câmera -->
       <div id="vcFlip" style="
-        position:absolute;right:18px;top:130px;
-        width:48px;height:48px;border-radius:50%;
-        background:rgba(70,50,50,.55);
-        backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+        position:absolute;right:20px;top:128px;
+        width:46px;height:46px;border-radius:50%;
+        background:rgba(0,0,0,0.35);
+        backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
         display:flex;align-items:center;justify-content:center;
         z-index:10;cursor:pointer;
+        box-shadow:0 2px 12px rgba(0,0,0,0.3);
       ">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-            stroke="rgba(255,255,255,.9)" stroke-width="2"
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="rgba(255,255,255,.9)" stroke-width="2.1"
             stroke-linecap="round" stroke-linejoin="round">
           <path d="M23 4v6h-6"/>
           <path d="M1 20v-6h6"/>
@@ -753,52 +725,154 @@ window.startVideoCall = async function () {
 
       <!-- gradiente baixo -->
       <div style="
-        position:absolute;bottom:0;left:0;right:0;height:240px;
-        background:linear-gradient(to top,rgba(0,0,0,.7),transparent);
+        position:absolute;bottom:0;left:0;right:0;height:260px;
+        background:linear-gradient(to top,rgba(0,0,0,.78),transparent);
         pointer-events:none;z-index:2;
       "></div>
 
       <!-- ═══ BARRA DE CONTROLES ═══ -->
       <div style="
-        position: absolute;
-        bottom: 44px;
-        left: 0; right: 0;
-        display: flex;
-        justify-content: center;
-        z-index: 10;
+        position:absolute;bottom:48px;left:0;right:0;
+        display:flex;justify-content:center;z-index:10;
       ">
         <div style="
-          background: rgba(60,40,40,0.45);
-          backdrop-filter: blur(24px);
-          -webkit-backdrop-filter: blur(24px);
-          border-radius: 52px;
-          padding: 12px 16px;
-          display: flex;
-          gap: 12px;
-          align-items: center;
+          background:rgba(50,32,32,0.50);
+          backdrop-filter:blur(28px);
+          -webkit-backdrop-filter:blur(28px);
+          border-radius:56px;
+          padding:14px 20px;
+          display:flex;gap:14px;align-items:center;
+          border:0.5px solid rgba(255,255,255,0.08);
         ">
-          ${mkBtn("vcMore",    "rgba(110,85,85,0.80)", ICO_MORE,       true)}
+          ${mkBtn("vcMore",    "rgba(100,78,78,0.82)", ICO_MORE,       true)}
           ${mkBtn("vcSpeaker", "#ffffff",               ICO_SPEAKER_ON, true)}
-          ${mkBtn("vcCam",     "rgba(115,105,105,0.75)", ICO_CAM,       false)}
-          ${mkBtn("vcMic",     "rgba(110,85,85,0.80)", ICO_MIC_ON,     true)}
-          ${mkBtn("vcEnd",     "#e5252a",               ICO_END,        true)}
+          ${mkBtn("vcCam",     "rgba(108,96,96,0.78)", ICO_CAM,        false)}
+          ${mkBtn("vcMic",     "rgba(100,78,78,0.82)", ICO_MIC_ON,     true)}
+          ${mkBtn("vcEnd",     "#e8242a",               ICO_END,        true)}
+        </div>
+      </div>
+
+      <!-- ═══ MORE SHEET — idêntico à foto ═══ -->
+      <div id="vcMoreSheet" style="
+        position:fixed;inset:0;z-index:200;
+        display:none;align-items:flex-end;justify-content:center;
+        background:rgba(0,0,0,0.45);
+        backdrop-filter:blur(4px);
+        -webkit-backdrop-filter:blur(4px);
+      ">
+        <div style="
+          width:100%;max-width:480px;
+          background:#1c1c1e;
+          border-top-left-radius:20px;
+          border-top-right-radius:20px;
+          padding:20px 20px 44px;
+          font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+          animation: slideUp .28s cubic-bezier(.32,.72,0,1);
+        ">
+
+          <!-- cabeçalho: cadeado + texto + X -->
+          <div style="
+            display:flex;align-items:flex-start;
+            justify-content:space-between;
+            margin-bottom:24px;
+            gap:12px;
+          ">
+            <div style="flex:1;"></div>
+
+            <div style="
+              flex:4;
+              display:flex;flex-direction:column;align-items:center;
+              gap:4px;
+            ">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <!-- cadeado -->
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="rgba(255,255,255,0.85)" stroke-width="2.2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <span style="
+                  color:#fff;font-size:15px;font-weight:600;
+                  text-align:center;line-height:1.3;
+                ">
+                  Protegida com a criptografia<br>de ponta a ponta
+                </span>
+              </div>
+            </div>
+
+            <!-- botão X -->
+            <div id="vcMoreClose" style="
+              flex:1;display:flex;justify-content:flex-end;
+              cursor:pointer;
+            ">
+              <div style="
+                width:34px;height:34px;border-radius:50%;
+                background:rgba(255,255,255,0.14);
+                display:flex;align-items:center;justify-content:center;
+              ">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+                    stroke="rgba(255,255,255,0.75)" stroke-width="2.2"
+                    stroke-linecap="round">
+                  <line x1="1" y1="1" x2="13" y2="13"/>
+                  <line x1="13" y1="1" x2="1" y2="13"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- lista de opções -->
+          <div style="
+            background:#2c2c2e;
+            border-radius:14px;
+            overflow:hidden;
+          ">
+
+            <!-- apenas Enviar mensagem (sem Compartilhar tela) -->
+            <div id="vcMoreMsg" style="
+              display:flex;align-items:center;justify-content:space-between;
+              padding:18px 20px;
+              cursor:pointer;
+            ">
+              <span style="color:#fff;font-size:17px;font-weight:400;">
+                Enviar mensagem
+              </span>
+              <!-- ícone balão de chat -->
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+                  stroke="rgba(255,255,255,0.55)" stroke-width="1.8"
+                  stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14
+                         a2 2 0 0 1 2 2z"/>
+              </svg>
+            </div>
+
+          </div>
         </div>
       </div>
 
       <!-- overlay encerrado -->
       <div id="vcEndOverlay" style="
         position:fixed;inset:0;background:#000;color:#fff;
-        display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
-        opacity:0;pointer-events:none;transition:opacity .35s ease;z-index:999;
+        display:flex;flex-direction:column;align-items:center;
+        justify-content:center;gap:8px;
+        opacity:0;pointer-events:none;
+        transition:opacity .35s ease;z-index:999;
       ">
         <div style="font-size:22px;font-weight:600;">${CONTACT.title}</div>
         <div style="font-size:15px;opacity:.6;">Chamada encerrada</div>
       </div>
 
     </div>
+
+    <style>
+      @keyframes slideUp {
+        from { transform: translateY(100%); opacity: 0; }
+        to   { transform: translateY(0);   opacity: 1; }
+      }
+    </style>
   `;
 
-  // ── conecta vídeo ──────────────────────────────────────────────────────────
+  // ── conecta vídeo ──────────────────────────────────────────────
   const vcVideo  = document.getElementById("vcVideo");
   const vcScreen = document.getElementById("vcScreen");
 
@@ -811,7 +885,7 @@ window.startVideoCall = async function () {
     });
   };
 
-  // ── helpers ────────────────────────────────────────────────────────────────
+  // ── helpers ────────────────────────────────────────────────────
   function setBg(id, color) {
     const el = document.getElementById(id + "-bg");
     if (el) el.style.background = color;
@@ -823,11 +897,42 @@ window.startVideoCall = async function () {
   function pulse(id) {
     const el = document.getElementById(id + "-bg");
     if (!el) return;
-    el.style.transform = "scale(0.87)";
-    setTimeout(() => { el.style.transform = "scale(1)"; }, 130);
+    el.style.transform = "scale(0.86)";
+    setTimeout(() => { el.style.transform = "scale(1)"; }, 140);
   }
 
-  // ── SPEAKER ───────────────────────────────────────────────────────────────
+  // ── MORE SHEET ─────────────────────────────────────────────────
+  const sheet = document.getElementById("vcMoreSheet");
+
+  function openSheet() {
+    sheet.style.display = "flex";
+    requestAnimationFrame(() => { sheet.style.opacity = "1"; });
+  }
+  function closeSheet() {
+    sheet.style.display = "none";
+  }
+
+  document.getElementById("vcMore").onclick = () => {
+    pulse("vcMore");
+    setTimeout(openSheet, 80);
+  };
+
+  document.getElementById("vcMoreClose").onclick = closeSheet;
+
+  // fechar clicando no fundo
+  sheet.addEventListener("click", (e) => {
+    if (e.target === sheet) closeSheet();
+  });
+
+  // Enviar mensagem → volta para o chat
+  document.getElementById("vcMoreMsg").onclick = () => {
+    closeSheet();
+    ringtoneVC.pause();
+    try { stream.getTracks().forEach(t => t.stop()); } catch {}
+    mountChat();
+  };
+
+  // ── SPEAKER ────────────────────────────────────────────────────
   document.getElementById("vcSpeaker").onclick = () => {
     pulse("vcSpeaker");
     isSpeakerVC = !isSpeakerVC;
@@ -835,38 +940,32 @@ window.startVideoCall = async function () {
       setBg("vcSpeaker", "#ffffff");
       setIcon("vcSpeaker", ICO_SPEAKER_ON);
     } else {
-      setBg("vcSpeaker", "rgba(110,85,85,0.80)");
+      setBg("vcSpeaker", "rgba(100,78,78,0.82)");
       setIcon("vcSpeaker", ICO_SPEAKER_OFF);
     }
   };
 
-  // ── MIC ── começa NORMAL, só muta ao clicar ───────────────────────────────
+  // ── MIC ────────────────────────────────────────────────────────
   document.getElementById("vcMic").onclick = () => {
     pulse("vcMic");
     isMutedVC = !isMutedVC;
     if (isMutedVC) {
-      // MUTADO: fundo branco + ícone vermelho riscado (igual à foto)
       setBg("vcMic", "#ffffff");
       setIcon("vcMic", ICO_MIC_MUTED);
     } else {
-      // NORMAL: fundo escuro + ícone branco
-      setBg("vcMic", "rgba(110,85,85,0.80)");
+      setBg("vcMic", "rgba(100,78,78,0.82)");
       setIcon("vcMic", ICO_MIC_ON);
     }
   };
 
-  // ── MAIS ─────────────────────────────────────────────────────────────────
-  document.getElementById("vcMore").onclick = () => { pulse("vcMore"); };
-
-  // ── GIRAR CÂMERA ─────────────────────────────────────────────────────────
+  // ── GIRAR CÂMERA ───────────────────────────────────────────────
   document.getElementById("vcFlip").onclick = async () => {
     if (isSwitching) return;
     isSwitching = true;
     currentFacing = currentFacing === "user" ? "environment" : "user";
     try {
       const newStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: currentFacing },
-        audio: false,
+        video: { facingMode: currentFacing }, audio: false,
       });
       const old = stream;
       vcVideo.srcObject = newStream;
@@ -876,16 +975,15 @@ window.startVideoCall = async function () {
     isSwitching = false;
   };
 
-  // ── ENCERRAR ─────────────────────────────────────────────────────────────
+  // ── ENCERRAR ───────────────────────────────────────────────────
   document.getElementById("vcEnd").onclick = () => {
-    ringtoneVC.pause();
-    ringtoneVC.currentTime = 0;
+    ringtoneVC.pause(); ringtoneVC.currentTime = 0;
     const ol = document.getElementById("vcEndOverlay");
     if (ol) ol.style.opacity = "1";
     vcScreen.style.opacity   = "0";
     vcScreen.style.transform = "scale(.96)";
     setTimeout(() => {
-      stream.getTracks().forEach(t => t.stop());
+      try { stream.getTracks().forEach(t => t.stop()); } catch {}
       openProfile();
     }, 380);
   };
