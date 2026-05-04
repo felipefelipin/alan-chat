@@ -753,9 +753,6 @@ function mountChat() {
   }, 30000);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SUBSTITUA A FUNÇÃO startVideoCall INTEIRA POR ESTA NO SEU app.js
-// ─────────────────────────────────────────────────────────────────────────────
 
 window.startVideoCall = async function () {
 
@@ -1141,7 +1138,6 @@ window.startVideoCall = async function () {
     openProfile();
   }, 40000);
 };
-// ─────────────────────────────────────────────────────────────────────────────
 
   function flipCameraIcon() {
     return `
