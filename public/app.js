@@ -1188,61 +1188,114 @@ function markStoryAsViewed() {
 function exitStories(fromSwipe = false, swipeScreen = null) {
   if (_storyExiting) return;
   _storyExiting = true;
-
+ 
   const video  = document.getElementById("storyVideo");
   const screen = swipeScreen || document.querySelector(".full");
-
+ 
   if (!screen) { _storyExiting = false; return; }
-
-  if (window.storyViewed) markStoryAsViewed();
-
+ 
+  // Marca como visto apenas na primeira vez (storyEverViewed persiste)
+  if (!window.storyEverViewed) {
+    window.storyEverViewed = true;
+    markStoryAsViewed();
+  }
+ 
   const origin = getAvatarOrigin();
-
   screen.style.transformOrigin = `${origin.x} ${origin.y}`;
   screen.style.transition      = `transform ${STORY_DURATION}ms ${STORY_EASING}, opacity ${STORY_DURATION}ms ${STORY_EASING}`;
   screen.style.transform       = fromSwipe ? "scale(0) translateY(0)" : "scale(0.04)";
   screen.style.opacity         = "0";
-
+ 
   setTimeout(() => {
-    video.pause(); video.src = ""; video.style.display = "none";
-    video.oncanplay = null; video.onplay = null; video.onpause = null; video.onended = null;
+    // ✅ FIX: NÃO limpa o src — só pausa e esconde
+    // Assim o vídeo fica pronto para a próxima abertura sem race condition
+    video.pause();
+    video.style.display = "none";
+ 
+    // Limpa apenas os handlers para não acumular listeners
+    video.oncanplay = null;
+    video.onplay    = null;
+    video.onpause   = null;
+    video.onended   = null;
+ 
     _storyExiting = false;
-    mountChat(); // ← FIX #4: era showHome()
+    mountChat();
   }, STORY_DURATION + 30);
 }
 
 function showStories() {
   console.log("📸 Stories aberto");
-  _storyExiting = false; window.storyViewed = false;
-
+ 
+  _storyExiting = false;
+  // ✅ FIX: NÃO reseta storyEverViewed (anel continua cinza se já viu)
+  // Apenas reseta o estado da sessão atual
+  window.storyViewed = false;
+ 
   const video = document.getElementById("storyVideo");
+ 
   if (!window.__storyHeight) window.__storyHeight = window.innerHeight;
   const realHeight = window.__storyHeight;
-
-  if (!video.src) video.src = "/assets/story-video.mp4";
-
-  Object.assign(video.style, {
-    display:"block", position:"fixed", top:"0", left:"0",
-    width:"100vw", height:realHeight+"px", objectFit:"cover",
-    zIndex:"0", transform:"translateZ(0)", willChange:"transform",
-  });
+ 
+  // ✅ FIX: Garante que o src está correto ANTES de tudo
+  const correctSrc = "/assets/story-video.mp4";
+  const needsReload = !video.src
+    || video.src === ""
+    || video.src === window.location.origin + "/"
+    || video.src === window.location.href;
+ 
+  if (needsReload) {
+    video.src = correctSrc;
+  }
+ 
+  // ✅ FIX: Sempre reseta para o início
   video.currentTime = 0;
-
-  if (video.readyState >= 2) video.play().catch(() => {});
-  else video.oncanplay = () => { video.play().catch(() => {}); };
-
+ 
+  Object.assign(video.style, {
+    display:    "block",
+    position:   "fixed",
+    top:        "0",
+    left:       "0",
+    width:      "100vw",
+    height:     realHeight + "px",
+    objectFit:  "cover",
+    zIndex:     "0",
+    transform:  "translateZ(0)",
+    willChange: "transform",
+  });
+ 
+  // ✅ FIX: Define handlers ANTES de tentar dar play
+  video.oncanplay = () => {
+    video.play().catch(() => {});
+  };
+ 
+  // Tenta dar play (funciona se readyState >= 2, senão o oncanplay cuida)
+  if (video.readyState >= 2) {
+    video.play().catch(() => {});
+  } else {
+    // Força o browser a reprocessar o vídeo
+    video.load();
+  }
+ 
   const origin = getAvatarOrigin();
-
+ 
   app.innerHTML = `
     <div class="full" style="
-      background:transparent;position:relative;overflow:hidden;height:${realHeight}px;
-      transform-origin:${origin.x} ${origin.y};transform:scale(0.04);opacity:0;
-      will-change:transform,opacity;
+      background: transparent;
+      position: relative;
+      overflow: hidden;
+      height: ${realHeight}px;
+      transform-origin: ${origin.x} ${origin.y};
+      transform: scale(0.04);
+      opacity: 0;
+      will-change: transform, opacity;
     ">
+ 
+      <!-- Barra de progresso -->
       <div style="position:absolute;top:0;left:0;right:0;height:3px;background:rgba(255,255,255,0.22);z-index:20;">
-        <div id="progressBar" style="height:100%;width:0%;background:#fff;"></div>
+        <div id="progressBar" style="height:100%;width:0%;background:#fff;transition:width 0.1s linear;"></div>
       </div>
-
+ 
+      <!-- Header -->
       <div style="position:absolute;top:8px;left:14px;right:14px;display:flex;align-items:center;z-index:30;">
         <button onclick="exitStories()" style="background:none;border:0;color:#fff;font-size:34px;margin-right:10px;padding:0;line-height:1;cursor:pointer;">‹</button>
         <div style="width:32px;height:32px;margin-right:10px;border-radius:50%;overflow:hidden;flex-shrink:0;">
@@ -1253,26 +1306,49 @@ function showStories() {
           <div style="color:rgba(255,255,255,0.85);font-size:12px;margin-top:2px;">12h</div>
         </div>
       </div>
-
-      <div id="replyBar" style="position:absolute;bottom:0;left:0;right:0;padding:12px 16px 20px;background:linear-gradient(to top,rgba(0,0,0,.92),transparent);z-index:40;">
-        <div onclick="openStoryReply()" style="background:rgba(255,255,255,.14);border-radius:30px;padding:14px 20px;color:#fff;display:flex;align-items:center;cursor:pointer;">
-          <span style="flex:1;">Responder...</span>
+ 
+      <!-- Barra de resposta -->
+      <div id="replyBar" style="
+        position:absolute;bottom:0;left:0;right:0;
+        padding:12px 16px 20px;
+        background:linear-gradient(to top,rgba(0,0,0,.92),transparent);
+        z-index:40;
+      ">
+        <div onclick="openStoryReply()" style="
+          background:rgba(255,255,255,.14);
+          border-radius:30px;
+          padding:14px 20px;
+          color:#fff;
+          display:flex;
+          align-items:center;
+          cursor:pointer;
+        ">
+          <span style="flex:1;color:rgba(255,255,255,0.7);font-size:15px;">Responder...</span>
+          <div style="
+            width:36px;height:36px;border-radius:50%;
+            overflow:hidden;flex-shrink:0;margin-left:8px;
+          ">
+            <img src="${ASSETS.avatar}?v=1" style="width:100%;height:100%;object-fit:cover;" />
+          </div>
         </div>
       </div>
+ 
     </div>
   `;
-
+ 
   const screen = document.querySelector(".full");
-
+ 
+  // Animação de entrada
   requestAnimationFrame(() => requestAnimationFrame(() => {
     screen.style.transition = `transform ${STORY_DURATION}ms ${STORY_EASING}, opacity ${STORY_DURATION}ms ${STORY_EASING}`;
     screen.style.transform  = "scale(1)";
     screen.style.opacity    = "1";
   }));
-
+ 
+  // Progress bar
   const progress = document.getElementById("progressBar");
   let progressInterval = null;
-
+ 
   video.onplay = () => {
     clearInterval(progressInterval);
     progressInterval = setInterval(() => {
@@ -1280,43 +1356,61 @@ function showStories() {
       progress.style.width = (video.currentTime / video.duration) * 100 + "%";
     }, 50);
   };
-  video.onpause  = () => clearInterval(progressInterval);
-  video.onended  = () => { clearInterval(progressInterval); window.storyViewed = true; exitStories(); };
-
+ 
+  video.onpause = () => clearInterval(progressInterval);
+ 
+  video.onended = () => {
+    clearInterval(progressInterval);
+    window.storyViewed = true;
+    exitStories();
+  };
+ 
+  // Click para sair
   screen.addEventListener("click", (e) => {
     if (e.target.closest("#replyBar") || e.target.closest("button") || _storyExiting) return;
-    window.storyViewed = true; exitStories();
+    window.storyViewed = true;
+    exitStories();
   });
-
-  let startY = 0, startX = 0, currentY = 0, dragging = false, isHolding = false, holdTimer = null, swipeCommitted = false;
-
+ 
+  // Swipe down + hold
+  let startY = 0, startX = 0, currentY = 0;
+  let dragging = false, isHolding = false, holdTimer = null, swipeCommitted = false;
+ 
   screen.addEventListener("touchstart", (e) => {
     if (_storyExiting) return;
     startY = e.touches[0].clientY; startX = e.touches[0].clientX;
     currentY = startY; dragging = true; swipeCommitted = false; isHolding = false;
-    holdTimer = setTimeout(() => { if (!swipeCommitted) { isHolding = true; video.pause(); } }, 180);
+    holdTimer = setTimeout(() => {
+      if (!swipeCommitted) { isHolding = true; video.pause(); }
+    }, 180);
   }, { passive: true });
-
+ 
   screen.addEventListener("touchmove", (e) => {
     if (_storyExiting || !dragging || isHolding) return;
     clearTimeout(holdTimer);
-    const touchY = e.touches[0].clientY, touchX = e.touches[0].clientX;
-    const diffY = touchY - startY, diffX = Math.abs(touchX - startX);
+    const touchY = e.touches[0].clientY;
+    const touchX = e.touches[0].clientX;
+    const diffY  = touchY - startY;
+    const diffX  = Math.abs(touchX - startX);
     if (diffX > diffY || diffY <= 0) return;
     currentY = touchY;
     const prog2  = Math.min(diffY / (realHeight * 0.55), 1);
     const scale  = 1 - prog2 * 0.46;
     const transY = diffY * 0.65;
-    const opac   = 1 - prog2 * 0.65;
+    const opac   = Math.max(1 - prog2 * 0.65, 0.35);
     screen.style.transition      = "none";
     screen.style.transformOrigin = `${origin.x} ${origin.y}`;
     screen.style.transform       = `translateY(${transY}px) scale(${scale})`;
-    screen.style.opacity         = String(Math.max(opac, 0.35));
+    screen.style.opacity         = String(opac);
   }, { passive: true });
-
+ 
   screen.addEventListener("touchend", () => {
     clearTimeout(holdTimer);
-    if (isHolding) { isHolding = false; dragging = false; video.play().catch(() => {}); return; }
+    if (isHolding) {
+      isHolding = false; dragging = false;
+      video.play().catch(() => {});
+      return;
+    }
     dragging = false;
     if (_storyExiting) return;
     const diffY = currentY - startY;
@@ -1327,77 +1421,10 @@ function showStories() {
       screen.style.opacity         = "1";
       return;
     }
-    swipeCommitted = true; window.storyViewed = true;
+    swipeCommitted = true;
+    window.storyViewed = true;
     exitStories(true, screen);
   });
-}
-
-// ==================== STORY REPLY ====================
-function openStoryReply() {
-  if (document.getElementById("storyReplyOverlay")) return;
-  const video  = document.getElementById("storyVideo");
-  const oldBar = document.getElementById("replyBar");
-  if (video) video.pause();
-  if (oldBar) oldBar.style.display = "none";
-  document.body.style.overflow = "hidden";
-
-  document.body.insertAdjacentHTML("beforeend", `
-    <div id="storyReplyOverlay" style="position:fixed;inset:0;z-index:9999;">
-      <div class="story-hint">Toque para enviar</div>
-      <div class="story-emojis">
-        <div class="emoji-row">
-          <span onclick="sendStoryReaction(this)">😍</span>
-          <span onclick="sendStoryReaction(this)">😂</span>
-          <span onclick="sendStoryReaction(this)">😮</span>
-          <span onclick="sendStoryReaction(this)">😢</span>
-        </div>
-        <div class="emoji-row">
-          <span onclick="sendStoryReaction(this)">🙏</span>
-          <span onclick="sendStoryReaction(this)">👏</span>
-          <span onclick="sendStoryReaction(this)">🎉</span>
-          <span onclick="sendStoryReaction(this)">💯</span>
-        </div>
-      </div>
-      <div class="story-input-bar" id="replyBarKeyboard">
-        <span class="plus-btn">＋</span>
-        <div class="story-input-wrap">
-          <input id="storyReplyInput" type="text" placeholder="" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
-        </div>
-        <span class="side-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 7h4l2-2h4l2 2h4v12H4z"/><circle cx="12" cy="13" r="3.5"/>
-          </svg>
-        </span>
-        <span class="side-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="9" y="3" width="6" height="12" rx="3"/>
-            <path d="M6 11a6 6 0 0 0 12 0"/><path d="M12 17v4"/>
-          </svg>
-        </span>
-      </div>
-    </div>
-  `);
-
-  const overlay  = document.getElementById("storyReplyOverlay");
-  const input    = document.getElementById("storyReplyInput");
-  const replyBar = document.getElementById("replyBarKeyboard");
-
-  replyBar.style.opacity = "1"; replyBar.style.bottom = "10px"; replyBar.style.transform = "translateY(0)";
-  input.focus(); input.click();
-  try { input.setSelectionRange(input.value.length, input.value.length); } catch {}
-  if (window.Telegram?.WebApp) Telegram.WebApp.expand();
-  requestAnimationFrame(() => { input.focus({ preventScroll: true }); input.click(); });
-
-  let keyboardOpen = false;
-  const handleViewport = () => {
-    const vh   = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    const kb   = window.innerHeight - vh;
-    if (kb > 120 && !keyboardOpen) { keyboardOpen = true; replyBar.style.transition = "none"; replyBar.style.transform = "translateY(-320px)"; }
-    if (kb < 80  && keyboardOpen)  { keyboardOpen = false; replyBar.style.transition = "none"; replyBar.style.transform = "translateY(0)"; }
-  };
-  window.visualViewport?.addEventListener("resize", handleViewport);
-  overlay._viewportHandler = handleViewport;
-  overlay.addEventListener("click", (e) => { if (e.target.id === "storyReplyOverlay") closeStoryReply(); });
 }
 
 function closeStoryReply() {
