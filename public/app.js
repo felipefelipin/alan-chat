@@ -1651,61 +1651,54 @@ function showStories() {
 // ─── openStoryReply ───────────────────────────────────────────────────────────
 function openStoryReply() {
   if (document.getElementById("storyReplyOverlay")) return;
-
+ 
   const video  = document.getElementById("storyVideo");
   const oldBar = document.getElementById("replyBar");
   if (video) video.pause();
   if (oldBar) oldBar.style.display = "none";
   document.body.style.overflow = "hidden";
-
-  // emojis no estilo antigo (2 linhas de 4)
+ 
   document.body.insertAdjacentHTML("beforeend", `
     <div id="storyReplyOverlay" style="
       position:fixed;inset:0;z-index:9999;
+      display:flex;flex-direction:column;
+      justify-content:flex-end;
     ">
-
-      <div class="story-hint" style="
-        position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);
-        color:rgba(255,255,255,0.7);font-size:14px;pointer-events:none;
-      ">Toque para enviar</div>
-
-      <!-- emojis — estrutura antiga: 2 linhas de 4 -->
-      <div class="story-emojis" style="
-        position:absolute;
-        bottom:100px;
-        left:0;right:0;
-        display:flex;flex-direction:column;align-items:center;gap:12px;
+ 
+      <!-- área clicável acima fecha o overlay -->
+      <div id="storyReplyDismiss" style="flex:1;"></div>
+ 
+      <!-- emojis — centralizados, tamanho igual ao original -->
+      <div style="
+        display:flex;flex-direction:column;align-items:center;
+        gap:14px;padding-bottom:18px;
       ">
-        <div class="emoji-row" style="display:flex;gap:16px;">
-          <span onclick="sendStoryReaction(this)" style="font-size:32px;cursor:pointer;">😍</span>
-          <span onclick="sendStoryReaction(this)" style="font-size:32px;cursor:pointer;">😂</span>
-          <span onclick="sendStoryReaction(this)" style="font-size:32px;cursor:pointer;">😮</span>
-          <span onclick="sendStoryReaction(this)" style="font-size:32px;cursor:pointer;">😢</span>
+        <div style="display:flex;gap:20px;align-items:center;justify-content:center;">
+          <span onclick="sendStoryReaction(this)" style="font-size:36px;cursor:pointer;line-height:1;">😍</span>
+          <span onclick="sendStoryReaction(this)" style="font-size:36px;cursor:pointer;line-height:1;">😂</span>
+          <span onclick="sendStoryReaction(this)" style="font-size:36px;cursor:pointer;line-height:1;">😮</span>
+          <span onclick="sendStoryReaction(this)" style="font-size:36px;cursor:pointer;line-height:1;">😢</span>
         </div>
-        <div class="emoji-row" style="display:flex;gap:16px;">
-          <span onclick="sendStoryReaction(this)" style="font-size:32px;cursor:pointer;">🙏</span>
-          <span onclick="sendStoryReaction(this)" style="font-size:32px;cursor:pointer;">👏</span>
-          <span onclick="sendStoryReaction(this)" style="font-size:32px;cursor:pointer;">🎉</span>
-          <span onclick="sendStoryReaction(this)" style="font-size:32px;cursor:pointer;">💯</span>
+        <div style="display:flex;gap:20px;align-items:center;justify-content:center;">
+          <span onclick="sendStoryReaction(this)" style="font-size:36px;cursor:pointer;line-height:1;">🙏</span>
+          <span onclick="sendStoryReaction(this)" style="font-size:36px;cursor:pointer;line-height:1;">👏</span>
+          <span onclick="sendStoryReaction(this)" style="font-size:36px;cursor:pointer;line-height:1;">🎉</span>
+          <span onclick="sendStoryReaction(this)" style="font-size:36px;cursor:pointer;line-height:1;">💯</span>
         </div>
       </div>
-
-      <!-- input bar — SEM foto, só campo + botão verde -->
+ 
+      <!-- input bar — sem foto, campo + botão verde -->
       <div id="replyBarKeyboard" style="
-        position:absolute;
-        bottom:0;left:0;right:0;
         display:flex;align-items:center;gap:10px;
-        padding:12px 14px 32px;
-        background:rgba(0,0,0,0.5);
-        backdrop-filter:blur(12px);
-        -webkit-backdrop-filter:blur(12px);
+        padding:10px 14px 36px;
+        background:rgba(0,0,0,0.45);
+        backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+        transition:padding-bottom 0.0s;
       ">
-
-        <!-- campo texto -->
         <div style="
           flex:1;
-          background:rgba(255,255,255,0.12);
-          border:1px solid rgba(255,255,255,0.18);
+          background:rgba(255,255,255,0.13);
+          border:1px solid rgba(255,255,255,0.2);
           border-radius:24px;
           padding:11px 16px;
           display:flex;align-items:center;
@@ -1721,14 +1714,13 @@ function openStoryReply() {
             "
           />
         </div>
-
+ 
         <!-- botão enviar verde -->
         <div onclick="sendStoryTextReply()" style="
-          width:44px;height:44px;border-radius:50%;
-          background:#25D366;
+          width:44px;height:44px;border-radius:50%;background:#25D366;
           display:flex;align-items:center;justify-content:center;
           cursor:pointer;flex-shrink:0;
-          box-shadow:0 2px 12px rgba(37,211,102,0.4);
+          box-shadow:0 2px 12px rgba(37,211,102,0.35);
         ">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
               stroke="#fff" stroke-width="2.4"
@@ -1737,41 +1729,93 @@ function openStoryReply() {
             <polygon points="22 2 15 22 11 13 2 9 22 2"/>
           </svg>
         </div>
-
       </div>
+ 
     </div>
   `);
-
+ 
   const overlay  = document.getElementById("storyReplyOverlay");
   const input    = document.getElementById("storyReplyInput");
   const replyBar = document.getElementById("replyBarKeyboard");
-
-  setTimeout(() => { input.focus(); }, 60);
-  if (window.Telegram?.WebApp) Telegram.WebApp.expand();
-
-  // detector de teclado
-  let kbOpen = false;
-  const onVP = () => {
-    const vh = window.visualViewport?.height ?? window.innerHeight;
-    const kb = window.innerHeight - vh;
-    if (kb > 100 && !kbOpen) {
-      kbOpen = true;
-      replyBar.style.paddingBottom = "10px";
-    }
-    if (kb < 60 && kbOpen) {
-      kbOpen = false;
-      replyBar.style.paddingBottom = "32px";
-    }
-  };
-  window.visualViewport?.addEventListener("resize", onVP);
-  overlay._vpHandler = onVP;
-
-  // clique fora fecha
-  overlay.addEventListener("click", (e) => {
-    if (e.target.id === "storyReplyOverlay") closeStoryReply();
+  const dismiss  = document.getElementById("storyReplyDismiss");
+ 
+  // teclado abre IMEDIATAMENTE junto com o overlay
+  input.focus();
+  // fallback para garantir abertura em Telegram WebApp
+  requestAnimationFrame(() => {
+    input.focus();
+    input.click();
   });
+  if (window.Telegram?.WebApp) Telegram.WebApp.expand();
+ 
+  // ── detector de teclado via visualViewport ─────────────────────────────
+  // move a barra suavemente junto com o teclado SEM salto
+  const onVP = () => {
+    if (!window.visualViewport) return;
+    const offsetFromBottom = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
+    replyBar.style.transform      = `translateY(-${Math.max(offsetFromBottom, 0)}px)`;
+    replyBar.style.transition     = "transform 0s"; // sem atraso — segue o teclado em tempo real
+  };
+ 
+  // também move os emojis junto com a barra
+  const emojiWrap = overlay.querySelector("div[style*='flex-direction:column'][style*='align-items:center']");
+  const onVPFull = () => {
+    if (!window.visualViewport) return;
+    const offsetFromBottom = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
+    const shift = Math.max(offsetFromBottom, 0);
+    if (emojiWrap) emojiWrap.style.transform  = `translateY(-${shift}px)`;
+    replyBar.style.transform = `translateY(-${shift}px)`;
+  };
+ 
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("scroll", onVPFull, { passive: true });
+    window.visualViewport.addEventListener("resize", onVPFull, { passive: true });
+  }
+  overlay._vpHandler = onVPFull;
+ 
+  // fechar ao clicar na área acima
+  dismiss.addEventListener("click", closeStoryReply);
 }
 
+function closeStoryReply() {
+  const overlay = document.getElementById("storyReplyOverlay");
+  if (!overlay) return;
+ 
+  if (overlay._vpHandler && window.visualViewport) {
+    window.visualViewport.removeEventListener("scroll", overlay._vpHandler);
+    window.visualViewport.removeEventListener("resize", overlay._vpHandler);
+  }
+  overlay.remove();
+ 
+  const input = document.getElementById("storyReplyInput");
+  if (input) input.blur();
+ 
+  document.body.style.overflow = "";
+  window.scrollTo(0, 0);
+  setTimeout(() => window.scrollTo(0, 0), 30);
+ 
+  const oldBar = document.getElementById("replyBar");
+  if (oldBar) {
+    oldBar.style.display    = "";
+    oldBar.style.opacity    = "1";
+    oldBar.style.transform  = "translateY(0)";
+  }
+ 
+  const video = document.getElementById("storyVideo");
+  if (video) {
+    Object.assign(video.style, {
+      position:   "fixed",
+      top:        "0",
+      left:       "0",
+      width:      "100vw",
+      height:     (window.__storyHeight || window.innerHeight) + "px",
+      objectFit:  "cover",
+      transform:  "translateZ(0)",
+      willChange: "transform",
+    });
+    video.play().catch(() => {});
+  }
+}
 
 // ─── sendStoryTextReply ───────────────────────────────────────────────────────
 function sendStoryTextReply() {
@@ -1795,45 +1839,6 @@ function sendStoryTextReply() {
   requestAnimationFrame(() => { t.style.opacity = "1"; });
   setTimeout(() => { t.style.opacity = "0"; }, 1800);
   setTimeout(() => t.remove(), 2200);
-}
-
-
-// ─── closeStoryReply ─────────────────────────────────────────────────────────
-function closeStoryReply() {
-  const overlay = document.getElementById("storyReplyOverlay");
-  if (!overlay) return;
-  if (overlay._vpHandler && window.visualViewport)
-    window.visualViewport.removeEventListener("resize", overlay._vpHandler);
-  overlay.remove();
-
-  const input = document.getElementById("storyReplyInput");
-  if (input) input.blur();
-
-  document.body.style.overflow = "";
-  window.scrollTo(0, 0);
-  setTimeout(() => window.scrollTo(0, 0), 30);
-
-  const oldBar = document.getElementById("replyBar");
-  if (oldBar) {
-    oldBar.style.display   = "";
-    oldBar.style.opacity   = "1";
-    oldBar.style.transform = "translateY(0)";
-  }
-
-  const video = document.getElementById("storyVideo");
-  if (video) {
-    Object.assign(video.style, {
-      position:   "fixed",
-      top:        "0",
-      left:       "0",
-      width:      "100vw",
-      height:     window.__storyHeight + "px",
-      objectFit:  "cover",
-      transform:  "translateZ(0)",
-      willChange: "transform",
-    });
-    video.play().catch(() => {});
-  }
 }
 
 function sendStoryReaction(emojiEl) {
