@@ -1972,48 +1972,6 @@ function showIncomingCall() {
   video.load();
 })();
 
-// ─── CONFIGURAÇÃO DA TRANSIÇÃO (estilo WhatsApp) ────────────────────────────
-const STORY_EASING   = "cubic-bezier(0.25, 0.46, 0.45, 0.94)";
-const STORY_DURATION = 350; // ms
-
-// ─── HELPER: calcula o centro do avatar relativo à janela ───────────────────
-// Adicione data-story-avatar no elemento de avatar da tela anterior.
-// Exemplo: <img data-story-avatar src="..." />
-function getAvatarOrigin() {
-  const avatarEl = document.querySelector("[data-story-avatar]");
-  if (!avatarEl) return { x: "50%", y: "50%" };
-  const r = avatarEl.getBoundingClientRect();
-  return {
-    x: Math.round(r.left + r.width  / 2) + "px",
-    y: Math.round(r.top  + r.height / 2) + "px",
-  };
-}
-
-// ─── EXIT STORIES ────────────────────────────────────────────────────────────
-function exitStories() {
-  const screen = document.querySelector(".full");
-  const video  = document.getElementById("storyVideo");
-
-  if (!screen) return; // proteção: já saiu
-
-  const origin = getAvatarOrigin();
-
-  screen.style.transformOrigin = `${origin.x} ${origin.y}`;
-  screen.style.transition      = `transform ${STORY_DURATION}ms ${STORY_EASING},
-                                   opacity  ${STORY_DURATION}ms ${STORY_EASING}`;
-  screen.style.transform       = "scale(0.05)";
-  screen.style.opacity         = "0";
-
-  setTimeout(() => {
-    video.pause();
-    video.src           = "";
-    video.style.display = "none";
-
-    // ⚠️ Troque showHome() pela função que renderiza sua tela anterior
-    showHome();
-  }, STORY_DURATION + 20);
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // STORIES — transição estilo WhatsApp (entrada, saída, swipe, estado visto)
 // ─────────────────────────────────────────────────────────────────────────────
