@@ -2528,44 +2528,6 @@ function closeStoryReply() {
   }
 }
 
-function exitStories() {
-  const screen = document.querySelector(".full");
-  const video = document.getElementById("storyVideo");
-
-  if (screen) {
-    screen.style.transition = "opacity .25s ease, transform .25s ease";
-    screen.style.opacity = "0";
-    screen.style.transform = "scale(0.96)";
-  }
-
-  setTimeout(() => {
-    if (video) {
-      video.pause();
-      video.currentTime = 0;
-      video.style.display = "none";
-
-      video.style.position = "";
-      video.style.top = "";
-      video.style.left = "";
-      video.style.width = "";
-      video.style.height = "";
-      video.style.objectFit = "";
-      video.style.zIndex = "";
-      video.style.transform = "";
-      video.style.willChange = "";
-
-      video.onplay = null;
-      video.onpause = null;
-      video.onended = null;
-      video.oncanplay = null;
-    }
-
-    app.innerHTML = "";
-    mountChat();
-
-  }, 250);
-}
-
 function closeStoryCircle(screen) {
   const avatar = document.querySelector("[data-avatar]");
 
