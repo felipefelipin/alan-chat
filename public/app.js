@@ -1651,6 +1651,10 @@ function showStories() {
 // SUBSTITUA ESTAS 3 FUNÇÕES NO SEU app.js
 // =============================================================================
 
+// =============================================================================
+// SUBSTITUA ESTAS 3 FUNÇÕES NO SEU app.js
+// =============================================================================
+
 
 // ─── openStoryReply ───────────────────────────────────────────────────────────
 function openStoryReply() {
@@ -1662,133 +1666,153 @@ function openStoryReply() {
   if (oldBar) oldBar.style.display = "none";
   document.body.style.overflow = "hidden";
 
-  // ── INPUT FANTASMA: abre teclado ANTES de qualquer DOM ──────────────────
+  // ── Ghost input: abre teclado ANTES de qualquer DOM insert ──────────────
   const ghost = document.createElement("input");
   ghost.type = "text";
   ghost.setAttribute("autocomplete", "off");
-  ghost.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0;width:1px;height:1px;font-size:16px;pointer-events:none;";
+  ghost.style.cssText = [
+    "position:fixed",
+    "left:0",
+    "bottom:0",          // fica na base para o teclado abrir subindo de lá
+    "opacity:0",
+    "width:100%",
+    "height:1px",
+    "font-size:16px",    // font-size >= 16px evita zoom no iOS
+    "pointer-events:none",
+    "z-index:-1",
+  ].join(";");
   document.body.appendChild(ghost);
   ghost.focus();
 
   document.body.insertAdjacentHTML("beforeend", `
     <div id="storyReplyOverlay" style="
       position:fixed;inset:0;z-index:9999;
-      display:flex;flex-direction:column;
+      pointer-events:none;
     ">
 
-      <!-- área superior transparente — clique fecha -->
-      <div id="storyReplyDismiss" style="flex:1;cursor:default;"></div>
-
-      <!-- BLOCO INFERIOR: emojis + input colados juntos, sem espaço -->
-      <div id="storyBottomBlock" style="
+      <!-- emojis: position fixed no centro vertical da tela,
+           independente do teclado -->
+      <div id="storyEmojiBlock" style="
+        position:fixed;
+        left:0;right:0;
+        top:38%;
         display:flex;flex-direction:column;
-        will-change:transform;
+        align-items:center;justify-content:center;
+        gap:12px;
+        pointer-events:auto;
       ">
+        <div style="display:flex;gap:22px;align-items:center;justify-content:center;">
+          <span onclick="sendStoryReaction(this)" style="font-size:40px;cursor:pointer;line-height:1;user-select:none;-webkit-tap-highlight-color:transparent;">😍</span>
+          <span onclick="sendStoryReaction(this)" style="font-size:40px;cursor:pointer;line-height:1;user-select:none;-webkit-tap-highlight-color:transparent;">😂</span>
+          <span onclick="sendStoryReaction(this)" style="font-size:40px;cursor:pointer;line-height:1;user-select:none;-webkit-tap-highlight-color:transparent;">😮</span>
+          <span onclick="sendStoryReaction(this)" style="font-size:40px;cursor:pointer;line-height:1;user-select:none;-webkit-tap-highlight-color:transparent;">😢</span>
+        </div>
+        <div style="display:flex;gap:22px;align-items:center;justify-content:center;">
+          <span onclick="sendStoryReaction(this)" style="font-size:40px;cursor:pointer;line-height:1;user-select:none;-webkit-tap-highlight-color:transparent;">🙏</span>
+          <span onclick="sendStoryReaction(this)" style="font-size:40px;cursor:pointer;line-height:1;user-select:none;-webkit-tap-highlight-color:transparent;">👏</span>
+          <span onclick="sendStoryReaction(this)" style="font-size:40px;cursor:pointer;line-height:1;user-select:none;-webkit-tap-highlight-color:transparent;">🎉</span>
+          <span onclick="sendStoryReaction(this)" style="font-size:40px;cursor:pointer;line-height:1;user-select:none;-webkit-tap-highlight-color:transparent;">💯</span>
+        </div>
+      </div>
 
-        <!-- emojis: 2 linhas centralizadas, tamanho igual à foto 2 -->
+      <!-- input bar: position fixed, bottom = altura do teclado
+           → fica COLADO no topo do teclado sem nenhum delay -->
+      <div id="replyBarKeyboard" style="
+        position:fixed;
+        left:0;right:0;
+        bottom:0;
+        display:flex;align-items:center;gap:10px;
+        padding:8px 12px 10px;
+        background:#000;
+        pointer-events:auto;
+        z-index:10000;
+      ">
         <div style="
-          display:flex;flex-direction:column;
-          align-items:center;justify-content:center;
-          gap:10px;
-          padding:16px 24px 14px;
+          flex:1;
+          background:#1c1c1e;
+          border-radius:22px;
+          padding:9px 16px;
+          display:flex;align-items:center;
         ">
-          <div style="display:flex;gap:20px;align-items:center;justify-content:center;width:100%;">
-            <span onclick="sendStoryReaction(this)" style="font-size:38px;cursor:pointer;line-height:1;user-select:none;">😍</span>
-            <span onclick="sendStoryReaction(this)" style="font-size:38px;cursor:pointer;line-height:1;user-select:none;">😂</span>
-            <span onclick="sendStoryReaction(this)" style="font-size:38px;cursor:pointer;line-height:1;user-select:none;">😮</span>
-            <span onclick="sendStoryReaction(this)" style="font-size:38px;cursor:pointer;line-height:1;user-select:none;">😢</span>
-          </div>
-          <div style="display:flex;gap:20px;align-items:center;justify-content:center;width:100%;">
-            <span onclick="sendStoryReaction(this)" style="font-size:38px;cursor:pointer;line-height:1;user-select:none;">🙏</span>
-            <span onclick="sendStoryReaction(this)" style="font-size:38px;cursor:pointer;line-height:1;user-select:none;">👏</span>
-            <span onclick="sendStoryReaction(this)" style="font-size:38px;cursor:pointer;line-height:1;user-select:none;">🎉</span>
-            <span onclick="sendStoryReaction(this)" style="font-size:38px;cursor:pointer;line-height:1;user-select:none;">💯</span>
-          </div>
+          <input id="storyReplyInput" type="text"
+            placeholder="Enviar mensagem..."
+            autocomplete="off" autocorrect="off"
+            autocapitalize="off" spellcheck="false"
+            style="
+              background:transparent;border:none;outline:none;
+              color:#fff;font-size:16px;width:100%;
+              font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+            "
+          />
         </div>
-
-        <!-- input: fundo preto, campo menor + botão verde, SEM padding extra embaixo -->
-        <div id="replyBarKeyboard" style="
-          display:flex;align-items:center;gap:10px;
-          padding:8px 12px 10px;
-          background:#000;
+        <div id="storyReplySend" style="
+          width:38px;height:38px;border-radius:50%;
+          background:#25D366;flex-shrink:0;
+          display:flex;align-items:center;justify-content:center;
+          cursor:pointer;
         ">
-          <!-- campo de texto -->
-          <div style="
-            flex:1;
-            background:#1c1c1e;
-            border-radius:22px;
-            padding:9px 16px;
-            display:flex;align-items:center;
-          ">
-            <input id="storyReplyInput" type="text"
-              placeholder="Enviar mensagem..."
-              autocomplete="off" autocorrect="off"
-              autocapitalize="off" spellcheck="false"
-              style="
-                background:transparent;border:none;outline:none;
-                color:#fff;font-size:15px;width:100%;
-                font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-              "
-            />
-          </div>
-          <!-- botão verde -->
-          <div id="storyReplySend" style="
-            width:38px;height:38px;border-radius:50%;
-            background:#25D366;flex-shrink:0;
-            display:flex;align-items:center;justify-content:center;
-            cursor:pointer;
-          ">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                stroke="#fff" stroke-width="2.5"
-                stroke-linecap="round" stroke-linejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13"/>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-            </svg>
-          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="#fff" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
         </div>
+      </div>
 
-      </div><!-- /storyBottomBlock -->
+      <!-- overlay dismiss: cobre tudo exceto input e emojis -->
+      <div id="storyReplyDismiss" style="
+        position:fixed;inset:0;
+        z-index:9998;
+        pointer-events:auto;
+      "></div>
 
     </div>
   `);
 
-  const overlay     = document.getElementById("storyReplyOverlay");
-  const input       = document.getElementById("storyReplyInput");
-  const bottomBlock = document.getElementById("storyBottomBlock");
-  const dismiss     = document.getElementById("storyReplyDismiss");
-  const sendBtn     = document.getElementById("storyReplySend");
+  const overlay  = document.getElementById("storyReplyOverlay");
+  const input    = document.getElementById("storyReplyInput");
+  const bar      = document.getElementById("replyBarKeyboard");
+  const dismiss  = document.getElementById("storyReplyDismiss");
+  const sendBtn  = document.getElementById("storyReplySend");
+
+  // eleva emojis e input acima do dismiss
+  document.getElementById("storyEmojiBlock").style.zIndex = "10001";
+  bar.style.zIndex = "10002";
 
   // ── transfere foco do ghost para o input real ────────────────────────────
-  ghost.addEventListener("blur", () => { ghost.remove(); });
+  ghost.addEventListener("blur", () => ghost.remove());
   input.focus();
   if (window.Telegram?.WebApp) Telegram.WebApp.expand();
 
-  // ── visualViewport: bloco inteiro sobe junto com o teclado ──────────────
-  // Usa position fixed + bottom dinâmico para COLAR no topo do teclado
-  // sem nenhum espaço preto
+  // ── visualViewport: move a barra SEM delay usando bottom dinâmico ────────
+  // Em vez de translateY (que pode ter lag), usamos `bottom` que o browser
+  // já sabe calcular junto com o layout do teclado
   const applyVP = () => {
     if (!window.visualViewport) return;
-    // altura do teclado = diferença entre innerHeight e viewport height
-    const kbHeight = window.innerHeight - window.visualViewport.height;
-    // desloca o bloco para cima exatamente a altura do teclado
-    bottomBlock.style.transform  = `translateY(-${Math.max(kbHeight, 0)}px)`;
-    bottomBlock.style.transition = "none";
+    const kbHeight = Math.max(
+      window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop,
+      0
+    );
+    // seta bottom como a altura do teclado — o elemento fica no topo dele
+    bar.style.bottom = kbHeight + "px";
   };
 
   if (window.visualViewport) {
+    // passive:true para não bloquear scroll, garante execução no mesmo frame
     window.visualViewport.addEventListener("resize", applyVP, { passive: true });
     window.visualViewport.addEventListener("scroll", applyVP, { passive: true });
-    applyVP(); // aplica imediatamente
+    applyVP();
   }
   overlay._vpHandler = applyVP;
 
-  // ── enviar com Enter ─────────────────────────────────────────────────────
+  // ── Enter envia ──────────────────────────────────────────────────────────
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") { e.preventDefault(); sendStoryTextReply(); }
   });
   sendBtn.onclick = sendStoryTextReply;
 
-  // ── fechar clicando acima ────────────────────────────────────────────────
+  // ── dismiss fecha (mas não intercepta emojis nem input) ─────────────────
   dismiss.addEventListener("click", closeStoryReply);
 }
 
@@ -1829,8 +1853,9 @@ function closeStoryReply() {
     window.visualViewport.removeEventListener("scroll", overlay._vpHandler);
   }
 
-  // limpa qualquer ghost que reste
-  document.querySelectorAll("input[style*='-9999px']").forEach(e => e.remove());
+  // remove qualquer ghost restante
+  document.querySelectorAll("input[style*='left:0'][style*='bottom:0'][style*='opacity:0']")
+    .forEach(e => e.remove());
 
   overlay.remove();
   document.body.style.overflow = "";
