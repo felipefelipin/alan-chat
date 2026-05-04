@@ -1662,73 +1662,117 @@ function openStoryReply() {
     <div id="storyReplyOverlay" style="
       position:fixed;inset:0;z-index:9999;
       display:flex;flex-direction:column;
-      justify-content:flex-end;
     ">
  
-      <!-- área clicável acima fecha o overlay -->
-      <div id="storyReplyDismiss" style="flex:1;"></div>
+      <!-- área superior clicável fecha -->
+      <div id="storyReplyDismiss" style="flex:1;min-height:0;"></div>
  
-      <!-- emojis — centralizados, tamanho igual ao original -->
-      <div style="
-        display:flex;flex-direction:column;align-items:center;
-        gap:14px;padding-bottom:18px;
+      <!-- emojis — 2 linhas de 4, flutuando, sem fundo -->
+      <div id="storyEmojiBlock" style="
+        display:flex;
+        flex-direction:column;
+        align-items:flex-start;
+        gap:16px;
+        padding:0 32px 24px;
+        pointer-events:auto;
       ">
-        <div style="display:flex;gap:20px;align-items:center;justify-content:center;">
-          <span onclick="sendStoryReaction(this)" style="font-size:36px;cursor:pointer;line-height:1;">😍</span>
-          <span onclick="sendStoryReaction(this)" style="font-size:36px;cursor:pointer;line-height:1;">😂</span>
-          <span onclick="sendStoryReaction(this)" style="font-size:36px;cursor:pointer;line-height:1;">😮</span>
-          <span onclick="sendStoryReaction(this)" style="font-size:36px;cursor:pointer;line-height:1;">😢</span>
+        <div style="display:flex;gap:24px;align-items:center;">
+          <span onclick="sendStoryReaction(this)" style="font-size:46px;cursor:pointer;line-height:1;display:block;">😍</span>
+          <span onclick="sendStoryReaction(this)" style="font-size:46px;cursor:pointer;line-height:1;display:block;">😂</span>
+          <span onclick="sendStoryReaction(this)" style="font-size:46px;cursor:pointer;line-height:1;display:block;">😮</span>
+          <span onclick="sendStoryReaction(this)" style="font-size:46px;cursor:pointer;line-height:1;display:block;">😢</span>
         </div>
-        <div style="display:flex;gap:20px;align-items:center;justify-content:center;">
-          <span onclick="sendStoryReaction(this)" style="font-size:36px;cursor:pointer;line-height:1;">🙏</span>
-          <span onclick="sendStoryReaction(this)" style="font-size:36px;cursor:pointer;line-height:1;">👏</span>
-          <span onclick="sendStoryReaction(this)" style="font-size:36px;cursor:pointer;line-height:1;">🎉</span>
-          <span onclick="sendStoryReaction(this)" style="font-size:36px;cursor:pointer;line-height:1;">💯</span>
+        <div style="display:flex;gap:24px;align-items:center;">
+          <span onclick="sendStoryReaction(this)" style="font-size:46px;cursor:pointer;line-height:1;display:block;">🙏</span>
+          <span onclick="sendStoryReaction(this)" style="font-size:46px;cursor:pointer;line-height:1;display:block;">👏</span>
+          <span onclick="sendStoryReaction(this)" style="font-size:46px;cursor:pointer;line-height:1;display:block;">🎉</span>
+          <span onclick="sendStoryReaction(this)" style="font-size:46px;cursor:pointer;line-height:1;display:block;">💯</span>
         </div>
       </div>
  
-      <!-- input bar — sem foto, campo + botão verde -->
+      <!-- input bar — idêntica à foto: fundo preto, + | campo+sticker | câmera | mic -->
       <div id="replyBarKeyboard" style="
-        display:flex;align-items:center;gap:10px;
-        padding:10px 14px 36px;
-        background:rgba(0,0,0,0.45);
-        backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-        transition:padding-bottom 0.0s;
+        display:flex;
+        align-items:center;
+        gap:0;
+        padding:10px 12px 10px;
+        background:#000;
+        min-height:58px;
       ">
+ 
+        <!-- botão + -->
+        <div style="
+          color:rgba(255,255,255,0.85);
+          font-size:26px;
+          font-weight:300;
+          padding:0 14px 0 4px;
+          cursor:pointer;
+          flex-shrink:0;
+          line-height:1;
+          display:flex;align-items:center;
+        ">+</div>
+ 
+        <!-- campo de texto com ícone sticker dentro -->
         <div style="
           flex:1;
-          background:rgba(255,255,255,0.13);
-          border:1px solid rgba(255,255,255,0.2);
+          background:rgba(255,255,255,0.1);
           border-radius:24px;
-          padding:11px 16px;
+          padding:10px 44px 10px 16px;
+          position:relative;
           display:flex;align-items:center;
+          min-height:40px;
         ">
           <input id="storyReplyInput" type="text"
-            placeholder="Enviar mensagem..."
+            placeholder=""
             autocomplete="off" autocorrect="off"
             autocapitalize="off" spellcheck="false"
             style="
               background:transparent;border:none;outline:none;
-              color:#fff;font-size:15px;width:100%;
+              color:#fff;font-size:16px;width:100%;
               font-family:-apple-system,BlinkMacSystemFont,sans-serif;
             "
           />
+          <!-- ícone sticker (balão arredondado) dentro do campo -->
+          <div style="
+            position:absolute;right:12px;top:50%;transform:translateY(-50%);
+            opacity:0.6;pointer-events:none;
+          ">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                stroke="rgba(255,255,255,0.8)" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
         </div>
  
-        <!-- botão enviar verde -->
-        <div onclick="sendStoryTextReply()" style="
-          width:44px;height:44px;border-radius:50%;background:#25D366;
+        <!-- ícone câmera -->
+        <div onclick="storyOpenCamera()" style="
+          padding:0 10px;cursor:pointer;flex-shrink:0;
           display:flex;align-items:center;justify-content:center;
-          cursor:pointer;flex-shrink:0;
-          box-shadow:0 2px 12px rgba(37,211,102,0.35);
         ">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-              stroke="#fff" stroke-width="2.4"
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+              stroke="rgba(255,255,255,0.85)" stroke-width="1.8"
               stroke-linecap="round" stroke-linejoin="round">
-            <line x1="22" y1="2" x2="11" y2="13"/>
-            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
           </svg>
         </div>
+ 
+        <!-- ícone microfone -->
+        <div style="
+          padding:0 4px 0 2px;cursor:pointer;flex-shrink:0;
+          display:flex;align-items:center;justify-content:center;
+        ">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="rgba(255,255,255,0.85)" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="2" width="6" height="12" rx="3"/>
+            <path d="M19 10a7 7 0 0 1-14 0"/>
+            <line x1="12" y1="19" x2="12" y2="23"/>
+            <line x1="8"  y1="23" x2="16" y2="23"/>
+          </svg>
+        </div>
+ 
       </div>
  
     </div>
@@ -1737,44 +1781,86 @@ function openStoryReply() {
   const overlay  = document.getElementById("storyReplyOverlay");
   const input    = document.getElementById("storyReplyInput");
   const replyBar = document.getElementById("replyBarKeyboard");
+  const emojiBlock = document.getElementById("storyEmojiBlock");
   const dismiss  = document.getElementById("storyReplyDismiss");
  
-  // teclado abre IMEDIATAMENTE junto com o overlay
+  // ── abre teclado IMEDIATAMENTE ─────────────────────────────────────────
   input.focus();
-  // fallback para garantir abertura em Telegram WebApp
-  requestAnimationFrame(() => {
-    input.focus();
-    input.click();
-  });
+  requestAnimationFrame(() => { input.focus(); input.click(); });
   if (window.Telegram?.WebApp) Telegram.WebApp.expand();
  
-  // ── detector de teclado via visualViewport ─────────────────────────────
-  // move a barra suavemente junto com o teclado SEM salto
+  // ── teclado empurra a UI suavemente via visualViewport ─────────────────
   const onVP = () => {
     if (!window.visualViewport) return;
-    const offsetFromBottom = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
-    replyBar.style.transform      = `translateY(-${Math.max(offsetFromBottom, 0)}px)`;
-    replyBar.style.transition     = "transform 0s"; // sem atraso — segue o teclado em tempo real
-  };
- 
-  // também move os emojis junto com a barra
-  const emojiWrap = overlay.querySelector("div[style*='flex-direction:column'][style*='align-items:center']");
-  const onVPFull = () => {
-    if (!window.visualViewport) return;
-    const offsetFromBottom = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
-    const shift = Math.max(offsetFromBottom, 0);
-    if (emojiWrap) emojiWrap.style.transform  = `translateY(-${shift}px)`;
-    replyBar.style.transform = `translateY(-${shift}px)`;
+    const kbHeight = window.innerHeight - window.visualViewport.height;
+    const shift    = Math.max(kbHeight, 0);
+    // move toda a barra + emojis junto com o teclado, sem salto
+    replyBar.style.transform   = `translateY(-${shift}px)`;
+    emojiBlock.style.transform = `translateY(-${shift}px)`;
   };
  
   if (window.visualViewport) {
-    window.visualViewport.addEventListener("scroll", onVPFull, { passive: true });
-    window.visualViewport.addEventListener("resize", onVPFull, { passive: true });
+    window.visualViewport.addEventListener("resize", onVP, { passive: true });
+    window.visualViewport.addEventListener("scroll", onVP, { passive: true });
   }
-  overlay._vpHandler = onVPFull;
+  overlay._vpHandler = onVP;
  
-  // fechar ao clicar na área acima
+  // ── entrada: quando o usuário pressiona Enter envia ────────────────────
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); sendStoryTextReply(); }
+  });
+ 
+  // ── fechar ao clicar na área acima ────────────────────────────────────
   dismiss.addEventListener("click", closeStoryReply);
+}
+ 
+ 
+// ─── storyOpenCamera (câmera da barra de reply) ───────────────────────────────
+function storyOpenCamera() {
+  const video = document.getElementById("storyVideo");
+ 
+  const input   = document.createElement("input");
+  input.type    = "file";
+  input.accept  = "image/*,video/*";
+  input.capture = "environment";
+  input.style.display = "none";
+  document.body.appendChild(input);
+ 
+  input.onchange = () => {
+    const file = input.files?.[0];
+    document.body.removeChild(input);
+    if (!file) return;
+ 
+    closeStoryReply();
+ 
+    const url   = URL.createObjectURL(file);
+    const isVid = file.type.startsWith("video");
+ 
+    const preview = document.createElement("div");
+    preview.style = `
+      position:fixed;inset:0;background:#000;z-index:99999;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+    `;
+    preview.innerHTML = isVid
+      ? `<video src="${url}" autoplay playsinline controls
+           style="max-width:100%;max-height:80vh;border-radius:12px;"></video>`
+      : `<img src="${url}" style="max-width:100%;max-height:80vh;
+           border-radius:12px;object-fit:contain;">`;
+ 
+    const closeBtn = document.createElement("div");
+    closeBtn.textContent = "✕ Fechar";
+    closeBtn.style = `
+      margin-top:20px;padding:10px 28px;border-radius:999px;
+      background:rgba(255,255,255,0.15);color:#fff;
+      font-size:15px;cursor:pointer;
+    `;
+    closeBtn.onclick = () => { URL.revokeObjectURL(url); preview.remove(); };
+    preview.appendChild(closeBtn);
+    document.body.appendChild(preview);
+  };
+ 
+  input.oncancel = () => { document.body.removeChild(input); };
+  input.click();
 }
 
 function closeStoryReply() {
@@ -1782,13 +1868,13 @@ function closeStoryReply() {
   if (!overlay) return;
  
   if (overlay._vpHandler && window.visualViewport) {
-    window.visualViewport.removeEventListener("scroll", overlay._vpHandler);
     window.visualViewport.removeEventListener("resize", overlay._vpHandler);
+    window.visualViewport.removeEventListener("scroll", overlay._vpHandler);
   }
   overlay.remove();
  
-  const input = document.getElementById("storyReplyInput");
-  if (input) input.blur();
+  const inp = document.getElementById("storyReplyInput");
+  if (inp) inp.blur();
  
   document.body.style.overflow = "";
   window.scrollTo(0, 0);
@@ -1796,22 +1882,20 @@ function closeStoryReply() {
  
   const oldBar = document.getElementById("replyBar");
   if (oldBar) {
-    oldBar.style.display    = "";
-    oldBar.style.opacity    = "1";
-    oldBar.style.transform  = "translateY(0)";
+    oldBar.style.display   = "";
+    oldBar.style.opacity   = "1";
+    oldBar.style.transform = "translateY(0)";
   }
  
   const video = document.getElementById("storyVideo");
   if (video) {
     Object.assign(video.style, {
-      position:   "fixed",
-      top:        "0",
-      left:       "0",
-      width:      "100vw",
-      height:     (window.__storyHeight || window.innerHeight) + "px",
-      objectFit:  "cover",
-      transform:  "translateZ(0)",
-      willChange: "transform",
+      position:"fixed", top:"0", left:"0",
+      width:"100vw",
+      height:(window.__storyHeight || window.innerHeight) + "px",
+      objectFit:"cover",
+      transform:"translateZ(0)",
+      willChange:"transform",
     });
     video.play().catch(() => {});
   }
@@ -1823,6 +1907,7 @@ function sendStoryTextReply() {
   const text  = input?.value?.trim() ?? "";
   closeStoryReply();
   if (!text) return;
+ 
   const t = document.createElement("div");
   t.textContent = "Mensagem enviada ✓";
   Object.assign(t.style, {
