@@ -544,213 +544,244 @@ function endCallBtn() {
 }
 
 // ==================== FIX #3: startCall RE-ADICIONADO ====================
-window.startCall = function () {
-  app.innerHTML = `
-    <div style="
-      height:100vh;background:#0b0b0b;color:#fff;
-      display:flex;flex-direction:column;align-items:center;justify-content:space-between;
-      font-family:-apple-system,BlinkMacSystemFont;
-    ">
-      <div style="margin-top:60px;text-align:center;">
-        <div style="font-size:22px;font-weight:600;">${CONTACT.title}</div>
-        <div id="callStatus" style="margin-top:6px;font-size:16px;color:rgba(255,255,255,0.6);">Ligando...</div>
-      </div>
-
-      <img src="${ASSETS.avatar}" style="width:180px;height:180px;border-radius:50%;object-fit:cover;">
-
-      <div style="
-        width:100%;padding:24px 20px 30px;background:#1c1c1e;
-        border-top-left-radius:28px;border-top-right-radius:28px;
-        display:flex;flex-direction:column;align-items:center;
-      ">
-        <div style="width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:26px;">
-          ${callBtn(speakerIcon(), "Alto-falante", "speaker")}
-          ${callBtn(videoIcon(),   "Vídeo",        "",       true)}
-          ${callBtn(muteIcon(),    "Silenciar",    "mute")}
-          ${callBtn(moreIcon(),    "Mais",         "more")}
-          ${callBtn(shareIcon(),   "Compartilhar", "",       true)}
-          ${endCallBtn()}
-        </div>
-      </div>
-
-      <div id="callEndOverlay" style="
-        position:fixed;inset:0;background:#000;color:#fff;
-        display:flex;align-items:center;justify-content:center;flex-direction:column;
-        font-size:18px;opacity:0;pointer-events:none;transition:opacity 0.4s ease;z-index:9999;
-      ">
-        <div style="font-size:22px;margin-bottom:6px;">${CONTACT.title}</div>
-        <div style="opacity:0.6;">Ligação encerrada</div>
-      </div>
-    </div>
-  `;
-
-  let callRingtone;
-  try {
-    callRingtone = new Audio(ASSETS.ringtone + `?v=${Date.now()}`);
-    callRingtone.loop = true;
-    callRingtone.play().catch(() => {});
-  } catch {}
-
-  setTimeout(() => {
-    document.querySelectorAll(".call-btn").forEach(btn => {
-      const action  = btn.getAttribute("data-action");
-      const circle  = btn.querySelector(".call-btn-circle");
-      const svgEl   = btn.querySelector("svg");
-
-      if (action === "speaker") {
-        btn.onclick = () => {
-          const active = btn.classList.toggle("active");
-          circle.style.background = active ? "#fff" : "#2c2c2e";
-          if (svgEl) { svgEl.style.stroke = active ? "#000" : "#fff"; svgEl.style.fill = active ? "#000" : "#fff"; }
-        };
-      }
-
-      if (action === "mute") {
-        btn.onclick = () => {
-          const active = btn.classList.toggle("active");
-          circle.style.background = active ? "#fff" : "#2c2c2e";
-          if (svgEl) { svgEl.style.stroke = active ? "#000" : "#fff"; svgEl.style.fill = active ? "#000" : "#fff"; }
-        };
-      }
-
-      if (action === "end") {
-        btn.onclick = () => {
-          const overlay = document.getElementById("callEndOverlay");
-          if (overlay) overlay.style.opacity = "1";
-          if (callRingtone) { callRingtone.pause(); callRingtone.currentTime = 0; }
-          setTimeout(() => openProfile(), 1200);
-        };
-      }
-    });
-  }, 0);
-
-  setTimeout(() => {
-    if (callRingtone) { callRingtone.pause(); callRingtone.currentTime = 0; }
-    mountChat();
-  }, 40000);
-
-  setTimeout(() => {
-    const el = document.getElementById("callStatus");
-    if (el) el.textContent = "Chamando...";
-  }, 2000);
-};
-
-// ==================== startVideoCall (LIMPO, SEM CÓDIGO ÓRFÃO) ====================
 window.startVideoCall = async function () {
+ 
   let stream;
   let currentFacing = "user";
   let isSwitching   = false;
-  let isMutedVC     = false;
-  let isSpeakerVC   = true;
-  let isVideoOff    = false;
-
-  const ringtoneVC = new Audio("/assets/call.mp3");
+  let isMutedVC     = true;   // começa mutado (igual à foto)
+  let isSpeakerVC   = true;   // speaker ativo por padrão
+  let isVideoOff    = true;   // câmera apagada por padrão (igual à foto)
+ 
+  const ringtoneVC = new Audio("/assets/ringtone.mp3");
   ringtoneVC.loop = true;
-
+ 
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacing }, audio: false });
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: currentFacing },
+      audio: false,
+    });
     ringtoneVC.play().catch(() => {});
   } catch {
     console.warn("Permissão de câmera negada");
     return;
   }
-
-  // SVG icons locais da video call
-  const svgMore = (color = "#fff") => `
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="${color}">
-      <circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>
+ 
+  // ── ícones idênticos à foto ────────────────────────────────────────────────
+ 
+  // ··· Mais — 3 pontos pequenos
+  const icoMore = `
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="rgba(255,255,255,0.85)">
+      <circle cx="5"  cy="12" r="2.2"/>
+      <circle cx="12" cy="12" r="2.2"/>
+      <circle cx="19" cy="12" r="2.2"/>
     </svg>`;
-
-  const svgSpeaker = (active, color = "#000") => active
-    ? `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-         <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
-         <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
-       </svg>`
-    : `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-         <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
-       </svg>`;
-
-  const svgCam = (off, color = "#fff") => off
-    ? `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-         <line x1="1" y1="1" x2="23" y2="23"/>
-         <path d="M21 21H3a2 2 0 0 1-2-2V8"/><path d="M10.66 6H14a2 2 0 0 1 2 2v2.34"/>
-         <path d="M22 8l-6 4 6 4V8z"/>
-       </svg>`
-    : `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-         <rect x="2" y="7" width="14" height="11" rx="2.5"/>
-         <path d="M22 8l-6 4 6 4V8z"/>
-       </svg>`;
-
-  const svgMic = (muted) => muted
-    ? `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-         <line x1="1" y1="1" x2="23" y2="23"/>
-         <path d="M9 9v3a3 3 0 0 0 5.12 2.12"/>
-         <path d="M15 9.34V5a3 3 0 0 0-5.94-.6"/>
-         <path d="M17 16.95A7 7 0 0 1 5 12v-2"/>
-         <line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
-       </svg>`
-    : `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-         <rect x="9" y="2" width="6" height="12" rx="3"/>
-         <path d="M19 10a7 7 0 0 1-14 0"/>
-         <line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
-       </svg>`;
-
-  const svgEnd = `
-    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45c.97.37 2 .57 3.07.57a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2C8.98 22 2 14.84 2 6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2c0 1.06.2 2.1.57 3.07a2 2 0 0 1-.46 2.11l-1 1z" transform="rotate(135 12 12)"/>
+ 
+  // 🔊 Speaker ATIVO — cone preenchido + 3 ondas (preto, para fundo branco)
+  const icoSpeakerOn = `
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+      <path d="M11 5L6 9H2v6h4l5 4V5z" fill="#111"/>
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"
+            stroke="#111" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14"
+            stroke="#111" stroke-width="2" stroke-linecap="round" fill="none"/>
     </svg>`;
-
-  const vcBtn = (id, bg, iconHtml) => `
-    <div id="${id}" style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;">
-      <div class="vc-circle" style="width:62px;height:62px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;transition:background .18s ease,transform .1s ease;">
-        ${iconHtml}
+ 
+  // 🔇 Speaker INATIVO — cone + X (branco, para fundo escuro)
+  const icoSpeakerOff = `
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+      <path d="M11 5L6 9H2v6h4l5 4V5z" fill="rgba(255,255,255,0.9)"/>
+      <line x1="23" y1="9" x2="17" y2="15" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round"/>
+      <line x1="17" y1="9" x2="23" y2="15" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round"/>
+    </svg>`;
+ 
+  // 📷 Câmera LIGADA — preenchida, branca (fundo escuro)
+  const icoCamOn = `
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+      <rect x="2" y="7" width="14" height="11" rx="2.5" fill="rgba(255,255,255,0.85)"/>
+      <path d="M22 8l-6 4 6 4V8z" fill="rgba(255,255,255,0.85)"/>
+    </svg>`;
+ 
+  // 📷 Câmera DESLIGADA — igual à foto (cinza médio, fundo cinza escuro)
+  const icoCamOff = `
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+      <rect x="2" y="7" width="14" height="11" rx="2.5" fill="rgba(200,190,190,0.75)"/>
+      <path d="M22 8l-6 4 6 4V8z" fill="rgba(200,190,190,0.75)"/>
+    </svg>`;
+ 
+  // 🎤 Mic NORMAL — preenchido, branco (fundo escuro)
+  const icoMicOn = `
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+      <rect x="9" y="2" width="6" height="12" rx="3" fill="rgba(255,255,255,0.9)"/>
+      <path d="M5 10a7 7 0 0 0 14 0" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <line x1="12" y1="17" x2="12" y2="21" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round"/>
+      <line x1="9"  y1="21" x2="15" y2="21" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round"/>
+    </svg>`;
+ 
+  // 🎤 Mic MUTADO — microfone riscado em VERMELHO, fundo BRANCO (idêntico à foto)
+  const icoMicMuted = `
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+      <!-- corpo do microfone -->
+      <rect x="9" y="2" width="6" height="12" rx="3" fill="#d32f2f"/>
+      <!-- linha diagonal riscando -->
+      <line x1="3" y1="3" x2="21" y2="21"
+            stroke="#d32f2f" stroke-width="2.2" stroke-linecap="round"/>
+      <!-- arco inferior e haste -->
+      <path d="M5 10a7 7 0 0 0 14 0"
+            stroke="#d32f2f" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <line x1="12" y1="17" x2="12" y2="21"
+            stroke="#d32f2f" stroke-width="2" stroke-linecap="round"/>
+      <line x1="9"  y1="21" x2="15" y2="21"
+            stroke="#d32f2f" stroke-width="2" stroke-linecap="round"/>
+    </svg>`;
+ 
+  // 📞 Encerrar — telefone inclinado, branco, idêntico à foto
+  const icoEnd = `
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+      <path d="M6.6 10.8c1.4-1.4 3-2.1 4.9-2.1s3.5.7 4.9 2.1l1.4-1.4C16 7.6 14.1 6.7 12 6.7S8 7.6 6.2 9.4l-1.4 1.4 1.8 1zM12 4C8.7 4 5.8 5.3 3.7 7.4L2 9l1.8 1.8 1.4-1.4C7 7.6 9.4 6.5 12 6.5s5 1.1 6.8 2.9l1.4 1.4L22 9l-1.7-1.6C18.2 5.3 15.3 4 12 4z"
+            fill="none"/>
+      <!-- ícone telefone simples inclinado -->
+      <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.12-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"
+            fill="white"/>
+    </svg>`;
+ 
+  // ── helper: cria botão ─────────────────────────────────────────────────────
+  const vcBtn = (id, bg, icon, size = "62px") => `
+    <div id="${id}" style="
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      flex-shrink: 0;
+    ">
+      <div class="vc-circle" id="${id}-circle" style="
+        width: ${size};
+        height: ${size};
+        border-radius: 50%;
+        background: ${bg};
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.18s ease, transform 0.1s ease;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+      ">
+        <div class="vc-icon" id="${id}-icon" style="
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          line-height: 0;
+        ">
+          ${icon}
+        </div>
       </div>
     </div>`;
-
+ 
+  // ── HTML da tela ───────────────────────────────────────────────────────────
   app.innerHTML = `
     <div id="vcScreen" style="
-      position:relative;height:100dvh;background:#1a0a0a;overflow:hidden;
-      font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-      opacity:0;transform:scale(1.03);transition:opacity .22s ease,transform .22s ease;
+      position: relative;
+      height: 100dvh;
+      background: #2a1a1a;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      opacity: 0;
+      transform: scale(1.03);
+      transition: opacity .22s ease, transform .22s ease;
     ">
-      <video id="vcVideo" autoplay playsinline muted style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;"></video>
-
-      <div style="position:absolute;top:0;left:0;right:0;height:180px;background:linear-gradient(to bottom,rgba(0,0,0,.55),transparent);pointer-events:none;z-index:2;"></div>
-
+ 
+      <!-- vídeo -->
+      <video id="vcVideo" autoplay playsinline muted style="
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: ${isVideoOff ? 0 : 1};
+        transition: opacity 0.3s ease;
+      "></video>
+ 
+      <!-- gradiente topo -->
+      <div style="
+        position:absolute;top:0;left:0;right:0;height:200px;
+        background:linear-gradient(to bottom,rgba(0,0,0,.6),transparent);
+        pointer-events:none;z-index:2;
+      "></div>
+ 
+      <!-- nome + status -->
       <div style="position:absolute;top:54px;width:100%;text-align:center;z-index:3;">
-        <div style="font-size:22px;font-weight:700;color:#fff;letter-spacing:-.3px;">${CONTACT.title}</div>
-        <div style="margin-top:5px;font-size:15px;color:rgba(255,255,255,.7);">Chamando...</div>
+        <div style="font-size:22px;font-weight:700;color:#fff;letter-spacing:-.3px;">
+          ${CONTACT.title}
+        </div>
+        <div id="vcStatus" style="margin-top:5px;font-size:15px;color:rgba(255,255,255,.7);">
+          Chamando...
+        </div>
       </div>
-
+ 
+      <!-- botão girar câmera -->
       <div id="vcFlip" style="
-        position:absolute;right:18px;top:130px;width:52px;height:52px;border-radius:50%;
-        background:rgba(50,50,50,.55);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-        display:flex;align-items:center;justify-content:center;z-index:10;cursor:pointer;
+        position:absolute;right:18px;top:130px;
+        width:48px;height:48px;border-radius:50%;
+        background:rgba(60,45,45,.6);
+        backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+        display:flex;align-items:center;justify-content:center;
+        z-index:10;cursor:pointer;
       ">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="rgba(255,255,255,.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
           <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/>
           <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"/>
         </svg>
       </div>
-
-      <div style="position:absolute;bottom:0;left:0;right:0;height:220px;background:linear-gradient(to top,rgba(0,0,0,.7),transparent);pointer-events:none;z-index:2;"></div>
-
-      <div style="position:absolute;bottom:36px;left:0;right:0;display:flex;justify-content:center;z-index:10;">
+ 
+      <!-- gradiente baixo -->
+      <div style="
+        position:absolute;bottom:0;left:0;right:0;height:240px;
+        background:linear-gradient(to top,rgba(0,0,0,.75),transparent);
+        pointer-events:none;z-index:2;
+      "></div>
+ 
+      <!-- ── BARRA DE CONTROLES — idêntica à foto ── -->
+      <div style="
+        position: absolute;
+        bottom: 40px;
+        left: 0; right: 0;
+        display: flex;
+        justify-content: center;
+        z-index: 10;
+      ">
         <div style="
-          background:rgba(28,28,30,.42);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-          border-radius:40px;padding:14px 20px;display:flex;gap:16px;align-items:center;
+          background: rgba(55,40,40,0.48);
+          backdrop-filter: blur(22px);
+          -webkit-backdrop-filter: blur(22px);
+          border-radius: 50px;
+          padding: 12px 18px;
+          display: flex;
+          gap: 14px;
+          align-items: center;
         ">
-          ${vcBtn("vcMore",    "rgba(100,100,105,.8)", svgMore())}
-          ${vcBtn("vcSpeaker", "#ffffff",              svgSpeaker(true, "#000"))}
-          ${vcBtn("vcCam",     "rgba(100,100,105,.8)", svgCam(false, "#fff"))}
-          ${vcBtn("vcMic",     "rgba(100,100,105,.8)", svgMic(false))}
-          ${vcBtn("vcEnd",     "#ff3b30",              svgEnd)}
+ 
+          <!-- Mais -->
+          ${vcBtn("vcMore",    "rgba(100,80,80,0.75)", icoMore)}
+ 
+          <!-- Speaker — branco (ativo) -->
+          ${vcBtn("vcSpeaker", "#ffffff",              icoSpeakerOn)}
+ 
+          <!-- Câmera — escuro (desligada) -->
+          ${vcBtn("vcCam",     "rgba(110,95,95,0.72)", icoCamOff)}
+ 
+          <!-- Mic — branco + ícone vermelho (mutado) igual à foto -->
+          ${vcBtn("vcMic",     "#ffffff",              icoMicMuted)}
+ 
+          <!-- Encerrar -->
+          ${vcBtn("vcEnd",     "#d9252a",              icoEnd)}
+ 
         </div>
       </div>
-
+ 
+      <!-- overlay encerrado -->
       <div id="vcEndOverlay" style="
         position:fixed;inset:0;background:#000;color:#fff;
         display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
@@ -759,53 +790,93 @@ window.startVideoCall = async function () {
         <div style="font-size:22px;font-weight:600;">${CONTACT.title}</div>
         <div style="font-size:15px;opacity:.6;">Chamada encerrada</div>
       </div>
+ 
     </div>
   `;
-
+ 
+  // ── conecta vídeo ──────────────────────────────────────────────────────────
   const vcVideo  = document.getElementById("vcVideo");
   const vcScreen = document.getElementById("vcScreen");
-
+ 
   vcVideo.srcObject = stream;
+ 
+  // desativa tracks de vídeo se câmera inicia desligada
+  if (isVideoOff) stream.getVideoTracks().forEach(t => { t.enabled = false; });
+ 
   vcVideo.onloadedmetadata = () => {
     vcVideo.play();
-    requestAnimationFrame(() => { vcScreen.style.opacity = "1"; vcScreen.style.transform = "scale(1)"; });
+    requestAnimationFrame(() => {
+      vcScreen.style.opacity   = "1";
+      vcScreen.style.transform = "scale(1)";
+    });
   };
-
-  const setCircleBg   = (id, c)  => { const el = document.querySelector(`#${id} .vc-circle`); if (el) el.style.background = c; };
-  const setCircleIcon = (id, h)  => { const el = document.querySelector(`#${id} .vc-circle`); if (el) el.innerHTML = h; };
-
+ 
+  // ── helpers de toggle ─────────────────────────────────────────────────────
+  function setBg(id, color)   { const el = document.getElementById(id + "-circle"); if (el) el.style.background = color; }
+  function setIcon(id, html)  { const el = document.getElementById(id + "-icon");   if (el) el.innerHTML = html; }
+  function pulse(id) {
+    const el = document.getElementById(id + "-circle");
+    if (!el) return;
+    el.style.transform = "scale(0.88)";
+    setTimeout(() => { el.style.transform = "scale(1)"; }, 120);
+  }
+ 
+  // ── SPEAKER ───────────────────────────────────────────────────────────────
   document.getElementById("vcSpeaker").onclick = () => {
+    pulse("vcSpeaker");
     isSpeakerVC = !isSpeakerVC;
-    setCircleBg("vcSpeaker", isSpeakerVC ? "#fff" : "rgba(100,100,105,.8)");
-    setCircleIcon("vcSpeaker", svgSpeaker(isSpeakerVC, isSpeakerVC ? "#000" : "#fff"));
+    if (isSpeakerVC) {
+      setBg("vcSpeaker",  "#ffffff");
+      setIcon("vcSpeaker", icoSpeakerOn);
+    } else {
+      setBg("vcSpeaker",  "rgba(100,80,80,0.75)");
+      setIcon("vcSpeaker", icoSpeakerOff);
+    }
   };
-
+ 
+  // ── CÂMERA ────────────────────────────────────────────────────────────────
   document.getElementById("vcCam").onclick = () => {
+    pulse("vcCam");
     isVideoOff = !isVideoOff;
     stream.getVideoTracks().forEach(t => { t.enabled = !isVideoOff; });
-    setCircleBg("vcCam", isVideoOff ? "#fff" : "rgba(100,100,105,.8)");
-    setCircleIcon("vcCam", svgCam(isVideoOff, isVideoOff ? "#000" : "#fff"));
+    vcVideo.style.opacity = isVideoOff ? "0" : "1";
+    if (isVideoOff) {
+      setBg("vcCam",  "rgba(110,95,95,0.72)");
+      setIcon("vcCam", icoCamOff);
+    } else {
+      setBg("vcCam",  "#ffffff");
+      setIcon("vcCam", icoCamOn);
+    }
   };
-
+ 
+  // ── MIC ───────────────────────────────────────────────────────────────────
   document.getElementById("vcMic").onclick = () => {
+    pulse("vcMic");
     isMutedVC = !isMutedVC;
-    setCircleBg("vcMic", isMutedVC ? "#fff" : "rgba(100,100,105,.8)");
-    setCircleIcon("vcMic", svgMic(isMutedVC));
+    if (isMutedVC) {
+      // MUTADO: fundo branco + ícone vermelho riscado
+      setBg("vcMic",  "#ffffff");
+      setIcon("vcMic", icoMicMuted);
+    } else {
+      // NORMAL: fundo escuro + ícone branco
+      setBg("vcMic",  "rgba(100,80,80,0.75)");
+      setIcon("vcMic", icoMicOn);
+    }
   };
-
-  document.getElementById("vcMore").onclick = () => {
-    const el = document.querySelector("#vcMore .vc-circle");
-    if (!el) return;
-    el.style.transform = "scale(.88)";
-    setTimeout(() => { el.style.transform = "scale(1)"; }, 120);
-  };
-
+ 
+  // ── MAIS (···) ────────────────────────────────────────────────────────────
+  document.getElementById("vcMore").onclick = () => { pulse("vcMore"); };
+ 
+  // ── GIRAR CÂMERA ──────────────────────────────────────────────────────────
   document.getElementById("vcFlip").onclick = async () => {
     if (isSwitching) return;
     isSwitching = true;
     currentFacing = currentFacing === "user" ? "environment" : "user";
     try {
-      const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacing }, audio: false });
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: currentFacing },
+        audio: false,
+      });
       const old = stream;
       vcVideo.srcObject = newStream;
       stream = newStream;
@@ -813,18 +884,25 @@ window.startVideoCall = async function () {
     } catch {}
     isSwitching = false;
   };
-
+ 
+  // ── ENCERRAR ──────────────────────────────────────────────────────────────
   document.getElementById("vcEnd").onclick = () => {
-    ringtoneVC.pause(); ringtoneVC.currentTime = 0;
-    const overlay = document.getElementById("vcEndOverlay");
-    if (overlay) overlay.style.opacity = "1";
-    vcScreen.style.opacity = "0"; vcScreen.style.transform = "scale(.96)";
-    setTimeout(() => { stream.getTracks().forEach(t => t.stop()); openProfile(); }, 380);
+    ringtoneVC.pause();
+    ringtoneVC.currentTime = 0;
+    const ol = document.getElementById("vcEndOverlay");
+    if (ol) ol.style.opacity = "1";
+    vcScreen.style.opacity   = "0";
+    vcScreen.style.transform = "scale(.96)";
+    setTimeout(() => {
+      stream.getTracks().forEach(t => t.stop());
+      openProfile();
+    }, 380);
   };
-
+ 
+  // encerra automaticamente após 40s
   setTimeout(() => {
     ringtoneVC.pause();
-    stream.getTracks().forEach(t => t.stop());
+    try { stream.getTracks().forEach(t => t.stop()); } catch {}
     openProfile();
   }, 40000);
 };
@@ -1188,114 +1266,61 @@ function markStoryAsViewed() {
 function exitStories(fromSwipe = false, swipeScreen = null) {
   if (_storyExiting) return;
   _storyExiting = true;
- 
+
   const video  = document.getElementById("storyVideo");
   const screen = swipeScreen || document.querySelector(".full");
- 
+
   if (!screen) { _storyExiting = false; return; }
- 
-  // Marca como visto apenas na primeira vez (storyEverViewed persiste)
-  if (!window.storyEverViewed) {
-    window.storyEverViewed = true;
-    markStoryAsViewed();
-  }
- 
+
+  if (window.storyViewed) markStoryAsViewed();
+
   const origin = getAvatarOrigin();
+
   screen.style.transformOrigin = `${origin.x} ${origin.y}`;
   screen.style.transition      = `transform ${STORY_DURATION}ms ${STORY_EASING}, opacity ${STORY_DURATION}ms ${STORY_EASING}`;
   screen.style.transform       = fromSwipe ? "scale(0) translateY(0)" : "scale(0.04)";
   screen.style.opacity         = "0";
- 
+
   setTimeout(() => {
-    // ✅ FIX: NÃO limpa o src — só pausa e esconde
-    // Assim o vídeo fica pronto para a próxima abertura sem race condition
-    video.pause();
-    video.style.display = "none";
- 
-    // Limpa apenas os handlers para não acumular listeners
-    video.oncanplay = null;
-    video.onplay    = null;
-    video.onpause   = null;
-    video.onended   = null;
- 
+    video.pause(); video.src = ""; video.style.display = "none";
+    video.oncanplay = null; video.onplay = null; video.onpause = null; video.onended = null;
     _storyExiting = false;
-    mountChat();
+    mountChat(); // ← FIX #4: era showHome()
   }, STORY_DURATION + 30);
 }
 
 function showStories() {
   console.log("📸 Stories aberto");
- 
-  _storyExiting = false;
-  // ✅ FIX: NÃO reseta storyEverViewed (anel continua cinza se já viu)
-  // Apenas reseta o estado da sessão atual
-  window.storyViewed = false;
- 
+  _storyExiting = false; window.storyViewed = false;
+
   const video = document.getElementById("storyVideo");
- 
   if (!window.__storyHeight) window.__storyHeight = window.innerHeight;
   const realHeight = window.__storyHeight;
- 
-  // ✅ FIX: Garante que o src está correto ANTES de tudo
-  const correctSrc = "/assets/story-video.mp4";
-  const needsReload = !video.src
-    || video.src === ""
-    || video.src === window.location.origin + "/"
-    || video.src === window.location.href;
- 
-  if (needsReload) {
-    video.src = correctSrc;
-  }
- 
-  // ✅ FIX: Sempre reseta para o início
-  video.currentTime = 0;
- 
+
+  if (!video.src) video.src = "/assets/story-video.mp4";
+
   Object.assign(video.style, {
-    display:    "block",
-    position:   "fixed",
-    top:        "0",
-    left:       "0",
-    width:      "100vw",
-    height:     realHeight + "px",
-    objectFit:  "cover",
-    zIndex:     "0",
-    transform:  "translateZ(0)",
-    willChange: "transform",
+    display:"block", position:"fixed", top:"0", left:"0",
+    width:"100vw", height:realHeight+"px", objectFit:"cover",
+    zIndex:"0", transform:"translateZ(0)", willChange:"transform",
   });
- 
-  // ✅ FIX: Define handlers ANTES de tentar dar play
-  video.oncanplay = () => {
-    video.play().catch(() => {});
-  };
- 
-  // Tenta dar play (funciona se readyState >= 2, senão o oncanplay cuida)
-  if (video.readyState >= 2) {
-    video.play().catch(() => {});
-  } else {
-    // Força o browser a reprocessar o vídeo
-    video.load();
-  }
- 
+  video.currentTime = 0;
+
+  if (video.readyState >= 2) video.play().catch(() => {});
+  else video.oncanplay = () => { video.play().catch(() => {}); };
+
   const origin = getAvatarOrigin();
- 
+
   app.innerHTML = `
     <div class="full" style="
-      background: transparent;
-      position: relative;
-      overflow: hidden;
-      height: ${realHeight}px;
-      transform-origin: ${origin.x} ${origin.y};
-      transform: scale(0.04);
-      opacity: 0;
-      will-change: transform, opacity;
+      background:transparent;position:relative;overflow:hidden;height:${realHeight}px;
+      transform-origin:${origin.x} ${origin.y};transform:scale(0.04);opacity:0;
+      will-change:transform,opacity;
     ">
- 
-      <!-- Barra de progresso -->
       <div style="position:absolute;top:0;left:0;right:0;height:3px;background:rgba(255,255,255,0.22);z-index:20;">
-        <div id="progressBar" style="height:100%;width:0%;background:#fff;transition:width 0.1s linear;"></div>
+        <div id="progressBar" style="height:100%;width:0%;background:#fff;"></div>
       </div>
- 
-      <!-- Header -->
+
       <div style="position:absolute;top:8px;left:14px;right:14px;display:flex;align-items:center;z-index:30;">
         <button onclick="exitStories()" style="background:none;border:0;color:#fff;font-size:34px;margin-right:10px;padding:0;line-height:1;cursor:pointer;">‹</button>
         <div style="width:32px;height:32px;margin-right:10px;border-radius:50%;overflow:hidden;flex-shrink:0;">
@@ -1306,49 +1331,26 @@ function showStories() {
           <div style="color:rgba(255,255,255,0.85);font-size:12px;margin-top:2px;">12h</div>
         </div>
       </div>
- 
-      <!-- Barra de resposta -->
-      <div id="replyBar" style="
-        position:absolute;bottom:0;left:0;right:0;
-        padding:12px 16px 20px;
-        background:linear-gradient(to top,rgba(0,0,0,.92),transparent);
-        z-index:40;
-      ">
-        <div onclick="openStoryReply()" style="
-          background:rgba(255,255,255,.14);
-          border-radius:30px;
-          padding:14px 20px;
-          color:#fff;
-          display:flex;
-          align-items:center;
-          cursor:pointer;
-        ">
-          <span style="flex:1;color:rgba(255,255,255,0.7);font-size:15px;">Responder...</span>
-          <div style="
-            width:36px;height:36px;border-radius:50%;
-            overflow:hidden;flex-shrink:0;margin-left:8px;
-          ">
-            <img src="${ASSETS.avatar}?v=1" style="width:100%;height:100%;object-fit:cover;" />
-          </div>
+
+      <div id="replyBar" style="position:absolute;bottom:0;left:0;right:0;padding:12px 16px 20px;background:linear-gradient(to top,rgba(0,0,0,.92),transparent);z-index:40;">
+        <div onclick="openStoryReply()" style="background:rgba(255,255,255,.14);border-radius:30px;padding:14px 20px;color:#fff;display:flex;align-items:center;cursor:pointer;">
+          <span style="flex:1;">Responder...</span>
         </div>
       </div>
- 
     </div>
   `;
- 
+
   const screen = document.querySelector(".full");
- 
-  // Animação de entrada
+
   requestAnimationFrame(() => requestAnimationFrame(() => {
     screen.style.transition = `transform ${STORY_DURATION}ms ${STORY_EASING}, opacity ${STORY_DURATION}ms ${STORY_EASING}`;
     screen.style.transform  = "scale(1)";
     screen.style.opacity    = "1";
   }));
- 
-  // Progress bar
+
   const progress = document.getElementById("progressBar");
   let progressInterval = null;
- 
+
   video.onplay = () => {
     clearInterval(progressInterval);
     progressInterval = setInterval(() => {
@@ -1356,61 +1358,43 @@ function showStories() {
       progress.style.width = (video.currentTime / video.duration) * 100 + "%";
     }, 50);
   };
- 
-  video.onpause = () => clearInterval(progressInterval);
- 
-  video.onended = () => {
-    clearInterval(progressInterval);
-    window.storyViewed = true;
-    exitStories();
-  };
- 
-  // Click para sair
+  video.onpause  = () => clearInterval(progressInterval);
+  video.onended  = () => { clearInterval(progressInterval); window.storyViewed = true; exitStories(); };
+
   screen.addEventListener("click", (e) => {
     if (e.target.closest("#replyBar") || e.target.closest("button") || _storyExiting) return;
-    window.storyViewed = true;
-    exitStories();
+    window.storyViewed = true; exitStories();
   });
- 
-  // Swipe down + hold
-  let startY = 0, startX = 0, currentY = 0;
-  let dragging = false, isHolding = false, holdTimer = null, swipeCommitted = false;
- 
+
+  let startY = 0, startX = 0, currentY = 0, dragging = false, isHolding = false, holdTimer = null, swipeCommitted = false;
+
   screen.addEventListener("touchstart", (e) => {
     if (_storyExiting) return;
     startY = e.touches[0].clientY; startX = e.touches[0].clientX;
     currentY = startY; dragging = true; swipeCommitted = false; isHolding = false;
-    holdTimer = setTimeout(() => {
-      if (!swipeCommitted) { isHolding = true; video.pause(); }
-    }, 180);
+    holdTimer = setTimeout(() => { if (!swipeCommitted) { isHolding = true; video.pause(); } }, 180);
   }, { passive: true });
- 
+
   screen.addEventListener("touchmove", (e) => {
     if (_storyExiting || !dragging || isHolding) return;
     clearTimeout(holdTimer);
-    const touchY = e.touches[0].clientY;
-    const touchX = e.touches[0].clientX;
-    const diffY  = touchY - startY;
-    const diffX  = Math.abs(touchX - startX);
+    const touchY = e.touches[0].clientY, touchX = e.touches[0].clientX;
+    const diffY = touchY - startY, diffX = Math.abs(touchX - startX);
     if (diffX > diffY || diffY <= 0) return;
     currentY = touchY;
     const prog2  = Math.min(diffY / (realHeight * 0.55), 1);
     const scale  = 1 - prog2 * 0.46;
     const transY = diffY * 0.65;
-    const opac   = Math.max(1 - prog2 * 0.65, 0.35);
+    const opac   = 1 - prog2 * 0.65;
     screen.style.transition      = "none";
     screen.style.transformOrigin = `${origin.x} ${origin.y}`;
     screen.style.transform       = `translateY(${transY}px) scale(${scale})`;
-    screen.style.opacity         = String(opac);
+    screen.style.opacity         = String(Math.max(opac, 0.35));
   }, { passive: true });
- 
+
   screen.addEventListener("touchend", () => {
     clearTimeout(holdTimer);
-    if (isHolding) {
-      isHolding = false; dragging = false;
-      video.play().catch(() => {});
-      return;
-    }
+    if (isHolding) { isHolding = false; dragging = false; video.play().catch(() => {}); return; }
     dragging = false;
     if (_storyExiting) return;
     const diffY = currentY - startY;
@@ -1421,10 +1405,77 @@ function showStories() {
       screen.style.opacity         = "1";
       return;
     }
-    swipeCommitted = true;
-    window.storyViewed = true;
+    swipeCommitted = true; window.storyViewed = true;
     exitStories(true, screen);
   });
+}
+
+// ==================== STORY REPLY ====================
+function openStoryReply() {
+  if (document.getElementById("storyReplyOverlay")) return;
+  const video  = document.getElementById("storyVideo");
+  const oldBar = document.getElementById("replyBar");
+  if (video) video.pause();
+  if (oldBar) oldBar.style.display = "none";
+  document.body.style.overflow = "hidden";
+
+  document.body.insertAdjacentHTML("beforeend", `
+    <div id="storyReplyOverlay" style="position:fixed;inset:0;z-index:9999;">
+      <div class="story-hint">Toque para enviar</div>
+      <div class="story-emojis">
+        <div class="emoji-row">
+          <span onclick="sendStoryReaction(this)">😍</span>
+          <span onclick="sendStoryReaction(this)">😂</span>
+          <span onclick="sendStoryReaction(this)">😮</span>
+          <span onclick="sendStoryReaction(this)">😢</span>
+        </div>
+        <div class="emoji-row">
+          <span onclick="sendStoryReaction(this)">🙏</span>
+          <span onclick="sendStoryReaction(this)">👏</span>
+          <span onclick="sendStoryReaction(this)">🎉</span>
+          <span onclick="sendStoryReaction(this)">💯</span>
+        </div>
+      </div>
+      <div class="story-input-bar" id="replyBarKeyboard">
+        <span class="plus-btn">＋</span>
+        <div class="story-input-wrap">
+          <input id="storyReplyInput" type="text" placeholder="" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+        </div>
+        <span class="side-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 7h4l2-2h4l2 2h4v12H4z"/><circle cx="12" cy="13" r="3.5"/>
+          </svg>
+        </span>
+        <span class="side-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="3" width="6" height="12" rx="3"/>
+            <path d="M6 11a6 6 0 0 0 12 0"/><path d="M12 17v4"/>
+          </svg>
+        </span>
+      </div>
+    </div>
+  `);
+
+  const overlay  = document.getElementById("storyReplyOverlay");
+  const input    = document.getElementById("storyReplyInput");
+  const replyBar = document.getElementById("replyBarKeyboard");
+
+  replyBar.style.opacity = "1"; replyBar.style.bottom = "10px"; replyBar.style.transform = "translateY(0)";
+  input.focus(); input.click();
+  try { input.setSelectionRange(input.value.length, input.value.length); } catch {}
+  if (window.Telegram?.WebApp) Telegram.WebApp.expand();
+  requestAnimationFrame(() => { input.focus({ preventScroll: true }); input.click(); });
+
+  let keyboardOpen = false;
+  const handleViewport = () => {
+    const vh   = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    const kb   = window.innerHeight - vh;
+    if (kb > 120 && !keyboardOpen) { keyboardOpen = true; replyBar.style.transition = "none"; replyBar.style.transform = "translateY(-320px)"; }
+    if (kb < 80  && keyboardOpen)  { keyboardOpen = false; replyBar.style.transition = "none"; replyBar.style.transform = "translateY(0)"; }
+  };
+  window.visualViewport?.addEventListener("resize", handleViewport);
+  overlay._viewportHandler = handleViewport;
+  overlay.addEventListener("click", (e) => { if (e.target.id === "storyReplyOverlay") closeStoryReply(); });
 }
 
 function closeStoryReply() {
