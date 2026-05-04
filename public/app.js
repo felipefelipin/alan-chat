@@ -2014,16 +2014,104 @@ function exitStories() {
   }, STORY_DURATION + 20);
 }
 
-// ─── SHOW STORIES ────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// STORIES — transição estilo WhatsApp (entrada, saída, swipe, estado visto)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const STORY_EASING   = "cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+const STORY_DURATION = 320; // ms
+
+// Flag global para evitar duplo disparo de exitStories
+let _storyExiting = false;
+
+// ─── Retorna o centro do avatar relativo à viewport ──────────────────────────
+// Adicione data-story-avatar no elemento do avatar na tela de home.
+// Ex: <div data-story-avatar> ... </div>
+function getAvatarOrigin() {
+  const el = document.querySelector("[data-story-avatar]");
+  if (!el) return { x: "50%", y: "50%", xPx: window.innerWidth / 2, yPx: window.innerHeight * 0.15 };
+  const r = el.getBoundingClientRect();
+  const xPx = Math.round(r.left + r.width  / 2);
+  const yPx = Math.round(r.top  + r.height / 2);
+  return { x: xPx + "px", y: yPx + "px", xPx, yPx };
+}
+
+// ─── Marca o avatar como "story visto" ───────────────────────────────────────
+// O elemento com data-story-avatar recebe a classe "story-viewed".
+// Controle a aparência via CSS (veja o bloco de CSS no final do arquivo).
+function markStoryAsViewed() {
+  const el = document.querySelector("[data-story-avatar]");
+  if (!el) return;
+  el.classList.add("story-viewed");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EXIT STORIES
+// ─────────────────────────────────────────────────────────────────────────────
+function exitStories(fromSwipe = false, swipeScreen = null) {
+  if (_storyExiting) return; // evita duplo disparo
+  _storyExiting = true;
+
+  const video  = document.getElementById("storyVideo");
+  const screen = swipeScreen || document.querySelector(".full");
+
+  if (!screen) {
+    _storyExiting = false;
+    return;
+  }
+
+  if (window.storyViewed) {
+    markStoryAsViewed();
+  }
+
+  const origin = getAvatarOrigin();
+
+  if (fromSwipe) {
+    // Vem do swipe: a tela já está deslocada, anima direto para o ponto do avatar
+    screen.style.transformOrigin = `${origin.x} ${origin.y}`;
+    screen.style.transition      = `transform ${STORY_DURATION}ms ${STORY_EASING},
+                                     opacity  ${STORY_DURATION}ms ${STORY_EASING}`;
+    screen.style.transform       = "scale(0) translateY(0)";
+    screen.style.opacity         = "0";
+  } else {
+    // Saída normal (click, botão, fim do vídeo)
+    screen.style.transformOrigin = `${origin.x} ${origin.y}`;
+    screen.style.transition      = `transform ${STORY_DURATION}ms ${STORY_EASING},
+                                     opacity  ${STORY_DURATION}ms ${STORY_EASING}`;
+    screen.style.transform       = "scale(0.04)";
+    screen.style.opacity         = "0";
+  }
+
+  setTimeout(() => {
+    video.pause();
+    video.src       = "";
+    video.style.display = "none";
+    video.oncanplay = null;
+    video.onplay    = null;
+    video.onpause   = null;
+    video.onended   = null;
+
+    _storyExiting = false;
+
+    // ⚠️ Troque showHome() pela sua função de tela anterior
+    showHome();
+  }, STORY_DURATION + 30);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SHOW STORIES
+// ─────────────────────────────────────────────────────────────────────────────
 function showStories() {
   console.log("📸 Stories aberto");
+
+  _storyExiting      = false;
+  window.storyViewed = false;
 
   const video = document.getElementById("storyVideo");
 
   if (!window.__storyHeight) {
     window.__storyHeight = window.innerHeight;
   }
-
   const realHeight = window.__storyHeight;
 
   if (!video.src) {
@@ -2048,107 +2136,87 @@ function showStories() {
     video.oncanplay = () => { video.play().catch(() => {}); };
   }
 
-  // Captura o origin ANTES de destruir o DOM atual
+  // Captura origin ANTES de destruir o DOM atual
   const origin = getAvatarOrigin();
 
   app.innerHTML = `
     <div class="full" style="
-      background:transparent;
-      position:relative;
-      overflow:hidden;
-      height:${realHeight}px;
-      transform-origin:${origin.x} ${origin.y};
-      transform:scale(0.05);
-      opacity:0;
+      background: transparent;
+      position: relative;
+      overflow: hidden;
+      height: ${realHeight}px;
+      transform-origin: ${origin.x} ${origin.y};
+      transform: scale(0.04);
+      opacity: 0;
+      will-change: transform, opacity;
     ">
 
+      <!-- Barra de progresso -->
       <div style="
-        position:absolute;
-        top:0;
-        left:0;
-        right:0;
-        height:3px;
-        background:rgba(255,255,255,0.22);
-        z-index:20;
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: rgba(255,255,255,0.22);
+        z-index: 20;
       ">
         <div id="progressBar" style="
-          height:100%;
-          width:0%;
-          background:#fff;
+          height: 100%;
+          width: 0%;
+          background: #fff;
         "></div>
       </div>
 
+      <!-- Header -->
       <div style="
-        position:absolute;
-        top:8px;
-        left:14px;
-        right:14px;
-        display:flex;
-        align-items:center;
-        z-index:30;
+        position: absolute;
+        top: 8px; left: 14px; right: 14px;
+        display: flex;
+        align-items: center;
+        z-index: 30;
       ">
-
         <button onclick="exitStories()" style="
-          background:none;
-          border:0;
-          color:#fff;
-          font-size:34px;
-          margin-right:10px;
-          padding:0;
-          line-height:1;
+          background: none;
+          border: 0;
+          color: #fff;
+          font-size: 34px;
+          margin-right: 10px;
+          padding: 0;
+          line-height: 1;
+          cursor: pointer;
         ">‹</button>
 
         <div style="
-          width:32px;
-          height:32px;
-          margin-right:10px;
-          border-radius:50%;
-          overflow:hidden;
-          flex-shrink:0;
+          width: 32px; height: 32px;
+          margin-right: 10px;
+          border-radius: 50%;
+          overflow: hidden;
+          flex-shrink: 0;
         ">
-          <img src="${ASSETS.avatar}?v=1" style="
-            width:100%;
-            height:100%;
-            object-fit:cover;
-          "/>
+          <img src="${ASSETS.avatar}?v=1" style="width:100%;height:100%;object-fit:cover;"/>
         </div>
 
-        <div style="margin-top:1px;">
-          <div style="
-            color:#fff;
-            font-weight:600;
-            font-size:15px;
-          ">
-            ${CONTACT.title}
-          </div>
-
-          <div style="
-            color:rgba(255,255,255,0.85);
-            font-size:12px;
-            margin-top:2px;
-          ">
-            12h
-          </div>
+        <div style="margin-top: 1px;">
+          <div style="color:#fff;font-weight:600;font-size:15px;">${CONTACT.title}</div>
+          <div style="color:rgba(255,255,255,0.85);font-size:12px;margin-top:2px;">12h</div>
         </div>
-
       </div>
 
+      <!-- Barra de resposta -->
       <div id="replyBar" style="
-        position:absolute;
-        bottom:0;
-        left:0;
-        right:0;
-        padding:12px 16px 20px;
-        background:linear-gradient(to top, rgba(0,0,0,.92), transparent);
-        z-index:40;
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        padding: 12px 16px 20px;
+        background: linear-gradient(to top, rgba(0,0,0,.92), transparent);
+        z-index: 40;
       ">
         <div onclick="openStoryReply()" style="
-          background:rgba(255,255,255,.14);
-          border-radius:30px;
-          padding:14px 20px;
-          color:#fff;
-          display:flex;
-          align-items:center;
+          background: rgba(255,255,255,.14);
+          border-radius: 30px;
+          padding: 14px 20px;
+          color: #fff;
+          display: flex;
+          align-items: center;
+          cursor: pointer;
         ">
           <span style="flex:1;">Responder...</span>
         </div>
@@ -2157,9 +2225,9 @@ function showStories() {
     </div>
   `;
 
-  // ── Anima entrada após o browser pintar o estado inicial (scale 0.05 → 1) ──
   const screen = document.querySelector(".full");
 
+  // ── Animação de ENTRADA: nasce pequeno no avatar e expande para tela cheia ──
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       screen.style.transition = `transform ${STORY_DURATION}ms ${STORY_EASING},
@@ -2169,7 +2237,7 @@ function showStories() {
     });
   });
 
-  // ── Progress bar ─────────────────────────────────────────────────────────
+  // ── Progress bar ──────────────────────────────────────────────────────────
   const progress = document.getElementById("progressBar");
   let progressInterval = null;
 
@@ -2185,77 +2253,124 @@ function showStories() {
 
   video.onended = () => {
     clearInterval(progressInterval);
-    window.storyViewed = true; // 🔥 marca como visto
+    window.storyViewed = true;
     exitStories();
   };
 
-  // ── Click ─────────────────────────────────────────────────────────────────
+  // ── Click para sair ───────────────────────────────────────────────────────
   screen.addEventListener("click", (e) => {
     if (e.target.closest("#replyBar")) return;
     if (e.target.closest("button"))   return;
+    if (_storyExiting)                return;
+    window.storyViewed = true;
     exitStories();
   });
 
-  // ── Swipe + Hold ──────────────────────────────────────────────────────────
-  let startY    = 0;
-  let currentY  = 0;
-  let dragging  = false;
-  let holdTimer = null;
-  let isHolding = false;
+  // ── SWIPE DOWN + HOLD ─────────────────────────────────────────────────────
+  let startY         = 0;
+  let startX         = 0;
+  let currentY       = 0;
+  let dragging       = false;
+  let isHolding      = false;
+  let holdTimer      = null;
+  let swipeCommitted = false;
 
   screen.addEventListener("touchstart", (e) => {
-    startY   = e.touches[0].clientY;
-    dragging = true;
+    if (_storyExiting) return;
+
+    startY         = e.touches[0].clientY;
+    startX         = e.touches[0].clientX;
+    currentY       = startY;
+    dragging       = true;
+    swipeCommitted = false;
+    isHolding      = false;
 
     holdTimer = setTimeout(() => {
-      isHolding = true;
-      video.pause();
+      if (!swipeCommitted) {
+        isHolding = true;
+        video.pause();
+      }
     }, 180);
-  });
+  }, { passive: true });
 
   screen.addEventListener("touchmove", (e) => {
+    if (_storyExiting || !dragging || isHolding) return;
+
     clearTimeout(holdTimer);
-    if (!dragging) return;
 
-    currentY = e.touches[0].clientY;
-    const diff  = currentY - startY;
-    if (diff < 0) return;
+    const touchY   = e.touches[0].clientY;
+    const touchX   = e.touches[0].clientX;
+    const diffY    = touchY - startY;
+    const diffX    = Math.abs(touchX - startX);
 
-    const scale = 1 - diff / 900;
-    screen.style.transition = "none";
-    screen.style.transform  = `translateY(${diff}px) scale(${scale})`;
-  });
+    // Ignora horizontal e arraste para cima
+    if (diffX > diffY || diffY <= 0) return;
+
+    currentY = touchY;
+
+    // ── Física do swipe estilo WhatsApp:
+    //    - translateY acompanha o dedo com resistência (fator 0.65)
+    //    - scale encolhe suavemente em direção ao origin do avatar
+    //    - opacity cai de 1 → 0.35 conforme arrasta
+    const progress  = Math.min(diffY / (realHeight * 0.55), 1);
+    const scale     = 1 - progress * 0.46;
+    const translateY = diffY * 0.65;
+    const opacity   = 1 - progress * 0.65;
+
+    screen.style.transition      = "none";
+    screen.style.transformOrigin = `${origin.x} ${origin.y}`;
+    screen.style.transform       = `translateY(${translateY}px) scale(${scale})`;
+    screen.style.opacity         = String(Math.max(opacity, 0.35));
+  }, { passive: true });
 
   screen.addEventListener("touchend", () => {
     clearTimeout(holdTimer);
 
     if (isHolding) {
-      video.play().catch(() => {});
       isHolding = false;
       dragging  = false;
+      video.play().catch(() => {});
       return;
     }
 
     dragging = false;
-    const diff = currentY - startY;
+    if (_storyExiting) return;
 
-    if (diff < 120) {
-      // Swipe pequeno: volta ao normal
-      screen.style.transition = "transform .25s ease";
-      screen.style.transform  = "translateY(0) scale(1)";
+    const diffY = currentY - startY;
+
+    if (diffY < 100) {
+      // Swipe pequeno — snap back suave
+      screen.style.transition      = `transform 0.28s ${STORY_EASING},
+                                       opacity  0.28s ${STORY_EASING}`;
+      screen.style.transformOrigin = `${origin.x} ${origin.y}`;
+      screen.style.transform       = "translateY(0) scale(1)";
+      screen.style.opacity         = "1";
       return;
     }
 
-    // Swipe confirmado: anima saída estilo WhatsApp
-    screen.style.transformOrigin = `${origin.x} ${origin.y}`;
-    screen.style.transition      = `transform ${STORY_DURATION}ms ${STORY_EASING},
-                                     opacity  ${STORY_DURATION}ms ${STORY_EASING}`;
-    screen.style.transform       = "scale(0.05)";
-    screen.style.opacity         = "0";
-
-    setTimeout(() => exitStories(), STORY_DURATION + 20);
+    // Swipe confirmado — saída estilo WhatsApp
+    swipeCommitted     = true;
+    window.storyViewed = true;
+    exitStories(true, screen);
   });
 }
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CSS — cole no seu arquivo de estilos
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// [data-story-avatar] {
+//   border: 2.5px solid #25D366;            /* verde = story não visto */
+//   border-radius: 50%;
+//   transition: border-color 0.4s ease;
+// }
+//
+// [data-story-avatar].story-viewed {
+//   border-color: rgba(255,255,255,0.25);   /* cinza = story já visto */
+// }
+//
+// ─────────────────────────────────────────────────────────────────────────────
 
 function openStoryReply() {
   // evita duplicação
