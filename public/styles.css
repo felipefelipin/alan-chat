@@ -260,21 +260,22 @@ body{
   -webkit-tap-highlight-color:transparent;
 }
 
-/* Mic button — ícone simples sem círculo */
+/* Mic button — círculo verde #25D366 */
 .composerMic{
-  width:40px;
-  height:40px;
+  width:48px;
+  height:48px;
+  border-radius:50%;
   border:0;
-  background:transparent;
-  color:#8696a0;
+  background:#25d366;
   display:flex;
   align-items:center;
   justify-content:center;
   flex-shrink:0;
   padding:0;
   -webkit-tap-highlight-color:transparent;
+  transition:transform .12s ease;
 }
-.composerMic:active{ opacity:.7; }
+.composerMic:active{ transform:scale(.92); }
 
 /* Camera button — ícone svg à direita do campo */
 .composerCamera{
