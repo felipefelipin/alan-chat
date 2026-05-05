@@ -440,10 +440,10 @@ function mountChat() {
         </button>
         <button class="composerMic" id="composerMic" type="button">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="9" y="2" width="6" height="12" rx="3" stroke="#fff" stroke-width="1.6"/>
-            <path d="M5 10a7 7 0 0 0 14 0" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
-            <line x1="12" y1="19" x2="12" y2="22" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
-            <line x1="9" y1="22" x2="15" y2="22" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+            <rect x="9" y="2" width="6" height="12" rx="3" stroke="#8696a0" stroke-width="1.6"/>
+            <path d="M5 10a7 7 0 0 0 14 0" stroke="#8696a0" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="12" y1="19" x2="12" y2="22" stroke="#8696a0" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="9" y1="22" x2="15" y2="22" stroke="#8696a0" stroke-width="1.6" stroke-linecap="round"/>
           </svg>
         </button>
         <button class="send is-hidden" id="send"><span class="sendArrow"></span></button>
