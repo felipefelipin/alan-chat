@@ -1227,6 +1227,14 @@ function addVideoBubble(src, title = "Vídeo") {
   pushHistory(item); renderItem(item, true); scrollBottom();
 }
 
+async function gisaSendVideo(src, title = "Vídeo") {
+  setStatus("enviando um vídeo…");
+  await sleep(rand(3000, 5000));
+  setStatus("");
+  await sleep(rand(80, 180));
+  addVideoBubble(src, title);
+}
+
 function addImgBubble(src) {
   updatePreviousGroupForNewMessage("left");
   const item = { type:"img", side:"left", src:`${src}?v=${Date.now()}`, time:nowTime(), cluster:getNewCluster("left") };
@@ -1313,7 +1321,7 @@ async function enterDesireEscalation() {
   state.step = 3; saveState();
   await gisaSay("tô me sentindo uma puta safada hoje…");
   await gisaSay("você tá me fazendo querer fazer coisas bem safadas ao vivo");
-  addVideoBubble(ASSETS.teaseVideo);
+  await gisaSendVideo(ASSETS.teaseVideo, "Vídeo Privado");
   await sleep(rand(6000, 8000));
   await gisaSay("apaguei rapidinho…\nconseguiu ver como eu tô molhada pra você?");
   state._t1 = setTimeout(async () => {
@@ -1414,8 +1422,7 @@ async function startScript() {
   await gisaSay("porra… você demorou hein 😈");
   await sleep(2500);
   await gisaSay("tô toda molhada só de saber que você entrou aqui atrás de mim");
-  await sleep(rand(800, 1400));
-  addVideoBubble(ASSETS.teaseVideo, "Vídeo Privado");
+  await gisaSendVideo(ASSETS.teaseVideo, "Vídeo Privado");
   await sleep(rand(5000, 7000));
   await gisaSay("mas fala a verdade… você aguenta me ver pelada de verdade ou vai só ficar olhando como os fracos?");
   state._t1 = setTimeout(async () => {
