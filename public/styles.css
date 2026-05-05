@@ -394,56 +394,6 @@ body{
   transform:rotate(-45deg);
 }
 
-/* COMPOSER - CONTINUAÇÃO (botões da direita) */
-.composerGhostBtn {
-  width: 36px;
-  height: 36px;
-  border: 0;
-  background: transparent;
-  color: #a0a0a0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  flex-shrink: 0;
-}
-
-.composerMic,
-.send {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  margin-bottom: 3px;
-}
-
-.composerMic {
-  background: #1f2228;
-  color: #a0a0a0;
-}
-
-.send {
-  background: #00d15a;
-  color: #000;
-  box-shadow: 0 2px 8px rgba(0, 209, 90, 0.35);
-}
-
-.sendArrow {
-  width: 19px;
-  height: 19px;
-  border-top: 2.8px solid #000;
-  border-right: 2.8px solid #000;
-  transform: rotate(45deg);
-  margin-left: -1px;
-}
-
-.is-hidden{
-  display:none !important;
-}
 /* media */
 .videoBubble{
   width:min(268px, 68vw);
@@ -648,33 +598,6 @@ body{
   background:#3a3d46;
 }
 
-/* typing */
-.bubble-typing{
-  padding:10px 12px;
-  border-radius:18px;
-}
-
-.typingDots{
-  display:inline-flex;
-  gap:6px;
-  align-items:center;
-}
-
-.dot{
-  width:6px;
-  height:6px;
-  border-radius:50%;
-  background:rgba(255,255,255,.84);
-  opacity:.25;
-  animation:blink 1.05s infinite;
-}
-.dot:nth-child(2){animation-delay:.12s}
-.dot:nth-child(3){animation-delay:.24s}
-
-@keyframes blink{
-  0%,100%{opacity:.22}
-  50%{opacity:.9}
-}
 
 /* CTA card */
 .ctaCardWrap{
@@ -1144,12 +1067,165 @@ object-fit:cover;
   font-size:18px;
 }
 
- [data-story-avatar] {
-  border: 2.5px solid #25D366;            /* verde = story não visto */
- border-radius: 50%;
+[data-story-avatar] {
+  border: 2.5px solid #25D366;
+  border-radius: 50%;
   transition: border-color 0.4s ease;
- }
+}
+[data-story-avatar].story-viewed {
+  border-color: rgba(255,255,255,0.25);
+}
 
- [data-story-avatar].story-viewed {
-   border-color: rgba(255,255,255,0.25);   /* cinza = story já visto */
- }
+/* ==================== LAYOUT PRINCIPAL DO CHAT ==================== */
+.full {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.chatShell {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+  background: var(--wall) center / cover;
+  background-color: #0d1117;
+}
+
+.chat {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 10px 16px;
+  display: flex;
+  flex-direction: column;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* ==================== ANIMAÇÕES ==================== */
+.fadeIn {
+  animation: fadeInAnim .22s ease both;
+}
+@keyframes fadeInAnim {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.popIn {
+  animation: popInAnim .18s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes popInAnim {
+  from { opacity: 0; transform: scale(0.82); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ==================== BACK BUTTON CHEVRON ==================== */
+.navChevron {
+  display: block;
+  width: 9px;
+  height: 9px;
+  border-left: 2px solid rgba(255,255,255,.88);
+  border-bottom: 2px solid rgba(255,255,255,.88);
+  transform: rotate(45deg);
+  margin-left: 6px;
+}
+
+/* ==================== AVATAR FALLBACK ==================== */
+.avatarImgWrap {
+  position: relative;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #2a2d35;
+}
+.avatarImgWrap img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.avatarFallbackText {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 15px;
+  color: #fff;
+}
+.avatarFallback .avatarFallbackText { display: flex; }
+.avatarFallback img { display: none; }
+
+/* ==================== MIC ICON ==================== */
+.iconMic {
+  display: block;
+  width: 14px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,.75);
+  border-radius: 999px;
+  margin: 0 auto;
+  position: relative;
+}
+.iconMic::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1.5px;
+  height: 5px;
+  background: rgba(255,255,255,.75);
+  border-radius: 2px;
+}
+
+/* ==================== BUBBLE VARIANTS ==================== */
+.bubble-media { padding: 4px 4px 6px; }
+.bubble-grid  { padding: 4px 4px 6px; }
+.bubble-audio { padding: 8px 10px 6px; }
+.bubble-card  { padding: 12px 14px 10px; }
+
+/* ==================== IMAGE BUBBLE ==================== */
+.imgBubble {
+  width: min(260px, 65vw);
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.08);
+  background: #111;
+}
+.imgBubble img {
+  width: 100%;
+  display: block;
+  border-radius: inherit;
+}
+
+/* ==================== TYPING INDICATOR (estilo WhatsApp) ==================== */
+.bubble-typing {
+  padding: 10px 14px 10px !important;
+  min-width: 64px;
+}
+.typingDots {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  height: 18px;
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.52);
+  animation: waDot 1.3s ease-in-out infinite;
+  flex-shrink: 0;
+}
+.dot:nth-child(1) { animation-delay: 0s; }
+.dot:nth-child(2) { animation-delay: .18s; }
+.dot:nth-child(3) { animation-delay: .36s; }
+@keyframes waDot {
+  0%, 57%, 100% { transform: translateY(0);   opacity: .45; }
+  29%           { transform: translateY(-7px); opacity: 1;   }
+}
