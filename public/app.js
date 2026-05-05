@@ -127,7 +127,7 @@ function escapeHtml(s) {
 
 function setStatus(text) {
   const el = document.getElementById("status");
-  if (el) el.textContent = text;
+  if (el) el.textContent = text || "online";
   saveState();
 }
 
@@ -397,39 +397,26 @@ function mountChat() {
         </span>
       </div>
 
-      <div class="topbar" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;">
-        <div style="display:flex;align-items:center;flex:1;min-width:0;">
-          <button class="navBtn" onclick="mountChat()" style="margin-right:4px;">
-            <span class="navChevron"></span>
-          </button>
+      <div class="topbar">
+        <button class="navBtn" onclick="mountChat()"><span class="navChevron"></span></button>
 
-          <div data-story-avatar onclick="showStories()" style="
-            width:40px;height:40px;border-radius:50%;background:#000;
-            display:flex;align-items:center;justify-content:center;
-            margin-right:10px;flex-shrink:0;
-            border:2px solid ${window.storyViewed ? "#2c2c2e" : "#25D366"};
-            box-sizing:border-box;
-          ">
-            <div style="width:34px;height:34px;border-radius:50%;overflow:hidden;">
-              <img src="${ASSETS.avatar}?v=1" style="width:100%;height:100%;object-fit:cover;" />
-            </div>
-          </div>
-
-          <div onclick="openProfile()" style="overflow:hidden;">
-            <div style="font-size:15px;font-weight:600;color:#fff;line-height:1.2;">${CONTACT.title}</div>
-            <div style="font-size:12px;color:rgba(255,255,255,0.55);margin-top:2px;">online</div>
-          </div>
+        <div data-story-avatar onclick="showStories()" style="width:40px;height:40px;border-radius:50%;overflow:hidden;border:2px solid ${window.storyViewed ? "rgba(255,255,255,.2)" : "#25D366"};flex-shrink:0;box-sizing:border-box;background:#111;">
+          <img src="${ASSETS.avatar}?v=1" style="width:100%;height:100%;object-fit:cover;display:block;" />
         </div>
 
-        <div style="display:flex;align-items:center;gap:18px;margin-right:4px;">
-          <button onclick="startVideoCall()" style="background:none;border:none;padding:0;display:flex;align-items:center;justify-content:center;width:34px;height:34px;">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="6" width="13" height="12" rx="3"></rect>
-              <path d="M16 10l5-3v10l-5-3z"></path>
+        <div onclick="openProfile()" style="flex:1;min-width:0;cursor:pointer;">
+          <div style="font-size:15px;font-weight:600;color:#e9edef;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${CONTACT.title}</div>
+          <div id="status" style="font-size:12.5px;color:#8696a0;margin-top:1px;">online</div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:22px;padding-right:6px;">
+          <button onclick="startVideoCall()" style="background:none;border:none;padding:0;display:flex;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#aebac1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="7" width="13" height="10" rx="2.5"></rect><path d="M15 9.5l5.5-3v11l-5.5-3z"></path>
             </svg>
           </button>
-          <button onclick="startCall()" style="background:none;border:none;padding:0;display:flex;align-items:center;justify-content:center;width:34px;height:34px;">
-            <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <button onclick="startCall()" style="background:none;border:none;padding:0;display:flex;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#aebac1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <path d="M22 16.92v2.5a1.8 1.8 0 0 1-2 1.8 19 19 0 0 1-8.2-2.9 18.7 18.7 0 0 1-5.8-5.8 19 19 0 0 1-2.62-8.52 1.8 1.8 0 0 1 1.8-1.8h2.5a1.8 1.8 0 0 1 1.7 1.5c.12.8.3 1.6.55 2.3a1.8 1.8 0 0 1-.4 1.8L7.9 9.5a15 15 0 0 0 6.6 6.6l1.9-1.4a1.8 1.8 0 0 1 1.8-.4c.7.25 1.5.43 2.3.55A1.8 1.8 0 0 1 22 16.92z"></path>
             </svg>
           </button>
