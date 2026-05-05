@@ -474,32 +474,78 @@ body{
 .msg-right .tick{ border-color:#53bdeb }
 
 /* media */
-.videoBubble{
-  width:min(268px, 68vw);
-  aspect-ratio:16/10;
-  border-radius:14px;
+/* ── Video Card (WhatsApp document-style) ───────────────────────── */
+.bubble-videoCard{
+  padding:0!important;
+  width:min(256px,66vw);
   overflow:hidden;
-  border:1px solid rgba(255,255,255,.08);
-  background:#000;
-  position:relative;
 }
-
-.videoBubble video{
+.videoCard{
+  display:flex;
+  flex-direction:column;
+  border-radius:inherit;
+  overflow:hidden;
+}
+.videoCardHeader{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 10px;
+  background:rgba(255,255,255,.07);
+  border-bottom:1px solid rgba(255,255,255,.05);
+  min-height:38px;
+}
+.videoCardTitle{
+  flex:1;
+  font-size:13px;
+  font-weight:500;
+  color:var(--text);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.videoCardThumb{
+  position:relative;
+  width:100%;
+  aspect-ratio:16/10;
+  background:#0d0d0d;
+  overflow:hidden;
+}
+.videoCardThumb video{
   width:100%;
   height:100%;
   object-fit:cover;
+  display:block;
 }
-
-.videoHint{
+.videoCardPlay{
   position:absolute;
-  left:10px;
-  bottom:8px;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:48px;
+  height:48px;
+  border-radius:50%;
+  background:rgba(0,0,0,.52);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  pointer-events:none;
+}
+.videoCardDur{
+  position:absolute;
+  bottom:6px;
+  left:8px;
+  display:flex;
+  align-items:center;
+  gap:3px;
   font-size:11px;
-  padding:4px 8px;
-  border-radius:999px;
-  background:rgba(0,0,0,.42);
-  border:1px solid rgba(255,255,255,.14);
-  color:rgba(255,255,255,.92);
+  color:#fff;
+  text-shadow:0 1px 2px rgba(0,0,0,.9);
+}
+.videoCardMetaRow{
+  display:flex;
+  justify-content:flex-end;
+  padding:4px 8px 6px;
 }
 
 /* media grid */

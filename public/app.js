@@ -1121,15 +1121,39 @@ function renderRowHTML(item, animated = false) {
       </div>
     </div>`;
 
-  if (item.type === "video") return `
+  if (item.type === "video") {
+    const title = item.title || "Vídeo";
+    const dur = item.duration || "0:00";
+    return `
     <div class="msgRow ${sideClass} ${cluster}">
-      <div class="bubble ${bubbleBase} bubble-media ${anim}">
-        <div class="videoBubble">
-          <video playsinline muted preload="auto" ${animated ? "autoplay" : ""} src="${item.src}"></video>
-          <div class="videoHint">vídeo</div>
-        </div>${renderMeta(item)}
+      <div class="bubble ${bubbleBase} bubble-videoCard ${anim}">
+        <div class="videoCard">
+          <div class="videoCardHeader">
+            <span class="videoCardTitle">${escapeHtml(title)}</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+              <path d="M6 9l6 6 6-6" stroke="rgba(255,255,255,.45)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="videoCardThumb">
+            <video data-vdur playsinline muted preload="metadata" src="${item.src}"></video>
+            <div class="videoCardPlay">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="white">
+                <polygon points="7,4 21,12 7,20"/>
+              </svg>
+            </div>
+            <div class="videoCardDur">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="white">
+                <rect x="2" y="4" width="13" height="16" rx="2"/>
+                <path d="M15 9l7-3.5v13L15 15V9z"/>
+              </svg>
+              <span data-dur-text>${dur}</span>
+            </div>
+          </div>
+        </div>
+        <div class="videoCardMetaRow">${renderMeta(item)}</div>
       </div>
     </div>`;
+  }
 
   if (item.type === "img") return `
     <div class="msgRow ${sideClass} ${cluster}">
@@ -1168,7 +1192,19 @@ function renderItem(item, animated = false) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = renderRowHTML(item, animated).trim();
   const row = wrapper.firstElementChild;
-  if (row) state.chatEl.appendChild(row);
+  if (row) {
+    state.chatEl.appendChild(row);
+    const vid = row.querySelector("[data-vdur]");
+    if (vid) {
+      const durText = row.querySelector("[data-dur-text]");
+      vid.addEventListener("loadedmetadata", () => {
+        if (durText && vid.duration && isFinite(vid.duration)) {
+          const s = Math.floor(vid.duration);
+          durText.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+        }
+      }, { once: true });
+    }
+  }
   return row;
 }
 
@@ -1185,9 +1221,9 @@ function addMsg(side, html) {
   pushHistory(item); renderItem(item, true); scrollBottom();
 }
 
-function addVideoBubble(src) {
+function addVideoBubble(src, title = "Vídeo") {
   updatePreviousGroupForNewMessage("left");
-  const item = { type:"video", side:"left", src:`${src}?v=${Date.now()}`, time:nowTime(), cluster:getNewCluster("left") };
+  const item = { type:"video", side:"left", src:`${src}?v=${Date.now()}`, title, time:nowTime(), cluster:getNewCluster("left") };
   pushHistory(item); renderItem(item, true); scrollBottom();
 }
 
@@ -1378,6 +1414,8 @@ async function startScript() {
   await gisaSay("porra… você demorou hein 😈");
   await sleep(2500);
   await gisaSay("tô toda molhada só de saber que você entrou aqui atrás de mim");
+  await sleep(rand(800, 1400));
+  addVideoBubble(ASSETS.teaseVideo, "Vídeo Privado");
   await sleep(rand(5000, 7000));
   await gisaSay("mas fala a verdade… você aguenta me ver pelada de verdade ou vai só ficar olhando como os fracos?");
   state._t1 = setTimeout(async () => {
