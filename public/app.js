@@ -1067,7 +1067,7 @@ function renderTicks(item) {
 }
 
 function renderMeta(item) {
-  return `<div class="meta"><span class="metaTime">${item.time || nowTime()}</span>${renderTicks(item)}</div>`;
+  return `<span class="meta"><span class="metaTime">${item.time || nowTime()}</span>${renderTicks(item)}</span>`;
 }
 
 function renderMediaGrid(item) {
@@ -1117,7 +1117,7 @@ function renderRowHTML(item, animated = false) {
   if (item.type === "msg") return `
     <div class="msgRow ${sideClass} ${cluster}">
       <div class="bubble ${bubbleBase} ${anim}">
-        <div class="bubbleText">${item.html}</div>${renderMeta(item)}
+        <div class="bubbleText">${item.html}${renderMeta(item)}</div>
       </div>
     </div>`;
 
