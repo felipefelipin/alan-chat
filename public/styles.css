@@ -1302,19 +1302,19 @@ object-fit:cover;
 
 /* ==================== TYPING INDICATOR ==================== */
 .bubble-typing{
-  padding:9px 12px !important;
+  padding:7px 10px !important;
   border-radius:8px !important;
-  min-width:52px;
+  min-width:44px;
 }
 .typingDots{
   display:inline-flex;
-  gap:4px;
+  gap:3px;
   align-items:center;
-  height:14px;
+  height:11px;
 }
 .dot{
-  width:6px;
-  height:6px;
+  width:5px;
+  height:5px;
   border-radius:50%;
   background:#8696a0;
   animation:waDot 1.2s ease-in-out infinite;
@@ -1325,5 +1325,5 @@ object-fit:cover;
 .dot:nth-child(3){animation-delay:.4s}
 @keyframes waDot{
   0%,60%,100%{transform:translateY(0);opacity:.4}
-  30%{transform:translateY(-4px);opacity:1}
+  30%{transform:translateY(-3px);opacity:1}
 }
