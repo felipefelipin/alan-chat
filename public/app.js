@@ -1447,7 +1447,7 @@ async function startScript() {
   if (state.flags.startedChat) return;
   state.flags.startedChat = true;
   state.step = 1; saveState();
-  await sleep(rand(0, 1000));
+  await sleep(rand(2000, 3000));
   await gisaSay("porra… você demorou hein 😈");
   await sleep(2500);
   await gisaSay("tô toda molhada só de saber que você entrou aqui atrás de mim");
