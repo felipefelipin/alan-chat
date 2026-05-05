@@ -2215,9 +2215,15 @@ async function endCall() {
 preloadMedia();
 loadState();
 
+// Sempre reinicia o fluxo do chat do zero a cada sessão
+state.history        = [];
+state.step           = 0;
+state.flags.startedChat = false;
+state.flags.routing     = false;
+
 if (state.flags.entered) {
   mountChat();
-  if (!state.flags.startedChat) setTimeout(startScript, 220);
+  setTimeout(startScript, 220);
 } else {
   mountPremiumIntro();
 }
