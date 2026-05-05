@@ -1425,10 +1425,11 @@ async function startScript() {
   if (state.flags.startedChat) return;
   state.flags.startedChat = true;
   state.step = 1; saveState();
-  await sleep(rand(2000, 3000));
+  await sleep(rand(4000, 5000));
   await gisaSay("porra… você demorou hein 😈");
   await sleep(2500);
   await gisaSay("tô toda molhada só de saber que você entrou aqui atrás de mim");
+  await sleep(rand(2000, 3000));
   await gisaSendVideo(ASSETS.teaseVideo, "Vídeo Privado");
   await sleep(rand(5000, 7000));
   await gisaSay("mas fala a verdade… você aguenta me ver pelada de verdade ou vai só ficar olhando como os fracos?");
