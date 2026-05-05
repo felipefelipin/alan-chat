@@ -1982,9 +1982,9 @@ function sendStoryReaction(emojiEl) {
 function openProfile() {
   const contact = CONTACT;
   app.innerHTML = `
-    <div style="background:#000;color:#fff;height:100vh;overflow:auto;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
+    <div class="slideInRight" style="background:#0a0a0a;color:#fff;height:100vh;overflow:auto;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
       <div style="position:sticky;top:0;height:52px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;background:#111111;z-index:10;">
-        <span onclick="mountChat()" style="position:absolute;left:14px;font-size:28px;">‹</span>
+        <span onclick="mountChat()" style="position:absolute;left:14px;font-size:28px;cursor:pointer;">‹</span>
         Dados do contato
       </div>
       <div style="display:flex;flex-direction:column;align-items:center;margin-top:24px;">
@@ -1994,7 +1994,7 @@ function openProfile() {
           padding:3px;box-sizing:border-box;cursor:pointer;
           transition:border-color 0.4s ease;
         ">
-          <img src="${ASSETS.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+          <img src="${ASSETS.avatar}?v=1" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" loading="eager" decoding="sync">
         </div>
         <div style="margin-top:14px;font-size:26px;font-weight:700;color:#fff;letter-spacing:-.3px;">${contact.name||contact.title}</div>
         <div style="margin-top:4px;font-size:15px;color:rgba(255,255,255,0.55);">@${contact.username||contact.title}</div>
@@ -2006,12 +2006,12 @@ function openProfile() {
         ${actionBtnSVG(iconPix(),    "Pix",        "showPixAlert")}
         ${actionBtnSVG(iconSearch(), "Pesquisar",  "")}
       </div>
-      <div style="margin:12px;background:#111;border-radius:14px;overflow:hidden;">
+      <div style="margin:12px;background:#111111;border-radius:14px;overflow:hidden;">
         <div onclick="openMediaScreen()" style="cursor:pointer;">${item(iconMedia(),"Mídia, links e docs")}</div>
         <div onclick="openStorageScreen()">${item(iconStorage(),"Gerenciar armazenamento")}</div>
         <div onclick="openSavedMessages()">${item(iconSaved(),"Mensagens salvas","Nenhuma")}</div>
       </div>
-      <div style="margin:12px;background:#111;border-radius:14px;overflow:hidden;">
+      <div style="margin:12px;background:#111111;border-radius:14px;overflow:hidden;">
         <div onclick="openNotificationsScreen()">${item(iconBell(),"Notificações")}</div>
         <div style="display:flex;align-items:center;padding:16px;gap:12px;">${iconTheme()}<span>Tema da conversa</span></div>
         <div style="display:flex;justify-content:space-between;padding:16px;">
@@ -2019,7 +2019,7 @@ function openProfile() {
           <span style="color:rgba(255,255,255,0.5);">Desativado</span>
         </div>
       </div>
-      <div style="margin:12px;background:#111;border-radius:14px;overflow:hidden;">
+      <div style="margin:12px;background:#111111;border-radius:14px;overflow:hidden;">
         <div style="display:flex;justify-content:space-between;padding:16px;">
           <div style="display:flex;align-items:center;gap:12px;">${iconTimer()}<span>Mensagens temporárias</span></div>
           <span style="color:rgba(255,255,255,0.5);">24 horas</span>
@@ -2031,14 +2031,14 @@ function openProfile() {
         </div>
         <div style="display:flex;align-items:center;padding:16px;gap:12px;">${iconCrypto()}<span>Criptografia</span></div>
       </div>
-      <div style="margin:12px;background:#111;border-radius:14px;overflow:hidden;">
+      <div style="margin:12px;background:#111111;border-radius:14px;overflow:hidden;">
         <div style="display:flex;align-items:center;padding:16px;gap:12px;">${iconPlus()}<span>Criar grupo com ${contact.title}</span></div>
         <div style="display:flex;align-items:center;padding:16px;gap:12px;">${iconGroup()}<span>${contact.title}</span></div>
       </div>
-      <div style="margin:12px;background:#111;border-radius:14px;overflow:hidden;">
+      <div style="margin:12px;background:#111111;border-radius:14px;overflow:hidden;">
         ${action("Adicionar aos favoritos")}${action("Adicionar à lista")}${action("Exportar conversa")}${action("Limpar conversa",true)}
       </div>
-      <div style="margin:12px;background:#111;border-radius:14px;overflow:hidden;">
+      <div style="margin:12px;background:#111111;border-radius:14px;overflow:hidden;">
         ${danger("Bloquear "+contact.title)}${danger("Denunciar "+contact.title)}
       </div>
       <div style="height:40px;"></div>
@@ -2116,7 +2116,7 @@ function openNotificationsScreen() {
         <div style="font-size:17px;font-weight:600;">Notificações</div>
       </div>
       <div style="padding:16px;font-size:13px;color:rgba(255,255,255,0.5);">Mensagens</div>
-      <div style="margin:0 12px;background:#111;border-radius:14px;overflow:hidden;">
+      <div style="margin:0 12px;background:#111111;border-radius:14px;overflow:hidden;">
         <div onclick="openMuteOptions()" style="display:flex;justify-content:space-between;padding:16px;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;">
           <div>Silenciar notificações</div>
           <div style="color:rgba(255,255,255,0.5);">${_isMutedNotif?"Sim":"Não"} ›</div>

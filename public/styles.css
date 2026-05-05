@@ -1205,6 +1205,14 @@ object-fit:cover;
   to   { opacity: 1; }
 }
 
+.slideInRight {
+  animation: slideInRightAnim .22s cubic-bezier(.25,.46,.45,.94) both;
+}
+@keyframes slideInRightAnim {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
 .popIn {
   animation: popInAnim .28s cubic-bezier(.25,.46,.45,.94) both;
 }
