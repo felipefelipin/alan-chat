@@ -1,7 +1,7 @@
 :root{
   /* WhatsApp Dark Mode — cores exatas */
-  --bg:#0f1a20;
-  --bg2:#111b21;
+  --bg:#111111;
+  --bg2:#111111;
   --bubbleIn:#202c33;
   --bubbleOut:#25d366;
   --text:#e9edef;
@@ -13,7 +13,7 @@
   --accent2:#d6b07a;
   --shadow:0 18px 56px rgba(0,0,0,.52);
   --wall:url("/assets/chat-bg.png?v=9");
-  --whatsapp-input-bg:#2a3942;
+  --whatsapp-input-bg:#292929;
   --whatsapp-send:#25d366;
   --topbar:#1f2c36;
 }
@@ -203,14 +203,14 @@ body{
   min-height:calc(58px + env(safe-area-inset-bottom));
 }
 
-/* Botão "+" — 40×40, ícone #8696a0 */
+/* Botão "+" — 40×40, ícone branco */
 .composerAttach{
   width:40px;
   height:40px;
   border-radius:50%;
   background:transparent;
   border:0;
-  color:#8696a0;
+  color:#ffffff;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -266,6 +266,7 @@ body{
   height:40px;
   border:0;
   background:transparent;
+  color:#ffffff;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -281,7 +282,7 @@ body{
   height:40px;
   border:0;
   background:transparent;
-  color:#8696a0;
+  color:#ffffff;
   display:flex;
   align-items:center;
   justify-content:center;
