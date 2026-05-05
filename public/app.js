@@ -400,8 +400,8 @@ function mountChat() {
       <div class="topbar">
         <button class="navBtn" onclick="mountChat()"><span class="navChevron"></span></button>
 
-        <div data-story-avatar onclick="showStories()" style="width:40px;height:40px;border-radius:50%;overflow:hidden;border:2px solid ${window.storyViewed ? "rgba(255,255,255,.2)" : "#25D366"};flex-shrink:0;box-sizing:border-box;background:#111;">
-          <img src="${ASSETS.avatar}?v=1" style="width:100%;height:100%;object-fit:cover;display:block;" />
+        <div data-story-avatar onclick="showStories()" style="width:42px;height:42px;border-radius:50%;border:2px solid ${window.storyViewed ? "rgba(255,255,255,.2)" : "#25D366"};padding:2px;flex-shrink:0;box-sizing:border-box;">
+          <img src="${ASSETS.avatar}?v=1" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;" />
         </div>
 
         <div onclick="openProfile()" style="flex:1;min-width:0;cursor:pointer;">
@@ -409,14 +409,14 @@ function mountChat() {
           <div id="status" style="font-size:12.5px;color:#8696a0;margin-top:1px;">online</div>
         </div>
 
-        <div style="display:flex;align-items:center;gap:22px;padding-right:6px;">
+        <div style="display:flex;align-items:center;gap:20px;padding-right:6px;">
           <button onclick="startVideoCall()" style="background:none;border:none;padding:0;display:flex;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#aebac1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <rect x="2" y="7" width="13" height="10" rx="2.5"></rect><path d="M15 9.5l5.5-3v11l-5.5-3z"></path>
             </svg>
           </button>
           <button onclick="startCall()" style="background:none;border:none;padding:0;display:flex;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#aebac1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <path d="M22 16.92v2.5a1.8 1.8 0 0 1-2 1.8 19 19 0 0 1-8.2-2.9 18.7 18.7 0 0 1-5.8-5.8 19 19 0 0 1-2.62-8.52 1.8 1.8 0 0 1 1.8-1.8h2.5a1.8 1.8 0 0 1 1.7 1.5c.12.8.3 1.6.55 2.3a1.8 1.8 0 0 1-.4 1.8L7.9 9.5a15 15 0 0 0 6.6 6.6l1.9-1.4a1.8 1.8 0 0 1 1.8-.4c.7.25 1.5.43 2.3.55A1.8 1.8 0 0 1 22 16.92z"></path>
             </svg>
           </button>
@@ -1522,8 +1522,10 @@ function getAvatarOrigin() {
 }
 
 function markStoryAsViewed() {
-  const el = document.querySelector("[data-story-avatar]");
-  if (el) el.classList.add("story-viewed");
+  document.querySelectorAll("[data-story-avatar]").forEach(el => {
+    el.classList.add("story-viewed");
+    el.style.borderColor = "rgba(255,255,255,.2)";
+  });
   window.storyViewed = true;
 }
 
