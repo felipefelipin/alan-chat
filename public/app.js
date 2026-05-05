@@ -375,14 +375,6 @@ async function runRoutingOverlayV4() {
 function mountChat() {
   app.innerHTML = `
     <div class="full fadeIn">
-      <div class="statusbar">
-        <span id="sbTime">${nowTime()}</span>
-        <span class="sbIcons">
-          <span class="sbSignal"></span>
-          <span class="sbWifi"></span>
-          <span class="sbBattery"></span>
-        </span>
-      </div>
 
       <div class="topbar">
         <button class="navBtn" onclick="mountChat()"><span class="navChevron"></span></button>
@@ -458,11 +450,6 @@ function mountChat() {
   restoreHistory();
   bindKeyboardUX();
   handleScrollDetection();
-
-  setInterval(() => {
-    const t = document.getElementById("sbTime");
-    if (t) t.textContent = nowTime();
-  }, 30000);
 }
 
 // ==================== FIX #2+3: SVG ICONS GLOBAIS (usados por startCall) ====================
@@ -1285,7 +1272,7 @@ function typingDelayFor(text) {
 }
 
 async function gisaSay(text, opts = {}) {
-  const status = Math.random() < 0.15 ? "gravando áudio…" : "digitando…";
+  const status = "digitando…";
   setStatus(status); addTyping();
   await sleep(opts.delay ?? typingDelayFor(text));
   removeTyping(); await sleep(rand(90,220));
