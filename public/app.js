@@ -1670,20 +1670,23 @@ function openStoryReply() {
       #storyBottomBlock {
         position: fixed;
         left: 0; right: 0;
-        bottom: 0;
+        top: 0; bottom: 0;
         z-index: 10001;
         display: flex;
         flex-direction: column;
-        align-items: center;
+        pointer-events: none;
       }
       #storyEmojiBlock {
+        flex: 1;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         gap: 28px;
-        padding: 16px 20px;
-        width: 100%;
+        padding: 0 20px;
+        pointer-events: none;
+      }
+      #storyEmojiBlock span {
         pointer-events: auto;
       }
       #replyBarKeyboard {
