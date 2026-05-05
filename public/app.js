@@ -1686,7 +1686,7 @@ function openStoryReply() {
         flex-direction: column;
         align-items: center;
         justify-content: flex-end;
-        gap: 14px;
+        gap: 28px;
         padding: 0 20px;
         pointer-events: auto;
       }
