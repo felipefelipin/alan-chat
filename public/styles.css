@@ -1336,16 +1336,35 @@ object-fit:cover;
 }
 
 /* ==================== TYPING INDICATOR ==================== */
+/* ── Typing bubble ─────────────────────────────────────── */
 .bubble-typing{
-  padding:7px 10px !important;
-  border-radius:8px !important;
+  padding:7px 10px!important;
+  border-radius:8px!important;
   min-width:44px;
+  animation:typingBubbleIn .22s cubic-bezier(.25,.46,.45,.94) both;
+}
+@keyframes typingBubbleIn{
+  from{opacity:0;transform:translateY(10px) scale(.82)}
+  to  {opacity:1;transform:translateY(0)    scale(1)}
 }
 .typingDots{
   display:inline-flex;
-  gap:3px;
+  gap:4px;
   align-items:center;
   height:11px;
+}
+/* each dot wrapper pops in one by one */
+.dotWrap{
+  display:flex;
+  align-items:center;
+  opacity:0;
+}
+.dotWrap:nth-child(1){animation:dotWrapIn .16s .10s cubic-bezier(.34,1.56,.64,1) both}
+.dotWrap:nth-child(2){animation:dotWrapIn .16s .26s cubic-bezier(.34,1.56,.64,1) both}
+.dotWrap:nth-child(3){animation:dotWrapIn .16s .42s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes dotWrapIn{
+  from{opacity:0;transform:scale(.2)}
+  to  {opacity:1;transform:scale(1)}
 }
 .dot{
   width:5px;
@@ -1355,9 +1374,9 @@ object-fit:cover;
   animation:waDot 1.2s ease-in-out infinite;
   flex-shrink:0;
 }
-.dot:nth-child(1){animation-delay:0s}
-.dot:nth-child(2){animation-delay:.2s}
-.dot:nth-child(3){animation-delay:.4s}
+.dotWrap:nth-child(1) .dot{animation-delay:.68s}
+.dotWrap:nth-child(2) .dot{animation-delay:.83s}
+.dotWrap:nth-child(3) .dot{animation-delay:.98s}
 @keyframes waDot{
   0%,60%,100%{transform:translateY(0);opacity:.4}
   30%{transform:translateY(-3px);opacity:1}

@@ -1024,7 +1024,9 @@ function addTyping() {
   row.innerHTML = `
     <div class="bubble bubble-in bubble-typing">
       <div class="typingDots">
-        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <span class="dotWrap"><span class="dot"></span></span>
+        <span class="dotWrap"><span class="dot"></span></span>
+        <span class="dotWrap"><span class="dot"></span></span>
       </div>
     </div>
   `;
