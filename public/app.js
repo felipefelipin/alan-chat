@@ -1426,9 +1426,9 @@ async function startScript() {
   state.flags.startedChat = true;
   state.step = 1; saveState();
   await sleep(rand(4000, 5000));
-  await gisaSay("porra… você demorou hein 😈");
+  await gisaSay("porra… você demorou hein 😈", { delay: rand(4500, 6500) });
   await sleep(2500);
-  await gisaSay("tô toda molhada só de saber que você entrou aqui atrás de mim");
+  await gisaSay("tô toda molhada só de saber que você entrou aqui atrás de mim", { delay: rand(6000, 8000) });
   await sleep(rand(2000, 3000));
   await gisaSendVideo(ASSETS.teaseVideo, "Vídeo Privado");
   await sleep(rand(5000, 7000));
