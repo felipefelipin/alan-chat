@@ -430,10 +430,30 @@ function mountChat() {
       <div class="composer">
         <button class="composerAttach" type="button"><span class="composerPlusMark">+</span></button>
         <div class="composerField">
+          <button class="composerGhostBtn" type="button" tabindex="-1" style="flex-shrink:0;width:28px;height:28px;border:0;background:transparent;padding:0;display:flex;align-items:center;justify-content:center;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="10" stroke="#8696a0" stroke-width="1.6"/>
+              <path d="M8 14s1.5 2 4 2 4-2 4-2" stroke="#8696a0" stroke-width="1.6" stroke-linecap="round"/>
+              <circle cx="9" cy="10" r="1.2" fill="#8696a0"/>
+              <circle cx="15" cy="10" r="1.2" fill="#8696a0"/>
+            </svg>
+          </button>
           <input id="input" autocomplete="off" placeholder="Mensagem" />
         </div>
-        <button class="composerGhostBtn" type="button"><span class="iconSticker">😀</span></button>
-        <button class="composerMic" id="composerMic" type="button"><span class="iconMic"></span></button>
+        <button class="composerCamera" type="button">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" stroke="#8696a0" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="12" cy="13" r="4" stroke="#8696a0" stroke-width="1.6"/>
+          </svg>
+        </button>
+        <button class="composerMic" id="composerMic" type="button">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="9" y="2" width="6" height="12" rx="3" stroke="#8696a0" stroke-width="1.6"/>
+            <path d="M5 10a7 7 0 0 0 14 0" stroke="#8696a0" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="12" y1="19" x2="12" y2="22" stroke="#8696a0" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="9" y1="22" x2="15" y2="22" stroke="#8696a0" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </button>
         <button class="send is-hidden" id="send"><span class="sendArrow"></span></button>
       </div>
     </div>

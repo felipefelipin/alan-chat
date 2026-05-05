@@ -3,7 +3,7 @@
   --bg:#0f1a20;
   --bg2:#111b21;
   --bubbleIn:#202c33;
-  --bubbleOut:#005c4b;
+  --bubbleOut:#25d366;
   --text:#e9edef;
   --meta:#8696a0;
   --muted:rgba(134,150,160,.9);
@@ -249,38 +249,48 @@ body{
 
 /* Emoji button dentro da área de input */
 .composerGhostBtn{
-  width:32px;
-  height:32px;
   border:0;
   background:transparent;
   color:#8696a0;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:22px;
   flex-shrink:0;
   padding:0;
+  -webkit-tap-highlight-color:transparent;
 }
 
-/* Mic button — 48×48, círculo verde #25D366 */
+/* Mic button — ícone simples sem círculo */
 .composerMic{
-  width:48px;
-  height:48px;
-  border-radius:50%;
+  width:40px;
+  height:40px;
   border:0;
-  background:#25d366;
-  color:#fff;
+  background:transparent;
+  color:#8696a0;
   display:flex;
   align-items:center;
   justify-content:center;
   flex-shrink:0;
-  transition:transform .12s ease, filter .12s ease;
+  padding:0;
   -webkit-tap-highlight-color:transparent;
 }
-.composerMic:active{
-  transform:scale(.92);
-  filter:brightness(.9);
+.composerMic:active{ opacity:.7; }
+
+/* Camera button — ícone svg à direita do campo */
+.composerCamera{
+  width:40px;
+  height:40px;
+  border:0;
+  background:transparent;
+  color:#8696a0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+  padding:0;
+  -webkit-tap-highlight-color:transparent;
 }
+.composerCamera:active{ opacity:.7; }
 
 /* Send button (aparece quando há texto) */
 .send{
