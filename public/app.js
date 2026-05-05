@@ -1480,22 +1480,6 @@ function showStories() {
             cursor:text;
           ">Responder...</div>
 
-          <!-- botão câmera -->
-          <div id="storyBtnCamera" style="
-            width:44px;height:44px;border-radius:50%;
-            background:rgba(255,255,255,0.15);
-            display:flex;align-items:center;justify-content:center;
-            cursor:pointer;flex-shrink:0;
-          ">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-                stroke="#fff" stroke-width="1.8" stroke-linecap="round"
-                stroke-linejoin="round">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8
-                       a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-              <circle cx="12" cy="13" r="4"/>
-            </svg>
-          </div>
-
         </div>
       </div>
 
@@ -1535,65 +1519,6 @@ function showStories() {
     window.storyViewed = true;
     exitStories();
   });
-
-  // ── botão câmera ────────────────────────────────────────────────────────
-  document.getElementById("storyBtnCamera").onclick = async (e) => {
-    e.stopPropagation();
-    video.pause();
-
-    try {
-      const input   = document.createElement("input");
-      input.type    = "file";
-      input.accept  = "image/*,video/*";
-      input.capture = "environment";
-      input.style.display = "none";
-      document.body.appendChild(input);
-
-      input.onchange = () => {
-        const file = input.files?.[0];
-        document.body.removeChild(input);
-        if (!file) { video.play().catch(() => {}); return; }
-
-        const url   = URL.createObjectURL(file);
-        const isVid = file.type.startsWith("video");
-
-        const preview = document.createElement("div");
-        preview.style = `
-          position:fixed;inset:0;background:#000;z-index:9999;
-          display:flex;flex-direction:column;align-items:center;justify-content:center;
-        `;
-        preview.innerHTML = isVid
-          ? `<video src="${url}" autoplay playsinline controls
-               style="max-width:100%;max-height:80vh;border-radius:12px;"></video>`
-          : `<img src="${url}" style="max-width:100%;max-height:80vh;
-               border-radius:12px;object-fit:contain;">`;
-
-        const closeBtn = document.createElement("div");
-        closeBtn.textContent = "✕ Fechar";
-        closeBtn.style = `
-          margin-top:20px;padding:10px 28px;border-radius:999px;
-          background:rgba(255,255,255,0.15);color:#fff;
-          font-size:15px;cursor:pointer;
-        `;
-        closeBtn.onclick = () => {
-          URL.revokeObjectURL(url);
-          preview.remove();
-          video.play().catch(() => {});
-        };
-        preview.appendChild(closeBtn);
-        document.body.appendChild(preview);
-      };
-
-      input.oncancel = () => {
-        document.body.removeChild(input);
-        video.play().catch(() => {});
-      };
-
-      input.click();
-    } catch {
-      video.play().catch(() => {});
-    }
-  };
 
   // swipe down + hold
   let startY = 0, startX = 0, currentY = 0;
