@@ -1667,28 +1667,33 @@ function openStoryReply() {
     const style = document.createElement("style");
     style.id = "storyReplyCSS";
     style.textContent = `
-      /* iOS 15+ — teclado move o layout nativamente via interactive-widget */
-      #replyBarKeyboard {
+      #storyBottomBlock {
         position: fixed;
         left: 0; right: 0;
         bottom: 0;
-        z-index: 10002;
-      }
-
-      /* emojis: ficam no centro do espaço disponível acima do input
-         = metade da altura visível acima da barra (~56px) menos metade do bloco de emojis */
-      #storyEmojiBlock {
-        position: fixed;
-        left: 0; right: 0;
-        bottom: 72px; /* logo acima da barra de input */
         z-index: 10001;
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: flex-end;
+      }
+      #storyEmojiBlock {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         gap: 28px;
-        padding: 0 20px;
+        padding: 16px 20px;
+        width: 100%;
         pointer-events: auto;
+      }
+      #replyBarKeyboard {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px 10px;
+        background: #000;
+        pointer-events: auto;
+        width: 100%;
       }
     `;
     document.head.appendChild(style);
@@ -1712,7 +1717,8 @@ function openStoryReply() {
         position:absolute;inset:0;z-index:1;
       "></div>
 
-      <!-- emojis -->
+      <!-- emojis + input (sobem juntos com o teclado) -->
+      <div id="storyBottomBlock">
       <div id="storyEmojiBlock">
         <div style="display:flex;gap:26px;align-items:center;justify-content:center;width:100%;">
           <span onclick="sendStoryReaction(this)" style="font-size:40px;cursor:pointer;line-height:1;user-select:none;-webkit-tap-highlight-color:transparent;">😍</span>
@@ -1729,12 +1735,7 @@ function openStoryReply() {
       </div>
 
       <!-- input bar -->
-      <div id="replyBarKeyboard" style="
-        display:flex;align-items:center;gap:10px;
-        padding:8px 12px 10px;
-        background:#000;
-        pointer-events:auto;
-      ">
+      <div id="replyBarKeyboard">
         <div style="
           flex:1;background:#1c1c1e;border-radius:22px;
           padding:9px 16px;display:flex;align-items:center;
@@ -1764,14 +1765,13 @@ function openStoryReply() {
           </svg>
         </div>
       </div>
+      </div>
 
     </div>
   `);
 
   const overlay = document.getElementById("storyReplyOverlay");
   const input   = document.getElementById("storyReplyInput");
-  const bar     = document.getElementById("replyBarKeyboard");
-  const emojis  = document.getElementById("storyEmojiBlock");
   const dismiss = document.getElementById("storyReplyDismiss");
   const sendBtn = document.getElementById("storyReplySend");
 
@@ -1779,31 +1779,6 @@ function openStoryReply() {
   ghost.addEventListener("blur", () => ghost.remove());
   input.focus();
   if (window.Telegram?.WebApp) Telegram.WebApp.expand();
-
-  // ── posiciona emojis no centro do espaço visível acima do input ──────────
-  // Com interactive-widget=resizes-content o viewport já foi redimensionado,
-  // então window.innerHeight já é a área visível acima do teclado.
-  // Os emojis ficam no centro dessa área: top = (innerHeight - barHeight - emojiBlockHeight) / 2
-  const INPUT_BAR_H = 60; // altura aproximada da barra
-
-  const repositionEmojis = () => {
-    const visibleH    = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    const emojiH      = emojis.offsetHeight || 110;
-    const topPos      = Math.max((visibleH - INPUT_BAR_H - emojiH) / 2, 8);
-    emojis.style.top    = topPos + "px";
-    emojis.style.bottom = "auto";
-  };
-
-  // aguarda o teclado abrir para calcular a posição correta
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener("resize", repositionEmojis, { passive: true });
-    // calcula imediatamente e também após um tick (teclado pode não ter aberto ainda)
-    repositionEmojis();
-    setTimeout(repositionEmojis, 350);
-  } else {
-    repositionEmojis();
-  }
-  overlay._vpHandler = repositionEmojis;
 
   // Enter envia
   input.addEventListener("keydown", (e) => {
@@ -1844,9 +1819,6 @@ function sendStoryTextReply() {
 function closeStoryReply() {
   const overlay = document.getElementById("storyReplyOverlay");
   if (!overlay) return;
-
-  if (overlay._vpHandler && window.visualViewport)
-    window.visualViewport.removeEventListener("resize", overlay._vpHandler);
 
   document.querySelectorAll("input[style*='pointer-events:none'][style*='opacity:0']")
     .forEach(e => e.remove());
