@@ -342,7 +342,7 @@ body{
 .bubble{
   display:inline-flex;
   flex-direction:column;
-  max-width:min(70%,310px);
+  max-width:min(85%,340px);
   padding:6px 9px 4px;
   border-radius:8px;
   position:relative;
