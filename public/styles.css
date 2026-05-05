@@ -447,23 +447,13 @@ body{
 
 .metaTime{ opacity:1 }
 
-.tickWrap{
-  display:inline-flex;
-  align-items:center;
-}
-
-/* Ticks duplos estilo WhatsApp — dois chevrons sobrepostos */
-.tick{
+/* WhatsApp double-tick SVG */
+.tickSvg{
   display:inline-block;
-  width:7px;
-  height:4.5px;
-  border-left:1.6px solid #8696a0;
-  border-bottom:1.6px solid #8696a0;
-  transform:rotate(-45deg);
-  margin-right:-3px;
+  vertical-align:middle;
+  flex-shrink:0;
+  margin-bottom:1px;
 }
-.tick:last-child{ margin-right:0 }
-.msg-right .tick{ border-color:#53bdeb }
 
 /* media */
 /* ── Video Card (WhatsApp document-style) ───────────────────────── */

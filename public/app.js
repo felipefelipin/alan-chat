@@ -1050,7 +1050,10 @@ function pushHistory(item) {
 
 function renderTicks(item) {
   if (item.side !== "right") return "";
-  return `<span class="tickWrap" aria-hidden="true"><span class="tick tick1"></span><span class="tick tick2"></span></span>`;
+  return `<svg class="tickSvg" width="17" height="11" viewBox="0 0 17 11" fill="none" aria-hidden="true">
+    <path d="M1 5.5L4 9L9.5 1.5" stroke="#53bdeb" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M6 5.5L9 9L14.5 1.5" stroke="#53bdeb" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
 }
 
 function renderMeta(item) {
