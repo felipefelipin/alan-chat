@@ -295,8 +295,8 @@ body{
 
 /* Send button (aparece quando há texto) */
 .send{
-  width:48px;
-  height:48px;
+  width:42px;
+  height:42px;
   border-radius:50%;
   border:0;
   background:#25d366;
@@ -306,17 +306,9 @@ body{
   justify-content:center;
   flex-shrink:0;
   transition:transform .12s ease;
+  padding:0;
 }
 .send:active{ transform:scale(.92) }
-
-.sendArrow{
-  width:17px;
-  height:17px;
-  border-top:2px solid #fff;
-  border-right:2px solid #fff;
-  transform:rotate(45deg);
-  margin-left:-2px;
-}
 
 .is-hidden{
   display:none !important;

@@ -146,21 +146,8 @@ function bindKeyboardUX() {
 
   let startY = 0, lastY = 0, totalDelta = 0, direction = null, isKeyboardOpen = false;
 
-  input.addEventListener("focus", () => {
-    document.body.classList.add("kb-open");
-    isKeyboardOpen = true;
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      if (state.chatEl) {
-        state.chatEl.style.paddingBottom = "10px";
-        void state.chatEl.offsetHeight;
-      }
-    }));
-  });
-
-  input.addEventListener("blur", () => {
-    document.body.classList.remove("kb-open");
-    isKeyboardOpen = false;
-  });
+  input.addEventListener("focus", () => { isKeyboardOpen = true; });
+  input.addEventListener("blur",  () => { isKeyboardOpen = false; });
 
   chat.addEventListener("touchstart", (e) => {
     startY = e.touches[0].clientY; lastY = startY; totalDelta = 0; direction = null;
@@ -446,7 +433,11 @@ function mountChat() {
             <line x1="9" y1="22" x2="15" y2="22" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/>
           </svg>
         </button>
-        <button class="send is-hidden" id="send"><span class="sendArrow"></span></button>
+        <button class="send is-hidden" id="send">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+          </svg>
+        </button>
       </div>
     </div>
   `;
