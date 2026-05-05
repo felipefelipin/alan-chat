@@ -1983,7 +1983,7 @@ function openProfile() {
   const contact = CONTACT;
   app.innerHTML = `
     <div style="background:#000;color:#fff;height:100vh;overflow:auto;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
-      <div style="position:sticky;top:0;height:52px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;background:#000;z-index:10;">
+      <div style="position:sticky;top:0;height:52px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;background:#111111;z-index:10;">
         <span onclick="mountChat()" style="position:absolute;left:14px;font-size:28px;">‹</span>
         Dados do contato
       </div>
