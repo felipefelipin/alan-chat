@@ -22,6 +22,7 @@ const ASSETS = {
   media4: "/assets/grid-4.jpg",
   lingerie: "/assets/lingerie.jpg",
   teaseVideo: "/assets/tease.mp4",
+  teaseVideo2: "/assets/tease2.mp4",
 };
 
 function preloadMedia() {
@@ -1307,12 +1308,13 @@ function isNegative(text) {
 async function enterTeaseBuildup() {
   clearReengage();
   state.step = 2; saveState();
-  await gisaSay("aqui não tem mimimi… eu mostro tudo, mas só pra quem merece");
-  await gisaSay("eu não abro as pernas pra qualquer um que aparece");
-  addImgBubble(ASSETS.lingerie);
-  await sleep(2500);
-  await gisaSay("tá duro já só com isso? 😏");
-  await gisaSay("quer que eu tire essa lingerie toda agora pra você ver minha buceta?");
+  await gisaSay("aqui não tem mimimi… eu mostro tudo, mas só pra quem merece", { delay: rand(5000, 7000) });
+  await gisaSay("eu não abro as pernas pra qualquer um que aparece", { delay: rand(4500, 6500) });
+  await sleep(rand(2000, 3000));
+  await gisaSendVideo(ASSETS.teaseVideo2, "Vídeo Privado");
+  await sleep(rand(5000, 7000));
+  await gisaSay("tá duro já só com isso? 😏", { delay: rand(3000, 4500) });
+  await gisaSay("quer que eu tire essa lingerie toda agora pra você ver minha buceta?", { delay: rand(7000, 9000) });
   state._t1 = setTimeout(async () => {
     if (state.step !== 2) return;
     await gisaSay("vou tirar mesmo assim… mas só porque você tá me deixando louca");
