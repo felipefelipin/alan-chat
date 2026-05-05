@@ -1199,14 +1199,39 @@ function renderItem(item, animated = false) {
     const vid = row.querySelector("[data-vdur]");
     if (vid) {
       const durText = row.querySelector("[data-dur-text]");
-      vid.addEventListener("loadedmetadata", () => {
-        // seek to show first frame as thumbnail
-        try { vid.currentTime = 0.01; } catch {}
+
+      // detect duration
+      const onMeta = () => {
         if (durText && vid.duration && isFinite(vid.duration)) {
           const s = Math.floor(vid.duration);
           durText.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
         }
-      }, { once: true });
+      };
+      vid.addEventListener("loadedmetadata", onMeta, { once: true });
+
+      // show first frame: autoplay muted (allowed on iOS) then pause immediately
+      vid.muted = true;
+      vid.play().then(() => {
+        vid.pause();
+        try { vid.currentTime = 0.01; } catch {}
+      }).catch(() => {
+        try { vid.currentTime = 0.01; } catch {}
+      });
+
+      // tap anywhere on card → fullscreen play with sound
+      const card = row.querySelector(".videoCard");
+      if (card) {
+        card.style.cursor = "pointer";
+        card.addEventListener("click", () => {
+          vid.muted = false;
+          if (vid.webkitEnterFullscreen) {
+            vid.webkitEnterFullscreen();
+          } else if (vid.requestFullscreen) {
+            vid.requestFullscreen();
+          }
+          vid.play().catch(() => {});
+        }, { once: false });
+      }
     }
   }
   return row;
