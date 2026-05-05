@@ -147,20 +147,15 @@ function bindKeyboardUX() {
 
   let startY = 0, lastY = 0, totalDelta = 0, direction = null, isKeyboardOpen = false;
 
-  input.addEventListener("focus", () => { isKeyboardOpen = true; });
-  input.addEventListener("blur",  () => { isKeyboardOpen = false; });
+  input.addEventListener("focus", () => {
+    isKeyboardOpen = true;
+    // wait one frame for the viewport to resize then snap to bottom
+    requestAnimationFrame(() => scrollBottom(true));
+  });
 
-  // resize .full to match visual viewport — keyboard overlays without shifting chat
-  if (window.visualViewport) {
-    const applyVV = () => {
-      const full = document.querySelector(".full");
-      if (full) full.style.height = Math.round(window.visualViewport.height) + "px";
-      if (isKeyboardOpen) scrollBottom();
-    };
-    window.visualViewport.addEventListener("resize", applyVV, { passive: true });
-    window.visualViewport.addEventListener("scroll", applyVV, { passive: true });
-  }
+  input.addEventListener("blur", () => { isKeyboardOpen = false; });
 
+  // swipe down on chat while keyboard open → dismiss keyboard
   chat.addEventListener("touchstart", (e) => {
     startY = e.touches[0].clientY; lastY = startY; totalDelta = 0; direction = null;
   }, { passive: true });
@@ -175,7 +170,7 @@ function bindKeyboardUX() {
 
   chat.addEventListener("touchend", () => {
     if (!isKeyboardOpen) return;
-    if (direction === "up" && Math.abs(totalDelta) > 70) input.blur();
+    if (direction === "down" && Math.abs(totalDelta) > 60) input.blur();
   });
 }
 
@@ -1301,7 +1296,10 @@ function onSend() {
   const micBtn  = document.getElementById("composerMic");
   const text = input.value.trim();
   if (!text) return;
-  input.value = ""; sendBtn.classList.add("is-hidden"); micBtn.classList.remove("is-hidden");
+  input.value = "";
+  sendBtn.classList.add("is-hidden");
+  micBtn.classList.remove("is-hidden");
+  input.focus(); // keep keyboard open after send, like WhatsApp
   addMsg("right", escapeHtml(text));
   handleUserText(text);
 }
