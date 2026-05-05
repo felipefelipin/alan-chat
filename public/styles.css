@@ -1161,9 +1161,7 @@ object-fit:cover;
   min-height: 0;
   overflow: hidden;
   position: relative;
-  background: var(--wall) center / cover;
-  background-color: var(--bg);
-  background-blend-mode: luminosity;
+  background: var(--bg);
 }
 
 .chat {
