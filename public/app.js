@@ -55,7 +55,7 @@ const CONTACT = {
   title: "Alana Lemes",
 };
 
-const PERSIST_KEY = "gisa_webapp_state_v6";
+const PERSIST_KEY = "gisa_webapp_state_v7";
 const CHECKOUT_URL = "/checkout";
 
 function safeJsonParse(s) {
