@@ -1135,22 +1135,24 @@ function renderRowHTML(item, animated = false) {
             </svg>
           </div>
           <div class="videoCardThumb">
-            <video data-vdur playsinline muted preload="metadata" src="${item.src}"></video>
+            <video data-vdur playsinline muted preload="auto" src="${item.src}"></video>
             <div class="videoCardPlay">
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="white">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="white">
                 <polygon points="7,4 21,12 7,20"/>
               </svg>
             </div>
+          </div>
+          <div class="videoCardFooter">
             <div class="videoCardDur">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="white">
-                <rect x="2" y="4" width="13" height="16" rx="2"/>
-                <path d="M15 9l7-3.5v13L15 15V9z"/>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                <rect x="2" y="4" width="13" height="16" rx="2" fill="rgba(255,255,255,.65)"/>
+                <path d="M15 9l7-3.5v13L15 15V9z" fill="rgba(255,255,255,.65)"/>
               </svg>
               <span data-dur-text>${dur}</span>
             </div>
+            ${renderMeta(item)}
           </div>
         </div>
-        <div class="videoCardMetaRow">${renderMeta(item)}</div>
       </div>
     </div>`;
   }
@@ -1198,6 +1200,8 @@ function renderItem(item, animated = false) {
     if (vid) {
       const durText = row.querySelector("[data-dur-text]");
       vid.addEventListener("loadedmetadata", () => {
+        // seek to show first frame as thumbnail
+        try { vid.currentTime = 0.01; } catch {}
         if (durText && vid.duration && isFinite(vid.duration)) {
           const s = Math.floor(vid.duration);
           durText.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
