@@ -20,6 +20,8 @@ const ASSETS = {
   media2: "/assets/grid-2.jpg",
   media3: "/assets/grid-3.jpg",
   media4: "/assets/grid-4.jpg",
+  lingerie: "/assets/lingerie.jpg",
+  teaseVideo: "/assets/tease.mp4",
 };
 
 function preloadMedia() {
@@ -1130,6 +1132,15 @@ function renderRowHTML(item, animated = false) {
       </div>
     </div>`;
 
+  if (item.type === "img") return `
+    <div class="msgRow ${sideClass} ${cluster}">
+      <div class="bubble ${bubbleBase} bubble-media ${anim}">
+        <div class="imgBubble">
+          <img src="${item.src}" alt="" style="width:100%;display:block;border-radius:inherit;" onerror="this.style.display='none'" />
+        </div>${renderMeta(item)}
+      </div>
+    </div>`;
+
   if (item.type === "mediaGrid") return `
     <div class="msgRow ${sideClass} ${cluster}">
       <div class="bubble ${bubbleBase} bubble-grid ${anim}">
@@ -1181,6 +1192,12 @@ function addVideoBubble(src) {
   pushHistory(item); renderItem(item, true); scrollBottom();
 }
 
+function addImgBubble(src) {
+  updatePreviousGroupForNewMessage("left");
+  const item = { type:"img", side:"left", src:`${src}?v=${Date.now()}`, time:nowTime(), cluster:getNewCluster("left") };
+  pushHistory(item); renderItem(item, true); scrollBottom();
+}
+
 function addMediaGridBubble(items = null) {
   updatePreviousGroupForNewMessage("left");
   const item = { type:"mediaGrid", side:"left", items:items||getDefaultGridItems(), time:nowTime(), cluster:getNewCluster("left") };
@@ -1226,37 +1243,183 @@ function onSend() {
 }
 
 // ==================== SCRIPT FLOW ====================
+function clearReengage() {
+  if (state._t1) { clearTimeout(state._t1); state._t1 = null; }
+  if (state._t2) { clearTimeout(state._t2); state._t2 = null; }
+}
+
+function isNegative(text) {
+  return /\b(n[ãa]o|depois|agora n[ãa]o|talvez|espera|nope|nop)\b/i.test(text);
+}
+
+async function enterTeaseBuildup() {
+  clearReengage();
+  state.step = 2; saveState();
+  await gisaSay("aqui não tem mimimi… eu mostro tudo, mas só pra quem merece");
+  await gisaSay("eu não abro as pernas pra qualquer um que aparece");
+  addImgBubble(ASSETS.lingerie);
+  await sleep(2500);
+  await gisaSay("tá duro já só com isso? 😏");
+  await gisaSay("quer que eu tire essa lingerie toda agora pra você ver minha buceta?");
+  state._t1 = setTimeout(async () => {
+    if (state.step !== 2) return;
+    await gisaSay("vou tirar mesmo assim… mas só porque você tá me deixando louca");
+    state._t2 = setTimeout(async () => {
+      if (state.step !== 2) return;
+      await gisaSay("pede pra eu continuar, vai… ou vou parar aqui e te deixar na vontade.");
+      await sleep(800);
+      await enterDesireEscalation();
+    }, 60 * 1000);
+  }, 2 * 60 * 1000);
+}
+
+async function enterDesireEscalation() {
+  clearReengage();
+  state.step = 3; saveState();
+  await gisaSay("tô me sentindo uma puta safada hoje…");
+  await gisaSay("você tá me fazendo querer fazer coisas bem safadas ao vivo");
+  addVideoBubble(ASSETS.teaseVideo);
+  await sleep(rand(6000, 8000));
+  await gisaSay("apaguei rapidinho…\nconseguiu ver como eu tô molhada pra você?");
+  state._t1 = setTimeout(async () => {
+    if (state.step !== 3) return;
+    await gisaSay("perdeu o melhor… eu tava literalmente pingando");
+    await sleep(800);
+    await enterPrivateInvite();
+  }, 2 * 60 * 1000);
+}
+
+async function enterPrivateInvite() {
+  clearReengage();
+  state.step = 4; saveState();
+  await gisaSay("chega de mensagem… eu quero te mostrar tudo ao vivo agora");
+  await gisaSay("quero que você me veja gozando olhando na sua cara");
+  await gisaSay("entra na chamada comigo. Quero sentir você me comendo com os olhos");
+  await gisaSay("vai entrar ou vai ficar só se masturbando por fora como os outros?");
+  state._t1 = setTimeout(async () => {
+    if (state.step !== 4) return;
+    await gisaSay("tá com medo de não aguentar? 🥵");
+    state._t2 = setTimeout(async () => {
+      if (state.step !== 4) return;
+      await gisaSay("vou te chamar agora. Entra logo, covarde gostoso.");
+      await sleep(800);
+      await enterCallConnecting();
+    }, 40 * 1000);
+  }, 2 * 60 * 1000);
+}
+
+async function enterCallConnecting() {
+  clearReengage();
+  state.step = 5; saveState();
+  await gisaSay("tô te esperando pelada… entra agora 🔥");
+  const connectEl = document.createElement("div");
+  connectEl.id = "connectingScreen";
+  connectEl.style.cssText = "position:fixed;inset:0;background:#111;z-index:8999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;";
+  connectEl.innerHTML = `
+    <div style="color:#fff;font-size:20px;font-weight:600;text-align:center;">Conectando com ela ao vivo…</div>
+    <div style="color:rgba(255,255,255,0.5);font-size:14px;">aguarde</div>
+  `;
+  document.body.appendChild(connectEl);
+  await sleep(2500);
+  connectEl.remove();
+  startFunnelCall();
+}
+
+async function startFunnelCall() {
+  state.step = 5; saveState();
+  const callEl = document.createElement("div");
+  callEl.id = "funnelCallScreen";
+  callEl.style.cssText = "position:fixed;inset:0;z-index:9000;background:#000;";
+  const vid = document.createElement("video");
+  vid.src = ASSETS.callVideo + `?v=${Date.now()}`;
+  vid.autoplay = true;
+  vid.playsinline = true;
+  vid.setAttribute("playsinline", "");
+  vid.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;";
+  callEl.appendChild(vid);
+  document.body.appendChild(callEl);
+
+  let done = false;
+  const triggerPaywall = async () => {
+    if (done) return; done = true;
+    callEl.remove();
+    state.step = 6; saveState();
+    await doCallPaywall();
+  };
+
+  setTimeout(() => {
+    if (done) return;
+    const msgEl = document.createElement("div");
+    msgEl.style.cssText = "position:absolute;bottom:80px;left:16px;right:16px;background:rgba(0,0,0,0.72);border-radius:16px;padding:12px 16px;color:#fff;font-size:14px;line-height:1.5;pointer-events:none;";
+    msgEl.textContent = "tá gostando dessa buceta? Eu tô me fodendo aqui pensando em você me comendo…";
+    callEl.style.position = "fixed";
+    callEl.appendChild(msgEl);
+    addMsg("left", "tá gostando dessa buceta? Eu tô me fodendo aqui pensando em você me comendo…");
+  }, rand(12000, 18000));
+
+  vid.addEventListener("ended", triggerPaywall);
+  setTimeout(triggerPaywall, 90000);
+}
+
+async function doCallPaywall() {
+  await gisaSay("mais pera... 😅");
+  await gisaSay("não dá pra continuar assim não");
+  await gisaSay("eu tô louca pra gozar pra você, mas só libero tudo mais vc tem que liberar abaixo");
+  await gisaSay("isso aqui foi só pra te deixar louco. A real começa quando você desbloquear");
+  await gisaSay("a maioria dos caras já clicou e tá me vendo gozar agora… vai ficar de fora... 🤦‍♀️?");
+  await gisaSay("desbloqueia agora e volta rápido que eu tô pingando te esperando");
+  showCheckoutCta();
+}
+
 async function startScript() {
   if (state.flags.startedChat) return;
   state.flags.startedChat = true;
-  state.step = 0; saveState();
-  setStatus("enviando vídeo…");
-  await sleep(rand(900,1600));
-  addVideoBubble(ASSETS.intro);
-  await sleep(rand(700,1200));
-  setStatus(CONTACT.subtitle ?? "");
-  await gisaSay("tive que te trazer pra cá…");
-  await gisaSay("aqui eu consigo fazer tudo com mais privacidade.");
-  await sleep(rand(400,800));
-  await gisaSay("mas me responde uma coisa rapidinho…");
-  await gisaSay("você é mais curioso…\nou vai até o fim?");
   state.step = 1; saveState();
+  await sleep(rand(0, 1000));
+  await gisaSay("porra… você demorou hein 😈");
+  await sleep(2500);
+  await gisaSay("tô toda molhada só de saber que você entrou aqui atrás de mim");
+  await sleep(rand(5000, 7000));
+  await gisaSay("mas fala a verdade… você aguenta me ver pelada de verdade ou vai só ficar olhando como os fracos?");
+  state._t1 = setTimeout(async () => {
+    if (state.step !== 1) return;
+    await gisaSay("tá aí ou já correu covarde? 👀");
+    state._t2 = setTimeout(async () => {
+      if (state.step !== 1) return;
+      await gisaSay("typical… entra, olha e some. Mas eu não sou pra qualquer um não, safado.");
+    }, 2 * 60 * 1000);
+  }, 2 * 60 * 1000);
 }
 
 async function handleUserText(text) {
-  if (state.step === 1) {
-    state.step = 2; saveState();
-    await gisaSay("hm…"); await gisaSay("foi o que eu imaginei");
-    await sleep(rand(700,1200));
-    await gisaSay("posso te mostrar rapidinho por chamada?");
-    state.step = 3; saveState();
+  clearReengage();
+  if (state.step === 1) { await enterTeaseBuildup(); return; }
+  if (state.step === 2) {
+    if (isNegative(text)) {
+      await gisaSay("vou tirar mesmo assim… mas só porque você tá me deixando louca");
+      await sleep(800);
+    }
+    await enterDesireEscalation();
     return;
   }
-  if (state.step === 3) {
-    state.step = 4; saveState();
-    await gisaSay("ok… espera."); await gisaSay("não some.");
-    await sleep(rand(900,1500));
-    showIncomingCall();
+  if (state.step === 3) { await enterPrivateInvite(); return; }
+  if (state.step === 4) {
+    if (isNegative(text)) {
+      await gisaSay("para de frescura… é agora. Eu tô pelada e molhada te esperando.\nVocê pode sair quando quiser, mas eu sei que você não vai querer sair.");
+      state._t1 = setTimeout(async () => {
+        if (state.step !== 4) return;
+        await gisaSay("tá com medo de não aguentar? 🥵");
+        state._t2 = setTimeout(async () => {
+          if (state.step !== 4) return;
+          await gisaSay("vou te chamar agora. Entra logo, covarde gostoso.");
+          await sleep(800);
+          await enterCallConnecting();
+        }, 40 * 1000);
+      }, 2 * 60 * 1000);
+      return;
+    }
+    await enterCallConnecting();
+    return;
   }
 }
 
@@ -1267,15 +1430,28 @@ function openCheckout() {
 
 function showCheckoutCta() {
   const html = `
-    <div class="ctaCardWrap">
-      <div class="ctaEyebrow">acesso protegido</div>
-      <div class="ctaTitle">se você quer que eu continue… é por aqui.</div>
-      <div class="ctaText">abre o checkout em ambiente seguro</div>
-      <button id="goCheckoutBtn" class="pBtnPrimary ctaPrimary">continuar</button>
+    <div class="ctaCardWrap" style="text-align:center;">
+      <div class="ctaTitle" style="font-size:16px;line-height:1.5;margin-bottom:8px;">Desbloqueia e volta imediatamente pra chamada.<br/>Eu tô te esperando pelada e safada.</div>
+      <button id="goCheckoutBtn" class="pBtnPrimary ctaPrimary" style="background:#e53935;font-size:16px;padding:14px 20px;border-radius:14px;width:100%;margin-top:8px;">🔥 DESBLOQUEAR ACESSO COMPLETO AGORA</button>
     </div>
   `;
   addCtaCard(html);
-  setTimeout(() => { const btn = document.getElementById("goCheckoutBtn"); if (btn) btn.onclick = openCheckout; }, 0);
+  setTimeout(() => {
+    const btn = document.getElementById("goCheckoutBtn");
+    if (btn) btn.onclick = openCheckout;
+  }, 0);
+  setTimeout(async () => {
+    if (!document.getElementById("goCheckoutBtn")) return;
+    await gisaSay("vai perder a chance de me ver gozando de verdade? Os outros não estão perdendo…");
+  }, 15000);
+  setTimeout(async () => {
+    if (!document.getElementById("goCheckoutBtn")) return;
+    await gisaSay("sumiu justo agora que eu tô pelada pra você? 😈");
+  }, rand(2 * 60 * 1000, 5 * 60 * 1000));
+  setTimeout(async () => {
+    if (!document.getElementById("goCheckoutBtn")) return;
+    await gisaSay("típico… fica só na vontade mesmo. Os machos de verdade já estão comigo agora.");
+  }, rand(10 * 60 * 1000, 20 * 60 * 1000));
 }
 
 function showIncomingCall() {
@@ -2026,29 +2202,12 @@ const iconPix   = () => `<svg width="26" height="26" viewBox="0 0 24 24" fill="n
 const iconSearch= () => `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#25D366" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`;
 
 // ==================== END CALL ====================
-async function endCall(wasAnswered) {
+async function endCall() {
   if (state.ring) { try { state.ring.pause(); } catch {} state.ring = null; }
   const call = document.getElementById("callScreen");
   if (call) call.remove();
-  if (!state.chatEl) return;
-  if (!wasAnswered) {
-    await gisaSay("pq vc n me atendeu?");
-    await gisaSay("eu só ia te mostrar rapidinho…");
-  } else {
-    await gisaSay("…caiu.");
-    await gisaSay("isso foi só um pedaço.");
-  }
-  await sleep(rand(650,1100));
-  addMediaGridBubble();
-  await sleep(rand(320,650));
-  addAudioBubble();
-  await sleep(rand(700,1200));
-  await gisaSay("aqui eu não posso continuar…");
-  await gisaSay("isso aqui não é seguro.");
-  await gisaSay("eu só mostro pra quem realmente quer.");
-  await sleep(rand(450,900));
-  showCheckoutCta();
-  saveState();
+  const funnel = document.getElementById("funnelCallScreen");
+  if (funnel) funnel.remove();
 }
 
 // ==================== INIT ====================
