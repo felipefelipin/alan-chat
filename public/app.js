@@ -1308,11 +1308,12 @@ function isNegative(text) {
 async function enterTeaseBuildup() {
   clearReengage();
   state.step = 2; saveState();
+  await sleep(rand(4000, 5000));
   await gisaSay("aqui não tem mimimi… eu mostro tudo, mas só pra quem merece", { delay: rand(5000, 7000) });
   await gisaSay("eu não abro as pernas pra qualquer um que aparece", { delay: rand(4500, 6500) });
   await sleep(rand(2000, 3000));
   await gisaSendVideo(ASSETS.teaseVideo2, "Vídeo Privado");
-  await sleep(rand(5000, 7000));
+  await sleep(rand(2000, 3000));
   await gisaSay("tá duro já só com isso? 😏", { delay: rand(3000, 4500) });
   await gisaSay("quer que eu tire essa lingerie toda agora pra você ver minha buceta?", { delay: rand(7000, 9000) });
   state._t1 = setTimeout(async () => {
