@@ -1164,6 +1164,15 @@ object-fit:cover;
   position: relative;
   background: var(--bg);
 }
+.chatShell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("/assets/chat-bg.png?v=9") center / cover;
+  opacity: .06;
+  pointer-events: none;
+  z-index: 0;
+}
 
 .chat {
   position: absolute;
@@ -1175,6 +1184,7 @@ object-fit:cover;
   flex-direction: column;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+  z-index: 1;
 }
 
 /* ==================== ANIMAÇÕES ==================== */
