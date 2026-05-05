@@ -150,6 +150,17 @@ function bindKeyboardUX() {
   input.addEventListener("focus", () => { isKeyboardOpen = true; });
   input.addEventListener("blur",  () => { isKeyboardOpen = false; });
 
+  // resize .full to match visual viewport — keyboard overlays without shifting chat
+  if (window.visualViewport) {
+    const applyVV = () => {
+      const full = document.querySelector(".full");
+      if (full) full.style.height = Math.round(window.visualViewport.height) + "px";
+      if (isKeyboardOpen) scrollBottom();
+    };
+    window.visualViewport.addEventListener("resize", applyVV, { passive: true });
+    window.visualViewport.addEventListener("scroll", applyVV, { passive: true });
+  }
+
   chat.addEventListener("touchstart", (e) => {
     startY = e.touches[0].clientY; lastY = startY; totalDelta = 0; direction = null;
   }, { passive: true });
