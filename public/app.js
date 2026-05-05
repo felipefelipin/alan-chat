@@ -1117,7 +1117,7 @@ function renderRowHTML(item, animated = false) {
   if (item.type === "msg") return `
     <div class="msgRow ${sideClass} ${cluster}">
       <div class="bubble ${bubbleBase} ${anim}">
-        <div class="bubbleText">${item.html}${renderMeta(item)}</div>
+        <div class="bubbleRow"><div class="bubbleText">${item.html}</div>${renderMeta(item)}</div>
       </div>
     </div>`;
 

@@ -422,28 +422,35 @@ body{
   border-bottom-left-radius:10px;
 }
 
+/* ── Row texto + meta (flex row, meta preso ao fundo) ── */
+.bubbleRow{
+  display:flex;
+  align-items:flex-end;
+  gap:5px;
+}
+
 /* ── Texto da bolha ── */
 .bubbleText{
+  flex:1;
+  min-width:0;
   color:var(--text);
   margin:0;
   font-size:14.8px;
   line-height:1.42;
+  word-break:break-word;
 }
 
-/* ── Meta (hora + ticks) — inline float direita, mesmo nível do texto ── */
+/* ── Meta (hora + ticks) — fixo no canto inferior direito ── */
 .meta{
   display:inline-flex;
-  align-items:flex-end;
+  align-items:center;
   gap:3px;
-  float:right;
-  margin-left:8px;
+  flex-shrink:0;
   margin-bottom:-2px;
-  margin-top:4px;
   font-size:11px;
   color:var(--meta);
   line-height:1;
   white-space:nowrap;
-  vertical-align:bottom;
 }
 
 .metaTime{ opacity:1 }
