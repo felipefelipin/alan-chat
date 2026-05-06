@@ -23,6 +23,7 @@ const ASSETS = {
   lingerie: "/assets/lingerie.jpg",
   teaseVideo: "/assets/tease.mp4",
   teaseVideo2: "/assets/tease2.mp4",
+  teaseVideo3: "/assets/tease3.mp4",
   teasePhoto: "/assets/tease-photo.jpg",
   audioMimimi: "/assets/audio-mimimi.mp3",
 };
@@ -1500,7 +1501,7 @@ async function enterDesireEscalation() {
   await sleep(rand(4000, 5000));
   await gisaSay("tô me sentindo uma puta safada hoje…", { delay: rand(5000, 7000) });
   await gisaSay("to quase te ligando chamando de vídeo vey… 🥵", { delay: rand(6000, 8000) });
-  await gisaAutoPlayVideo(ASSETS.teaseVideo);
+  await gisaAutoPlayVideo(ASSETS.teaseVideo3);
   await enterPrivateInvite(true);
 }
 
