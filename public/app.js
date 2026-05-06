@@ -1091,7 +1091,7 @@ function renderAudioBubble(item) {
         <div class="audioWaveRow">
           <span class="audioProgressDot"></span>
           <div class="audioWave">
-            ${bars.map((h,i) => `<span class="waveBar${i<4?" isPlayed":""}" style="height:${Math.max(3,Math.min(h,30))}px"></span>`).join("")}
+            ${bars.map(h => `<span class="waveBar" style="height:${Math.max(3,Math.min(h,30))}px"></span>`).join("")}
           </div>
         </div>
         <div class="audioAvatarWrap">
@@ -1404,11 +1404,11 @@ async function enterTeaseBuildup() {
   await sleep(rand(4000, 5000));
   await gisaSendAudio(ASSETS.audioMimimi);
   await gisaSay("eu não abro as pernas pra qualquer um que aparece, mas como gostei de vc... 😏", { delay: rand(7000, 10000) });
-  await sleep(rand(2000, 3000));
+  await sleep(5000);
   setStatus("gravando um vídeo...");
   await sleep(15000);
-  setStatus("enviando um vídeo…");
-  await sleep(1000);
+  setStatus("enviando vídeo...");
+  await sleep(3000);
   setStatus("");
   addVideoBubble(ASSETS.teaseVideo2, "Vídeo Privado");
   await sleep(rand(2000, 3000));
@@ -1534,7 +1534,7 @@ async function startScript() {
   await sleep(rand(2000, 3000));
   await gisaSendVideo(ASSETS.teaseVideo, "Vídeo Privado");
   await sleep(rand(5000, 7000));
-  await gisaSay("mas fala a verdade… você aguenta me ver pelada de verdade ou vai só ficar olhando como os fracos?", { delay: rand(8000, 11000) });
+  await gisaSay("mas fala a verdade… você aguenta me ver pelada de verdade ou vai só ficar olhando como os fracos?... 👀", { delay: rand(8000, 11000) });
   state._t1 = setTimeout(async () => {
     if (state.step !== 1) return;
     await gisaSay("tá aí ou já correu covarde? 👀");
