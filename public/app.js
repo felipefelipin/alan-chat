@@ -1063,7 +1063,7 @@ function addTyping() {
     </div>
   `;
   state.chatEl.appendChild(row);
-  scrollBottom(true);
+  requestAnimationFrame(() => { const el = state.chatEl; if (el) el.scrollTop = el.scrollHeight; });
 }
 
 // ==================== RENDER ====================
@@ -1359,7 +1359,8 @@ function addMsg(side, html) {
   updatePreviousGroupForNewMessage(side);
   const item = { type:"msg", side, html, time:nowTime(), cluster:getNewCluster(side) };
   pushHistory(item); renderItem(item, true);
-  if (side === "left") scrollBottom(true); else scrollBottom();
+  if (side === "left") requestAnimationFrame(() => { const el = state.chatEl; if (el) el.scrollTop = el.scrollHeight; });
+  else scrollBottom();
 }
 
 function addVideoBubble(src, title = "Vídeo") {
