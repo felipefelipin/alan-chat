@@ -1239,18 +1239,44 @@ function renderItem(item, animated = false) {
       }
     }
 
-    // audio duration auto-detect
+    // audio: playback + duration detect
     if (item.type === "audio" && item.src) {
-      const durEl = row.querySelector("[data-audio-dur]");
-      if (durEl) {
-        const a = new Audio();
-        a.src = item.src;
-        a.addEventListener("loadedmetadata", () => {
-          if (a.duration && isFinite(a.duration)) {
-            const s = Math.floor(a.duration);
-            durEl.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+      const durEl   = row.querySelector("[data-audio-dur]");
+      const playBtn = row.querySelector(".audioPlayBtn");
+      const dot     = row.querySelector(".audioProgressDot");
+
+      const audio = new Audio(item.src);
+      let playing = false;
+
+      const playIcon  = `<svg width="22" height="22" viewBox="0 0 24 24" fill="rgba(255,255,255,.88)"><polygon points="6,4 21,12 6,20"/></svg>`;
+      const pauseIcon = `<svg width="22" height="22" viewBox="0 0 24 24" fill="rgba(255,255,255,.88)"><rect x="5" y="4" width="4" height="16" rx="1"/><rect x="15" y="4" width="4" height="16" rx="1"/></svg>`;
+
+      audio.addEventListener("loadedmetadata", () => {
+        if (durEl && audio.duration && isFinite(audio.duration)) {
+          const s = Math.floor(audio.duration);
+          durEl.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+        }
+      }, { once: true });
+
+      audio.addEventListener("ended", () => {
+        playing = false;
+        if (playBtn) playBtn.innerHTML = playIcon;
+        if (dot) dot.style.background = "#53bdeb";
+      });
+
+      if (playBtn) {
+        playBtn.addEventListener("click", () => {
+          if (playing) {
+            audio.pause();
+            playing = false;
+            playBtn.innerHTML = playIcon;
+          } else {
+            audio.play().catch(() => {});
+            playing = true;
+            playBtn.innerHTML = pauseIcon;
+            if (dot) dot.style.background = "#53bdeb";
           }
-        }, { once: true });
+        });
       }
     }
   }
@@ -1360,11 +1386,10 @@ async function enterTeaseBuildup() {
   state.step = 2; saveState();
   await sleep(rand(4000, 5000));
   await gisaSendAudio(ASSETS.audioMimimi);
-  await gisaSay("eu não abro as pernas pra qualquer um que aparece", { delay: rand(4500, 6500) });
+  await gisaSay("eu não abro as pernas pra qualquer um que aparece, mas como gostei de vc... 😏", { delay: rand(7000, 10000) });
   await sleep(rand(2000, 3000));
   await gisaSendVideo(ASSETS.teaseVideo2, "Vídeo Privado");
   await sleep(rand(2000, 3000));
-  await gisaSay("tá duro já só com isso? 😏", { delay: rand(3000, 4500) });
   await gisaSay("quer que eu tire essa lingerie toda agora pra você ver minha buceta?", { delay: rand(7000, 9000) });
   state._t1 = setTimeout(async () => {
     if (state.step !== 2) return;
