@@ -23,6 +23,7 @@ const ASSETS = {
   lingerie: "/assets/lingerie.jpg",
   teaseVideo: "/assets/tease.mp4",
   teaseVideo2: "/assets/tease2.mp4",
+  teasePhoto: "/assets/tease-photo.jpg",
   audioMimimi: "/assets/audio-mimimi.mp3",
 };
 
@@ -80,6 +81,7 @@ const state = {
 };
 
 let isUserNearBottom = true;
+let isKeyboardOpen = false;
 
 function snapshotForSave() {
   return {
@@ -146,10 +148,11 @@ function bindKeyboardUX() {
   const chat  = document.getElementById("chat");
   if (!input || !chat) return;
 
-  let startY = 0, lastY = 0, totalDelta = 0, direction = null, isKeyboardOpen = false;
+  let startY = 0, lastY = 0, totalDelta = 0, direction = null;
 
   input.addEventListener("focus", () => {
     isKeyboardOpen = true;
+    isUserNearBottom = true;
     scrollBottom(true);
     setTimeout(() => scrollBottom(true), 150);
     setTimeout(() => scrollBottom(true), 350);
@@ -177,7 +180,7 @@ function bindKeyboardUX() {
 }
 
 // ==================== CLUSTER/HISTORY HELPERS ====================
-function getFlowTypes() { return new Set(["msg","video","cta","mediaGrid","audio"]); }
+function getFlowTypes() { return new Set(["msg","video","photo","cta","mediaGrid","audio"]); }
 
 function updatePreviousGroupForNewMessage(side) {
   const flowTypes = getFlowTypes();
@@ -1007,8 +1010,8 @@ function showPixAlert() {
 function scrollBottom(force = false) {
   const el = state.chatEl;
   if (!el) return;
-  if (!force && !isUserNearBottom) return;
-  if (force) {
+  if (!force && !isUserNearBottom && !isKeyboardOpen) return;
+  if (force || isKeyboardOpen) {
     el.scrollTop = el.scrollHeight;
   } else {
     requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
@@ -1185,6 +1188,29 @@ function renderRowHTML(item, animated = false) {
       </div>
     </div>`;
 
+  if (item.type === "photo") {
+    const title = item.title || "Foto Privada";
+    return `
+    <div class="msgRow ${sideClass} ${cluster}">
+      <div class="bubble ${bubbleBase} bubble-videoCard ${anim}">
+        <div class="videoCard">
+          <div class="videoCardHeader">
+            <span class="videoCardTitle">${escapeHtml(title)}</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+              <path d="M6 9l6 6 6-6" stroke="rgba(255,255,255,.45)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="videoCardThumb">
+            <img src="${item.src}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'" />
+          </div>
+          <div class="videoCardFooter" style="justify-content:flex-end;">
+            ${renderMeta(item)}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
   if (item.type === "audio") return `
     <div class="msgRow ${sideClass} ${cluster}">
       <div class="bubble ${bubbleBase} bubble-audio ${anim}">
@@ -1332,6 +1358,20 @@ async function gisaSendVideo(src, title = "Vídeo") {
   addVideoBubble(src, title);
 }
 
+function addPhotoCardBubble(src, title = "Foto Privada") {
+  updatePreviousGroupForNewMessage("left");
+  const item = { type:"photo", side:"left", src:`${src}?v=${Date.now()}`, title, time:nowTime(), cluster:getNewCluster("left") };
+  pushHistory(item); renderItem(item, true); scrollBottom();
+}
+
+async function gisaSendPhoto(src, title = "Foto Privada") {
+  setStatus("enviando uma foto…");
+  await sleep(rand(2000, 4000));
+  setStatus("");
+  await sleep(rand(80, 180));
+  addPhotoCardBubble(src, title);
+}
+
 function addImgBubble(src) {
   updatePreviousGroupForNewMessage("left");
   const item = { type:"img", side:"left", src:`${src}?v=${Date.now()}`, time:nowTime(), cluster:getNewCluster("left") };
@@ -1437,13 +1477,9 @@ async function enterDesireEscalation() {
   await sleep(rand(4000, 5000));
   await gisaSay("tô me sentindo uma puta safada hoje…", { delay: rand(5000, 7000) });
   await gisaSay("to quase te ligando chamando de vídeo vey… 🥵", { delay: rand(6000, 8000) });
-  await gisaSendVideo(ASSETS.teaseVideo, "Vídeo Privado");
-  await sleep(rand(6000, 8000));
-  state._t1 = setTimeout(async () => {
-    if (state.step !== 3) return;
-    await sleep(800);
-    await enterPrivateInvite();
-  }, 2 * 60 * 1000);
+  await gisaSendPhoto(ASSETS.teasePhoto, "Foto Privada");
+  await sleep(3000);
+  await enterPrivateInvite();
 }
 
 async function enterPrivateInvite() {
