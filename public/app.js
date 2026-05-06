@@ -1150,12 +1150,8 @@ function renderRowHTML(item, animated = false) {
             </svg>
           </div>
           <div class="videoCardThumb">
-            <video data-vdur playsinline muted preload="auto" src="${item.src}"></video>
-            <div class="videoCardPlay">
-              <svg width="21" height="21" viewBox="0 0 24 24" fill="white">
-                <polygon points="7,4 21,12 7,20"/>
-              </svg>
-            </div>
+            <video data-vdur${item.autoplay ? " data-autoplay" : ""} playsinline muted preload="auto" src="${item.src}"></video>
+            ${item.autoplay ? "" : `<div class="videoCardPlay"><svg width="21" height="21" viewBox="0 0 24 24" fill="white"><polygon points="7,4 21,12 7,20"/></svg></div>`}
           </div>
           <div class="videoCardFooter">
             <div class="videoCardDur">
@@ -1247,14 +1243,19 @@ function renderItem(item, animated = false) {
       };
       vid.addEventListener("loadedmetadata", onMeta, { once: true });
 
-      // show first frame: autoplay muted (allowed on iOS) then pause immediately
       vid.muted = true;
-      vid.play().then(() => {
-        vid.pause();
-        try { vid.currentTime = 0.01; } catch {}
-      }).catch(() => {
-        try { vid.currentTime = 0.01; } catch {}
-      });
+      if (vid.hasAttribute("data-autoplay")) {
+        vid.loop = true;
+        vid.play().catch(() => {});
+      } else {
+        // show first frame then pause
+        vid.play().then(() => {
+          vid.pause();
+          try { vid.currentTime = 0.01; } catch {}
+        }).catch(() => {
+          try { vid.currentTime = 0.01; } catch {}
+        });
+      }
 
       // tap anywhere on card → fullscreen play with sound
       const card = row.querySelector(".videoCard");
@@ -1356,6 +1357,28 @@ async function gisaSendVideo(src, title = "Vídeo") {
   setStatus("");
   await sleep(rand(80, 180));
   addVideoBubble(src, title);
+}
+
+async function gisaAutoPlayVideo(src) {
+  // Temporary video — plays in card, disappears after 5s, not saved to history
+  const item = { type:"video", side:"left", src:`${src}?v=${Date.now()}`, title:"Vídeo Privado", autoplay:true, time:nowTime(), cluster:"single" };
+  const row = renderItem(item, true);
+  scrollBottom();
+
+  // t=3s: typing appears 2 seconds before video disappears
+  await sleep(3000);
+  setStatus("digitando…");
+  addTyping();
+
+  // t=5s: fade out and remove video row
+  await sleep(2000);
+  if (row && row.parentNode) {
+    row.style.transition = "opacity 0.4s ease, transform 0.4s ease";
+    row.style.opacity = "0";
+    row.style.transform = "scale(0.95)";
+    await sleep(420);
+    if (row.parentNode) row.remove();
+  }
 }
 
 function addPhotoCardBubble(src, title = "Foto Privada") {
@@ -1477,15 +1500,22 @@ async function enterDesireEscalation() {
   await sleep(rand(4000, 5000));
   await gisaSay("tô me sentindo uma puta safada hoje…", { delay: rand(5000, 7000) });
   await gisaSay("to quase te ligando chamando de vídeo vey… 🥵", { delay: rand(6000, 8000) });
-  await gisaSendPhoto(ASSETS.teasePhoto, "Foto Privada");
-  await sleep(3000);
-  await enterPrivateInvite();
+  await gisaAutoPlayVideo(ASSETS.teaseVideo);
+  await enterPrivateInvite(true);
 }
 
-async function enterPrivateInvite() {
+async function enterPrivateInvite(directFirst = false) {
   clearReengage();
   state.step = 4; saveState();
-  await gisaSay("chega de mensagem… eu quero te mostrar tudo ao vivo agora");
+  if (directFirst) {
+    removeTyping();
+    setStatus("");
+    await sleep(120);
+    addMsg("left", escapeHtml("chega de mensagem… eu quero te mostrar tudo ao vivo agora"));
+    await sleep(rand(500, 900));
+  } else {
+    await gisaSay("chega de mensagem… eu quero te mostrar tudo ao vivo agora");
+  }
   await gisaSay("quero que você me veja gozando olhando na sua cara");
   await gisaSay("entra na chamada comigo. Quero sentir você me comendo com os olhos");
   await gisaSay("vai entrar ou vai ficar só se masturbando por fora como os outros?");
