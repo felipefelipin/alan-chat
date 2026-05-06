@@ -1082,32 +1082,34 @@ function renderAudioBubble(item) {
   const time = item.time || nowTime();
   return `
     <div class="audioBubbleShell">
-      <button class="audioPlayBtn" type="button" aria-label="Play">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="rgba(255,255,255,.88)">
-          <polygon points="6,4 21,12 6,20"/>
-        </svg>
-      </button>
-      <div class="audioWaveWrap">
+      <div class="audioMainRow">
+        <button class="audioPlayBtn" type="button" aria-label="Play">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="rgba(255,255,255,.88)">
+            <polygon points="6,4 21,12 6,20"/>
+          </svg>
+        </button>
         <div class="audioWaveRow">
           <span class="audioProgressDot"></span>
           <div class="audioWave">
             ${bars.map((h,i) => `<span class="waveBar${i<4?" isPlayed":""}" style="height:${Math.max(3,Math.min(h,30))}px"></span>`).join("")}
           </div>
         </div>
-        <div class="audioMetaRow">
-          <span data-audio-dur>${dur}</span>
-          <span>${time}</span>
+        <div class="audioAvatarWrap">
+          <div class="audioAvatarMini">
+            <img src="${ASSETS.avatar}?v=1" alt="" onerror="this.style.display='none'" />
+          </div>
+          <span class="audioMicBadge">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+              <rect x="9" y="2" width="6" height="11" rx="3" fill="#53bdeb"/>
+              <path d="M5 10a7 7 0 0 0 14 0" stroke="#53bdeb" stroke-width="2.2" stroke-linecap="round"/>
+              <line x1="12" y1="19" x2="12" y2="22" stroke="#53bdeb" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>
+          </span>
         </div>
       </div>
-      <div class="audioAvatarCol">
-        <div class="audioAvatarMini">
-          <img src="${ASSETS.avatar}?v=1" alt="" onerror="this.style.display='none'" />
-        </div>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-          <rect x="9" y="2" width="6" height="11" rx="3" fill="#53bdeb"/>
-          <path d="M5 10a7 7 0 0 0 14 0" stroke="#53bdeb" stroke-width="2" stroke-linecap="round"/>
-          <line x1="12" y1="19" x2="12" y2="22" stroke="#53bdeb" stroke-width="2" stroke-linecap="round"/>
-        </svg>
+      <div class="audioFooterRow">
+        <span data-audio-dur>${dur}</span>
+        <span>${time}</span>
       </div>
     </div>
   `;
@@ -1239,17 +1241,30 @@ function renderItem(item, animated = false) {
       }
     }
 
-    // audio: playback + duration detect
+    // audio: playback + duration detect + waveform animation
     if (item.type === "audio" && item.src) {
       const durEl   = row.querySelector("[data-audio-dur]");
       const playBtn = row.querySelector(".audioPlayBtn");
-      const dot     = row.querySelector(".audioProgressDot");
+      const waveBars = Array.from(row.querySelectorAll(".waveBar"));
 
       const audio = new Audio(item.src);
       let playing = false;
+      let rafId   = null;
 
       const playIcon  = `<svg width="22" height="22" viewBox="0 0 24 24" fill="rgba(255,255,255,.88)"><polygon points="6,4 21,12 6,20"/></svg>`;
       const pauseIcon = `<svg width="22" height="22" viewBox="0 0 24 24" fill="rgba(255,255,255,.88)"><rect x="5" y="4" width="4" height="16" rx="1"/><rect x="15" y="4" width="4" height="16" rx="1"/></svg>`;
+
+      function updateWave() {
+        if (!audio.duration || !isFinite(audio.duration)) { rafId = requestAnimationFrame(updateWave); return; }
+        const progress = audio.currentTime / audio.duration;
+        const played = Math.floor(progress * waveBars.length);
+        waveBars.forEach((b, i) => b.classList.toggle("isPlayed", i < played));
+        rafId = requestAnimationFrame(updateWave);
+      }
+
+      function stopWave() {
+        if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+      }
 
       audio.addEventListener("loadedmetadata", () => {
         if (durEl && audio.duration && isFinite(audio.duration)) {
@@ -1260,8 +1275,9 @@ function renderItem(item, animated = false) {
 
       audio.addEventListener("ended", () => {
         playing = false;
+        stopWave();
+        waveBars.forEach(b => b.classList.remove("isPlayed"));
         if (playBtn) playBtn.innerHTML = playIcon;
-        if (dot) dot.style.background = "#53bdeb";
       });
 
       if (playBtn) {
@@ -1269,12 +1285,13 @@ function renderItem(item, animated = false) {
           if (playing) {
             audio.pause();
             playing = false;
-            playBtn.innerHTML = playIcon;
+            stopWave();
+            if (playBtn) playBtn.innerHTML = playIcon;
           } else {
             audio.play().catch(() => {});
             playing = true;
-            playBtn.innerHTML = pauseIcon;
-            if (dot) dot.style.background = "#53bdeb";
+            if (playBtn) playBtn.innerHTML = pauseIcon;
+            rafId = requestAnimationFrame(updateWave);
           }
         });
       }
@@ -1388,7 +1405,12 @@ async function enterTeaseBuildup() {
   await gisaSendAudio(ASSETS.audioMimimi);
   await gisaSay("eu não abro as pernas pra qualquer um que aparece, mas como gostei de vc... 😏", { delay: rand(7000, 10000) });
   await sleep(rand(2000, 3000));
-  await gisaSendVideo(ASSETS.teaseVideo2, "Vídeo Privado");
+  setStatus("gravando um vídeo...");
+  await sleep(15000);
+  setStatus("enviando um vídeo…");
+  await sleep(1000);
+  setStatus("");
+  addVideoBubble(ASSETS.teaseVideo2, "Vídeo Privado");
   await sleep(rand(2000, 3000));
   await gisaSay("quer que eu tire essa lingerie toda agora pra você ver minha buceta?", { delay: rand(7000, 9000) });
   state._t1 = setTimeout(async () => {

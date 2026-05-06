@@ -596,9 +596,15 @@ body{
 
 .audioBubbleShell{
   display:flex;
+  flex-direction:column;
+  gap:6px;
+  min-width:min(265px,74vw);
+}
+
+.audioMainRow{
+  display:flex;
   align-items:center;
   gap:8px;
-  min-width:min(265px,74vw);
 }
 
 .audioPlayBtn{
@@ -610,20 +616,13 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
-  align-self:center;
   -webkit-tap-highlight-color:transparent;
   cursor:pointer;
 }
 
-.audioWaveWrap{
+.audioWaveRow{
   flex:1;
   min-width:0;
-  display:flex;
-  flex-direction:column;
-  gap:5px;
-}
-
-.audioWaveRow{
   display:flex;
   align-items:center;
   gap:5px;
@@ -654,28 +653,14 @@ body{
 }
 .waveBar.isPlayed{ background:rgba(255,255,255,.78); }
 
-.audioMetaRow{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  font-size:11px;
-  color:rgba(255,255,255,.52);
-  line-height:1;
-}
-
-.audioAvatarCol{
+.audioAvatarWrap{
   flex-shrink:0;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  align-self:center;
-  gap:3px;
+  position:relative;
 }
 
 .audioAvatarMini{
-  width:38px;
-  height:38px;
+  width:40px;
+  height:40px;
   border-radius:50%;
   overflow:hidden;
   background:#3a3d46;
@@ -685,6 +670,30 @@ body{
   height:100%;
   object-fit:cover;
   display:block;
+}
+
+.audioMicBadge{
+  position:absolute;
+  bottom:-2px;
+  left:-2px;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:#1f2123;
+  border:1.5px solid #1f2123;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.audioFooterRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  font-size:11px;
+  color:rgba(255,255,255,.52);
+  line-height:1;
+  padding:0 2px;
 }
 
 
