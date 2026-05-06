@@ -1063,7 +1063,7 @@ function addTyping() {
     </div>
   `;
   state.chatEl.appendChild(row);
-  scrollBottom();
+  scrollBottom(true);
 }
 
 // ==================== RENDER ====================
@@ -1358,7 +1358,8 @@ function restoreHistory() {
 function addMsg(side, html) {
   updatePreviousGroupForNewMessage(side);
   const item = { type:"msg", side, html, time:nowTime(), cluster:getNewCluster(side) };
-  pushHistory(item); renderItem(item, true); scrollBottom();
+  pushHistory(item); renderItem(item, true);
+  if (side === "left") scrollBottom(true); else scrollBottom();
 }
 
 function addVideoBubble(src, title = "Vídeo") {
@@ -1376,25 +1377,39 @@ async function gisaSendVideo(src, title = "Vídeo") {
 }
 
 async function gisaAutoPlayVideo(src) {
-  // Temporary video — plays in card, disappears after 5s, not saved to history
-  const item = { type:"video", side:"left", src:`${src}?v=${Date.now()}`, title:"Vídeo Privado", autoplay:true, time:nowTime(), cluster:"single" };
-  const row = renderItem(item, true);
-  scrollBottom();
+  // 3s pause → status "enviando vídeo…" → 5s → video drops and autoplays
+  let row = null;
+  try {
+    await sleep(3000);
+    setStatus("enviando vídeo…");
+    await sleep(5000);
+    setStatus("");
+    await sleep(rand(80, 160));
 
-  // t=3s: typing appears 2 seconds before video disappears
-  await sleep(3000);
-  setStatus("digitando…");
-  addTyping();
+    const item = { type:"video", side:"left", src:`${src}?v=${Date.now()}`, title:"Vídeo Privado", autoplay:true, time:nowTime(), cluster:"single" };
+    row = renderItem(item, true);
+    scrollBottom(true);
 
-  // t=5s: fade out and remove video row
-  await sleep(2000);
-  if (row && row.parentNode) {
-    row.style.transition = "opacity 0.4s ease, transform 0.4s ease";
-    row.style.opacity = "0";
-    row.style.transform = "scale(0.95)";
-    await sleep(420);
-    if (row.parentNode) row.remove();
-    scrollBottom(true); // re-anchor after video card removal
+    // t=3s after video drop: typing appears (2s before disappear)
+    await sleep(3000);
+    setStatus("digitando…");
+    addTyping();
+
+    // t=5s: fade out and remove
+    await sleep(2000);
+    if (row && row.parentNode) {
+      row.style.transition = "opacity 0.4s ease, transform 0.4s ease";
+      row.style.opacity = "0";
+      row.style.transform = "scale(0.95)";
+      await sleep(420);
+      if (row.parentNode) row.remove();
+      scrollBottom(true);
+    }
+  } catch(e) {
+    // Clean up on cancellation so the video row and typing don't linger
+    if (row && row.parentNode) row.remove();
+    removeTyping();
+    throw e;
   }
 }
 
@@ -1528,6 +1543,7 @@ async function enterPrivateInvite(directFirst = false) {
   if (directFirst) {
     removeTyping();
     setStatus("");
+    scrollBottom(true);
     await sleep(120);
     addMsg("left", escapeHtml("chega de mensagem… eu quero te mostrar tudo ao vivo agora"));
     await sleep(rand(500, 900));
