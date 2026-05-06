@@ -23,6 +23,7 @@ const ASSETS = {
   lingerie: "/assets/lingerie.jpg",
   teaseVideo: "/assets/tease.mp4",
   teaseVideo2: "/assets/tease2.mp4",
+  audioMimimi: "/assets/audio-mimimi.mp3",
 };
 
 function preloadMedia() {
@@ -1077,22 +1078,36 @@ function renderMediaGrid(item) {
 
 function renderAudioBubble(item) {
   const bars = Array.isArray(item.bars) && item.bars.length ? item.bars : getDefaultWaveBars();
+  const dur  = item.duration || "0:00";
+  const time = item.time || nowTime();
   return `
     <div class="audioBubbleShell">
-      <button class="audioPlayFake" type="button" aria-hidden="true"><span class="audioPlayTriangle"></span></button>
+      <button class="audioPlayBtn" type="button" aria-label="Play">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="rgba(255,255,255,.88)">
+          <polygon points="6,4 21,12 6,20"/>
+        </svg>
+      </button>
       <div class="audioWaveWrap">
-        <div class="audioWave">
-          ${bars.map((h, i) => `<span class="waveBar ${i < 6 ? "isPlayed" : ""}" style="height:${h}px"></span>`).join("")}
+        <div class="audioWaveRow">
+          <span class="audioProgressDot"></span>
+          <div class="audioWave">
+            ${bars.map((h,i) => `<span class="waveBar${i<4?" isPlayed":""}" style="height:${Math.max(3,Math.min(h,30))}px"></span>`).join("")}
+          </div>
         </div>
         <div class="audioMetaRow">
-          <span class="audioStart">${item.start || "0:09"}</span>
-          <span class="audioEnd">${item.end || "10:00"}</span>
+          <span data-audio-dur>${dur}</span>
+          <span>${time}</span>
         </div>
       </div>
-      <button class="audioMicFake" type="button" aria-hidden="true"><span class="audioMicIcon"></span></button>
-      <div class="audioAvatarMini avatarImgWrap">
-        <img src="${ASSETS.avatar}?v=1" alt="${CONTACT.title}" onerror="this.parentNode.classList.add('avatarFallback')" />
-        <span class="avatarFallbackText">${CONTACT.title.charAt(0)}</span>
+      <div class="audioAvatarCol">
+        <div class="audioAvatarMini">
+          <img src="${ASSETS.avatar}?v=1" alt="" onerror="this.style.display='none'" />
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <rect x="9" y="2" width="6" height="11" rx="3" fill="#53bdeb"/>
+          <path d="M5 10a7 7 0 0 0 14 0" stroke="#53bdeb" stroke-width="2" stroke-linecap="round"/>
+          <line x1="12" y1="19" x2="12" y2="22" stroke="#53bdeb" stroke-width="2" stroke-linecap="round"/>
+        </svg>
       </div>
     </div>
   `;
@@ -1166,7 +1181,7 @@ function renderRowHTML(item, animated = false) {
   if (item.type === "audio") return `
     <div class="msgRow ${sideClass} ${cluster}">
       <div class="bubble ${bubbleBase} bubble-audio ${anim}">
-        ${renderAudioBubble(item)}${renderMeta(item)}
+        ${renderAudioBubble(item)}
       </div>
     </div>`;
 
@@ -1223,6 +1238,21 @@ function renderItem(item, animated = false) {
         }, { once: false });
       }
     }
+
+    // audio duration auto-detect
+    if (item.type === "audio" && item.src) {
+      const durEl = row.querySelector("[data-audio-dur]");
+      if (durEl) {
+        const a = new Audio();
+        a.src = item.src;
+        a.addEventListener("loadedmetadata", () => {
+          if (a.duration && isFinite(a.duration)) {
+            const s = Math.floor(a.duration);
+            durEl.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+          }
+        }, { once: true });
+      }
+    }
   }
   return row;
 }
@@ -1268,8 +1298,16 @@ function addMediaGridBubble(items = null) {
 
 function addAudioBubble(data = {}) {
   updatePreviousGroupForNewMessage("left");
-  const item = { type:"audio", side:"left", bars:data.bars||getDefaultWaveBars(), start:data.start||"0:09", end:data.end||"10:00", time:nowTime(), cluster:getNewCluster("left") };
+  const item = { type:"audio", side:"left", src:data.src||"", bars:data.bars||getDefaultWaveBars(), duration:data.duration||"0:00", time:nowTime(), cluster:getNewCluster("left") };
   pushHistory(item); renderItem(item, true); scrollBottom();
+}
+
+async function gisaSendAudio(src, bars = null) {
+  setStatus("gravando áudio…");
+  await sleep(rand(3000, 5000));
+  setStatus("");
+  await sleep(rand(80, 160));
+  addAudioBubble({ src, bars: bars || getDefaultWaveBars() });
 }
 
 function addCtaCard(html) {
@@ -1321,7 +1359,7 @@ async function enterTeaseBuildup() {
   clearReengage();
   state.step = 2; saveState();
   await sleep(rand(4000, 5000));
-  await gisaSay("aqui não tem mimimi… eu mostro tudo, mas só pra quem merece", { delay: rand(5000, 7000) });
+  await gisaSendAudio(ASSETS.audioMimimi);
   await gisaSay("eu não abro as pernas pra qualquer um que aparece", { delay: rand(4500, 6500) });
   await sleep(rand(2000, 3000));
   await gisaSendVideo(ASSETS.teaseVideo2, "Vídeo Privado");

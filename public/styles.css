@@ -591,45 +591,55 @@ body{
   color:#fff;
 }
 
-/* audio */
+/* ── Audio Bubble (WhatsApp style) ────────────────────────────── */
+.bubble-audio{ padding:8px 10px 8px!important; }
+
 .audioBubbleShell{
   display:flex;
   align-items:center;
-  gap:10px;
-  min-width:min(280px, 78vw);
+  gap:8px;
+  min-width:min(265px,74vw);
 }
 
-.audioPlayFake,
-.audioMicFake{
-  width:34px;
-  height:34px;
-  border-radius:50%;
+.audioPlayBtn{
+  flex-shrink:0;
+  width:28px;
+  height:44px;
+  background:transparent;
   border:0;
-  flex:0 0 auto;
-}
-
-.audioPlayFake{
-  background:rgba(255,255,255,.08);
-  position:relative;
-}
-.audioPlayTriangle{
-  position:absolute;
-  left:13px;
-  top:10px;
-  width:0;
-  height:0;
-  border-top:7px solid transparent;
-  border-bottom:7px solid transparent;
-  border-left:10px solid rgba(255,255,255,.92);
+  padding:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  -webkit-tap-highlight-color:transparent;
+  cursor:pointer;
 }
 
 .audioWaveWrap{
   flex:1;
   min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+.audioWaveRow{
+  display:flex;
+  align-items:center;
+  gap:5px;
+}
+
+.audioProgressDot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:#53bdeb;
+  flex-shrink:0;
 }
 
 .audioWave{
-  height:48px;
+  flex:1;
+  height:32px;
   display:flex;
   align-items:center;
   gap:2px;
@@ -637,69 +647,42 @@ body{
 }
 
 .waveBar{
-  width:3px;
-  border-radius:3px;
+  width:2.5px;
+  border-radius:2px;
   background:rgba(255,255,255,.28);
   flex:0 0 auto;
 }
-.waveBar.isPlayed{
-  background:rgba(255,255,255,.84);
-}
+.waveBar.isPlayed{ background:rgba(255,255,255,.78); }
 
 .audioMetaRow{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  margin-top:4px;
-  font-size:10px;
-  color:rgba(255,255,255,.62);
+  font-size:11px;
+  color:rgba(255,255,255,.52);
+  line-height:1;
 }
 
-.audioMicFake{
-  background:rgba(255,255,255,.08);
-  position:relative;
-}
-
-.audioMicIcon{
-  position:absolute;
-  left:12px;
-  top:8px;
-  width:10px;
-  height:14px;
-  border:2px solid rgba(255,255,255,.9);
-  border-top-left-radius:8px;
-  border-top-right-radius:8px;
-  border-bottom-left-radius:8px;
-  border-bottom-right-radius:8px;
-}
-.audioMicIcon::before{
-  content:"";
-  position:absolute;
-  left:3px;
-  bottom:-6px;
-  width:2px;
-  height:5px;
-  background:rgba(255,255,255,.9);
-  border-radius:2px;
-}
-.audioMicIcon::after{
-  content:"";
-  position:absolute;
-  left:3px;
-  bottom:-10px;
-  width:2px;
-  height:6px;
-  background:rgba(255,255,255,.9);
-  border-radius:2px;
+.audioAvatarCol{
+  flex-shrink:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:3px;
 }
 
 .audioAvatarMini{
-  width:28px;
-  height:28px;
+  width:38px;
+  height:38px;
   border-radius:50%;
   overflow:hidden;
-  flex:0 0 auto;
   background:#3a3d46;
+}
+.audioAvatarMini img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
 }
 
 
@@ -1308,7 +1291,6 @@ object-fit:cover;
 /* ==================== BUBBLE VARIANTS ==================== */
 .bubble-media { padding: 4px 4px 6px; }
 .bubble-grid  { padding: 4px 4px 6px; }
-.bubble-audio { padding: 8px 10px 6px; }
 .bubble-card  { padding: 12px 14px 10px; }
 
 /* ==================== IMAGE BUBBLE ==================== */
