@@ -1023,15 +1023,17 @@ function showPixAlert() {
 }
 
 // ==================== SCROLL / TYPING ====================
+function scrollToBottom() {
+  // RAF prevents WebKit GPU black square; setTimeout(50) ensures iOS layout has settled
+  requestAnimationFrame(() => { const el = state.chatEl; if (el) el.scrollTop = el.scrollHeight; });
+  setTimeout(() => { const el = state.chatEl; if (el) el.scrollTop = el.scrollHeight; }, 50);
+}
+
 function scrollBottom(force = false) {
   const el = state.chatEl;
   if (!el) return;
   if (!force && !isUserNearBottom && !isKeyboardOpen) return;
-  if (force || isKeyboardOpen) {
-    el.scrollTop = el.scrollHeight;
-  } else {
-    requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
-  }
+  scrollToBottom();
 }
 
 function removeTyping() {
@@ -1063,7 +1065,7 @@ function addTyping() {
     </div>
   `;
   state.chatEl.appendChild(row);
-  requestAnimationFrame(() => { const el = state.chatEl; if (el) el.scrollTop = el.scrollHeight; });
+  scrollToBottom();
 }
 
 // ==================== RENDER ====================
@@ -1359,8 +1361,7 @@ function addMsg(side, html) {
   updatePreviousGroupForNewMessage(side);
   const item = { type:"msg", side, html, time:nowTime(), cluster:getNewCluster(side) };
   pushHistory(item); renderItem(item, true);
-  if (side === "left") requestAnimationFrame(() => { const el = state.chatEl; if (el) el.scrollTop = el.scrollHeight; });
-  else scrollBottom();
+  if (side === "left") scrollToBottom(); else scrollBottom();
 }
 
 function addVideoBubble(src, title = "Vídeo") {
@@ -1389,7 +1390,7 @@ async function gisaAutoPlayVideo(src) {
 
     const item = { type:"video", side:"left", src:`${src}?v=${Date.now()}`, title:"Vídeo Privado", autoplay:true, time:nowTime(), cluster:"single" };
     row = renderItem(item, true);
-    requestAnimationFrame(() => { const el = state.chatEl; if (el) el.scrollTop = el.scrollHeight; });
+    scrollToBottom();
 
     // t=3s after video drop: typing appears (2s before disappear)
     await sleep(3000);
@@ -1407,7 +1408,7 @@ async function gisaAutoPlayVideo(src) {
       row.style.transform = "scale(0.95)";
       await sleep(420);
       if (row.parentNode) row.remove();
-      requestAnimationFrame(() => { const el = state.chatEl; if (el) el.scrollTop = el.scrollHeight; });
+      scrollToBottom();
     }
   } catch(e) {
     // Clean up on cancellation so the video row and typing don't linger
@@ -1547,7 +1548,7 @@ async function enterPrivateInvite(directFirst = false) {
   if (directFirst) {
     removeTyping();
     setStatus("");
-    requestAnimationFrame(() => { const el = state.chatEl; if (el) el.scrollTop = el.scrollHeight; });
+    scrollToBottom();
     await sleep(120);
     addMsg("left", escapeHtml("chega de mensagem… eu quero te mostrar tudo ao vivo agora"));
     await sleep(rand(500, 900));
