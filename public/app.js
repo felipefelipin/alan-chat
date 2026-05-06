@@ -1399,6 +1399,9 @@ async function gisaAutoPlayVideo(src) {
     // t=5s: fade out and remove
     await sleep(2000);
     if (row && row.parentNode) {
+      // pause + detach src before fade to release WebKit GPU video texture layer
+      const vid = row.querySelector("video");
+      if (vid) { vid.pause(); vid.src = ""; vid.load(); }
       row.style.transition = "opacity 0.4s ease, transform 0.4s ease";
       row.style.opacity = "0";
       row.style.transform = "scale(0.95)";
