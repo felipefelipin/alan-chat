@@ -1389,7 +1389,7 @@ async function gisaAutoPlayVideo(src) {
 
     const item = { type:"video", side:"left", src:`${src}?v=${Date.now()}`, title:"Vídeo Privado", autoplay:true, time:nowTime(), cluster:"single" };
     row = renderItem(item, true);
-    scrollBottom(true);
+    requestAnimationFrame(() => { const el = state.chatEl; if (el) el.scrollTop = el.scrollHeight; });
 
     // t=3s after video drop: typing appears (2s before disappear)
     await sleep(3000);
@@ -1404,7 +1404,7 @@ async function gisaAutoPlayVideo(src) {
       row.style.transform = "scale(0.95)";
       await sleep(420);
       if (row.parentNode) row.remove();
-      scrollBottom(true);
+      requestAnimationFrame(() => { const el = state.chatEl; if (el) el.scrollTop = el.scrollHeight; });
     }
   } catch(e) {
     // Clean up on cancellation so the video row and typing don't linger
@@ -1544,7 +1544,7 @@ async function enterPrivateInvite(directFirst = false) {
   if (directFirst) {
     removeTyping();
     setStatus("");
-    scrollBottom(true);
+    requestAnimationFrame(() => { const el = state.chatEl; if (el) el.scrollTop = el.scrollHeight; });
     await sleep(120);
     addMsg("left", escapeHtml("chega de mensagem… eu quero te mostrar tudo ao vivo agora"));
     await sleep(rand(500, 900));
