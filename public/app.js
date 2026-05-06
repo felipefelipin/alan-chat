@@ -122,7 +122,22 @@ function nowTime() {
   return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
 }
 
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+// Flow cancellation — incrementing _sleepGen causes all pending sleeps to throw
+class FlowCancelledError extends Error {
+  constructor() { super("flow_cancelled"); this.name = "FlowCancelledError"; }
+}
+let _sleepGen = 0;
+
+function sleep(ms) {
+  const gen = _sleepGen;
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (_sleepGen !== gen) reject(new FlowCancelledError());
+      else resolve();
+    }, ms);
+  });
+}
+
 function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
 function escapeHtml(s) {
@@ -337,7 +352,7 @@ function mountPremiumIntro() {
     await runRoutingOverlayV4();
     mountChat();
     await sleep(220);
-    startScript();
+    startScript().catch(e => { if (!(e instanceof FlowCancelledError)) console.error(e); });
   };
 
   setTimeout(() => {
@@ -1379,6 +1394,7 @@ async function gisaAutoPlayVideo(src) {
     row.style.transform = "scale(0.95)";
     await sleep(420);
     if (row.parentNode) row.remove();
+    scrollBottom(true); // re-anchor after video card removal
   }
 }
 
@@ -1462,6 +1478,7 @@ function onSend() {
 function clearReengage() {
   if (state._t1) { clearTimeout(state._t1); state._t1 = null; }
   if (state._t2) { clearTimeout(state._t2); state._t2 = null; }
+  _sleepGen++; // cancel all pending sleeps in previous flows
 }
 
 function isNegative(text) {
@@ -1618,35 +1635,37 @@ async function startScript() {
 }
 
 async function handleUserText(text) {
-  clearReengage();
-  if (state.step === 1) { await enterTeaseBuildup(); return; }
-  if (state.step === 2) {
-    if (isNegative(text)) {
-      await gisaSay("vou tirar mesmo assim… mas só porque você tá me deixando louca");
-      await sleep(800);
-    }
-    await enterDesireEscalation();
-    return;
-  }
-  if (state.step === 3) { await enterPrivateInvite(); return; }
-  if (state.step === 4) {
-    if (isNegative(text)) {
-      await gisaSay("para de frescura… é agora. Eu tô pelada e molhada te esperando.\nVocê pode sair quando quiser, mas eu sei que você não vai querer sair.");
-      state._t1 = setTimeout(async () => {
-        if (state.step !== 4) return;
-        await gisaSay("tá com medo de não aguentar? 🥵");
-        state._t2 = setTimeout(async () => {
-          if (state.step !== 4) return;
-          await gisaSay("vou te chamar agora. Entra logo, covarde gostoso.");
-          await sleep(800);
-          await enterCallConnecting();
-        }, 40 * 1000);
-      }, 2 * 60 * 1000);
+  clearReengage(); // cancels all pending sleeps in previous flows
+  try {
+    if (state.step === 1) { await enterTeaseBuildup(); return; }
+    if (state.step === 2) {
+      if (isNegative(text)) {
+        await gisaSay("vou tirar mesmo assim… mas só porque você tá me deixando louca");
+        await sleep(800);
+      }
+      await enterDesireEscalation();
       return;
     }
-    await enterCallConnecting();
-    return;
-  }
+    if (state.step === 3) { await enterPrivateInvite(); return; }
+    if (state.step === 4) {
+      if (isNegative(text)) {
+        await gisaSay("para de frescura… é agora. Eu tô pelada e molhada te esperando.\nVocê pode sair quando quiser, mas eu sei que você não vai querer sair.");
+        state._t1 = setTimeout(async () => {
+          if (state.step !== 4) return;
+          await gisaSay("tá com medo de não aguentar? 🥵");
+          state._t2 = setTimeout(async () => {
+            if (state.step !== 4) return;
+            await gisaSay("vou te chamar agora. Entra logo, covarde gostoso.");
+            await sleep(800);
+            await enterCallConnecting();
+          }, 40 * 1000);
+        }, 2 * 60 * 1000);
+        return;
+      }
+      await enterCallConnecting();
+      return;
+    }
+  } catch(e) { if (!(e instanceof FlowCancelledError)) throw e; }
 }
 
 function openCheckout() {
