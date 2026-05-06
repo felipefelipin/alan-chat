@@ -1356,6 +1356,7 @@ async function gisaSendAudio(src, bars = null) {
   setStatus("");
   await sleep(rand(80, 160));
   addAudioBubble({ src, bars: bars || getDefaultWaveBars() });
+  await sleep(3000);
 }
 
 function addCtaCard(html) {
@@ -1417,7 +1418,7 @@ async function enterTeaseBuildup() {
   setStatus("");
   addVideoBubble(ASSETS.teaseVideo2, "Vídeo Privado");
   await sleep(5000);
-  await gisaSay("quer que eu tire essa lingerie toda agora pra você ver minha buceta?", { delay: rand(7000, 9000) });
+  await gisaSay("quer que eu tire essa lingerie toda agora pra você ver minha buceta? 😈🔥", { delay: rand(7000, 9000) });
   state._t1 = setTimeout(async () => {
     if (state.step !== 2) return;
     await gisaSay("vou tirar mesmo assim… mas só porque você tá me deixando louca");
@@ -1435,13 +1436,11 @@ async function enterDesireEscalation() {
   state.step = 3; saveState();
   await sleep(rand(4000, 5000));
   await gisaSay("tô me sentindo uma puta safada hoje…", { delay: rand(5000, 7000) });
-  await gisaSay("você tá me fazendo querer fazer coisas bem safadas ao vivo", { delay: rand(6000, 8000) });
+  await gisaSay("to quase te ligando chamando de vídeo vey… 🥵", { delay: rand(6000, 8000) });
   await gisaSendVideo(ASSETS.teaseVideo, "Vídeo Privado");
   await sleep(rand(6000, 8000));
-  await gisaSay("apaguei rapidinho…\nconseguiu ver como eu tô molhada pra você?");
   state._t1 = setTimeout(async () => {
     if (state.step !== 3) return;
-    await gisaSay("perdeu o melhor… eu tava literalmente pingando");
     await sleep(800);
     await enterPrivateInvite();
   }, 2 * 60 * 1000);
