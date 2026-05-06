@@ -150,8 +150,9 @@ function bindKeyboardUX() {
 
   input.addEventListener("focus", () => {
     isKeyboardOpen = true;
-    // wait one frame for the viewport to resize then snap to bottom
-    requestAnimationFrame(() => scrollBottom(true));
+    scrollBottom(true);
+    setTimeout(() => scrollBottom(true), 150);
+    setTimeout(() => scrollBottom(true), 350);
   });
 
   input.addEventListener("blur", () => { isKeyboardOpen = false; });
@@ -1007,7 +1008,11 @@ function scrollBottom(force = false) {
   const el = state.chatEl;
   if (!el) return;
   if (!force && !isUserNearBottom) return;
-  requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
+  if (force) {
+    el.scrollTop = el.scrollHeight;
+  } else {
+    requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
+  }
 }
 
 function removeTyping() {
@@ -1411,7 +1416,7 @@ async function enterTeaseBuildup() {
   await sleep(3000);
   setStatus("");
   addVideoBubble(ASSETS.teaseVideo2, "Vídeo Privado");
-  await sleep(rand(2000, 3000));
+  await sleep(5000);
   await gisaSay("quer que eu tire essa lingerie toda agora pra você ver minha buceta?", { delay: rand(7000, 9000) });
   state._t1 = setTimeout(async () => {
     if (state.step !== 2) return;
@@ -1428,8 +1433,9 @@ async function enterTeaseBuildup() {
 async function enterDesireEscalation() {
   clearReengage();
   state.step = 3; saveState();
-  await gisaSay("tô me sentindo uma puta safada hoje…");
-  await gisaSay("você tá me fazendo querer fazer coisas bem safadas ao vivo");
+  await sleep(rand(4000, 5000));
+  await gisaSay("tô me sentindo uma puta safada hoje…", { delay: rand(5000, 7000) });
+  await gisaSay("você tá me fazendo querer fazer coisas bem safadas ao vivo", { delay: rand(6000, 8000) });
   await gisaSendVideo(ASSETS.teaseVideo, "Vídeo Privado");
   await sleep(rand(6000, 8000));
   await gisaSay("apaguei rapidinho…\nconseguiu ver como eu tô molhada pra você?");
