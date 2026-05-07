@@ -166,17 +166,12 @@ function bindKeyboardUX() {
 
   let startY = 0, lastY = 0, totalDelta = 0, direction = null;
 
-  // Track keyboard height via visualViewport — only composer moves, layout stays still
+  // Track keyboard height — only moves the composer, nothing else changes
   function syncVH() {
     const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     const kbHeight = Math.max(0, window.innerHeight - h);
     document.documentElement.style.setProperty("--kb-offset", kbHeight + "px");
-    const kbOpen = kbHeight > 80;
-    if (kbOpen !== isKeyboardOpen) {
-      isUserNearBottom = true;
-      scrollToBottom();
-    }
-    isKeyboardOpen = kbOpen;
+    isKeyboardOpen = kbHeight > 80;
   }
 
   if (window.visualViewport) {
@@ -188,7 +183,6 @@ function bindKeyboardUX() {
 
   input.addEventListener("focus", () => {
     isUserNearBottom = true;
-    scrollToBottom();
   });
 
   input.addEventListener("blur", () => {

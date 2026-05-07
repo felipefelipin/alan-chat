@@ -1210,7 +1210,7 @@ object-fit:cover;
   inset: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 8px 10px calc(58px + env(safe-area-inset-bottom) + var(--kb-offset, 0px) + 16px);
+  padding: 8px 10px calc(58px + env(safe-area-inset-bottom) + 16px);
   display: flex;
   flex-direction: column;
   -webkit-overflow-scrolling: touch;
