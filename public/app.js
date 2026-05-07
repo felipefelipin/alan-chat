@@ -166,12 +166,20 @@ function bindKeyboardUX() {
 
   let startY = 0, lastY = 0, totalDelta = 0, direction = null;
 
-  // Track keyboard height — only moves the composer, nothing else changes
+  // iOS WKWebView scrolls the document to bring focused input into view, even on
+  // position:fixed elements. We counter this by (a) resetting document scroll
+  // and (b) compensating .full's top with visualViewport.offsetTop.
+  window.addEventListener("scroll", () => window.scrollTo(0, 0), { passive: false });
+
   function syncVH() {
-    const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    const vv = window.visualViewport;
+    const h = vv ? vv.height : window.innerHeight;
     const kbHeight = Math.max(0, window.innerHeight - h);
     document.documentElement.style.setProperty("--kb-offset", kbHeight + "px");
     isKeyboardOpen = kbHeight > 80;
+    // Compensate visual viewport offset so .full stays pinned to screen top
+    const fullEl = document.querySelector(".full");
+    if (fullEl) fullEl.style.top = (vv ? vv.offsetTop : 0) + "px";
   }
 
   if (window.visualViewport) {
