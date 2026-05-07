@@ -1177,7 +1177,10 @@ object-fit:cover;
 /* ==================== LAYOUT PRINCIPAL DO CHAT ==================== */
 .full {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--visual-vh, 100svh);
   display: flex;
   flex-direction: column;
   background: var(--bg);

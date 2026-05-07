@@ -166,15 +166,34 @@ function bindKeyboardUX() {
 
   let startY = 0, lastY = 0, totalDelta = 0, direction = null;
 
+  // Track visual viewport every frame of keyboard animation → smooth resize with no jump
+  function syncVH() {
+    const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    document.documentElement.style.setProperty("--visual-vh", h + "px");
+    const kbOpen = (window.innerHeight - h) > 80;
+    if (kbOpen && !isKeyboardOpen) {
+      isUserNearBottom = true;
+      scrollToBottom();
+    }
+    isKeyboardOpen = kbOpen;
+  }
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", syncVH);
+    window.visualViewport.addEventListener("scroll", syncVH);
+  }
+  window.addEventListener("resize", syncVH);
+  syncVH();
+
   input.addEventListener("focus", () => {
-    isKeyboardOpen = true;
     isUserNearBottom = true;
-    scrollBottom(true);
-    setTimeout(() => scrollBottom(true), 150);
-    setTimeout(() => scrollBottom(true), 350);
+    scrollToBottom();
   });
 
-  input.addEventListener("blur", () => { isKeyboardOpen = false; });
+  input.addEventListener("blur", () => {
+    isKeyboardOpen = false;
+    syncVH();
+  });
 
   // swipe down on chat while keyboard open → dismiss keyboard
   chat.addEventListener("touchstart", (e) => {
