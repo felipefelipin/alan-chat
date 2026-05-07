@@ -166,12 +166,13 @@ function bindKeyboardUX() {
 
   let startY = 0, lastY = 0, totalDelta = 0, direction = null;
 
-  // Track visual viewport every frame of keyboard animation → smooth resize with no jump
+  // Track keyboard height via visualViewport — only composer moves, layout stays still
   function syncVH() {
     const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    document.documentElement.style.setProperty("--visual-vh", h + "px");
-    const kbOpen = (window.innerHeight - h) > 80;
-    if (kbOpen && !isKeyboardOpen) {
+    const kbHeight = Math.max(0, window.innerHeight - h);
+    document.documentElement.style.setProperty("--kb-offset", kbHeight + "px");
+    const kbOpen = kbHeight > 80;
+    if (kbOpen !== isKeyboardOpen) {
       isUserNearBottom = true;
       scrollToBottom();
     }
