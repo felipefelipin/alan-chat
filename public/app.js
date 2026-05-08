@@ -407,6 +407,8 @@ async function runRoutingOverlayV4() {
 
 // ==================== MOUNT CHAT ====================
 function mountChat() {
+  const _ls = new Date(Date.now() - 10 * 60 * 1000);
+  const _lsStr = `visto por último às ${String(_ls.getHours()).padStart(2,"0")}:${String(_ls.getMinutes()).padStart(2,"0")}`;
   app.innerHTML = `
     <div class="full fadeIn">
 
@@ -419,7 +421,7 @@ function mountChat() {
 
         <div onclick="openProfile()" style="flex:1;min-width:0;cursor:pointer;">
           <div style="font-size:15px;font-weight:600;color:#e9edef;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${CONTACT.title}</div>
-          <div id="status" style="font-size:12.5px;color:#8696a0;margin-top:1px;">online</div>
+          <div id="status" style="font-size:12.5px;color:#8696a0;margin-top:1px;">${_lsStr}</div>
         </div>
 
         <div style="display:flex;align-items:center;gap:20px;padding-right:6px;">
@@ -1648,15 +1650,10 @@ async function startScript() {
   state.flags.startedChat = true;
   state.step = 1; saveState();
 
-  // Mostra "visto por último" 10 min antes por 2s, depois volta ao online
-  const lastSeen = new Date(Date.now() - 10 * 60 * 1000);
-  const hh = String(lastSeen.getHours()).padStart(2, "0");
-  const mm = String(lastSeen.getMinutes()).padStart(2, "0");
-  setStatus(`visto por último às ${hh}:${mm}`);
-  await sleep(2000);
+  // Fica com "visto por último" por 5s (já aparece assim desde mountChat), depois online
+  await sleep(5000);
   setStatus("online");
-
-  await sleep(rand(2000, 3000));
+  await sleep(rand(500, 1000));
   const firstName = tg?.initDataUnsafe?.user?.first_name || "";
   const greeting = firstName
     ? `porra… você demorou hein ${firstName} 😈`
