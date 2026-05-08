@@ -1653,7 +1653,7 @@ async function startScript() {
   // Fica com "visto por último" por 5s (já aparece assim desde mountChat), depois online
   await sleep(5000);
   setStatus("online");
-  await sleep(rand(500, 1000));
+  await sleep(5000);
   const firstName = tg?.initDataUnsafe?.user?.first_name || "";
   const greeting = firstName
     ? `porra… você demorou hein ${firstName} 😈`
