@@ -1189,6 +1189,7 @@ object-fit:cover;
   overflow: hidden;
   position: relative;
   background: var(--bg);
+  transform: translateZ(0);
 }
 .chatShell::before {
   content: "";
@@ -1204,14 +1205,16 @@ object-fit:cover;
 .chat {
   position: absolute;
   inset: 0;
-  overflow-y: auto;
+  overflow-y: scroll;
   overflow-x: hidden;
   padding: 8px 10px 16px;
   display: flex;
   flex-direction: column;
-  -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   z-index: 1;
+  will-change: scroll-position;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 /* ==================== ANIMAÇÕES ==================== */
@@ -1315,6 +1318,26 @@ object-fit:cover;
   width: 100%;
   display: block;
   border-radius: inherit;
+}
+
+/* ==================== DELETED MESSAGE ==================== */
+.bubble-deleted {
+  background: transparent !important;
+  border: 1px solid rgba(255,255,255,.13) !important;
+  box-shadow: none !important;
+}
+.deleted-msg {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--meta);
+  font-style: italic;
+  font-size: 13.5px;
+  white-space: nowrap;
+}
+.deleted-msg svg {
+  flex-shrink: 0;
+  opacity: .7;
 }
 
 /* ==================== TYPING INDICATOR ==================== */

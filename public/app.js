@@ -1403,21 +1403,23 @@ async function gisaAutoPlayVideo(src) {
     setStatus("digitando…");
     addTyping();
 
-    // t=5s: fade out and remove
+    // t=5s: replace video with deleted-message bubble (WhatsApp style)
     await sleep(2000);
     if (row && row.parentNode) {
-      // pause + detach src before fade to release WebKit GPU video texture layer
       const vid = row.querySelector("video");
       if (vid) { vid.pause(); vid.src = ""; vid.load(); }
-      row.style.transition = "opacity 0.4s ease, transform 0.4s ease";
-      row.style.opacity = "0";
-      row.style.transform = "scale(0.95)";
-      await sleep(420);
-      if (row.parentNode) row.remove();
-      scrollToBottom();
+      const bubble = row.querySelector(".bubble");
+      if (bubble) {
+        bubble.style.transition = "opacity 0.15s ease";
+        bubble.style.opacity = "0";
+        await sleep(160);
+        bubble.innerHTML = `<span class="deleted-msg"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>Esta mensagem foi apagada</span>`;
+        bubble.classList.add("bubble-deleted");
+        bubble.style.transition = "opacity 0.2s ease";
+        bubble.style.opacity = "1";
+      }
     }
   } catch(e) {
-    // Clean up on cancellation so the video row and typing don't linger
     if (row && row.parentNode) row.remove();
     removeTyping();
     throw e;
@@ -1501,6 +1503,8 @@ function onSend() {
 }
 
 // ==================== SCRIPT FLOW ====================
+let _flowRunning = false;
+
 function clearReengage() {
   if (state._t1) { clearTimeout(state._t1); state._t1 = null; }
   if (state._t2) { clearTimeout(state._t2); state._t2 = null; }
@@ -1643,8 +1647,21 @@ async function startScript() {
   if (state.flags.startedChat) return;
   state.flags.startedChat = true;
   state.step = 1; saveState();
-  await sleep(rand(4000, 5000));
-  await gisaSay("porra… você demorou hein 😈", { delay: rand(4500, 6500) });
+
+  // Mostra "visto por último" 10 min antes por 2s, depois volta ao online
+  const lastSeen = new Date(Date.now() - 10 * 60 * 1000);
+  const hh = String(lastSeen.getHours()).padStart(2, "0");
+  const mm = String(lastSeen.getMinutes()).padStart(2, "0");
+  setStatus(`visto por último às ${hh}:${mm}`);
+  await sleep(2000);
+  setStatus("online");
+
+  await sleep(rand(2000, 3000));
+  const firstName = tg?.initDataUnsafe?.user?.first_name || "";
+  const greeting = firstName
+    ? `porra… você demorou hein ${firstName} 😈`
+    : "porra… você demorou hein 😈";
+  await gisaSay(greeting, { delay: rand(4500, 6500) });
   await sleep(2500);
   await gisaSay("tô toda molhada só de saber que você entrou aqui atrás de mim", { delay: rand(6000, 8000) });
   await sleep(rand(2000, 3000));
@@ -1662,7 +1679,9 @@ async function startScript() {
 }
 
 async function handleUserText(text) {
-  clearReengage(); // cancels all pending sleeps in previous flows
+  if (_flowRunning) return; // flow already running — ignore extra messages
+  clearReengage();
+  _flowRunning = true;
   try {
     if (state.step === 1) { await enterTeaseBuildup(); return; }
     if (state.step === 2) {
@@ -1693,6 +1712,7 @@ async function handleUserText(text) {
       return;
     }
   } catch(e) { if (!(e instanceof FlowCancelledError)) throw e; }
+  finally { _flowRunning = false; }
 }
 
 function openCheckout() {
