@@ -1187,6 +1187,8 @@ object-fit:cover;
   flex-direction: column;
   background: var(--bg);
   overflow: hidden;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 .chatShell {

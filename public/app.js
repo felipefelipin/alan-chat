@@ -177,9 +177,6 @@ function bindKeyboardUX() {
     const kbHeight = Math.max(0, window.innerHeight - h);
     document.documentElement.style.setProperty("--kb-offset", kbHeight + "px");
     isKeyboardOpen = kbHeight > 80;
-    // Compensate visual viewport offset so .full stays pinned to screen top
-    const fullEl = document.querySelector(".full");
-    if (fullEl) fullEl.style.top = (vv ? vv.offsetTop : 0) + "px";
   }
 
   if (window.visualViewport) {
