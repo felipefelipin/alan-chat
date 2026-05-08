@@ -2527,7 +2527,7 @@ if (window.visualViewport) {
     const vh = window.visualViewport.height;
     const isOpening = (lastHeight - vh) > 80;
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      if (isOpening || isUserNearBottom) chat.scrollTop = chat.scrollHeight;
+      if (isOpening) chat.scrollTop = chat.scrollHeight;
     }));
     lastHeight = vh;
   });
