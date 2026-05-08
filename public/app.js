@@ -169,10 +169,10 @@ function bindKeyboardUX() {
   // Kill any scroll the WKWebView applies on top of the natural resize
   window.addEventListener("scroll", () => {
     if (window.scrollY !== 0) window.scrollTo(0, 0);
-  }, { passive: false });
+  }, { passive: true });
   document.addEventListener("scroll", () => {
     if (document.documentElement.scrollTop !== 0) document.documentElement.scrollTop = 0;
-  }, { passive: false });
+  }, { passive: true });
 
   input.addEventListener("focus", () => {
     isKeyboardOpen = true;
