@@ -176,11 +176,6 @@ function bindKeyboardUX() {
 
   input.addEventListener("focus", () => {
     isKeyboardOpen = true;
-    const chatEl = state.chatEl;
-    if (chatEl) {
-      const saved = chatEl.scrollTop;
-      setTimeout(() => { if (chatEl) chatEl.scrollTop = saved; }, 350);
-    }
   });
 
   input.addEventListener("blur", () => {
@@ -1076,7 +1071,7 @@ function addTyping() {
     </div>
   `;
   state.chatEl.appendChild(row);
-  scrollToBottom();
+  scrollBottom();
 }
 
 // ==================== RENDER ====================
@@ -1372,7 +1367,7 @@ function addMsg(side, html) {
   updatePreviousGroupForNewMessage(side);
   const item = { type:"msg", side, html, time:nowTime(), cluster:getNewCluster(side) };
   pushHistory(item); renderItem(item, true);
-  if (side === "left") scrollToBottom(); else scrollBottom();
+  scrollBottom();
 }
 
 function addVideoBubble(src, title = "Vídeo") {
