@@ -176,7 +176,6 @@ function bindKeyboardUX() {
 
   input.addEventListener("focus", () => {
     isKeyboardOpen = true;
-    isUserNearBottom = true;
   });
 
   input.addEventListener("blur", () => {
@@ -1039,7 +1038,7 @@ function scrollToBottom() {
 function scrollBottom(force = false) {
   const el = state.chatEl;
   if (!el) return;
-  if (!force && !isUserNearBottom && !isKeyboardOpen) return;
+  if (!force && !isUserNearBottom) return;
   scrollToBottom();
 }
 
