@@ -497,6 +497,16 @@ function mountChat() {
   restoreHistory();
   bindKeyboardUX();
   handleScrollDetection();
+  // Lock .full to initial pixel dimensions so keyboard open/close never resizes or scrolls it
+  const fullEl = document.querySelector(".full");
+  if (fullEl) {
+    const h = window.innerHeight;
+    const w = window.innerWidth;
+    fullEl.style.width = w + "px";
+    fullEl.style.height = h + "px";
+    fullEl.style.top = "0px";
+    fullEl.style.left = "0px";
+  }
 }
 
 // ==================== FIX #2+3: SVG ICONS GLOBAIS (usados por startCall) ====================
