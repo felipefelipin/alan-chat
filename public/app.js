@@ -166,33 +166,13 @@ function bindKeyboardUX() {
 
   let startY = 0, lastY = 0, totalDelta = 0, direction = null;
 
-  // iOS WKWebView scrolls the document to bring focused input into view, even on
-  // position:fixed elements. We counter this by (a) resetting document scroll
-  // and (b) compensating .full's top with visualViewport.offsetTop.
-  window.addEventListener("scroll", () => window.scrollTo(0, 0), { passive: false });
-
-  function syncVH() {
-    const vv = window.visualViewport;
-    const h = vv ? vv.height : window.innerHeight;
-    const kbHeight = Math.max(0, window.innerHeight - h);
-    document.documentElement.style.setProperty("--kb-offset", kbHeight + "px");
-    isKeyboardOpen = kbHeight > 80;
-  }
-
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener("resize", syncVH);
-    window.visualViewport.addEventListener("scroll", syncVH);
-  }
-  window.addEventListener("resize", syncVH);
-  syncVH();
-
   input.addEventListener("focus", () => {
+    isKeyboardOpen = true;
     isUserNearBottom = true;
   });
 
   input.addEventListener("blur", () => {
     isKeyboardOpen = false;
-    syncVH();
   });
 
   // swipe down on chat while keyboard open → dismiss keyboard
@@ -497,16 +477,6 @@ function mountChat() {
   restoreHistory();
   bindKeyboardUX();
   handleScrollDetection();
-  // Lock .full to initial pixel dimensions so keyboard open/close never resizes or scrolls it
-  const fullEl = document.querySelector(".full");
-  if (fullEl) {
-    const h = window.innerHeight;
-    const w = window.innerWidth;
-    fullEl.style.width = w + "px";
-    fullEl.style.height = h + "px";
-    fullEl.style.top = "0px";
-    fullEl.style.left = "0px";
-  }
 }
 
 // ==================== FIX #2+3: SVG ICONS GLOBAIS (usados por startCall) ====================
