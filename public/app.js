@@ -176,6 +176,11 @@ function bindKeyboardUX() {
 
   input.addEventListener("focus", () => {
     isKeyboardOpen = true;
+    const chatEl = state.chatEl;
+    if (chatEl) {
+      const saved = chatEl.scrollTop;
+      setTimeout(() => { if (chatEl) chatEl.scrollTop = saved; }, 350);
+    }
   });
 
   input.addEventListener("blur", () => {
