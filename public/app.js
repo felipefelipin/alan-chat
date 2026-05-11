@@ -1564,7 +1564,7 @@ async function enterPrivateInvite(directFirst = false) {
   clearReengage();
   state.step = 4; saveState();
   await gisaSay("chega de mensagem… eu quero te mostrar tudo ao vivo agora");
-  await gisaSay("quero que você me veja gozando olhando na sua cara");
+  await gisaSay("quero que você me veja gozando olhando na sua cara 🤫👀");
   await gisaSay("entra na chamada comigo. Quero sentir você me comendo com os olhos");
   await gisaSay("vai entrar ou vai ficar só se masturbando por fora como os outros?");
   state._t1 = setTimeout(async () => {
