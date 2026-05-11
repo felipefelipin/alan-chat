@@ -1676,7 +1676,7 @@ async function startFunnelCall() {
   vid.setAttribute("playsinline", "");
   vid.setAttribute("webkit-playsinline", "");
   vid.muted = false;
-  vid.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;";
+  vid.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;opacity:0;transition:opacity 0.4s ease;";
   callEl.appendChild(vid);
 
   // ── Overlay: topo com nome + timer ─────────────────────────────────────────
@@ -1762,7 +1762,10 @@ async function startFunnelCall() {
 
   // Câmera frontal do lead — vídeo principal só inicia após resposta de permissão
   let camStream = null;
-  const startMainVideo = () => vid.play().catch(() => {});
+  const startMainVideo = () => {
+    vid.play().catch(() => {});
+    requestAnimationFrame(() => { vid.style.opacity = "1"; });
+  };
   if (navigator.mediaDevices?.getUserMedia) {
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
       .then(s => { camStream = s; pip.srcObject = s; pip.play().catch(() => {}); })
