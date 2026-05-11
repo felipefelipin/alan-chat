@@ -1757,14 +1757,18 @@ async function startFunnelCall() {
 
   document.body.appendChild(callEl);
 
-  // Inicia o vídeo explicitamente (necessário no iOS WKWebView)
-  vid.play().catch(() => {});
-
-  // Câmera frontal do lead
+  // Câmera frontal do lead — vídeo principal só inicia após resposta de permissão
   let camStream = null;
-  navigator.mediaDevices?.getUserMedia({ video: { facingMode: "user" }, audio: false })
-    .then(s => { camStream = s; pip.srcObject = s; pip.play().catch(() => {}); })
-    .catch(() => { pip.style.display = "none"; });
+  const startMainVideo = () => vid.play().catch(() => {});
+  if (navigator.mediaDevices?.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
+      .then(s => { camStream = s; pip.srcObject = s; pip.play().catch(() => {}); })
+      .catch(() => { pip.style.display = "none"; })
+      .finally(startMainVideo);
+  } else {
+    pip.style.display = "none";
+    startMainVideo();
+  }
 
   const cleanup = () => {
     clearInterval(timerInterval);
@@ -1793,7 +1797,6 @@ async function startFunnelCall() {
     msgEl.style.cssText = "position:absolute;bottom:140px;left:16px;right:16px;background:rgba(0,0,0,0.72);border-radius:16px;padding:12px 16px;color:#fff;font-size:14px;line-height:1.5;pointer-events:none;z-index:25;";
     msgEl.textContent = "tá gostando dessa buceta? Eu tô me fodendo aqui pensando em você me comendo…";
     callEl.appendChild(msgEl);
-    addMsg("left", "tá gostando dessa buceta? Eu tô me fodendo aqui pensando em você me comendo…");
   }, rand(12000, 18000));
 
   vid.addEventListener("ended", triggerPaywall);
@@ -1802,12 +1805,27 @@ async function startFunnelCall() {
 
 async function doCallPaywall() {
   await gisaSay("mais pera... 😅");
+  await sleep(rand(1200, 2000));
   await gisaSay("não dá pra continuar assim não");
+  await sleep(rand(1500, 2500));
   await gisaSay("eu tô louca pra gozar pra você, mas só libero tudo mais vc tem que liberar abaixo");
+  await sleep(rand(1000, 1800));
   await gisaSay("isso aqui foi só pra te deixar louco. A real começa quando você desbloquear");
+  await sleep(rand(1500, 2200));
   await gisaSay("a maioria dos caras já clicou e tá me vendo gozar agora… vai ficar de fora... 🤦‍♀️?");
+  await sleep(rand(1000, 1600));
   await gisaSay("desbloqueia agora e volta rápido que eu tô pingando te esperando");
   showCheckoutCta();
+}
+
+function lockChat() {
+  const composer = document.querySelector(".composer");
+  if (!composer) return;
+  composer.innerHTML = `
+    <div style="width:100%;text-align:center;color:rgba(255,255,255,.4);font-size:13.5px;padding:12px 20px;font-style:italic;pointer-events:none;">
+      Chat Encerrado... Desbloquie o acesso pra me ver...
+    </div>
+  `;
 }
 
 async function startScript() {
@@ -1842,6 +1860,7 @@ async function startScript() {
 }
 
 async function handleUserText(text) {
+  if (state.step >= 6) return; // chat locked after paywall
   if (_flowRunning) return; // flow already running — ignore extra messages
   clearReengage();
   _flowRunning = true;
@@ -1897,6 +1916,7 @@ function showCheckoutCta() {
   }, 0);
   setTimeout(async () => {
     if (!document.getElementById("goCheckoutBtn")) return;
+    lockChat();
     await gisaSay("vai perder a chance de me ver gozando de verdade? Os outros não estão perdendo…");
   }, 15000);
   setTimeout(async () => {
