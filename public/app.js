@@ -1342,8 +1342,11 @@ function renderItem(item, animated = false) {
       });
 
       if (playBtn) {
+        // preventDefault no mousedown impede o iOS de tirar foco do input (fecha teclado)
+        playBtn.addEventListener("mousedown", (e) => {
+          if (document.activeElement?.id === "input") e.preventDefault();
+        });
         playBtn.addEventListener("click", () => {
-          const prevActive = document.activeElement;
           if (playing) {
             audio.pause();
             playing = false;
@@ -1355,8 +1358,6 @@ function renderItem(item, animated = false) {
             if (playBtn) playBtn.innerHTML = pauseIcon;
             rafId = requestAnimationFrame(updateWave);
           }
-          // Mantém teclado aberto se o input estava focado antes do clique
-          if (prevActive && prevActive.id === "input") prevActive.focus();
         });
       }
     }
