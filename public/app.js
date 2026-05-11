@@ -408,7 +408,9 @@ async function runRoutingOverlayV4() {
 // ==================== MOUNT CHAT ====================
 function mountChat() {
   const _ls = new Date(Date.now() - 10 * 60 * 1000);
-  const _lsStr = `visto por último às ${String(_ls.getHours()).padStart(2,"0")}:${String(_ls.getMinutes()).padStart(2,"0")}`;
+  const _lsStr = state.flags.botOnline
+    ? "online"
+    : `visto por último às ${String(_ls.getHours()).padStart(2,"0")}:${String(_ls.getMinutes()).padStart(2,"0")}`;
   app.innerHTML = `
     <div class="full fadeIn">
 
@@ -1825,6 +1827,7 @@ async function startScript() {
   // Fica com "visto por último" por 5s (já aparece assim desde mountChat), depois online
   await sleep(5000);
   setStatus("online");
+  state.flags.botOnline = true; saveState();
   await sleep(5000);
   const firstName = tg?.initDataUnsafe?.user?.first_name || "";
   const greeting = firstName
@@ -2042,10 +2045,6 @@ function showStories() {
 
   const video = document.getElementById("storyVideo");
 
-  // Usa a altura real da tela (sem teclado), capturada no load
-  if (!window.__storyHeight) window.__storyHeight = window.innerHeight;
-  const realHeight = window.__storyHeight;
-
   // força reload completo — resolve reabertura
   video.src         = "/assets/story-video.mp4";
   video.currentTime = 0;
@@ -2056,7 +2055,7 @@ function showStories() {
     top:        "0",
     left:       "0",
     width:      "100vw",
-    height:     realHeight + "px",
+    height:     "100dvh",
     objectFit:  "cover",
     zIndex:     "0",
     transform:  "translateZ(0)",
@@ -2071,7 +2070,7 @@ function showStories() {
   app.innerHTML = `
     <div class="full" style="
       background:transparent;position:relative;overflow:hidden;
-      height:${realHeight}px;
+      height:100dvh;
       transform-origin:${origin.x} ${origin.y};
       transform:scale(0.04);opacity:0;
       will-change:transform,opacity;
@@ -2410,7 +2409,7 @@ function closeStoryReply() {
     Object.assign(video.style, {
       position:"fixed", top:"0", left:"0",
       width:"100vw",
-      height:(window.__storyHeight || window.innerHeight) + "px",
+      height:"100dvh",
       objectFit:"cover",
       transform:"translateZ(0)",
       willChange:"transform",
