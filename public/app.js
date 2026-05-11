@@ -1262,8 +1262,9 @@ function renderItem(item, animated = false) {
     if (vid) {
       const durText = row.querySelector("[data-dur-text]");
 
-      // detect duration
+      // detect duration — skip for autoplay videos that have a fixed fake duration
       const onMeta = () => {
+        if (vid.hasAttribute("data-autoplay")) return;
         if (durText && vid.duration && isFinite(vid.duration)) {
           const s = Math.floor(vid.duration);
           durText.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
@@ -1401,7 +1402,7 @@ async function gisaAutoPlayVideo(src) {
     setStatus("");
     await sleep(rand(80, 160));
 
-    const item = { type:"video", side:"left", src:`${src}?v=${Date.now()}`, title:"Vídeo Privado", autoplay:true, time:nowTime(), cluster:"single" };
+    const item = { type:"video", side:"left", src:`${src}?v=${Date.now()}`, title:"Vídeo Privado", autoplay:true, duration:"3:00", time:nowTime(), cluster:"single" };
     row = renderItem(item, true);
     scrollToBottom();
 
@@ -1590,8 +1591,6 @@ function showCallChoiceButtons() {
         background:linear-gradient(135deg,#ff5252 0%,#e53935 60%,#b71c1c 100%);
         color:#fff;font-size:14.5px;font-weight:700;letter-spacing:.6px;
         cursor:pointer;-webkit-tap-highlight-color:transparent;
-        box-shadow:0 0 18px rgba(255,82,82,.55),0 4px 14px rgba(211,47,47,.4);
-        animation:glowR 2.2s ease-in-out infinite;
       ">NÃO QUERO ❌</button>
     </div>
   `;
@@ -1960,7 +1959,7 @@ function showCheckoutCta() {
       @keyframes ctaPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
     </style>
     <div style="overflow:hidden;border-radius:14px;margin:-8px -8px 0;background:#111;">
-      <img src="/assets/cta-thumb.jpg" style="width:100%;display:block;max-height:220px;object-fit:cover;" />
+      <img src="/assets/cta-thumb.jpg" style="width:100%;display:block;max-height:220px;object-fit:cover;object-position:top;" />
     </div>
     <div style="padding:14px 2px 4px;text-align:center;">
       <div style="font-size:15.5px;line-height:1.55;margin-bottom:14px;color:#fff;font-weight:500;">Desbloqueia e volta imediatamente pra chamada.<br/>Eu tô te esperando pelada e safada.</div>
@@ -2221,7 +2220,7 @@ function showStories() {
     const diffX  = Math.abs(touchX - startX);
     if (diffX > diffY || diffY <= 0) return;
     currentY = touchY;
-    const prog2 = Math.min(diffY / (realHeight * 0.55), 1);
+    const prog2 = Math.min(diffY / (window.innerHeight * 0.55), 1);
     screen.style.transition      = "none";
     screen.style.transformOrigin = `${origin.x} ${origin.y}`;
     screen.style.transform       = `translateY(${diffY * 0.65}px) scale(${1 - prog2 * 0.46})`;
