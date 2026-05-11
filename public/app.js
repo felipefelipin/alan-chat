@@ -1759,9 +1759,9 @@ async function startFunnelCall() {
     display:flex;justify-content:space-around;align-items:center;
   `;
   bottomBar.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-      <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="white">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;" id="funnelMuteBtn">
+      <div id="funnelMuteBg" style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;transition:background .15s ease;">
+        <svg id="funnelMuteIcon" width="26" height="26" viewBox="0 0 24 24" fill="white">
           <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1 1.93c-3.94-.49-7-3.85-7-7.93H6c0 3.31 2.69 6 6 6s6-2.69 6-6h2c0 4.08-3.06 7.44-7 7.93V22h-2v-6.07z"/>
         </svg>
       </div>
@@ -1775,10 +1775,12 @@ async function startFunnelCall() {
       </button>
       <span style="color:rgba(255,255,255,.75);font-size:12px;">Encerrar</span>
     </div>
-    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;" id="funnelFlipBtn">
       <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="white">
-          <path d="M20 5h-3.17L15 3H9L7.17 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-8 13c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.65 0-3 1.35-3 3s1.35 3 3 3 3-1.35 3-3-1.35-3-3-3z"/>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/>
+          <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"/>
         </svg>
       </div>
       <span style="color:rgba(255,255,255,.75);font-size:12px;">Câmera</span>
@@ -1843,6 +1845,40 @@ async function startFunnelCall() {
   setTimeout(() => {
     const endBtn = document.getElementById("funnelEndCall");
     if (endBtn) endBtn.onclick = triggerPaywall;
+
+    // ── Silenciar ───────────────────────────────────────────────────
+    let isMuted = false;
+    const muteBtn = document.getElementById("funnelMuteBtn");
+    const muteBg  = document.getElementById("funnelMuteBg");
+    const muteIco = document.getElementById("funnelMuteIcon");
+    if (muteBtn) muteBtn.onclick = () => {
+      isMuted = !isMuted;
+      if (isMuted) {
+        muteBg.style.background = "#ffffff";
+        muteIco.setAttribute("fill", "#111");
+      } else {
+        muteBg.style.background = "rgba(255,255,255,.22)";
+        muteIco.setAttribute("fill", "white");
+      }
+    };
+
+    // ── Virar câmera ────────────────────────────────────────────────
+    let flipFacing = "user";
+    let flipping = false;
+    const flipBtn = document.getElementById("funnelFlipBtn");
+    if (flipBtn) flipBtn.onclick = async () => {
+      if (flipping || !navigator.mediaDevices?.getUserMedia) return;
+      flipping = true;
+      flipFacing = flipFacing === "user" ? "environment" : "user";
+      try {
+        const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: flipFacing }, audio: false });
+        if (camStream) camStream.getTracks().forEach(t => t.stop());
+        camStream = newStream;
+        pip.srcObject = newStream;
+        pip.play().catch(() => {});
+      } catch {}
+      flipping = false;
+    };
   }, 0);
 
   // Mensagem aparece durante a chamada
