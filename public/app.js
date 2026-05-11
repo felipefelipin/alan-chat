@@ -1584,7 +1584,7 @@ function showCallChoiceButtons() {
         cursor:pointer;-webkit-tap-highlight-color:transparent;
         box-shadow:0 0 22px rgba(0,230,118,.65),0 4px 18px rgba(0,200,83,.5);
         animation:glowG 1.8s ease-in-out infinite;
-      ">EU QUERO 🔥</button>
+      ">EU QUERO ✅</button>
       <button id="callChoiceNo" style="
         width:100%;padding:14px 10px;border-radius:16px;border:none;
         background:linear-gradient(135deg,#ff5252 0%,#e53935 60%,#b71c1c 100%);
@@ -1592,7 +1592,7 @@ function showCallChoiceButtons() {
         cursor:pointer;-webkit-tap-highlight-color:transparent;
         box-shadow:0 0 18px rgba(255,82,82,.55),0 4px 14px rgba(211,47,47,.4);
         animation:glowR 2.2s ease-in-out infinite;
-      ">NÃO QUERO</button>
+      ">NÃO QUERO ❌</button>
     </div>
   `;
   addCtaCard(html);
@@ -2082,9 +2082,10 @@ function showStories() {
 
   const video = document.getElementById("storyVideo");
 
-  // força reload completo — resolve reabertura
-  video.src         = "/assets/story-video.mp4";
+  // Reseta sem reatribuir src nem chamar load() — manter gesto do usuário na call stack
+  // para o iOS liberar o áudio. Reatribuir src + load() aborta o play() e quebra o contexto.
   video.currentTime = 0;
+  video.muted = false;
 
   Object.assign(video.style, {
     display:    "block",
@@ -2099,12 +2100,8 @@ function showStories() {
     willChange: "transform",
   });
 
-  // Chama play() diretamente no contexto do gesto do usuário para desbloquear áudio no iOS
-  video.play().catch(() => {
-    // fallback: aguarda canplay se play() falhar antes de carregar
-    video.oncanplay = () => { video.play().catch(() => {}); };
-  });
-  video.load();
+  // play() síncrono dentro do gesto — única forma de desbloquear áudio no iOS WKWebView
+  video.play().catch(() => {});
 
   const origin = getAvatarOrigin();
 
