@@ -1567,16 +1567,42 @@ async function enterPrivateInvite(directFirst = false) {
   await gisaSay("quero que você me veja gozando olhando na sua cara 🤫👀");
   await gisaSay("entra na chamada comigo. Quero sentir você me comendo com os olhos");
   await gisaSay("vai entrar ou vai ficar só se masturbando por fora como os outros?");
-  state._t1 = setTimeout(async () => {
-    if (state.step !== 4) return;
-    await gisaSay("tá com medo de não aguentar? 🥵");
-    state._t2 = setTimeout(async () => {
-      if (state.step !== 4) return;
-      await gisaSay("vou te chamar agora. Entra logo, covarde gostoso.");
-      await sleep(800);
+  showCallChoiceButtons();
+}
+
+function showCallChoiceButtons() {
+  const html = `
+    <div id="callChoiceCard" style="display:flex;gap:10px;justify-content:center;padding:2px 0;">
+      <button id="callChoiceYes" style="flex:1;padding:13px 8px;border-radius:22px;border:none;background:#25D366;color:#fff;font-size:14.5px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;">EU QUERO 🔥</button>
+      <button id="callChoiceNo" style="flex:1;padding:13px 8px;border-radius:22px;border:none;background:rgba(255,255,255,.13);color:rgba(255,255,255,.55);font-size:14px;cursor:pointer;-webkit-tap-highlight-color:transparent;">não quero</button>
+    </div>
+  `;
+  addCtaCard(html);
+
+  setTimeout(() => {
+    const yesBtn = document.getElementById("callChoiceYes");
+    const noBtn  = document.getElementById("callChoiceNo");
+    const removeCard = () => document.getElementById("callChoiceCard")?.closest(".msgRow")?.remove();
+
+    if (yesBtn) yesBtn.onclick = async () => {
+      removeCard();
       await enterCallConnecting();
-    }, 40 * 1000);
-  }, 2 * 60 * 1000);
+    };
+
+    if (noBtn) noBtn.onclick = async () => {
+      removeCard();
+      if (_flowRunning) return;
+      _flowRunning = true;
+      try {
+        await gisaSay("tá com medo de não aguentar? 🥵", { delay: rand(2000, 3500) });
+        await sleep(rand(1200, 2000));
+        await gisaSay("vou te chamar agora. Entra logo, covarde gostoso.", { delay: rand(3000, 4500) });
+        await sleep(800);
+        await enterCallConnecting();
+      } catch(e) { if (!(e instanceof FlowCancelledError)) throw e; }
+      finally { _flowRunning = false; }
+    };
+  }, 0);
 }
 
 async function enterCallConnecting() {
@@ -1882,6 +1908,7 @@ async function handleUserText(text) {
     }
     if (state.step === 3) { await enterPrivateInvite(); return; }
     if (state.step === 4) {
+      document.getElementById("callChoiceCard")?.closest(".msgRow")?.remove();
       if (isNegative(text)) {
         await gisaSay("para de frescura… é agora. Eu tô pelada e molhada te esperando.\nVocê pode sair quando quiser, mas eu sei que você não vai querer sair.");
         state._t1 = setTimeout(async () => {
