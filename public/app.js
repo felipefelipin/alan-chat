@@ -1874,10 +1874,40 @@ async function doCallPaywall() {
 
 function lockChat() {
   const composer = document.querySelector(".composer");
-  if (!composer) return;
+  if (!composer || composer.dataset.locked) return;
+  composer.dataset.locked = "1";
+  composer.style.cssText = "padding:0;flex-direction:column;background:var(--topbar);border-top:1px solid rgba(255,255,255,.07);";
   composer.innerHTML = `
-    <div style="width:100%;text-align:center;color:rgba(255,255,255,.4);font-size:13.5px;padding:12px 20px;font-style:italic;pointer-events:none;">
-      Chat Encerrado... Desbloquie o acesso pra me ver...
+    <style>
+      @keyframes glowG{0%,100%{box-shadow:0 0 18px rgba(0,230,118,.6),0 4px 16px rgba(0,200,83,.45)}50%{box-shadow:0 0 36px rgba(0,230,118,.95),0 6px 26px rgba(0,200,83,.75)}}
+    </style>
+    <div style="
+      display:flex;align-items:center;justify-content:space-between;
+      gap:12px;padding:10px 14px 10px;
+      background:linear-gradient(135deg,rgba(0,20,8,.95),rgba(0,40,15,.95));
+      border-bottom:1px solid rgba(0,230,118,.18);
+    ">
+      <div style="flex:1;min-width:0;">
+        <div style="color:#fff;font-size:13.5px;font-weight:600;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+          Ela está te esperando pelada…
+        </div>
+        <div style="color:rgba(0,230,118,.85);font-size:11.5px;margin-top:2px;font-weight:500;">
+          🔴 Ao vivo agora
+        </div>
+      </div>
+      <button onclick="reopenPaywall()" style="
+        flex-shrink:0;
+        background:linear-gradient(135deg,#00e676 0%,#00c853 55%,#009624 100%);
+        color:#fff;font-size:13px;font-weight:800;letter-spacing:.2px;
+        padding:10px 16px;border-radius:12px;border:none;
+        cursor:pointer;white-space:nowrap;
+        box-shadow:0 0 16px rgba(0,230,118,.55);
+        animation:glowG 1.8s ease-in-out infinite;
+        -webkit-tap-highlight-color:transparent;
+      ">🔥 Desbloquear</button>
+    </div>
+    <div style="width:100%;text-align:center;color:rgba(255,255,255,.3);font-size:12.5px;padding:8px 20px;font-style:italic;">
+      Chat Encerrado
     </div>
   `;
 }
@@ -1957,11 +1987,20 @@ function openCheckout() {
   catch { window.location.href = CHECKOUT_URL; }
 }
 
+let _paywallOverlay = null;
+
+function reopenPaywall() {
+  if (!_paywallOverlay) return;
+  document.body.appendChild(_paywallOverlay);
+  requestAnimationFrame(() => { _paywallOverlay.style.opacity = "1"; });
+}
+
 function showCheckoutCta() {
   lockChat();
 
   const overlay = document.createElement("div");
   overlay.id = "paywallOverlay";
+  _paywallOverlay = overlay;
   overlay.style.cssText = `
     position:fixed;inset:0;z-index:9800;background:#0a0a0a;
     display:flex;flex-direction:column;align-items:stretch;
@@ -2029,7 +2068,10 @@ function showCheckoutCta() {
     const btn = document.getElementById("goCheckoutBtn");
     if (btn) btn.onclick = openCheckout;
     const dismiss = document.getElementById("paywallDismiss");
-    if (dismiss) dismiss.onclick = () => overlay.remove();
+    if (dismiss) dismiss.onclick = () => {
+      overlay.style.opacity = "0";
+      setTimeout(() => overlay.remove(), 400);
+    };
   }, 0);
 
   setTimeout(async () => {
