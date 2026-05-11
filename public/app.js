@@ -60,7 +60,10 @@ const CONTACT = {
 };
 
 const PERSIST_KEY = "gisa_webapp_state_v7";
-const CHECKOUT_URL = "/checkout";
+const CHECKOUT_URL = "/checkout"; // legado — substituído pelos pacotes abaixo
+const PKG_URL_1 = "#LINK_PACOTE_1"; // trocar pelo link Telegram do Pacote 1
+const PKG_URL_2 = "#LINK_PACOTE_2"; // trocar pelo link Telegram do Pacote 2
+const PKG_URL_3 = "#LINK_PACOTE_3"; // trocar pelo link Telegram do Pacote 3
 
 function safeJsonParse(s) {
   try { return JSON.parse(s); } catch { return null; }
@@ -2079,6 +2082,11 @@ function reopenPaywall() {
   });
 }
 
+function openPkg(url) {
+  try { if (tg?.openLink) tg.openLink(url); else window.open(url, "_blank"); }
+  catch { window.open(url, "_blank"); }
+}
+
 function showCheckoutCta() {
   lockChat();
 
@@ -2090,78 +2098,126 @@ function showCheckoutCta() {
     display:flex;flex-direction:column;align-items:stretch;
     opacity:0;transition:opacity 0.4s ease;overflow-y:auto;
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+    -webkit-overflow-scrolling:touch;
   `;
 
   overlay.innerHTML = `
     <style>
-      @keyframes glowG{0%,100%{box-shadow:0 0 22px rgba(0,230,118,.65),0 4px 18px rgba(0,200,83,.5)}50%{box-shadow:0 0 44px rgba(0,230,118,1),0 8px 32px rgba(0,200,83,.8)}}
-      @keyframes ctaPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
-      @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
-      @keyframes liveGlow{0%,100%{box-shadow:0 0 8px rgba(255,59,48,.5);opacity:1}50%{box-shadow:0 0 18px rgba(255,59,48,.9),0 0 28px rgba(255,59,48,.4);opacity:.85}}
+      @keyframes pwFadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+      @keyframes liveGlow{0%,100%{box-shadow:0 0 8px rgba(255,59,48,.5)}50%{box-shadow:0 0 22px rgba(255,59,48,.9),0 0 32px rgba(255,59,48,.35)}}
+      @keyframes glowG{0%,100%{box-shadow:0 0 20px rgba(0,230,118,.6),0 4px 16px rgba(0,200,83,.45)}50%{box-shadow:0 0 40px rgba(0,230,118,1),0 8px 28px rgba(0,200,83,.8)}}
+      @keyframes glowGold{0%,100%{box-shadow:0 0 20px rgba(255,200,0,.5),0 4px 16px rgba(220,160,0,.4)}50%{box-shadow:0 0 40px rgba(255,200,0,.9),0 8px 28px rgba(220,160,0,.7)}}
+      @keyframes glowPurple{0%,100%{box-shadow:0 0 20px rgba(147,51,234,.5),0 4px 16px rgba(120,40,200,.4)}50%{box-shadow:0 0 40px rgba(147,51,234,.9),0 8px 28px rgba(120,40,200,.7)}}
+      @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.022)}}
+      .pw-pkg-btn{width:100%;padding:16px;border-radius:16px;border:none;font-size:15.5px;font-weight:900;letter-spacing:.3px;cursor:pointer;-webkit-tap-highlight-color:transparent;animation:pulse 2.4s ease-in-out infinite;}
     </style>
 
-    <div style="width:100%;overflow:hidden;flex-shrink:0;">
+    <!-- Imagem topo -->
+    <div style="width:100%;overflow:hidden;flex-shrink:0;position:relative;">
       <img src="/assets/cta-thumb.jpg"
-        style="width:100%;display:block;
-               height:52vw;max-height:290px;min-height:190px;
-               object-fit:cover;object-position:top;" />
+        style="width:100%;display:block;height:52vw;max-height:280px;min-height:170px;object-fit:cover;object-position:top;" />
+      <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 55%,#0a0a0a);pointer-events:none;"></div>
     </div>
 
     <!-- Área de conteúdo com vídeo de fundo -->
-    <div style="flex:1;position:relative;overflow:hidden;">
+    <div style="flex:1;position:relative;">
+      <video id="paywallBgVideo" src="/assets/paywall-bg.mp4" autoplay loop muted playsinline
+        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.32;pointer-events:none;transform:translateZ(0);"></video>
+      <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,10,10,.42),rgba(10,10,10,.60));pointer-events:none;"></div>
 
-      <!-- Vídeo de fundo -->
-      <video id="paywallBgVideo"
-        src="/assets/paywall-bg.mp4"
-        autoplay loop muted playsinline
-        style="
-          position:absolute;inset:0;width:100%;height:100%;
-          object-fit:cover;opacity:0.32;pointer-events:none;
-          transform:translateZ(0);
-        ">
-      </video>
+      <div style="position:relative;z-index:1;padding:20px 16px calc(env(safe-area-inset-bottom,20px) + 28px);animation:pwFadeUp 0.45s ease 0.1s both;">
 
-      <!-- Overlay escuro pra garantir legibilidade sem esconder o vídeo -->
-      <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,10,10,.40),rgba(10,10,10,.55));pointer-events:none;"></div>
+        <!-- Badge ao vivo -->
+        <div style="display:flex;justify-content:center;margin-bottom:16px;">
+          <div style="background:rgba(255,59,48,.15);border:1px solid rgba(255,59,48,.35);border-radius:20px;padding:5px 14px;animation:liveGlow 1.4s ease-in-out infinite;">
+            <span style="color:#ff6b6b;font-size:12px;font-weight:700;letter-spacing:.5px;">🔴 VAGAS LIMITADAS HOJE</span>
+          </div>
+        </div>
 
-      <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;
-                  padding:26px 24px calc(env(safe-area-inset-bottom,20px) + 24px);
-                  animation:fadeUp 0.5s ease 0.2s both;">
+        <!-- Headline -->
+        <div style="color:#fff;font-size:19px;font-weight:800;text-align:center;line-height:1.35;letter-spacing:-.2px;margin-bottom:6px;">
+          Tô aqui toda molhada te esperando...
+        </div>
+        <div style="color:rgba(255,255,255,.55);font-size:13.5px;text-align:center;line-height:1.5;margin-bottom:22px;">
+          Escolhe agora e garante seu lugar no Ao Vivo + conteúdo particular.
+        </div>
 
-      <div style="background:rgba(255,59,48,.14);border:1px solid rgba(255,59,48,.32);
-                  border-radius:20px;padding:5px 16px;margin-bottom:22px;
-                  animation:liveGlow 1.4s ease-in-out infinite;">
-        <span style="color:#ff6b6b;font-size:12.5px;font-weight:700;letter-spacing:.5px;">
-          🔴 AO VIVO AGORA
-        </span>
-      </div>
+        <!-- ── PACOTE 1 ── -->
+        <div style="background:rgba(255,255,255,.05);border:1.5px solid rgba(0,230,118,.35);border-radius:20px;padding:18px 16px;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div style="color:#fff;font-size:16px;font-weight:800;">🚀 PACOTE 1 — ACESSO AO VIVO</div>
+            <div style="color:#00e676;font-size:18px;font-weight:900;">R$&nbsp;29,90</div>
+          </div>
+          <div style="color:rgba(255,255,255,.6);font-size:13px;line-height:1.7;margin-bottom:14px;">
+            • Entrada imediata no grupo do Ao Vivo<br/>
+            • 20 fotos exclusivas<br/>
+            • Acesso durante toda a live
+          </div>
+          <button id="pkgBtn1" class="pw-pkg-btn"
+            style="background:linear-gradient(135deg,#00e676 0%,#00c853 55%,#009624 100%);color:#fff;animation:glowG 1.8s ease-in-out infinite,pulse 2.4s ease-in-out infinite;">
+            Entrar no Ao Vivo Agora
+          </button>
+        </div>
 
-      <div style="color:#fff;font-size:22px;font-weight:800;text-align:center;
-                  line-height:1.3;letter-spacing:-.3px;margin-bottom:10px;">
-        Desbloqueia e volta<br/>imediatamente pra chamada
-      </div>
+        <!-- ── PACOTE 2 (destaque) ── -->
+        <div style="background:rgba(255,200,0,.06);border:2px solid rgba(255,200,0,.55);border-radius:20px;padding:18px 16px;margin-bottom:12px;position:relative;">
+          <div style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:12px;padding:3px 14px;">
+            <span style="color:#fff;font-size:11px;font-weight:800;letter-spacing:.4px;">MAIS ESCOLHIDO 🔥</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;margin-top:4px;">
+            <div style="color:#fff;font-size:16px;font-weight:800;">💎 PACOTE 2 — PREMIUM</div>
+            <div style="color:#fbbf24;font-size:18px;font-weight:900;">R$&nbsp;49,90</div>
+          </div>
+          <div style="color:rgba(255,255,255,.6);font-size:13px;line-height:1.7;margin-bottom:14px;">
+            • Tudo do Pacote 1<br/>
+            • 40 fotos + 8 vídeos exclusivos<br/>
+            • Prioridade nos comentários da live<br/>
+            • Conteúdo extra após o Ao Vivo
+          </div>
+          <button id="pkgBtn2" class="pw-pkg-btn"
+            style="background:linear-gradient(135deg,#f59e0b 0%,#d97706 55%,#b45309 100%);color:#fff;animation:glowGold 1.8s ease-in-out infinite,pulse 2.4s ease-in-out infinite;">
+            Quero o Premium 🔥
+          </button>
+        </div>
 
-      <div style="color:rgba(255,255,255,.58);font-size:15px;text-align:center;
-                  line-height:1.55;margin-bottom:32px;">
-        Eu tô te esperando pelada e safada.
-      </div>
+        <!-- ── PACOTE 3 ── -->
+        <div style="background:rgba(147,51,234,.06);border:1.5px solid rgba(147,51,234,.4);border-radius:20px;padding:18px 16px;margin-bottom:20px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div style="color:#fff;font-size:16px;font-weight:800;">👑 PACOTE 3 — VIP TOTAL</div>
+            <div style="color:#c084fc;font-size:18px;font-weight:900;">R$&nbsp;97,00</div>
+          </div>
+          <div style="color:rgba(255,255,255,.6);font-size:13px;line-height:1.7;margin-bottom:14px;">
+            • Tudo do Pacote 2<br/>
+            • <strong style="color:#c084fc;">Meu WhatsApp pessoal</strong><br/>
+            • <strong style="color:#c084fc;">Chamada de vídeo particular</strong> (15–20 min peladinha só pra você)<br/>
+            • Conteúdo exclusivo por 7 dias
+          </div>
+          <button id="pkgBtn3" class="pw-pkg-btn"
+            style="background:linear-gradient(135deg,#9333ea 0%,#7c3aed 55%,#5b21b6 100%);color:#fff;animation:glowPurple 1.8s ease-in-out infinite,pulse 2.4s ease-in-out infinite;">
+            Quero o VIP — WhatsApp + Chamada
+          </button>
+        </div>
 
-      <button id="goCheckoutBtn" style="
-        width:100%;padding:18px 20px;border-radius:18px;border:none;
-        background:linear-gradient(135deg,#00e676 0%,#00c853 55%,#009624 100%);
-        color:#fff;font-size:17px;font-weight:900;letter-spacing:.3px;
-        cursor:pointer;-webkit-tap-highlight-color:transparent;
-        box-shadow:0 0 28px rgba(0,230,118,.7),0 6px 22px rgba(0,200,83,.55);
-        animation:glowG 1.8s ease-in-out infinite, ctaPulse 2.6s ease-in-out infinite;
-        margin-bottom:22px;
-      ">🔥 DESBLOQUEAR ACESSO COMPLETO AGORA</button>
+        <!-- Rodapé entrega -->
+        <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:14px 16px;margin-bottom:20px;text-align:center;">
+          <div style="color:#00e676;font-size:13.5px;font-weight:700;margin-bottom:4px;">⚡ Entrega imediata após o pagamento!</div>
+          <div style="color:rgba(255,255,255,.5);font-size:12.5px;line-height:1.5;">
+            Assim que confirmar, você recebe o link do grupo ou meu WhatsApp<br/><strong style="color:rgba(255,255,255,.75);">em menos de 30 segundos.</strong> Sem espera.
+          </div>
+        </div>
 
-      <button id="paywallDismiss" style="
-        background:none;border:none;color:rgba(255,255,255,.28);
-        font-size:13px;cursor:pointer;padding:8px;
-        -webkit-tap-highlight-color:transparent;
-      ">Ver conversa</button>
-      </div><!-- /conteúdo relativo -->
+        <!-- Pagamento confirmado -->
+        <div style="text-align:center;color:rgba(255,255,255,.4);font-size:12px;margin-bottom:18px;">
+          ✅ Pagamento confirmado = Liberação imediata
+        </div>
+
+        <div style="text-align:center;">
+          <button id="paywallDismiss" style="background:none;border:none;color:rgba(255,255,255,.25);font-size:13px;cursor:pointer;padding:8px;-webkit-tap-highlight-color:transparent;">
+            Ver conversa
+          </button>
+        </div>
+
+      </div><!-- /padding wrapper -->
     </div><!-- /área com vídeo de fundo -->
   `;
 
@@ -2173,8 +2229,9 @@ function showCheckoutCta() {
   });
 
   setTimeout(() => {
-    const btn = document.getElementById("goCheckoutBtn");
-    if (btn) btn.onclick = openCheckout;
+    document.getElementById("pkgBtn1")?.addEventListener("click", () => openPkg(PKG_URL_1));
+    document.getElementById("pkgBtn2")?.addEventListener("click", () => openPkg(PKG_URL_2));
+    document.getElementById("pkgBtn3")?.addEventListener("click", () => openPkg(PKG_URL_3));
     const dismiss = document.getElementById("paywallDismiss");
     if (dismiss) dismiss.onclick = () => {
       overlay.style.opacity = "0";
