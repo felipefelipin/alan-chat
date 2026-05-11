@@ -1736,14 +1736,18 @@ async function startFunnelCall() {
   `;
   callEl.appendChild(topBar);
 
-  // ── Timer ──────────────────────────────────────────────────────────────────
+  // ── Timer — iniciado só após permissão de câmera ───────────────────────────
   let elapsed = 0;
+  let timerInterval = null;
   const timerEl = () => callEl.querySelector("#callTimer");
-  const timerInterval = setInterval(() => {
-    elapsed++;
-    const m = Math.floor(elapsed / 60), s = elapsed % 60;
-    const t = timerEl(); if (t) t.textContent = m + ":" + String(s).padStart(2,"0");
-  }, 1000);
+  const startTimer = () => {
+    if (timerInterval) return;
+    timerInterval = setInterval(() => {
+      elapsed++;
+      const m = Math.floor(elapsed / 60), s = elapsed % 60;
+      const t = timerEl(); if (t) t.textContent = m + ":" + String(s).padStart(2,"0");
+    }, 1000);
+  };
 
   // ── Barra de controles em baixo ────────────────────────────────────────────
   const bottomBar = document.createElement("div");
@@ -1808,6 +1812,7 @@ async function startFunnelCall() {
   const startMainVideo = () => {
     vid.play().catch(() => {});
     requestAnimationFrame(() => { vid.style.opacity = "1"; });
+    startTimer();
   };
   if (navigator.mediaDevices?.getUserMedia) {
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
