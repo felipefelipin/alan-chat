@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const path = require("path");
+const { queue } = require("./src/queue");
 
 const app = express();
 
@@ -37,6 +38,25 @@ app.get("/health", (req, res) => {
 app.post("/webhook", (req, res) => {
   console.log("Webhook recebido:", req.body);
   res.sendStatus(200);
+});
+
+// =======================
+// API: checkout disparado pelo Mini App
+// =======================
+app.post("/api/checkout", async (req, res) => {
+  try {
+    const { chatId } = req.body;
+    if (!chatId) return res.status(400).json({ error: "missing chatId" });
+    await queue.add(
+      "jobs",
+      { type: "SEND_PLANS", chatId: String(chatId), data: {} },
+      { removeOnComplete: true, removeOnFail: true }
+    );
+    res.json({ ok: true });
+  } catch (e) {
+    console.error("/api/checkout error:", e);
+    res.status(500).json({ error: "internal error" });
+  }
 });
 
 // =======================

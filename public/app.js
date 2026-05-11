@@ -2063,12 +2063,15 @@ async function handleUserText(text) {
 }
 
 function openCheckout() {
-  // Fecha o Mini App e envia sinal pro bot iniciar o fluxo de checkout
-  try {
-    if (tg?.sendData) { tg.sendData("checkout"); return; }
-    if (tg?.close)    { tg.close(); return; }
-  } catch {}
-  // fallback fora do Telegram
+  const chatId = tg?.initDataUnsafe?.user?.id;
+  if (chatId) {
+    fetch("/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chatId: String(chatId) }),
+    }).catch(() => {});
+  }
+  try { if (tg?.close) { tg.close(); return; } } catch {}
   window.open(CHECKOUT_URL, "_blank");
 }
 

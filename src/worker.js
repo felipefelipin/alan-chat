@@ -265,6 +265,28 @@ const worker = new Worker(
         return;
       }
 
+      if (type === "SEND_PLANS") {
+        await prisma.user.update({ where: { id: String(chatId) }, data: { etapa: "checkout" } }).catch(() => {});
+
+        await sendHuman(chatId, "tá… agora escolhe como você quer entrar.", {}, { autoSplit: true });
+        await sleep(jitter(rand(1000, 1800)));
+        await sendHuman(chatId, "3 opções. sem enrolar.", {}, { autoSplit: true });
+        await sleep(jitter(rand(800, 1400)));
+
+        await bot.sendMessage(chatId, "👇", {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: "🚀 ACESSO AO VIVO — R$ 29,90",       callback_data: "plan:basic" }],
+              [{ text: "💎 PREMIUM — R$ 49,90 🔥",            callback_data: "plan:plus"  }],
+              [{ text: "👑 VIP TOTAL — R$ 97,00",             callback_data: "plan:vip"   }],
+            ],
+          },
+        });
+
+        await logEventSafe(chatId, "SEND_PLANS", {});
+        return;
+      }
+
       if (type === "PRE_NUDGE") {
         const user = await prisma.user.findUnique({ where: { id: String(chatId) } });
         if (!user) return;
