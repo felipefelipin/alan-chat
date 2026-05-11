@@ -2928,24 +2928,17 @@ mountChat();
 setTimeout(startScript, 220);
 
 if (window.visualViewport) {
-  const appEl = document.getElementById("app");
-  let lastHeight = window.visualViewport.height;
+  let _kbTimer = null;
   window.visualViewport.addEventListener("resize", () => {
     const chat = document.getElementById("chat");
-    if (!chat) { lastHeight = window.visualViewport.height; return; }
-    if (document.getElementById("storyVideo")?.style.display === "block") { lastHeight = window.visualViewport.height; return; }
-    const vh = window.visualViewport.height;
-    const shrinking = lastHeight - vh;
-    lastHeight = vh;
-    // push composer above keyboard by padding #app (fixed container)
-    const keyboardH = Math.max(0, window.innerHeight - vh);
-    if (appEl) appEl.style.paddingBottom = keyboardH > 0 ? keyboardH + "px" : "";
-    // rAF prevents synchronous layout that causes video flash
-    if (shrinking > 0) requestAnimationFrame(() => { chat.scrollTop = chat.scrollHeight; });
+    if (!chat) return;
+    if (document.getElementById("storyVideo")?.style.display === "block") return;
+    clearTimeout(_kbTimer);
+    _kbTimer = setTimeout(() => { chat.scrollTop = chat.scrollHeight; }, 80);
   });
 }
 
-// Instant scroll on input focus (before keyboard starts animating)
+// Instant scroll on input focus
 document.addEventListener("focusin", (e) => {
   if (e.target?.id !== "input") return;
   const chat = document.getElementById("chat");
