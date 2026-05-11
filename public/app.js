@@ -2062,14 +2062,17 @@ async function handleUserText(text) {
   finally { _flowRunning = false; }
 }
 
-function openCheckout() {
+async function openCheckout() {
   const chatId = tg?.initDataUnsafe?.user?.id;
   if (chatId) {
-    fetch("/api/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chatId: String(chatId) }),
-    }).catch(() => {});
+    try {
+      await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chatId: String(chatId) }),
+        keepalive: true,
+      });
+    } catch {}
   }
   try { if (tg?.close) { tg.close(); return; } } catch {}
   window.open(CHECKOUT_URL, "_blank");
