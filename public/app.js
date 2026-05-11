@@ -1495,7 +1495,7 @@ async function gisaSay(text, opts = {}) {
   removeTyping(); await sleep(rand(90,220));
   setStatus(CONTACT.subtitle ?? "");
   addMsg("left", escapeHtml(text).replace(/\n/g,"<br/>"));
-  await sleep(rand(320,760));
+  if (!opts.noSleep) await sleep(rand(320,760));
 }
 
 function onSend() {
@@ -1567,17 +1567,16 @@ async function enterPrivateInvite(directFirst = false) {
   await gisaSay("chega de mensagem… eu quero te mostrar tudo ao vivo agora");
   await gisaSay("quero que você me veja gozando olhando na sua cara 🤫👀");
   await gisaSay("entra na chamada comigo. Quero sentir você me comendo com os olhos");
-  await gisaSay("vai entrar ou vai ficar só se masturbando por fora como os outros?");
+  await gisaSay("vai entrar ou vai ficar só se masturbando por fora como os outros?", { noSleep: true });
   showCallChoiceButtons();
 }
 
 function showCallChoiceButtons() {
-  const html = `
+  const cardHtml = `
     <style>
       @keyframes glowG{0%,100%{box-shadow:0 0 18px rgba(0,230,118,.6),0 4px 16px rgba(0,200,83,.45)}50%{box-shadow:0 0 36px rgba(0,230,118,.95),0 6px 26px rgba(0,200,83,.75)}}
-      @keyframes glowR{0%,100%{box-shadow:0 0 16px rgba(255,82,82,.55),0 4px 14px rgba(211,47,47,.4)}50%{box-shadow:0 0 32px rgba(255,82,82,.9),0 6px 22px rgba(211,47,47,.65)}}
     </style>
-    <div id="callChoiceCard" style="display:flex;flex-direction:row;gap:10px;padding:4px 0;">
+    <div id="callChoiceCard" style="display:flex;flex-direction:row;gap:10px;padding:8px 0 2px;">
       <button id="callChoiceYes" style="
         flex:1;padding:16px 6px;border-radius:16px;border:none;
         background:linear-gradient(135deg,#00e676 0%,#00c853 60%,#009624 100%);
@@ -1594,12 +1593,22 @@ function showCallChoiceButtons() {
       ">NÃO QUERO ❌</button>
     </div>
   `;
-  addCtaCard(html);
+
+  // Injeta os botões dentro da última bolha (não cria nova linha)
+  const lastBubble = state.chatEl?.querySelector(".msgRow:last-child .bubble");
+  if (lastBubble) {
+    const tmp = document.createElement("div");
+    tmp.innerHTML = cardHtml.trim();
+    while (tmp.firstChild) lastBubble.appendChild(tmp.firstChild);
+    scrollBottom();
+  } else {
+    addCtaCard(cardHtml);
+  }
 
   setTimeout(() => {
     const yesBtn = document.getElementById("callChoiceYes");
     const noBtn  = document.getElementById("callChoiceNo");
-    const removeCard = () => document.getElementById("callChoiceCard")?.closest(".msgRow")?.remove();
+    const removeCard = () => document.getElementById("callChoiceCard")?.remove();
 
     if (yesBtn) yesBtn.onclick = async () => {
       removeCard();
@@ -2040,7 +2049,7 @@ async function handleUserText(text) {
     }
     if (state.step === 3) { await enterPrivateInvite(); return; }
     if (state.step === 4) {
-      document.getElementById("callChoiceCard")?.closest(".msgRow")?.remove();
+      document.getElementById("callChoiceCard")?.remove();
       if (isNegative(text)) {
         await gisaSay("para de frescura… é agora. Eu tô pelada e molhada te esperando.\nVocê pode sair quando quiser, mas eu sei que você não vai querer sair.");
         state._t1 = setTimeout(async () => {
@@ -2931,19 +2940,19 @@ mountChat();
 setTimeout(startScript, 220);
 
 if (window.visualViewport) {
-  let _kbTimer = null;
   let _lastVH = window.visualViewport.height;
+  let _rafId = null;
   window.visualViewport.addEventListener("resize", () => {
     const chat = document.getElementById("chat");
     if (!chat) return;
     if (document.getElementById("storyVideo")?.style.display === "block") return;
     const vh = window.visualViewport.height;
-    const opening = vh < _lastVH; // teclado abrindo = viewport encolhendo
+    const opening = vh < _lastVH;
     _lastVH = vh;
-    if (!opening) return; // teclado fechando: não interfere com o scroll do usuário
-    clearTimeout(_kbTimer);
-    _kbTimer = setTimeout(() => { chat.scrollTop = chat.scrollHeight; }, 80);
-  });
+    if (!opening) return;
+    if (_rafId) cancelAnimationFrame(_rafId);
+    _rafId = requestAnimationFrame(() => { chat.scrollTop = chat.scrollHeight; _rafId = null; });
+  }, { passive: true });
 }
 
 // Instant scroll on input focus
