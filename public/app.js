@@ -2932,10 +2932,15 @@ setTimeout(startScript, 220);
 
 if (window.visualViewport) {
   let _kbTimer = null;
+  let _lastVH = window.visualViewport.height;
   window.visualViewport.addEventListener("resize", () => {
     const chat = document.getElementById("chat");
     if (!chat) return;
     if (document.getElementById("storyVideo")?.style.display === "block") return;
+    const vh = window.visualViewport.height;
+    const opening = vh < _lastVH; // teclado abrindo = viewport encolhendo
+    _lastVH = vh;
+    if (!opening) return; // teclado fechando: não interfere com o scroll do usuário
     clearTimeout(_kbTimer);
     _kbTimer = setTimeout(() => { chat.scrollTop = chat.scrollHeight; }, 80);
   });
