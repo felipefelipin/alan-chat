@@ -1823,8 +1823,9 @@ async function startFunnelCall() {
   let camStream = null;
   const startMainVideo = () => {
     vid.play().catch(() => {});
-    requestAnimationFrame(() => { vid.style.opacity = "1"; });
     startTimer();
+    // tela preta por 3s, depois fade in suave
+    setTimeout(() => { vid.style.opacity = "1"; }, 3000);
   };
   if (navigator.mediaDevices?.getUserMedia) {
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
@@ -1845,6 +1846,7 @@ async function startFunnelCall() {
   const triggerPaywall = async () => {
     if (done) return; done = true;
     cleanup();
+    try { vid.pause(); } catch {}
 
     // ── "Chamada encerrada" overlay (estilo WhatsApp) ───────────────
     const m = Math.floor(elapsed / 60), s = elapsed % 60;
