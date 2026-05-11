@@ -2205,16 +2205,17 @@ function showStories() {
   video.muted = false;
 
   Object.assign(video.style, {
-    display:    "block",
-    position:   "fixed",
-    top:        "0",
-    left:       "0",
-    width:      "100vw",
-    height:     "100dvh",
-    objectFit:  "cover",
-    zIndex:     "10",
-    transform:  "translateZ(0)",
-    willChange: "transform",
+    display:       "block",
+    position:      "fixed",
+    top:           "0",
+    left:          "0",
+    width:         "100vw",
+    height:        "100dvh",
+    objectFit:     "cover",
+    zIndex:        "10",
+    transform:     "translateZ(0)",
+    willChange:    "transform",
+    pointerEvents: "none",   // UI overlay recebe todos os toques
   });
 
   // 1) play() síncrono no gesto do usuário — desbloqueia o áudio no iOS WKWebView
@@ -2236,7 +2237,7 @@ function showStories() {
   app.innerHTML = `
     <div class="full" style="
       background:transparent;position:relative;overflow:hidden;
-      height:100dvh;
+      height:100dvh;z-index:15;
       transform-origin:${origin.x} ${origin.y};
       transform:scale(0.04);opacity:0;
       will-change:transform,opacity;
