@@ -2015,6 +2015,7 @@ function showCheckoutCta() {
       @keyframes glowG{0%,100%{box-shadow:0 0 22px rgba(0,230,118,.65),0 4px 18px rgba(0,200,83,.5)}50%{box-shadow:0 0 44px rgba(0,230,118,1),0 8px 32px rgba(0,200,83,.8)}}
       @keyframes ctaPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
       @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+      @keyframes liveGlow{0%,100%{box-shadow:0 0 8px rgba(255,59,48,.5);opacity:1}50%{box-shadow:0 0 18px rgba(255,59,48,.9),0 0 28px rgba(255,59,48,.4);opacity:.85}}
     </style>
 
     <div style="width:100%;overflow:hidden;flex-shrink:0;">
@@ -2024,12 +2025,30 @@ function showCheckoutCta() {
                object-fit:cover;object-position:top;" />
     </div>
 
-    <div style="flex:1;display:flex;flex-direction:column;align-items:center;
-                padding:26px 24px calc(env(safe-area-inset-bottom,20px) + 24px);
-                animation:fadeUp 0.5s ease 0.2s both;">
+    <!-- Área de conteúdo com vídeo de fundo -->
+    <div style="flex:1;position:relative;overflow:hidden;">
+
+      <!-- Vídeo de fundo com opacidade baixa -->
+      <video id="paywallBgVideo"
+        src="/assets/paywall-bg.mp4"
+        autoplay loop muted playsinline
+        style="
+          position:absolute;inset:0;width:100%;height:100%;
+          object-fit:cover;opacity:0.18;pointer-events:none;
+          transform:translateZ(0);
+        ">
+      </video>
+
+      <!-- Overlay escuro pra garantir legibilidade -->
+      <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,10,10,.55),rgba(10,10,10,.75));pointer-events:none;"></div>
+
+      <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;
+                  padding:26px 24px calc(env(safe-area-inset-bottom,20px) + 24px);
+                  animation:fadeUp 0.5s ease 0.2s both;">
 
       <div style="background:rgba(255,59,48,.14);border:1px solid rgba(255,59,48,.32);
-                  border-radius:20px;padding:5px 16px;margin-bottom:22px;">
+                  border-radius:20px;padding:5px 16px;margin-bottom:22px;
+                  animation:liveGlow 1.4s ease-in-out infinite;">
         <span style="color:#ff6b6b;font-size:12.5px;font-weight:700;letter-spacing:.5px;">
           🔴 AO VIVO AGORA
         </span>
@@ -2060,11 +2079,16 @@ function showCheckoutCta() {
         font-size:13px;cursor:pointer;padding:8px;
         -webkit-tap-highlight-color:transparent;
       ">Ver conversa</button>
-    </div>
+      </div><!-- /conteúdo relativo -->
+    </div><!-- /área com vídeo de fundo -->
   `;
 
   document.body.appendChild(overlay);
-  requestAnimationFrame(() => { overlay.style.opacity = "1"; });
+  requestAnimationFrame(() => {
+    overlay.style.opacity = "1";
+    const bgVid = document.getElementById("paywallBgVideo");
+    if (bgVid) bgVid.play().catch(() => {});
+  });
 
   setTimeout(() => {
     const btn = document.getElementById("goCheckoutBtn");
