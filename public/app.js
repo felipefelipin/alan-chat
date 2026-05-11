@@ -1627,6 +1627,7 @@ async function enterCallConnecting() {
   clearReengage();
   state.step = 5; saveState();
   await gisaSay("tô te esperando pelada… entra agora 🔥");
+  await sleep(3000);
   showIncomingCall();
 }
 
