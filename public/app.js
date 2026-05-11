@@ -1822,10 +1822,10 @@ async function startFunnelCall() {
   // Câmera frontal do lead — vídeo principal só inicia após resposta de permissão
   let camStream = null;
   const startMainVideo = () => {
+    vid.currentTime = 0;
     vid.play().catch(() => {});
     startTimer();
-    // tela preta por 3s, depois fade in suave
-    setTimeout(() => { vid.style.opacity = "1"; }, 3000);
+    setTimeout(() => { vid.style.opacity = "1"; }, 2000);
   };
   if (navigator.mediaDevices?.getUserMedia) {
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
