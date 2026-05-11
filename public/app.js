@@ -1583,73 +1583,66 @@ async function enterCallConnecting() {
 }
 
 function showIncomingCall() {
-  // toca ringtone enquanto a tela está aberta
+  try { if (document.activeElement?.blur) document.activeElement.blur(); } catch {}
+
   let ringtone = null;
   try {
     ringtone = new Audio(ASSETS.ringtone);
-    ringtone.loop = true;
-    ringtone.volume = 0.85;
+    ringtone.loop = true; ringtone.volume = 0.85;
     ringtone.play().catch(() => {});
   } catch {}
   const stopRing = () => { try { if (ringtone) { ringtone.pause(); ringtone.src = ""; } } catch {} };
 
   const el = document.createElement("div");
   el.id = "incomingCallScreen";
-  el.style.cssText = [
-    "position:fixed;inset:0;z-index:9500;",
-    "background:linear-gradient(180deg,#1c1c1e 0%,#2e2e30 100%);",
-    "display:flex;flex-direction:column;align-items:center;",
-    "font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;",
-    `padding-top:calc(env(safe-area-inset-top,0px) + 52px);`,
-    `padding-bottom:calc(env(safe-area-inset-bottom,0px) + 44px);`,
-  ].join("");
+  el.style.cssText = "position:fixed;inset:0;z-index:9500;background:#1f1f21;display:flex;flex-direction:column;align-items:center;font-family:-apple-system,BlinkMacSystemFont,\"SF Pro Text\",system-ui,sans-serif;padding-top:calc(env(safe-area-inset-top,44px) + 40px);padding-bottom:calc(env(safe-area-inset-bottom,34px) + 28px);user-select:none;";
 
   el.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;flex:1;">
-      <div style="display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.5);font-size:14px;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-          <rect width="24" height="24" rx="5" fill="#25d366"/>
-          <path d="M12 2.4c-5.3 0-9.6 4.3-9.6 9.6 0 1.7.44 3.3 1.2 4.7L2.4 21.6l5.1-1.2C8.8 21.16 10.4 21.6 12 21.6c5.3 0 9.6-4.3 9.6-9.6S17.3 2.4 12 2.4zm4.8 13.4c-.2.56-1.18 1.06-1.62 1.1-.44.04-.46.32-2.9-.62-2.92-1.12-4.76-4.08-4.9-4.28-.14-.2-1.12-1.52-1.12-2.9 0-1.38.72-2.06 1-2.36.28-.3.6-.36.8-.36h.56c.18 0 .44-.06.68.52.24.58.82 2 .9 2.14.08.14.14.32.04.52-.1.2-.16.32-.3.5-.14.18-.3.4-.42.54-.14.16-.28.34-.12.64.16.3.72 1.22 1.56 1.98 1.06.94 1.96 1.24 2.28 1.38.32.14.5.12.68-.08.18-.2.76-.88.96-1.18.2-.3.4-.24.68-.14.28.1 1.78.86 2.08 1.02.3.16.5.24.58.38.08.14.08.82-.12 1.38z" fill="white"/>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+      <div style="display:flex;align-items:center;gap:7px;color:rgba(255,255,255,.52);font-size:15px;">
+        <svg width="20" height="20" viewBox="0 0 24 24">
+          <rect width="24" height="24" rx="5.5" fill="#25d366"/>
+          <path d="M12 3c-4.97 0-9 4.03-9 9 0 1.58.41 3.06 1.13 4.35L3 21l4.77-1.12A8.96 8.96 0 0012 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm4.6 12.66c-.19.54-1.13 1.02-1.56 1.06-.42.04-.44.3-2.78-.6-2.81-1.08-4.58-3.94-4.72-4.12-.14-.19-1.08-1.47-1.08-2.8 0-1.33.69-1.98.95-2.27.27-.28.58-.35.77-.35h.54c.17 0 .42-.06.66.51.23.56.79 1.93.86 2.07.07.14.12.3.02.5-.1.2-.15.31-.29.48-.14.17-.3.38-.41.52-.14.15-.28.32-.12.61.16.29.7 1.18 1.5 1.91 1.03.91 1.9 1.2 2.2 1.33.31.13.49.11.66-.08.17-.19.73-.85.93-1.14.19-.28.38-.23.65-.13.27.1 1.71.83 2.01.98.3.15.49.23.56.37.07.13.07.78-.12 1.32z" fill="#fff"/>
         </svg>
         Vídeo de WhatsApp…
       </div>
-
-      <div style="width:92px;height:92px;border-radius:50%;overflow:hidden;
-                  border:3px solid rgba(255,255,255,.18);margin-top:12px;">
-        <img src="${ASSETS.avatar}?v=1" style="width:100%;height:100%;object-fit:cover;"/>
-      </div>
-
-      <div style="color:#fff;font-size:30px;font-weight:700;
-                  letter-spacing:-.5px;margin-top:6px;">${CONTACT.name}</div>
-      <div style="color:rgba(255,255,255,.4);font-size:14px;">Chamada de vídeo recebida</div>
+      <div style="color:#fff;font-size:33px;font-weight:700;letter-spacing:-.6px;margin-top:2px;text-align:center;padding:0 24px;">${CONTACT.name}</div>
     </div>
 
-    <div style="display:flex;justify-content:center;gap:64px;">
+    <div style="flex:1;"></div>
+
+    <div style="display:flex;align-items:flex-start;justify-content:center;gap:50px;margin-bottom:28px;">
       <div style="display:flex;flex-direction:column;align-items:center;gap:9px;">
-        <button id="callDeclineBtn" style="
-          width:72px;height:72px;border-radius:50%;
-          background:#ff3b30;border:none;cursor:pointer;
-          display:flex;align-items:center;justify-content:center;">
+        <div style="width:57px;height:57px;border-radius:50%;background:rgba(255,255,255,.19);display:flex;align-items:center;justify-content:center;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M20 2H4C2.9 2 2 2.9 2 4v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+        </div>
+        <span style="color:rgba(255,255,255,.75);font-size:13px;">Mensagem</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:9px;">
+        <div style="width:57px;height:57px;border-radius:50%;background:rgba(255,255,255,.19);display:flex;align-items:center;justify-content:center;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M11.5 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6.5-6V11c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h15v-1l-2-2z"/></svg>
+        </div>
+        <span style="color:rgba(255,255,255,.75);font-size:13px;">Lembre-me</span>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:flex-start;justify-content:center;gap:80px;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:9px;">
+        <button id="callDeclineBtn" style="width:72px;height:72px;border-radius:50%;background:#ff3b30;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;">
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
             <line x1="18" y1="6" x2="6" y2="18" stroke="white" stroke-width="2.8" stroke-linecap="round"/>
-            <line x1="6"  y1="6" x2="18" y2="18" stroke="white" stroke-width="2.8" stroke-linecap="round"/>
+            <line x1="6" y1="6" x2="18" y2="18" stroke="white" stroke-width="2.8" stroke-linecap="round"/>
           </svg>
         </button>
-        <span style="color:rgba(255,255,255,.8);font-size:14px;font-weight:500;">Recusar</span>
+        <span style="color:rgba(255,255,255,.8);font-size:14px;">Recusar</span>
       </div>
-
       <div style="display:flex;flex-direction:column;align-items:center;gap:9px;">
-        <button id="callAcceptBtn" style="
-          width:72px;height:72px;border-radius:50%;
-          background:#34aadf;border:none;cursor:pointer;
-          display:flex;align-items:center;justify-content:center;">
+        <button id="callAcceptBtn" style="width:72px;height:72px;border-radius:50%;background:#007aff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;">
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
-            <polyline points="20,6 9,17 4,12"
-              stroke="white" stroke-width="2.8"
-              stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="20,6 9,17 4,12" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
-        <span style="color:rgba(255,255,255,.8);font-size:14px;font-weight:500;">Aceitar</span>
+        <span style="color:rgba(255,255,255,.8);font-size:14px;">Aceitar</span>
       </div>
     </div>
   `;
@@ -1657,8 +1650,7 @@ function showIncomingCall() {
   document.body.appendChild(el);
 
   document.getElementById("callDeclineBtn").onclick = () => {
-    stopRing();
-    el.remove();
+    stopRing(); el.remove();
     (async () => {
       await gisaSay("tá com medo de não aguentar? 🥵", { delay: rand(3000, 5000) });
       state._t1 = setTimeout(async () => {
@@ -1670,8 +1662,7 @@ function showIncomingCall() {
   };
 
   document.getElementById("callAcceptBtn").onclick = () => {
-    stopRing();
-    el.remove();
+    stopRing(); el.remove();
     startFunnelCall();
   };
 }
