@@ -1854,13 +1854,16 @@ function exitStories(fromSwipe = false, swipeScreen = null) {
 
 // ─── showStories ─────────────────────────────────────────────────────────────
 function showStories() {
-  console.log("📸 Stories aberto");
+  // Fecha teclado antes de abrir o story para não sobrepor
+  const activeEl = document.activeElement;
+  if (activeEl && typeof activeEl.blur === "function") activeEl.blur();
 
   _storyExiting      = false;
   window.storyViewed = false;
 
   const video = document.getElementById("storyVideo");
 
+  // Usa a altura real da tela (sem teclado), capturada no load
   if (!window.__storyHeight) window.__storyHeight = window.innerHeight;
   const realHeight = window.__storyHeight;
 
@@ -1905,9 +1908,9 @@ function showStories() {
       <!-- header -->
       <div style="position:absolute;top:8px;left:14px;right:14px;
                   display:flex;align-items:center;z-index:30;">
-        <button onclick="exitStories()" style="
+        <button style="
           background:none;border:0;color:#fff;font-size:34px;
-          margin-right:10px;padding:0;line-height:1;cursor:pointer;">‹</button>
+          margin-right:10px;padding:0;line-height:1;cursor:default;pointer-events:none;">‹</button>
         <div style="width:32px;height:32px;margin-right:10px;border-radius:50%;
                     overflow:hidden;flex-shrink:0;">
           <img src="${ASSETS.avatar}?v=1"
