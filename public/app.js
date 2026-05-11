@@ -60,7 +60,7 @@ const CONTACT = {
 };
 
 const PERSIST_KEY = "gisa_webapp_state_v7";
-const CHECKOUT_URL = "https://t.me/alanalemesoficial_bot";
+const CHECKOUT_URL = "https://t.me/alanalemesoficial_bot"; // fallback sem Telegram WebApp
 
 function safeJsonParse(s) {
   try { return JSON.parse(s); } catch { return null; }
@@ -2063,8 +2063,13 @@ async function handleUserText(text) {
 }
 
 function openCheckout() {
-  try { if (tg?.openLink) tg.openLink(CHECKOUT_URL); else window.location.href = CHECKOUT_URL; }
-  catch { window.location.href = CHECKOUT_URL; }
+  // Fecha o Mini App e envia sinal pro bot iniciar o fluxo de checkout
+  try {
+    if (tg?.sendData) { tg.sendData("checkout"); return; }
+    if (tg?.close)    { tg.close(); return; }
+  } catch {}
+  // fallback fora do Telegram
+  window.open(CHECKOUT_URL, "_blank");
 }
 
 let _paywallOverlay = null;
