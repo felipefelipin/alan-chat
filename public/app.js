@@ -1958,42 +1958,90 @@ function openCheckout() {
 }
 
 function showCheckoutCta() {
-  const html = `
+  lockChat();
+
+  const overlay = document.createElement("div");
+  overlay.id = "paywallOverlay";
+  overlay.style.cssText = `
+    position:fixed;inset:0;z-index:9800;background:#0a0a0a;
+    display:flex;flex-direction:column;align-items:stretch;
+    opacity:0;transition:opacity 0.4s ease;overflow-y:auto;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+  `;
+
+  overlay.innerHTML = `
     <style>
-      @keyframes glowG{0%,100%{box-shadow:0 0 18px rgba(0,230,118,.6),0 4px 16px rgba(0,200,83,.45)}50%{box-shadow:0 0 36px rgba(0,230,118,.95),0 6px 26px rgba(0,200,83,.75)}}
-      @keyframes ctaPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
+      @keyframes glowG{0%,100%{box-shadow:0 0 22px rgba(0,230,118,.65),0 4px 18px rgba(0,200,83,.5)}50%{box-shadow:0 0 44px rgba(0,230,118,1),0 8px 32px rgba(0,200,83,.8)}}
+      @keyframes ctaPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
+      @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
     </style>
-    <div style="overflow:hidden;border-radius:14px;margin:-8px -8px 0;background:#111;">
-      <img src="/assets/cta-thumb.jpg" style="width:100%;display:block;max-height:220px;object-fit:cover;object-position:top;" />
+
+    <div style="width:100%;overflow:hidden;flex-shrink:0;">
+      <img src="/assets/cta-thumb.jpg"
+        style="width:100%;display:block;
+               height:52vw;max-height:290px;min-height:190px;
+               object-fit:cover;object-position:top;" />
     </div>
-    <div style="padding:14px 2px 4px;text-align:center;">
-      <div style="font-size:15.5px;line-height:1.55;margin-bottom:14px;color:#fff;font-weight:500;">Desbloqueia e volta imediatamente pra chamada.<br/>Eu tô te esperando pelada e safada.</div>
+
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;
+                padding:26px 24px calc(env(safe-area-inset-bottom,20px) + 24px);
+                animation:fadeUp 0.5s ease 0.2s both;">
+
+      <div style="background:rgba(255,59,48,.14);border:1px solid rgba(255,59,48,.32);
+                  border-radius:20px;padding:5px 16px;margin-bottom:22px;">
+        <span style="color:#ff6b6b;font-size:12.5px;font-weight:700;letter-spacing:.5px;">
+          🔴 AO VIVO AGORA
+        </span>
+      </div>
+
+      <div style="color:#fff;font-size:22px;font-weight:800;text-align:center;
+                  line-height:1.3;letter-spacing:-.3px;margin-bottom:10px;">
+        Desbloqueia e volta<br/>imediatamente pra chamada
+      </div>
+
+      <div style="color:rgba(255,255,255,.58);font-size:15px;text-align:center;
+                  line-height:1.55;margin-bottom:32px;">
+        Eu tô te esperando pelada e safada.
+      </div>
+
       <button id="goCheckoutBtn" style="
+        width:100%;padding:18px 20px;border-radius:18px;border:none;
         background:linear-gradient(135deg,#00e676 0%,#00c853 55%,#009624 100%);
-        color:#fff;font-size:16px;font-weight:900;letter-spacing:.35px;
-        padding:16px 20px;border-radius:16px;width:100%;border:none;
+        color:#fff;font-size:17px;font-weight:900;letter-spacing:.3px;
         cursor:pointer;-webkit-tap-highlight-color:transparent;
         box-shadow:0 0 28px rgba(0,230,118,.7),0 6px 22px rgba(0,200,83,.55);
         animation:glowG 1.8s ease-in-out infinite, ctaPulse 2.6s ease-in-out infinite;
+        margin-bottom:22px;
       ">🔥 DESBLOQUEAR ACESSO COMPLETO AGORA</button>
+
+      <button id="paywallDismiss" style="
+        background:none;border:none;color:rgba(255,255,255,.28);
+        font-size:13px;cursor:pointer;padding:8px;
+        -webkit-tap-highlight-color:transparent;
+      ">Ver conversa</button>
     </div>
   `;
-  addCtaCard(html);
+
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => { overlay.style.opacity = "1"; });
+
   setTimeout(() => {
     const btn = document.getElementById("goCheckoutBtn");
     if (btn) btn.onclick = openCheckout;
+    const dismiss = document.getElementById("paywallDismiss");
+    if (dismiss) dismiss.onclick = () => overlay.remove();
   }, 0);
+
   setTimeout(async () => {
-    if (!document.getElementById("goCheckoutBtn")) return;
-    lockChat();
+    if (state.step < 6) return;
     await gisaSay("vai perder a chance de me ver gozando de verdade? Os outros não estão perdendo…");
   }, 15000);
   setTimeout(async () => {
-    if (!document.getElementById("goCheckoutBtn")) return;
+    if (state.step < 6) return;
     await gisaSay("sumiu justo agora que eu tô pelada pra você? 😈");
   }, rand(2 * 60 * 1000, 5 * 60 * 1000));
   setTimeout(async () => {
-    if (!document.getElementById("goCheckoutBtn")) return;
+    if (state.step < 6) return;
     await gisaSay("típico… fica só na vontade mesmo. Os machos de verdade já estão comigo agora.");
   }, rand(10 * 60 * 1000, 20 * 60 * 1000));
 }
