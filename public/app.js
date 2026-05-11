@@ -2134,9 +2134,6 @@ function showStories() {
 
   const video = document.getElementById("storyVideo");
 
-  // Reseta sem reatribuir src nem chamar load() — manter gesto do usuário na call stack
-  // para o iOS liberar o áudio. Reatribuir src + load() aborta o play() e quebra o contexto.
-  video.currentTime = 0;
   video.muted = false;
 
   Object.assign(video.style, {
@@ -2147,13 +2144,24 @@ function showStories() {
     width:      "100vw",
     height:     "100dvh",
     objectFit:  "cover",
-    zIndex:     "0",
+    zIndex:     "10",
     transform:  "translateZ(0)",
     willChange: "transform",
   });
 
-  // play() síncrono dentro do gesto — única forma de desbloquear áudio no iOS WKWebView
+  // 1) play() síncrono no gesto do usuário — desbloqueia o áudio no iOS WKWebView
+  //    (pode falhar se o vídeo já terminou, mas o desbloqueio já acontece)
   video.play().catch(() => {});
+
+  // 2) Recarrega o vídeo do início; oncanplay dispara quando pronto e toca com áudio
+  //    já desbloqueado pelo play() acima
+  video.oncanplay = null;
+  video.src = "/assets/story-video.mp4";
+  video.load();
+  video.oncanplay = () => {
+    video.oncanplay = null;
+    video.play().catch(() => {});
+  };
 
   const origin = getAvatarOrigin();
 
