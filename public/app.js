@@ -1836,7 +1836,30 @@ async function startFunnelCall() {
   const triggerPaywall = async () => {
     if (done) return; done = true;
     cleanup();
+
+    // ── "Chamada encerrada" overlay (estilo WhatsApp) ───────────────
+    const m = Math.floor(elapsed / 60), s = elapsed % 60;
+    const durStr = m + ":" + String(s).padStart(2, "0");
+    const endOverlay = document.createElement("div");
+    endOverlay.style.cssText = "position:absolute;inset:0;z-index:50;background:rgba(0,0,0,0.55);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;opacity:0;transition:opacity 0.25s ease;pointer-events:none;";
+    endOverlay.innerHTML = `
+      <div style="color:#fff;font-size:17px;font-weight:600;letter-spacing:-.2px;">Chamada encerrada</div>
+      <div style="color:rgba(255,255,255,.6);font-size:13px;">${durStr}</div>
+    `;
+    callEl.appendChild(endOverlay);
+    requestAnimationFrame(() => { endOverlay.style.opacity = "1"; });
+
+    await sleep(2000);
+
+    // fade out e remove tela de chamada
+    callEl.style.transition = "opacity 0.35s ease";
+    callEl.style.opacity = "0";
+    await sleep(380);
     callEl.remove();
+
+    // bubble WhatsApp de ligação de vídeo no chat
+    addCallNotifBubble(elapsed);
+
     state.step = 6; saveState();
     await doCallPaywall();
   };
@@ -1894,7 +1917,27 @@ async function startFunnelCall() {
   setTimeout(triggerPaywall, 90000);
 }
 
+function addCallNotifBubble(seconds) {
+  const m = Math.floor(seconds / 60), s = seconds % 60;
+  const dur = m + ":" + String(s).padStart(2, "0");
+  const html = `
+    <div style="display:flex;align-items:center;gap:10px;padding:2px 0;">
+      <div style="width:38px;height:38px;border-radius:50%;background:rgba(37,211,102,0.18);flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#25d366">
+          <path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z"/>
+        </svg>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px;min-width:0;">
+        <span style="color:#fff;font-size:14.5px;font-weight:600;line-height:1.2;">Ligação de vídeo</span>
+        <span style="color:rgba(255,255,255,.5);font-size:12px;">${dur}</span>
+      </div>
+    </div>
+  `;
+  addMsg("left", html);
+}
+
 async function doCallPaywall() {
+  await sleep(2000);
   await gisaSay("mais pera... 😅");
   await sleep(rand(1200, 2000));
   await gisaSay("não dá pra continuar assim não");
@@ -2906,8 +2949,8 @@ if (window.visualViewport) {
     // push composer above keyboard by padding #app (fixed container)
     const keyboardH = Math.max(0, window.innerHeight - vh);
     if (appEl) appEl.style.paddingBottom = keyboardH > 0 ? keyboardH + "px" : "";
-    // keep scroll glued to bottom every frame of keyboard animation
-    if (shrinking > 0) chat.scrollTop = chat.scrollHeight;
+    // rAF prevents synchronous layout that causes video flash
+    if (shrinking > 0) requestAnimationFrame(() => { chat.scrollTop = chat.scrollHeight; });
   });
 }
 

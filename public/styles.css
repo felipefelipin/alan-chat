@@ -489,6 +489,9 @@ body{
   aspect-ratio:9/16;
   background:#0d0d0d;
   overflow:hidden;
+  transform:translateZ(0);
+  -webkit-transform:translateZ(0);
+  will-change:transform;
 }
 .videoCardThumb video{
   width:100%;
