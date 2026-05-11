@@ -1556,7 +1556,7 @@ async function enterDesireEscalation() {
   clearReengage();
   state.step = 3; saveState();
   await sleep(rand(4000, 5000));
-  await gisaSay("tô me sentindo uma puta safada hoje…", { delay: rand(5000, 7000) });
+  await gisaSay("tô me sentindo uma puta safada hoje... 👀", { delay: rand(5000, 7000) });
   await gisaAutoPlayVideo(ASSETS.teaseVideo3);
   await enterPrivateInvite(true);
 }
@@ -1579,18 +1579,18 @@ function showCallChoiceButtons() {
     </style>
     <div id="callChoiceCard" style="display:flex;flex-direction:row;gap:10px;padding:4px 0;">
       <button id="callChoiceYes" style="
-        flex:1;padding:16px 10px;border-radius:16px;border:none;
+        flex:1;padding:16px 6px;border-radius:16px;border:none;
         background:linear-gradient(135deg,#00e676 0%,#00c853 60%,#009624 100%);
-        color:#fff;font-size:15px;font-weight:900;letter-spacing:.3px;
-        cursor:pointer;-webkit-tap-highlight-color:transparent;
+        color:#fff;font-size:14px;font-weight:900;letter-spacing:.2px;
+        cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;
         box-shadow:0 0 22px rgba(0,230,118,.65),0 4px 18px rgba(0,200,83,.5);
         animation:glowG 1.8s ease-in-out infinite;
       ">EU QUERO ✅</button>
       <button id="callChoiceNo" style="
-        flex:1;padding:16px 10px;border-radius:16px;border:none;
+        flex:1;padding:16px 6px;border-radius:16px;border:none;
         background:linear-gradient(135deg,#ff5252 0%,#e53935 60%,#b71c1c 100%);
-        color:#fff;font-size:15px;font-weight:700;letter-spacing:.3px;
-        cursor:pointer;-webkit-tap-highlight-color:transparent;
+        color:#fff;font-size:14px;font-weight:700;letter-spacing:.2px;
+        cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;
       ">NÃO QUERO ❌</button>
     </div>
   `;
@@ -1993,7 +1993,11 @@ let _paywallOverlay = null;
 function reopenPaywall() {
   if (!_paywallOverlay) return;
   document.body.appendChild(_paywallOverlay);
-  requestAnimationFrame(() => { _paywallOverlay.style.opacity = "1"; });
+  requestAnimationFrame(() => {
+    _paywallOverlay.style.opacity = "1";
+    const vid = document.getElementById("paywallBgVideo");
+    if (vid) vid.play().catch(() => {});
+  });
 }
 
 function showCheckoutCta() {
@@ -2858,6 +2862,7 @@ if (state.flags.entered) {
 }
 
 if (window.visualViewport) {
+  const appEl = document.getElementById("app");
   let lastHeight = window.visualViewport.height;
   window.visualViewport.addEventListener("resize", () => {
     const chat = document.getElementById("chat");
@@ -2866,7 +2871,10 @@ if (window.visualViewport) {
     const vh = window.visualViewport.height;
     const shrinking = lastHeight - vh;
     lastHeight = vh;
-    // fires every frame of keyboard animation — keeps scroll glued to bottom
+    // push composer above keyboard by padding #app (fixed container)
+    const keyboardH = Math.max(0, window.innerHeight - vh);
+    if (appEl) appEl.style.paddingBottom = keyboardH > 0 ? keyboardH + "px" : "";
+    // keep scroll glued to bottom every frame of keyboard animation
     if (shrinking > 0) chat.scrollTop = chat.scrollHeight;
   });
 }
