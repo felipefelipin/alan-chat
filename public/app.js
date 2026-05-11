@@ -1412,13 +1412,15 @@ async function gisaAutoPlayVideo(src) {
       if (vid) { vid.pause(); vid.src = ""; vid.load(); }
       const bubble = row.querySelector(".bubble");
       if (bubble) {
-        bubble.style.transition = "opacity 0.15s ease";
-        bubble.style.opacity = "0";
-        await sleep(160);
-        bubble.innerHTML = `<span class="deleted-msg"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>Esta mensagem foi apagada</span>`;
+        // instant content swap, then fade-in only — zero lag before text appears
         bubble.classList.add("bubble-deleted");
-        bubble.style.transition = "opacity 0.2s ease";
-        bubble.style.opacity = "1";
+        bubble.innerHTML = `<span class="deleted-msg"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>Esta mensagem foi apagada</span>`;
+        bubble.style.opacity = "0";
+        bubble.style.transition = "";
+        requestAnimationFrame(() => {
+          bubble.style.transition = "opacity 0.3s ease";
+          bubble.style.opacity = "1";
+        });
       }
     }
   } catch(e) {
@@ -1557,16 +1559,7 @@ async function enterDesireEscalation() {
 async function enterPrivateInvite(directFirst = false) {
   clearReengage();
   state.step = 4; saveState();
-  if (directFirst) {
-    removeTyping();
-    setStatus("");
-    scrollToBottom();
-    await sleep(120);
-    addMsg("left", escapeHtml("chega de mensagem… eu quero te mostrar tudo ao vivo agora"));
-    await sleep(rand(500, 900));
-  } else {
-    await gisaSay("chega de mensagem… eu quero te mostrar tudo ao vivo agora");
-  }
+  await gisaSay("chega de mensagem… eu quero te mostrar tudo ao vivo agora");
   await gisaSay("quero que você me veja gozando olhando na sua cara");
   await gisaSay("entra na chamada comigo. Quero sentir você me comendo com os olhos");
   await gisaSay("vai entrar ou vai ficar só se masturbando por fora como os outros?");
