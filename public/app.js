@@ -2890,12 +2890,8 @@ state.step           = 0;
 state.flags.startedChat = false;
 state.flags.routing     = false;
 
-if (state.flags.entered) {
-  mountChat();
-  setTimeout(startScript, 220);
-} else {
-  mountPremiumIntro();
-}
+mountChat();
+setTimeout(startScript, 220);
 
 if (window.visualViewport) {
   const appEl = document.getElementById("app");
