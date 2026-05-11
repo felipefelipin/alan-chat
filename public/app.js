@@ -1579,36 +1579,155 @@ async function enterCallConnecting() {
   clearReengage();
   state.step = 5; saveState();
   await gisaSay("tô te esperando pelada… entra agora 🔥");
-  const connectEl = document.createElement("div");
-  connectEl.id = "connectingScreen";
-  connectEl.style.cssText = "position:fixed;inset:0;background:#111;z-index:8999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;";
-  connectEl.innerHTML = `
-    <div style="color:#fff;font-size:20px;font-weight:600;text-align:center;">Conectando com ela ao vivo…</div>
-    <div style="color:rgba(255,255,255,0.5);font-size:14px;">aguarde</div>
+  showIncomingCall();
+}
+
+function showIncomingCall() {
+  // toca ringtone enquanto a tela está aberta
+  let ringtone = null;
+  try {
+    ringtone = new Audio(ASSETS.ringtone);
+    ringtone.loop = true;
+    ringtone.volume = 0.85;
+    ringtone.play().catch(() => {});
+  } catch {}
+  const stopRing = () => { try { if (ringtone) { ringtone.pause(); ringtone.src = ""; } } catch {} };
+
+  const el = document.createElement("div");
+  el.id = "incomingCallScreen";
+  el.style.cssText = [
+    "position:fixed;inset:0;z-index:9500;",
+    "background:linear-gradient(180deg,#1c1c1e 0%,#2e2e30 100%);",
+    "display:flex;flex-direction:column;align-items:center;",
+    "font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;",
+    `padding-top:calc(env(safe-area-inset-top,0px) + 52px);`,
+    `padding-bottom:calc(env(safe-area-inset-bottom,0px) + 44px);`,
+  ].join("");
+
+  el.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;flex:1;">
+      <div style="display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.5);font-size:14px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <rect width="24" height="24" rx="5" fill="#25d366"/>
+          <path d="M12 2.4c-5.3 0-9.6 4.3-9.6 9.6 0 1.7.44 3.3 1.2 4.7L2.4 21.6l5.1-1.2C8.8 21.16 10.4 21.6 12 21.6c5.3 0 9.6-4.3 9.6-9.6S17.3 2.4 12 2.4zm4.8 13.4c-.2.56-1.18 1.06-1.62 1.1-.44.04-.46.32-2.9-.62-2.92-1.12-4.76-4.08-4.9-4.28-.14-.2-1.12-1.52-1.12-2.9 0-1.38.72-2.06 1-2.36.28-.3.6-.36.8-.36h.56c.18 0 .44-.06.68.52.24.58.82 2 .9 2.14.08.14.14.32.04.52-.1.2-.16.32-.3.5-.14.18-.3.4-.42.54-.14.16-.28.34-.12.64.16.3.72 1.22 1.56 1.98 1.06.94 1.96 1.24 2.28 1.38.32.14.5.12.68-.08.18-.2.76-.88.96-1.18.2-.3.4-.24.68-.14.28.1 1.78.86 2.08 1.02.3.16.5.24.58.38.08.14.08.82-.12 1.38z" fill="white"/>
+        </svg>
+        Vídeo de WhatsApp…
+      </div>
+
+      <div style="width:92px;height:92px;border-radius:50%;overflow:hidden;
+                  border:3px solid rgba(255,255,255,.18);margin-top:12px;">
+        <img src="${ASSETS.avatar}?v=1" style="width:100%;height:100%;object-fit:cover;"/>
+      </div>
+
+      <div style="color:#fff;font-size:30px;font-weight:700;
+                  letter-spacing:-.5px;margin-top:6px;">${CONTACT.name}</div>
+      <div style="color:rgba(255,255,255,.4);font-size:14px;">Chamada de vídeo recebida</div>
+    </div>
+
+    <div style="display:flex;justify-content:center;gap:64px;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:9px;">
+        <button id="callDeclineBtn" style="
+          width:72px;height:72px;border-radius:50%;
+          background:#ff3b30;border:none;cursor:pointer;
+          display:flex;align-items:center;justify-content:center;">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+            <line x1="18" y1="6" x2="6" y2="18" stroke="white" stroke-width="2.8" stroke-linecap="round"/>
+            <line x1="6"  y1="6" x2="18" y2="18" stroke="white" stroke-width="2.8" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <span style="color:rgba(255,255,255,.8);font-size:14px;font-weight:500;">Recusar</span>
+      </div>
+
+      <div style="display:flex;flex-direction:column;align-items:center;gap:9px;">
+        <button id="callAcceptBtn" style="
+          width:72px;height:72px;border-radius:50%;
+          background:#34aadf;border:none;cursor:pointer;
+          display:flex;align-items:center;justify-content:center;">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+            <polyline points="20,6 9,17 4,12"
+              stroke="white" stroke-width="2.8"
+              stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <span style="color:rgba(255,255,255,.8);font-size:14px;font-weight:500;">Aceitar</span>
+      </div>
+    </div>
   `;
-  document.body.appendChild(connectEl);
-  await sleep(2500);
-  connectEl.remove();
-  startFunnelCall();
+
+  document.body.appendChild(el);
+
+  document.getElementById("callDeclineBtn").onclick = () => {
+    stopRing();
+    el.remove();
+    (async () => {
+      await gisaSay("tá com medo de não aguentar? 🥵", { delay: rand(3000, 5000) });
+      state._t1 = setTimeout(async () => {
+        await gisaSay("vou te chamar de novo. Prepara.");
+        await sleep(800);
+        await enterCallConnecting();
+      }, 30 * 1000);
+    })();
+  };
+
+  document.getElementById("callAcceptBtn").onclick = () => {
+    stopRing();
+    el.remove();
+    startFunnelCall();
+  };
 }
 
 async function startFunnelCall() {
   state.step = 5; saveState();
+
   const callEl = document.createElement("div");
   callEl.id = "funnelCallScreen";
-  callEl.style.cssText = "position:fixed;inset:0;z-index:9000;background:#000;";
+  callEl.style.cssText = "position:fixed;inset:0;z-index:9000;background:#000;overflow:hidden;";
+
+  // Vídeo principal (dela)
   const vid = document.createElement("video");
   vid.src = ASSETS.callVideo + `?v=${Date.now()}`;
   vid.autoplay = true;
   vid.playsinline = true;
   vid.setAttribute("playsinline", "");
-  vid.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;";
+  vid.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;";
   callEl.appendChild(vid);
+
+  // PiP — câmera do usuário (canto inferior direito, igual WhatsApp)
+  const pip = document.createElement("video");
+  pip.autoplay = true;
+  pip.muted = true;
+  pip.playsinline = true;
+  pip.setAttribute("playsinline", "");
+  pip.style.cssText = [
+    "position:absolute;",
+    "bottom:calc(env(safe-area-inset-bottom,0px) + 90px);",
+    "right:14px;",
+    "width:90px;height:130px;",
+    "border-radius:14px;",
+    "object-fit:cover;",
+    "border:2px solid rgba(255,255,255,.22);",
+    "background:#1a1a1a;",
+    "transform:scaleX(-1);",   // espelha câmera frontal
+    "z-index:10;",
+  ].join("");
+  callEl.appendChild(pip);
+
+  // Solicita câmera frontal; esconde PiP se negado
+  let camStream = null;
+  navigator.mediaDevices?.getUserMedia({ video: { facingMode: "user" }, audio: false })
+    .then(s => { camStream = s; pip.srcObject = s; })
+    .catch(() => { pip.style.display = "none"; });
+
   document.body.appendChild(callEl);
+
+  const cleanup = () => {
+    try { if (camStream) camStream.getTracks().forEach(t => t.stop()); } catch {}
+  };
 
   let done = false;
   const triggerPaywall = async () => {
     if (done) return; done = true;
+    cleanup();
     callEl.remove();
     state.step = 6; saveState();
     await doCallPaywall();
@@ -1617,9 +1736,8 @@ async function startFunnelCall() {
   setTimeout(() => {
     if (done) return;
     const msgEl = document.createElement("div");
-    msgEl.style.cssText = "position:absolute;bottom:80px;left:16px;right:16px;background:rgba(0,0,0,0.72);border-radius:16px;padding:12px 16px;color:#fff;font-size:14px;line-height:1.5;pointer-events:none;";
+    msgEl.style.cssText = "position:absolute;bottom:80px;left:16px;right:16px;background:rgba(0,0,0,0.72);border-radius:16px;padding:12px 16px;color:#fff;font-size:14px;line-height:1.5;pointer-events:none;z-index:20;";
     msgEl.textContent = "tá gostando dessa buceta? Eu tô me fodendo aqui pensando em você me comendo…";
-    callEl.style.position = "fixed";
     callEl.appendChild(msgEl);
     addMsg("left", "tá gostando dessa buceta? Eu tô me fodendo aqui pensando em você me comendo…");
   }, rand(12000, 18000));
