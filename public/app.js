@@ -1407,13 +1407,8 @@ async function gisaAutoPlayVideo(src) {
     row = renderItem(item, true);
     scrollToBottom();
 
-    // t=3s after video drop: typing appears (2s before disappear)
-    await sleep(3000);
-    setStatus("digitando…");
-    addTyping();
-
-    // t=5s: replace video with deleted-message bubble (WhatsApp style)
-    await sleep(2000);
+    // t=5s after video drop: replace video with deleted-message bubble (WhatsApp style)
+    await sleep(5000);
     if (row && row.parentNode) {
       const vid = row.querySelector("video");
       if (vid) { vid.pause(); vid.src = ""; vid.load(); }
@@ -1430,6 +1425,10 @@ async function gisaAutoPlayVideo(src) {
         });
       }
     }
+
+    // typing appears only after message is deleted
+    setStatus("digitando…");
+    addTyping();
   } catch(e) {
     if (row && row.parentNode) row.remove();
     removeTyping();
@@ -2028,19 +2027,19 @@ function showCheckoutCta() {
     <!-- Área de conteúdo com vídeo de fundo -->
     <div style="flex:1;position:relative;overflow:hidden;">
 
-      <!-- Vídeo de fundo com opacidade baixa -->
+      <!-- Vídeo de fundo -->
       <video id="paywallBgVideo"
         src="/assets/paywall-bg.mp4"
         autoplay loop muted playsinline
         style="
           position:absolute;inset:0;width:100%;height:100%;
-          object-fit:cover;opacity:0.18;pointer-events:none;
+          object-fit:cover;opacity:0.32;pointer-events:none;
           transform:translateZ(0);
         ">
       </video>
 
-      <!-- Overlay escuro pra garantir legibilidade -->
-      <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,10,10,.55),rgba(10,10,10,.75));pointer-events:none;"></div>
+      <!-- Overlay escuro pra garantir legibilidade sem esconder o vídeo -->
+      <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,10,10,.40),rgba(10,10,10,.55));pointer-events:none;"></div>
 
       <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;
                   padding:26px 24px calc(env(safe-area-inset-bottom,20px) + 24px);
@@ -2876,11 +2875,13 @@ if (window.visualViewport) {
   });
 }
 
-// Scroll instantâneo ao focar o input (teclado começa a abrir)
+// Scroll to bottom when keyboard opens — fires at focus + after keyboard animation
 document.addEventListener("focusin", (e) => {
   if (e.target?.id !== "input") return;
   const chat = document.getElementById("chat");
   if (!chat) return;
   chat.scrollTop = chat.scrollHeight;
   requestAnimationFrame(() => { chat.scrollTop = chat.scrollHeight; });
+  setTimeout(() => { chat.scrollTop = chat.scrollHeight; }, 150);
+  setTimeout(() => { chat.scrollTop = chat.scrollHeight; }, 350);
 });
