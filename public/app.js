@@ -2073,20 +2073,23 @@ async function handleUserText(text) {
   finally { _flowRunning = false; }
 }
 
-async function openCheckout(plan = "") {
+function openCheckout() {
   const chatId = tg?.initDataUnsafe?.user?.id;
+
+  // Fecha imediatamente — sem esperar o servidor
+  try { if (tg?.close) { tg.close(); } } catch {}
+
+  // Request em background (keepalive garante entrega mesmo após fechar o WebView)
   if (chatId) {
-    try {
-      await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chatId: String(chatId), plan }),
-        keepalive: true,
-      });
-    } catch {}
+    fetch("/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chatId: String(chatId) }),
+      keepalive: true,
+    }).catch(() => {});
   }
-  try { if (tg?.close) { tg.close(); return; } } catch {}
-  window.open(CHECKOUT_URL, "_blank");
+
+  if (!tg?.close) window.open(CHECKOUT_URL, "_blank");
 }
 
 let _paywallOverlay = null;
