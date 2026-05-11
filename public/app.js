@@ -2841,9 +2841,20 @@ if (window.visualViewport) {
     if (document.getElementById("storyVideo")?.style.display === "block") { lastHeight = window.visualViewport.height; return; }
     const vh = window.visualViewport.height;
     const isOpening = (lastHeight - vh) > 80;
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      if (isOpening) chat.scrollTop = chat.scrollHeight;
-    }));
     lastHeight = vh;
+    if (isOpening) {
+      // Scroll imediato + um RAF pra garantir layout completo — sem duplo RAF
+      chat.scrollTop = chat.scrollHeight;
+      requestAnimationFrame(() => { chat.scrollTop = chat.scrollHeight; });
+    }
   });
 }
+
+// Scroll instantâneo ao focar o input (teclado começa a abrir)
+document.addEventListener("focusin", (e) => {
+  if (e.target?.id !== "input") return;
+  const chat = document.getElementById("chat");
+  if (!chat) return;
+  chat.scrollTop = chat.scrollHeight;
+  requestAnimationFrame(() => { chat.scrollTop = chat.scrollHeight; });
+});
