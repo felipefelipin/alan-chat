@@ -1551,7 +1551,6 @@ async function enterDesireEscalation() {
   state.step = 3; saveState();
   await sleep(rand(4000, 5000));
   await gisaSay("tô me sentindo uma puta safada hoje…", { delay: rand(5000, 7000) });
-  await gisaSay("to quase te ligando chamando de vídeo vey… 🥵", { delay: rand(6000, 8000) });
   await gisaAutoPlayVideo(ASSETS.teaseVideo3);
   await enterPrivateInvite(true);
 }
