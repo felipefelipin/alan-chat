@@ -1584,7 +1584,12 @@ async function enterCallConnecting() {
 }
 
 function showIncomingCall() {
-  try { if (document.activeElement?.blur) document.activeElement.blur(); } catch {}
+  // Força fechar teclado antes de mostrar a tela de chamada
+  try { document.activeElement?.blur(); } catch {}
+  try {
+    const inp = document.querySelector("input,textarea");
+    if (inp) { inp.readOnly = true; inp.blur(); setTimeout(() => { inp.readOnly = false; }, 300); }
+  } catch {}
 
   let ringtone = null;
   try {
@@ -1916,45 +1921,6 @@ function showCheckoutCta() {
     if (!document.getElementById("goCheckoutBtn")) return;
     await gisaSay("típico… fica só na vontade mesmo. Os machos de verdade já estão comigo agora.");
   }, rand(10 * 60 * 1000, 20 * 60 * 1000));
-}
-
-function showIncomingCall() {
-  try {
-    state.ring = new Audio(ASSETS.ringtone + `?v=${Date.now()}`);
-    state.ring.loop = true;
-    state.ring.play().catch(() => {});
-  } catch {}
-
-  app.insertAdjacentHTML("beforeend", `
-    <div class="callScreen" id="callScreen">
-      <div class="callAmbient"></div>
-      <div class="callCenter">
-        <div class="avatar callAvatar avatarImgWrap">
-          <img src="${ASSETS.avatar}?v=1" alt="${CONTACT.title}" />
-          <span class="avatarFallbackText">${CONTACT.title.charAt(0)}</span>
-        </div>
-        <div class="callName">${CONTACT.title}</div>
-        <div class="callSub">chamada de vídeo…</div>
-      </div>
-      <div class="callActions">
-        <button class="callActionWrap" id="decline" type="button">
-          <span class="btnRed"></span>
-          <span class="callActionLabel">Recusar</span>
-        </button>
-        <button class="callActionWrap" id="accept" type="button">
-          <span class="btnGreen"></span>
-          <span class="callActionLabel">Atender</span>
-        </button>
-      </div>
-    </div>
-  `);
-
-  setTimeout(() => {
-    const declineBtn = document.getElementById("decline");
-    const acceptBtn  = document.getElementById("accept");
-    if (declineBtn) declineBtn.onclick = () => endCall(false);
-    if (acceptBtn)  acceptBtn.onclick  = () => { endCall(true); startVideoCall(); };
-  }, 0);
 }
 
 // ==================== STORY VIDEO INIT ====================
