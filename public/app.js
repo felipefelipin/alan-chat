@@ -1617,20 +1617,6 @@ function showIncomingCall() {
 
     <div style="flex:1;"></div>
 
-    <div style="display:flex;align-items:flex-start;justify-content:center;gap:50px;margin-bottom:28px;">
-      <div style="display:flex;flex-direction:column;align-items:center;gap:9px;">
-        <div style="width:57px;height:57px;border-radius:50%;background:rgba(255,255,255,.19);display:flex;align-items:center;justify-content:center;">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M20 2H4C2.9 2 2 2.9 2 4v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
-        </div>
-        <span style="color:rgba(255,255,255,.75);font-size:13px;">Mensagem</span>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:9px;">
-        <div style="width:57px;height:57px;border-radius:50%;background:rgba(255,255,255,.19);display:flex;align-items:center;justify-content:center;">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M11.5 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6.5-6V11c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h15v-1l-2-2z"/></svg>
-        </div>
-        <span style="color:rgba(255,255,255,.75);font-size:13px;">Lembre-me</span>
-      </div>
-    </div>
 
     <div style="display:flex;align-items:flex-start;justify-content:center;gap:80px;">
       <div style="display:flex;flex-direction:column;align-items:center;gap:9px;">
