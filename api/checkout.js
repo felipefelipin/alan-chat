@@ -2,50 +2,42 @@
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
 
-  const { chatId, plan } = req.body || {};
+  const { chatId } = req.body || {};
   if (!chatId) return res.status(400).json({ error: "missing chatId" });
 
   const BOT_TOKEN = process.env.BOT_TOKEN;
   if (!BOT_TOKEN) return res.status(500).json({ error: "no bot token" });
 
-  const base = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-  const tgSend = (text, extra = {}) =>
-    fetch(base, {
+  const send = (text, extra = {}) =>
+    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: String(chatId), text, ...extra }),
+      body: JSON.stringify({ chat_id: String(chatId), parse_mode: "HTML", text, ...extra }),
     });
 
-  const planMap = {
-    basic: { label: "🚀 ACESSO AO VIVO — R$ 29,90", cb: "plan:basic" },
-    plus:  { label: "💎 PREMIUM — R$ 49,90 🔥",     cb: "plan:plus"  },
-    vip:   { label: "👑 VIP TOTAL — R$ 97,00",       cb: "plan:vip"   },
-  };
-
   try {
-    if (plan && planMap[plan]) {
-      // Usuário já escolheu o plano no Mini App — confirma direto
-      const chosen = planMap[plan];
-      await tgSend(`você escolheu: ${chosen.label}`);
-      await tgSend("confirma aqui para gerar o link de pagamento 👇", {
-        reply_markup: {
-          inline_keyboard: [[{ text: chosen.label, callback_data: chosen.cb }]],
-        },
-      });
-    } else {
-      // Fallback: envia os 3 planos
-      await tgSend("tá… agora escolhe como você quer entrar.");
-      await tgSend("3 opções. sem enrolar.");
-      await tgSend("👇", {
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: planMap.basic.label, callback_data: planMap.basic.cb }],
-            [{ text: planMap.plus.label,  callback_data: planMap.plus.cb  }],
-            [{ text: planMap.vip.label,   callback_data: planMap.vip.cb   }],
-          ],
-        },
-      });
-    }
+    // Pacote 1
+    await send(
+      `🚀 <b>PACOTE 1 - ACESSO AO VIVO</b>\nR$ 29,90\n🔥 ATENÇÃO: VAGAS LIMITADAS HOJE\n\nTô aqui toda molhada te esperando...\n\nEscolhe agora e garante seu lugar no Ao Vivo + conteúdo particular.\n\n✅ <b>Pagamento confirmado = Liberação imediata</b>\n\nAssim que pagar, você entra no grupo ou recebe meu WhatsApp <b>em poucos segundos</b>.\n• Entrada imediata no grupo do Ao Vivo\n• 20 fotos exclusivas\n• Acesso durante toda a live`,
+      { reply_markup: { inline_keyboard: [[{ text: "Entrar no Ao Vivo Agora", callback_data: "plan:basic" }]] } }
+    );
+
+    // Pacote 2
+    await send(
+      `────────────────────\n\n💎 <b>PACOTE 2 - PREMIUM (MAIS ESCOLHIDO 🔥)</b>\nR$ 49,90\n\n• Tudo do Pacote 1\n• 40 fotos + 8 vídeos exclusivos\n• Prioridade nos comentários da live\n• Conteúdo extra após o Ao Vivo`,
+      { reply_markup: { inline_keyboard: [[{ text: "Quero o Premium 🔥", callback_data: "plan:plus" }]] } }
+    );
+
+    // Pacote 3
+    await send(
+      `────────────────────\n\n👑 <b>PACOTE 3 - VIP TOTAL (Mais Forte)</b>\nR$ 97,00\n\n• Tudo do Pacote 2\n• <b>Meu WhatsApp pessoal</b>\n• <b>Chamada de vídeo particular</b> (15 a 20 minutos peladinha só pra você)\n• Conteúdo exclusivo por 7 dias`,
+      { reply_markup: { inline_keyboard: [[{ text: "Quero o VIP - WhatsApp + Chamada", callback_data: "plan:vip" }]] } }
+    );
+
+    // Rodapé
+    await send(
+      `────────────────────\n\n⚡ <b>Entrega imediata após o pagamento!</b>\nAssim que confirmar o pagamento, você receberá o link do grupo ou meu WhatsApp <b>na hora</b>, em menos de 30 segundos. Sem espera.`
+    );
 
     res.json({ ok: true });
   } catch (e) {

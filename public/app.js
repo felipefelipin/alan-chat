@@ -2117,117 +2117,52 @@ function showCheckoutCta() {
   overlay.innerHTML = `
     <style>
       @keyframes glowG{0%,100%{box-shadow:0 0 22px rgba(0,230,118,.65),0 4px 18px rgba(0,200,83,.5)}50%{box-shadow:0 0 44px rgba(0,230,118,1),0 8px 32px rgba(0,200,83,.8)}}
-      @keyframes glowO{0%,100%{box-shadow:0 0 22px rgba(255,140,0,.65),0 4px 18px rgba(255,100,0,.5)}50%{box-shadow:0 0 44px rgba(255,140,0,1),0 8px 32px rgba(255,100,0,.8)}}
-      @keyframes glowV{0%,100%{box-shadow:0 0 22px rgba(160,90,255,.65),0 4px 18px rgba(120,50,200,.5)}50%{box-shadow:0 0 44px rgba(160,90,255,1),0 8px 32px rgba(120,50,200,.8)}}
-      @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-      @keyframes liveGlow{0%,100%{box-shadow:0 0 8px rgba(255,59,48,.5)}50%{box-shadow:0 0 18px rgba(255,59,48,.9),0 0 28px rgba(255,59,48,.4)}}
+      @keyframes ctaPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
+      @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+      @keyframes liveGlow{0%,100%{box-shadow:0 0 8px rgba(255,59,48,.5);opacity:1}50%{box-shadow:0 0 18px rgba(255,59,48,.9),0 0 28px rgba(255,59,48,.4);opacity:.85}}
     </style>
 
-    <!-- Vídeo topo -->
-    <div style="width:100%;flex-shrink:0;position:relative;background:#000;overflow:hidden;height:54vw;max-height:300px;min-height:190px;">
-      <video id="checkoutTopVideo" src="/assets/checkout-video.mp4" autoplay loop muted playsinline webkit-playsinline
-        style="width:100%;height:100%;object-fit:cover;display:block;transform:translateZ(0);"></video>
-      <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 55%,rgba(10,10,10,.9));pointer-events:none;"></div>
-      <div style="position:absolute;top:12px;left:50%;transform:translateX(-50%);
-                  background:rgba(255,59,48,.15);border:1px solid rgba(255,59,48,.35);
-                  border-radius:20px;padding:5px 14px;animation:liveGlow 1.4s ease-in-out infinite;white-space:nowrap;">
-        <span style="color:#ff6b6b;font-size:12px;font-weight:700;letter-spacing:.5px;">🔴 AO VIVO AGORA</span>
-      </div>
+    <div style="width:100%;overflow:hidden;flex-shrink:0;">
+      <img src="/assets/cta-thumb.jpg"
+        style="width:100%;display:block;height:52vw;max-height:290px;min-height:190px;object-fit:cover;object-position:top;" />
     </div>
 
-    <!-- Conteúdo com bg video -->
-    <div style="flex:1;position:relative;">
+    <div style="flex:1;position:relative;overflow:hidden;">
       <video id="paywallBgVideo" src="/assets/paywall-bg.mp4" autoplay loop muted playsinline
-        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.28;pointer-events:none;transform:translateZ(0);"></video>
-      <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,10,10,.5),rgba(10,10,10,.65));pointer-events:none;"></div>
+        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.32;pointer-events:none;transform:translateZ(0);"></video>
+      <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,10,10,.40),rgba(10,10,10,.55));pointer-events:none;"></div>
 
-      <div style="position:relative;z-index:1;padding:20px 16px calc(env(safe-area-inset-bottom,20px) + 24px);animation:fadeUp 0.5s ease 0.15s both;">
+      <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;
+                  padding:26px 24px calc(env(safe-area-inset-bottom,20px) + 24px);
+                  animation:fadeUp 0.5s ease 0.2s both;">
 
-        <!-- Header copy -->
-        <div style="text-align:center;color:#ff6b6b;font-size:13px;font-weight:700;letter-spacing:.3px;margin-bottom:6px;">🔥 ATENÇÃO: VAGAS LIMITADAS HOJE</div>
-        <div style="color:rgba(255,255,255,.8);font-size:14.5px;text-align:center;line-height:1.55;margin-bottom:4px;">Tô aqui toda molhada te esperando...</div>
-        <div style="color:rgba(255,255,255,.6);font-size:13px;text-align:center;line-height:1.55;margin-bottom:16px;">Escolhe agora e garante seu lugar no Ao Vivo + conteúdo particular.</div>
-
-        <!-- Entrega imediata info -->
-        <div style="background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);border-radius:12px;padding:10px 14px;margin-bottom:20px;">
-          <div style="color:#00e676;font-size:13px;font-weight:800;margin-bottom:4px;">✅ Pagamento confirmado = Liberação imediata</div>
-          <div style="color:rgba(255,255,255,.6);font-size:12.5px;line-height:1.5;">Assim que pagar, você entra no grupo ou recebe meu WhatsApp <strong style="color:rgba(255,255,255,.9);">em poucos segundos</strong>.</div>
+        <div style="background:rgba(255,59,48,.14);border:1px solid rgba(255,59,48,.32);
+                    border-radius:20px;padding:5px 16px;margin-bottom:22px;
+                    animation:liveGlow 1.4s ease-in-out infinite;">
+          <span style="color:#ff6b6b;font-size:12.5px;font-weight:700;letter-spacing:.5px;">🔴 AO VIVO AGORA</span>
         </div>
 
-        <div style="height:1px;background:rgba(255,255,255,.1);margin-bottom:20px;"></div>
-
-        <!-- PACOTE 1 -->
-        <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.13);border-radius:18px;padding:18px 16px;margin-bottom:14px;">
-          <div style="color:#fff;font-size:15px;font-weight:800;margin-bottom:2px;">🚀 <strong>PACOTE 1 - ACESSO AO VIVO</strong></div>
-          <div style="color:#00e676;font-size:26px;font-weight:900;margin:8px 0 14px;">R$ 29,90</div>
-          <ul style="color:rgba(255,255,255,.72);font-size:13px;line-height:1.85;padding-left:16px;margin:0 0 16px;">
-            <li>Entrada imediata no grupo do Ao Vivo</li>
-            <li>20 fotos exclusivas</li>
-            <li>Acesso durante toda a live</li>
-          </ul>
-          <button id="btnPlan1" style="
-            width:100%;padding:15px;border-radius:14px;border:none;
-            background:linear-gradient(135deg,#00e676 0%,#00c853 55%,#009624 100%);
-            color:#fff;font-size:15px;font-weight:900;letter-spacing:.2px;
-            cursor:pointer;-webkit-tap-highlight-color:transparent;
-            animation:glowG 1.8s ease-in-out infinite;
-          ">Entrar no Ao Vivo Agora</button>
+        <div style="color:#fff;font-size:22px;font-weight:800;text-align:center;line-height:1.3;letter-spacing:-.3px;margin-bottom:10px;">
+          Desbloqueia e volta<br/>imediatamente pra chamada
         </div>
 
-        <div style="height:1px;background:rgba(255,255,255,.1);margin-bottom:14px;"></div>
-
-        <!-- PACOTE 2 -->
-        <div style="background:rgba(255,140,0,.07);border:1px solid rgba(255,140,0,.28);border-radius:18px;padding:18px 16px;margin-bottom:14px;position:relative;">
-          <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#ff8c00,#ff5500);border-radius:20px;padding:4px 14px;white-space:nowrap;">
-            <span style="color:#fff;font-size:11px;font-weight:800;letter-spacing:.4px;">MAIS ESCOLHIDO 🔥</span>
-          </div>
-          <div style="color:#fff;font-size:15px;font-weight:800;margin-bottom:2px;">💎 <strong>PACOTE 2 - PREMIUM</strong></div>
-          <div style="color:#ffb347;font-size:26px;font-weight:900;margin:8px 0 14px;">R$ 49,90</div>
-          <ul style="color:rgba(255,255,255,.72);font-size:13px;line-height:1.85;padding-left:16px;margin:0 0 16px;">
-            <li>Tudo do Pacote 1</li>
-            <li>40 fotos + 8 vídeos exclusivos</li>
-            <li>Prioridade nos comentários da live</li>
-            <li>Conteúdo extra após o Ao Vivo</li>
-          </ul>
-          <button id="btnPlan2" style="
-            width:100%;padding:15px;border-radius:14px;border:none;
-            background:linear-gradient(135deg,#ff8c00 0%,#ff5500 100%);
-            color:#fff;font-size:15px;font-weight:900;letter-spacing:.2px;
-            cursor:pointer;-webkit-tap-highlight-color:transparent;
-            animation:glowO 1.8s ease-in-out infinite;
-          ">Quero o Premium 🔥</button>
+        <div style="color:rgba(255,255,255,.58);font-size:15px;text-align:center;line-height:1.55;margin-bottom:32px;">
+          Eu tô te esperando pelada e safada.
         </div>
 
-        <div style="height:1px;background:rgba(255,255,255,.1);margin-bottom:14px;"></div>
-
-        <!-- PACOTE 3 -->
-        <div style="background:rgba(150,80,255,.07);border:1px solid rgba(150,80,255,.28);border-radius:18px;padding:18px 16px;margin-bottom:20px;">
-          <div style="color:#fff;font-size:15px;font-weight:800;margin-bottom:2px;">👑 <strong>PACOTE 3 - VIP TOTAL (Mais Forte)</strong></div>
-          <div style="color:#c084fc;font-size:26px;font-weight:900;margin:8px 0 14px;">R$ 97,00</div>
-          <ul style="color:rgba(255,255,255,.72);font-size:13px;line-height:1.85;padding-left:16px;margin:0 0 16px;">
-            <li>Tudo do Pacote 2</li>
-            <li><strong style="color:#fff;">Meu WhatsApp pessoal</strong></li>
-            <li><strong style="color:#fff;">Chamada de vídeo particular</strong> (15 a 20 minutos peladinha só pra você)</li>
-            <li>Conteúdo exclusivo por 7 dias</li>
-          </ul>
-          <button id="btnPlan3" style="
-            width:100%;padding:15px;border-radius:14px;border:none;
-            background:linear-gradient(135deg,#9b59b6 0%,#8e44ad 55%,#6c3483 100%);
-            color:#fff;font-size:15px;font-weight:900;letter-spacing:.2px;
-            cursor:pointer;-webkit-tap-highlight-color:transparent;
-            animation:glowV 1.8s ease-in-out infinite;
-          ">Quero o VIP - WhatsApp + Chamada</button>
-        </div>
-
-        <!-- Rodapé entrega -->
-        <div style="background:rgba(255,255,255,.05);border-radius:14px;padding:14px;margin-bottom:22px;text-align:center;">
-          <div style="color:#fff;font-size:13.5px;font-weight:800;margin-bottom:5px;">⚡ <strong>Entrega imediata após o pagamento!</strong></div>
-          <div style="color:rgba(255,255,255,.6);font-size:12.5px;line-height:1.6;">Assim que confirmar o pagamento, você receberá o link do grupo ou meu WhatsApp <strong style="color:rgba(255,255,255,.85);">na hora</strong>, em menos de 30 segundos. Sem espera.</div>
-        </div>
+        <button id="goCheckoutBtn" style="
+          width:100%;padding:18px 20px;border-radius:18px;border:none;
+          background:linear-gradient(135deg,#00e676 0%,#00c853 55%,#009624 100%);
+          color:#fff;font-size:17px;font-weight:900;letter-spacing:.3px;
+          cursor:pointer;-webkit-tap-highlight-color:transparent;
+          box-shadow:0 0 28px rgba(0,230,118,.7),0 6px 22px rgba(0,200,83,.55);
+          animation:glowG 1.8s ease-in-out infinite, ctaPulse 2.6s ease-in-out infinite;
+          margin-bottom:22px;
+        ">🔥 DESBLOQUEAR ACESSO COMPLETO AGORA</button>
 
         <button id="paywallDismiss" style="
-          background:none;border:none;color:rgba(255,255,255,.25);
-          font-size:13px;cursor:pointer;padding:8px;width:100%;text-align:center;
+          background:none;border:none;color:rgba(255,255,255,.28);
+          font-size:13px;cursor:pointer;padding:8px;
           -webkit-tap-highlight-color:transparent;
         ">Ver conversa</button>
 
@@ -2239,13 +2174,11 @@ function showCheckoutCta() {
   requestAnimationFrame(() => {
     overlay.style.opacity = "1";
     document.getElementById("paywallBgVideo")?.play().catch(() => {});
-    document.getElementById("checkoutTopVideo")?.play().catch(() => {});
   });
 
   setTimeout(() => {
-    document.getElementById("btnPlan1")?.addEventListener("click", () => openCheckout("basic"));
-    document.getElementById("btnPlan2")?.addEventListener("click", () => openCheckout("plus"));
-    document.getElementById("btnPlan3")?.addEventListener("click", () => openCheckout("vip"));
+    const btn = document.getElementById("goCheckoutBtn");
+    if (btn) btn.onclick = openCheckout;
     const dismiss = document.getElementById("paywallDismiss");
     if (dismiss) dismiss.onclick = () => {
       overlay.style.opacity = "0";
