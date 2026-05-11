@@ -1572,9 +1572,27 @@ async function enterPrivateInvite(directFirst = false) {
 
 function showCallChoiceButtons() {
   const html = `
-    <div id="callChoiceCard" style="display:flex;gap:10px;justify-content:center;padding:2px 0;">
-      <button id="callChoiceYes" style="flex:1;padding:13px 8px;border-radius:22px;border:none;background:#25D366;color:#fff;font-size:14.5px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;">EU QUERO 🔥</button>
-      <button id="callChoiceNo" style="flex:1;padding:13px 8px;border-radius:22px;border:none;background:rgba(255,255,255,.13);color:rgba(255,255,255,.55);font-size:14px;cursor:pointer;-webkit-tap-highlight-color:transparent;">não quero</button>
+    <style>
+      @keyframes glowG{0%,100%{box-shadow:0 0 18px rgba(0,230,118,.6),0 4px 16px rgba(0,200,83,.45)}50%{box-shadow:0 0 36px rgba(0,230,118,.95),0 6px 26px rgba(0,200,83,.75)}}
+      @keyframes glowR{0%,100%{box-shadow:0 0 16px rgba(255,82,82,.55),0 4px 14px rgba(211,47,47,.4)}50%{box-shadow:0 0 32px rgba(255,82,82,.9),0 6px 22px rgba(211,47,47,.65)}}
+    </style>
+    <div id="callChoiceCard" style="display:flex;flex-direction:column;gap:11px;padding:4px 0;">
+      <button id="callChoiceYes" style="
+        width:100%;padding:16px 10px;border-radius:16px;border:none;
+        background:linear-gradient(135deg,#00e676 0%,#00c853 60%,#009624 100%);
+        color:#fff;font-size:16px;font-weight:900;letter-spacing:.4px;
+        cursor:pointer;-webkit-tap-highlight-color:transparent;
+        box-shadow:0 0 22px rgba(0,230,118,.65),0 4px 18px rgba(0,200,83,.5);
+        animation:glowG 1.8s ease-in-out infinite;
+      ">EU QUERO 🔥</button>
+      <button id="callChoiceNo" style="
+        width:100%;padding:14px 10px;border-radius:16px;border:none;
+        background:linear-gradient(135deg,#ff5252 0%,#e53935 60%,#b71c1c 100%);
+        color:#fff;font-size:14.5px;font-weight:700;letter-spacing:.6px;
+        cursor:pointer;-webkit-tap-highlight-color:transparent;
+        box-shadow:0 0 18px rgba(255,82,82,.55),0 4px 14px rgba(211,47,47,.4);
+        animation:glowR 2.2s ease-in-out infinite;
+      ">NÃO QUERO</button>
     </div>
   `;
   addCtaCard(html);
@@ -1937,9 +1955,23 @@ function openCheckout() {
 
 function showCheckoutCta() {
   const html = `
-    <div class="ctaCardWrap" style="text-align:center;">
-      <div class="ctaTitle" style="font-size:16px;line-height:1.5;margin-bottom:8px;">Desbloqueia e volta imediatamente pra chamada.<br/>Eu tô te esperando pelada e safada.</div>
-      <button id="goCheckoutBtn" class="pBtnPrimary ctaPrimary" style="background:#e53935;font-size:16px;padding:14px 20px;border-radius:14px;width:100%;margin-top:8px;">🔥 DESBLOQUEAR ACESSO COMPLETO AGORA</button>
+    <style>
+      @keyframes glowG{0%,100%{box-shadow:0 0 18px rgba(0,230,118,.6),0 4px 16px rgba(0,200,83,.45)}50%{box-shadow:0 0 36px rgba(0,230,118,.95),0 6px 26px rgba(0,200,83,.75)}}
+      @keyframes ctaPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
+    </style>
+    <div style="overflow:hidden;border-radius:14px;margin:-8px -8px 0;background:#111;">
+      <img src="/assets/cta-thumb.jpg" style="width:100%;display:block;max-height:220px;object-fit:cover;" />
+    </div>
+    <div style="padding:14px 2px 4px;text-align:center;">
+      <div style="font-size:15.5px;line-height:1.55;margin-bottom:14px;color:#fff;font-weight:500;">Desbloqueia e volta imediatamente pra chamada.<br/>Eu tô te esperando pelada e safada.</div>
+      <button id="goCheckoutBtn" style="
+        background:linear-gradient(135deg,#00e676 0%,#00c853 55%,#009624 100%);
+        color:#fff;font-size:16px;font-weight:900;letter-spacing:.35px;
+        padding:16px 20px;border-radius:16px;width:100%;border:none;
+        cursor:pointer;-webkit-tap-highlight-color:transparent;
+        box-shadow:0 0 28px rgba(0,230,118,.7),0 6px 22px rgba(0,200,83,.55);
+        animation:glowG 1.8s ease-in-out infinite, ctaPulse 2.6s ease-in-out infinite;
+      ">🔥 DESBLOQUEAR ACESSO COMPLETO AGORA</button>
     </div>
   `;
   addCtaCard(html);
