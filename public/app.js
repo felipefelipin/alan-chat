@@ -1672,46 +1672,110 @@ async function startFunnelCall() {
 
   const callEl = document.createElement("div");
   callEl.id = "funnelCallScreen";
-  callEl.style.cssText = "position:fixed;inset:0;z-index:9000;background:#000;overflow:hidden;";
+  callEl.style.cssText = "position:fixed;inset:0;z-index:9000;background:#000;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;";
 
-  // Vídeo principal (dela)
+  // ── Vídeo principal (dela) fullscreen ──────────────────────────────────────
   const vid = document.createElement("video");
   vid.src = ASSETS.callVideo + `?v=${Date.now()}`;
-  vid.autoplay = true;
-  vid.playsinline = true;
+  vid.playsInline = true;
   vid.setAttribute("playsinline", "");
-  vid.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;";
+  vid.setAttribute("webkit-playsinline", "");
+  vid.muted = false;
+  vid.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;";
   callEl.appendChild(vid);
 
-  // PiP — câmera do usuário (canto inferior direito, igual WhatsApp)
+  // ── Overlay: topo com nome + timer ─────────────────────────────────────────
+  const topBar = document.createElement("div");
+  topBar.style.cssText = `
+    position:absolute;top:0;left:0;right:0;z-index:20;
+    padding:calc(env(safe-area-inset-top,44px) + 12px) 16px 20px;
+    background:linear-gradient(to bottom,rgba(0,0,0,.55),transparent);
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+  `;
+  topBar.innerHTML = `
+    <div style="color:#fff;font-size:17px;font-weight:600;letter-spacing:-.3px;">${CONTACT.name}</div>
+    <div id="callTimer" style="color:rgba(255,255,255,.8);font-size:14px;">0:00</div>
+  `;
+  callEl.appendChild(topBar);
+
+  // ── Timer ──────────────────────────────────────────────────────────────────
+  let elapsed = 0;
+  const timerEl = () => callEl.querySelector("#callTimer");
+  const timerInterval = setInterval(() => {
+    elapsed++;
+    const m = Math.floor(elapsed / 60), s = elapsed % 60;
+    const t = timerEl(); if (t) t.textContent = m + ":" + String(s).padStart(2,"0");
+  }, 1000);
+
+  // ── Barra de controles em baixo ────────────────────────────────────────────
+  const bottomBar = document.createElement("div");
+  bottomBar.style.cssText = `
+    position:absolute;bottom:0;left:0;right:0;z-index:20;
+    padding:20px 40px calc(env(safe-area-inset-bottom,34px) + 20px);
+    background:linear-gradient(to top,rgba(0,0,0,.6),transparent);
+    display:flex;justify-content:space-around;align-items:center;
+  `;
+  bottomBar.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+      <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="white">
+          <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1 1.93c-3.94-.49-7-3.85-7-7.93H6c0 3.31 2.69 6 6 6s6-2.69 6-6h2c0 4.08-3.06 7.44-7 7.93V22h-2v-6.07z"/>
+        </svg>
+      </div>
+      <span style="color:rgba(255,255,255,.75);font-size:12px;">Silenciar</span>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+      <button id="funnelEndCall" style="width:68px;height:68px;border-radius:50%;background:#ff3b30;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="white">
+          <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/>
+        </svg>
+      </button>
+      <span style="color:rgba(255,255,255,.75);font-size:12px;">Encerrar</span>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+      <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="white">
+          <path d="M20 5h-3.17L15 3H9L7.17 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-8 13c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.65 0-3 1.35-3 3s1.35 3 3 3 3-1.35 3-3-1.35-3-3-3z"/>
+        </svg>
+      </div>
+      <span style="color:rgba(255,255,255,.75);font-size:12px;">Câmera</span>
+    </div>
+  `;
+  callEl.appendChild(bottomBar);
+
+  // ── PiP câmera do lead (canto inferior direito) ────────────────────────────
   const pip = document.createElement("video");
   pip.autoplay = true;
   pip.muted = true;
-  pip.playsinline = true;
+  pip.playsInline = true;
   pip.setAttribute("playsinline", "");
-  pip.style.cssText = [
-    "position:absolute;",
-    "bottom:calc(env(safe-area-inset-bottom,0px) + 90px);",
-    "right:14px;",
-    "width:90px;height:130px;",
-    "border-radius:14px;",
-    "object-fit:cover;",
-    "border:2px solid rgba(255,255,255,.22);",
-    "background:#1a1a1a;",
-    "transform:scaleX(-1);",   // espelha câmera frontal
-    "z-index:10;",
-  ].join("");
+  pip.style.cssText = `
+    position:absolute;
+    bottom:calc(env(safe-area-inset-bottom,34px) + 108px);
+    right:14px;
+    width:88px;height:120px;
+    border-radius:14px;
+    object-fit:cover;
+    border:2px solid rgba(255,255,255,.25);
+    background:#111;
+    transform:scaleX(-1);
+    z-index:15;
+  `;
   callEl.appendChild(pip);
-
-  // Solicita câmera frontal; esconde PiP se negado
-  let camStream = null;
-  navigator.mediaDevices?.getUserMedia({ video: { facingMode: "user" }, audio: false })
-    .then(s => { camStream = s; pip.srcObject = s; })
-    .catch(() => { pip.style.display = "none"; });
 
   document.body.appendChild(callEl);
 
+  // Inicia o vídeo explicitamente (necessário no iOS WKWebView)
+  vid.play().catch(() => {});
+
+  // Câmera frontal do lead
+  let camStream = null;
+  navigator.mediaDevices?.getUserMedia({ video: { facingMode: "user" }, audio: false })
+    .then(s => { camStream = s; pip.srcObject = s; pip.play().catch(() => {}); })
+    .catch(() => { pip.style.display = "none"; });
+
   const cleanup = () => {
+    clearInterval(timerInterval);
     try { if (camStream) camStream.getTracks().forEach(t => t.stop()); } catch {}
   };
 
@@ -1724,10 +1788,17 @@ async function startFunnelCall() {
     await doCallPaywall();
   };
 
+  // Botão encerrar
+  setTimeout(() => {
+    const endBtn = document.getElementById("funnelEndCall");
+    if (endBtn) endBtn.onclick = triggerPaywall;
+  }, 0);
+
+  // Mensagem aparece durante a chamada
   setTimeout(() => {
     if (done) return;
     const msgEl = document.createElement("div");
-    msgEl.style.cssText = "position:absolute;bottom:80px;left:16px;right:16px;background:rgba(0,0,0,0.72);border-radius:16px;padding:12px 16px;color:#fff;font-size:14px;line-height:1.5;pointer-events:none;z-index:20;";
+    msgEl.style.cssText = "position:absolute;bottom:140px;left:16px;right:16px;background:rgba(0,0,0,0.72);border-radius:16px;padding:12px 16px;color:#fff;font-size:14px;line-height:1.5;pointer-events:none;z-index:25;";
     msgEl.textContent = "tá gostando dessa buceta? Eu tô me fodendo aqui pensando em você me comendo…";
     callEl.appendChild(msgEl);
     addMsg("left", "tá gostando dessa buceta? Eu tô me fodendo aqui pensando em você me comendo…");
