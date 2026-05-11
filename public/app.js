@@ -2040,7 +2040,11 @@ function showStories() {
     willChange: "transform",
   });
 
-  video.oncanplay = () => { video.play().catch(() => {}); };
+  // Chama play() diretamente no contexto do gesto do usuário para desbloquear áudio no iOS
+  video.play().catch(() => {
+    // fallback: aguarda canplay se play() falhar antes de carregar
+    video.oncanplay = () => { video.play().catch(() => {}); };
+  });
   video.load();
 
   const origin = getAvatarOrigin();
