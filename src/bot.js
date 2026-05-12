@@ -93,9 +93,9 @@ async function sendPlans(chatId) {
     { type: "SEND_MESSAGE", chatId: String(chatId), data: {
       text: "👇",
       extra: { reply_markup: { inline_keyboard: [
-        [{ text: "basic", callback_data: "plan:basic" }],
-        [{ text: "plus",  callback_data: "plan:plus"  }],
-        [{ text: "vip",   callback_data: "plan:vip"   }],
+        [{ text: "basic", callback_data: "plan:basic", style: "primary" }],
+        [{ text: "plus",  callback_data: "plan:plus",  style: "success" }],
+        [{ text: "vip",   callback_data: "plan:vip",   style: "success" }],
       ]}},
     }},
     { delay: rand(4200, 5600), removeOnComplete: true, removeOnFail: true }
@@ -120,7 +120,7 @@ async function createCheckoutAndSend(chatId, plano) {
   await queue.add("jobs",
     { type: "SEND_MESSAGE", chatId: String(chatId), data: {
       text: "👇",
-      extra: { reply_markup: { inline_keyboard: [[{ text: "💳 pagar agora", url: initPoint }]] } },
+      extra: { reply_markup: { inline_keyboard: [[{ text: "💳 pagar agora", url: initPoint, style: "success" }]] } },
     }},
     { delay: rand(4600, 6200), removeOnComplete: true, removeOnFail: true }
   );

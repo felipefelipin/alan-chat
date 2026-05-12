@@ -372,9 +372,9 @@ const worker = new Worker(
         await bot.sendMessage(chatId, "👇", {
           reply_markup: {
             inline_keyboard: [
-              [{ text: "🚀 ACESSO AO VIVO — R$ 29,90",       callback_data: "plan:basic" }],
-              [{ text: "💎 PREMIUM — R$ 49,90 🔥",            callback_data: "plan:plus"  }],
-              [{ text: "👑 VIP TOTAL — R$ 97,00",             callback_data: "plan:vip"   }],
+              [{ text: "🚀 ACESSO AO VIVO — R$ 29,90",       callback_data: "plan:basic", style: "primary" }],
+              [{ text: "💎 PREMIUM — R$ 49,90 🔥",            callback_data: "plan:plus",  style: "success" }],
+              [{ text: "👑 VIP TOTAL — R$ 97,00",             callback_data: "plan:vip",   style: "success" }],
             ],
           },
         });
@@ -419,6 +419,7 @@ const worker = new Worker(
               reply_markup: { inline_keyboard: [[{
                 text: "🔒 ENTRAR NO PRIVADO AGORA",
                 web_app: { url: process.env.WEBAPP_URL },
+                style: "success",
               }]]},
             });
           } else if (stage === "1h") {
@@ -431,6 +432,7 @@ const worker = new Worker(
               reply_markup: { inline_keyboard: [[{
                 text: "🔒 GARANTIR MEU ACESSO AGORA",
                 web_app: { url: process.env.WEBAPP_URL },
+                style: "success",
               }]]},
             });
           } else if (stage === "24h") {
@@ -441,6 +443,7 @@ const worker = new Worker(
               reply_markup: { inline_keyboard: [[{
                 text: "🔥 ÚLTIMA CHANCE — ENTRAR AGORA",
                 web_app: { url: process.env.WEBAPP_URL },
+                style: "danger",
               }]]},
             });
           }
@@ -504,9 +507,9 @@ const worker = new Worker(
         await bot.sendMessage(chatId,
           "Oi gato 😈\n\nAcabei de acordar toda molhada pensando em um homem de verdade...\n\nTá tudo bem por aí?",
           { reply_markup: { inline_keyboard: [
-            [{ text: "Tô bem 🔥",            callback_data: "start_sim"   }],
-            [{ text: "Tô ótimo, e você? 😏",  callback_data: "start_otimo" }],
-            [{ text: "Tô afim de você 💦",    callback_data: "start_afim"  }],
+            [{ text: "Tô bem 🔥",            callback_data: "start_sim",   style: "success" }],
+            [{ text: "Tô ótimo, e você? 😏",  callback_data: "start_otimo", style: "success" }],
+            [{ text: "Tô afim de você 💦",    callback_data: "start_afim",  style: "primary" }],
           ]}}
         );
         await logEventSafe(chatId, "FUNNEL_START", {});
@@ -521,9 +524,9 @@ const worker = new Worker(
         await bot.sendMessage(chatId,
           "Que bom... Eu também tô bem, mas bem safadinha hoje 👀💦\n\nSabe, eu só faço chamada de vídeo peladinha pra quem realmente me excita de verdade...\n\nTopa uma chamada bem gostosa e sem censura comigo agora?",
           { reply_markup: { inline_keyboard: [
-            [{ text: "Quero sim 😈",           callback_data: "quero_video"     }],
-            [{ text: "Tô afim pra caralho 🔥", callback_data: "quero_video"     }],
-            [{ text: "Me mostra primeiro",      callback_data: "mostra_primeiro" }],
+            [{ text: "Quero sim 😈",           callback_data: "quero_video",     style: "success" }],
+            [{ text: "Tô afim pra caralho 🔥", callback_data: "quero_video",     style: "success" }],
+            [{ text: "Me mostra primeiro",      callback_data: "mostra_primeiro", style: "primary" }],
           ]}}
         );
         await logEventSafe(chatId, "FUNNEL_STEP2", {});
@@ -538,8 +541,8 @@ const worker = new Worker(
         await bot.sendMessage(chatId,
           "Perfeito 😏\n\nMas pra me ver toda peladinha, e me ter bem putinha em um privado bem secreto, a gente vai ter que brincar de roleta da sorte.\n\nQuer tentar a sorte?",
           { reply_markup: { inline_keyboard: [
-            [{ text: "Quero tentar a sorte 🎰",   callback_data: "tentar_roleta_1" }],
-            [{ text: "Tô com muita sorte hoje 😈", callback_data: "tentar_roleta_1" }],
+            [{ text: "Quero tentar a sorte 🎰",   callback_data: "tentar_roleta_1", style: "success" }],
+            [{ text: "Tô com muita sorte hoje 😈", callback_data: "tentar_roleta_1", style: "primary" }],
           ]}}
         );
         await logEventSafe(chatId, "FUNNEL_ROLETA_INTRO", {});
@@ -549,7 +552,7 @@ const worker = new Worker(
       if (type === "FUNNEL_NUM_GRID") {
         const round  = data?.round ?? 1;
         const label  = round === 2 ? "Última chance! Escolhe seu número de 1 a 10:" : "Escolhe um número de 1 a 10:";
-        const numRow = (nums) => nums.map(n => ({ text: String(n), callback_data: `num${round}_${n}` }));
+        const numRow = (nums) => nums.map(n => ({ text: String(n), callback_data: `num${round}_${n}`, style: "primary" }));
         await bot.sendMessage(chatId, label, {
           reply_markup: { inline_keyboard: [ numRow([1,2,3,4,5]), numRow([6,7,8,9,10]) ] },
         });
@@ -563,7 +566,7 @@ const worker = new Worker(
         await bot.sendMessage(chatId,
           `Beleza! Escolheu o <b>${chosen}</b>.\n\nVou girar a roleta...`,
           { parse_mode: "HTML", reply_markup: { inline_keyboard: [
-            [{ text: "🎰 Girar Roleta", callback_data: `spin${round}_${chosen}` }],
+            [{ text: "🎰 Girar Roleta", callback_data: `spin${round}_${chosen}`, style: "success" }],
           ]}}
         );
         await logEventSafe(chatId, "FUNNEL_NUM_CHOSEN", { round, chosen });
@@ -637,8 +640,8 @@ const worker = new Worker(
           await bot.sendMessage(chatId,
             `Quase... caiu <b>${c1} — ${c2} — ${c3}</b> 😔\n\nNão foi dessa vez... mas você ainda tem uma última chance.\n\nQuer tentar de novo?`,
             { parse_mode: "HTML", reply_markup: { inline_keyboard: [
-              [{ text: "🔥 Quero tentar novamente", callback_data: "tentar_roleta_2" }],
-              [{ text: "Desistir",                   callback_data: "desistir"         }],
+              [{ text: "🔥 Quero tentar novamente", callback_data: "tentar_roleta_2", style: "success" }],
+              [{ text: "Desistir",                   callback_data: "desistir",         style: "danger"  }],
             ]}}
           );
         } else {
@@ -657,6 +660,7 @@ const worker = new Worker(
             { reply_markup: { inline_keyboard: [[{
               text: "🚀 ENTRAR NO MINI APP AGORA",
               web_app: { url: process.env.WEBAPP_URL },
+              style: "success",
             }]]}}
           );
           await prisma.user.update({
