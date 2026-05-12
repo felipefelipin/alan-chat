@@ -547,7 +547,7 @@ const worker = new Worker(
         await sleep(300);
         await bot.sendMessage(chatId, "Mas pra me ver toda peladinha, e me ter bem putinha em um privado bem secreto, a gente vai ter que brincar de roleta da sorte 🎰");
         await sleep(300);
-        await bot.sendMessage(chatId, "Você tem que acertar a sequencia de 3 numeros, se tiver essa sorte vai conseguir me ter bem putinha no meu privadinho safado 🥵🔥");
+        await bot.sendMessage(chatId, "Você tem que acertar a sequencia de 3 numeros, se tiver essa sorte vai conseguir me ter bem putinha no meu privadinho safado 🥵");
         await sleep(300);
         await bot.sendMessage(chatId, "Quer tentar a sorte? 👀",
           { reply_markup: { inline_keyboard: [
@@ -575,7 +575,7 @@ const worker = new Worker(
         const chosen = data?.chosen ?? 1;
         await bot.sendMessage(chatId, `Beleza! Escolheu o ${chosen} 😏`);
         await sleep(300);
-        await bot.sendMessage(chatId, "Vou girar a roleta...",
+        await bot.sendMessage(chatId, "CLIQUE ABAIXO PRA GIRAR A ROLETA... 👀🔥",
           { reply_markup: { inline_keyboard: [
             [{ text: "🎰 Girar Roleta", callback_data: `spin${round}_${chosen}`, style: "success" }],
           ]}}
