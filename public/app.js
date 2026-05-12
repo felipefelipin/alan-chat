@@ -428,7 +428,7 @@ function mountChat() {
     <div class="full fadeIn">
 
       <div class="topbar">
-        <button class="navBtn" onclick="mountChat()"><span class="navChevron"></span></button>
+        <button class="navBtn" onclick="return false;"><span class="navChevron"></span></button>
 
         <div data-story-avatar onclick="showStories()" style="width:42px;height:42px;border-radius:50%;border:2px solid ${window.storyViewed ? "rgba(255,255,255,.2)" : "#25D366"};padding:2px;flex-shrink:0;box-sizing:border-box;">
           <img src="${ASSETS.avatar}?v=1" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;" />
