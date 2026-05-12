@@ -283,8 +283,11 @@ async function deleteFunnelMsgs(chatId) {
   } catch (e) { console.error("[funnelMsg] delete error:", e.message); }
 }
 
-// wrapper: envia mensagem e salva o message_id automaticamente
+// wrapper: typing indicator + envia mensagem e salva o message_id automaticamente
 async function fm(chatId, text, opts = {}) {
+  await bot.sendChatAction(chatId, "typing").catch(() => {});
+  const ms = Math.min(3000, Math.max(600, String(text || "").length * 40));
+  await sleep(ms);
   const sent = await bot.sendMessage(chatId, text, opts);
   if (sent?.message_id) saveFunnelMsg(chatId, sent.message_id);
   return sent;
