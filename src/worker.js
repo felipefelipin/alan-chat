@@ -380,6 +380,13 @@ const worker = new Worker(
       }
 
       if (type === "FUNNEL_ROLETA_INTRO") {
+        try {
+          const stream = fs.createReadStream(path.join(ASSETS_DIR, "step3-video.mp4"));
+          await bot.sendVideo(chatId, stream);
+        } catch (e) {
+          console.error("FUNNEL_ROLETA_INTRO video error:", e.message);
+        }
+        await sleep(rand(500, 900));
         await bot.sendMessage(chatId,
           "Perfeito 😏\n\nMas pra me ver toda peladinha, e me ter bem putinha em um privado bem secreto, a gente vai ter que brincar de roleta da sorte.\n\nQuer tentar a sorte?",
           { reply_markup: { inline_keyboard: [
@@ -452,6 +459,13 @@ const worker = new Worker(
             ]}}
           );
         } else {
+          try {
+            const stream = fs.createReadStream(path.join(ASSETS_DIR, "win-photo.jpg"));
+            await bot.sendPhoto(chatId, stream);
+          } catch (e) {
+            console.error("FUNNEL_SPIN win photo error:", e.message);
+          }
+          await sleep(rand(400, 700));
           await bot.sendMessage(chatId,
             "🔥🔥 PORRA KKKKKK VC É MUITO SORTUDO CARALHO!! 🔥🔥\n\nDessa vez caiu o seu número!!\n\nAcabei de liberar o acesso pro meu privado.\n\nClica no botão abaixo e entra agora no meu privado pra me ver peladinha na chamada de vídeo 😈💦",
             { reply_markup: { inline_keyboard: [[{
