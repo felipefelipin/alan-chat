@@ -214,7 +214,7 @@ async function sendFunnelVideo(chatId, filename) {
     return bot.sendVideo(chatId, cached);
   }
   const stream = fs.createReadStream(path.join(ASSETS_DIR, filename));
-  const sent = await bot.sendVideo(chatId, stream);
+  const sent = await bot.sendVideo(chatId, stream, {}, { filename, contentType: "video/mp4" });
   const fid = sent?.video?.file_id;
   if (fid) fileIdCache.set(filename, fid);
   return sent;
@@ -226,7 +226,7 @@ async function sendFunnelPhoto(chatId, filename) {
     return bot.sendPhoto(chatId, cached);
   }
   const stream = fs.createReadStream(path.join(ASSETS_DIR, filename));
-  const sent = await bot.sendPhoto(chatId, stream);
+  const sent = await bot.sendPhoto(chatId, stream, {}, { filename, contentType: "image/jpeg" });
   const fid = sent?.photo?.at(-1)?.file_id;
   if (fid) fileIdCache.set(filename, fid);
   return sent;
