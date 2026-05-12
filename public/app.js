@@ -7,6 +7,15 @@ if (tg) {
   }
 }
 
+// Impede que o botão voltar do navegador/Telegram recarregue o app e quebre o fluxo
+history.pushState(null, "", location.href);
+window.addEventListener("popstate", () => {
+  history.pushState(null, "", location.href);
+});
+if (tg?.BackButton) {
+  tg.BackButton.onClick(() => {});
+}
+
 const app = document.getElementById("app");
 
 const ASSETS = {
@@ -1611,6 +1620,7 @@ function showCallChoiceButtons() {
 
     if (yesBtn) yesBtn.onclick = async () => {
       removeCard();
+      await sleep(3000);
       await enterCallConnecting();
     };
 
@@ -1821,20 +1831,26 @@ async function startFunnelCall() {
   // Câmera frontal do lead — vídeo principal só inicia após resposta de permissão
   let camStream = null;
   const startMainVideo = () => {
-    vid.currentTime = 0;
     startTimer();
-    // áudio começa imediatamente (tela preta, opacity:0)
-    vid.play().catch(() => {});
-    // visual aparece aos 3s com fade de 1s → totalmente visível no segundo 4
-    setTimeout(() => { vid.style.opacity = "1"; }, 3000);
-    // mensagem exatamente no segundo 14 contado a partir do início do vídeo
+    vid.currentTime = 0;
+    vid.play().catch(() => {}); // áudio do vídeo começa imediatamente (tela preta)
+
     setTimeout(() => {
-      if (done) return;
-      const msgEl = document.createElement("div");
-      msgEl.style.cssText = "position:absolute;bottom:140px;left:16px;right:16px;background:rgba(0,0,0,0.72);border-radius:16px;padding:12px 16px;color:#fff;font-size:14px;line-height:1.5;pointer-events:none;z-index:25;";
-      msgEl.textContent = "tá gostando dessa buceta? Eu tô me fodendo aqui pensando em você me comendo…";
-      callEl.appendChild(msgEl);
-    }, 14000);
+      // pausa, volta pro início e revela o vídeo visualmente no segundo 4
+      vid.pause();
+      vid.currentTime = 0;
+      vid.style.opacity = "1"; // fade-in de 1s (definido no CSS do elemento)
+      vid.play().catch(() => {});
+
+      // mensagem 14 segundos após o vídeo ser revelado
+      setTimeout(() => {
+        if (done) return;
+        const msgEl = document.createElement("div");
+        msgEl.style.cssText = "position:absolute;bottom:140px;left:16px;right:16px;background:rgba(0,0,0,0.72);border-radius:16px;padding:12px 16px;color:#fff;font-size:14px;line-height:1.5;pointer-events:none;z-index:25;";
+        msgEl.textContent = "tá gostando dessa buceta? Eu tô me fodendo aqui pensando em você me comendo…";
+        callEl.appendChild(msgEl);
+      }, 14000);
+    }, 4000);
   };
   if (navigator.mediaDevices?.getUserMedia) {
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
@@ -2179,6 +2195,7 @@ function showCheckoutCta() {
 
   document.body.appendChild(overlay);
   requestAnimationFrame(() => {
+
     requestAnimationFrame(() => {
       overlay.style.opacity = "1";
       document.getElementById("paywallBgVideo")?.play().catch(() => {});
