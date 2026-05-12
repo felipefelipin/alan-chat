@@ -2178,8 +2178,10 @@ function showCheckoutCta() {
 
   document.body.appendChild(overlay);
   requestAnimationFrame(() => {
-    overlay.style.opacity = "1";
-    document.getElementById("paywallBgVideo")?.play().catch(() => {});
+    requestAnimationFrame(() => {
+      overlay.style.opacity = "1";
+      document.getElementById("paywallBgVideo")?.play().catch(() => {});
+    });
   });
 
   setTimeout(() => {
