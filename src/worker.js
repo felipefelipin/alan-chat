@@ -230,14 +230,17 @@ async function saveFileIdToDB(filename, fileId) {
   }
 }
 
-async function sendFunnelVideo(chatId, filename) {
+async function sendFunnelVideo(chatId, filename, opts = {}) {
   const cached = fileIdCache.get(filename);
+  const msgOpts = {};
+  if (opts.caption)      msgOpts.caption      = opts.caption;
+  if (opts.reply_markup) msgOpts.reply_markup = opts.reply_markup;
   let sent;
   if (cached) {
-    sent = await bot.sendVideo(chatId, cached);
+    sent = await bot.sendVideo(chatId, cached, msgOpts);
   } else {
     const stream = fs.createReadStream(path.join(ASSETS_DIR, filename));
-    sent = await bot.sendVideo(chatId, stream, {}, { filename, contentType: "video/mp4" });
+    sent = await bot.sendVideo(chatId, stream, msgOpts, { filename, contentType: "video/mp4" });
     const fid = sent?.video?.file_id;
     if (fid) { fileIdCache.set(filename, fid); saveFileIdToDB(filename, fid); }
   }
@@ -573,28 +576,25 @@ const worker = new Worker(
       }
 
       if (type === "FUNNEL_STEP2") {
-        await sendFunnelVideo(chatId, "step2-video.mp4").catch(e => console.error("FUNNEL_STEP2 video:", e.message));
-        await sleep(rand(300, 500));
         await sendSocialProof(chatId);
         await sleep(rand(300, 500));
         await fm(chatId, "Que bom... Eu também tô bem, mas bem safadinha hoje 👀💦");
         await sleep(300);
         await fm(chatId, "Sabe, eu só faço chamada de vídeo peladinha pra quem realmente me excita de verdade...");
         await sleep(300);
-        await fm(chatId, "Topa uma chamada bem gostosa e sem censura comigo agora?",
-          { reply_markup: { inline_keyboard: [
+        await sendFunnelVideo(chatId, "step2-video.mp4", {
+          caption: "Topa uma chamada bem gostosa e sem censura comigo agora?",
+          reply_markup: { inline_keyboard: [
             [{ text: "Quero sim 😈",           callback_data: "quero_video",     style: "success" }],
             [{ text: "Tô afim pra caralho 🔥", callback_data: "quero_video"                       }],
             [{ text: "Me mostra primeiro",      callback_data: "mostra_primeiro", style: "primary" }],
-          ]}}
-        );
+          ]},
+        }).catch(e => console.error("FUNNEL_STEP2 video:", e.message));
         await logEventSafe(chatId, "FUNNEL_STEP2", {});
         return;
       }
 
       if (type === "FUNNEL_ROLETA_INTRO") {
-        await sendFunnelVideo(chatId, "step3-video.mp4").catch(e => console.error("FUNNEL_ROLETA_INTRO video:", e.message));
-        await sleep(rand(300, 500));
         await sendSocialProof(chatId);
         await sleep(rand(300, 500));
         await fm(chatId, "Perfeito 😏");
@@ -603,12 +603,13 @@ const worker = new Worker(
         await sleep(300);
         await fm(chatId, "Você tem que acertar a sequencia de 3 numeros, se tiver essa sorte vai conseguir me ter bem putinha no meu privadinho safado 🥵");
         await sleep(300);
-        await fm(chatId, "Quer tentar a sorte? 👀",
-          { reply_markup: { inline_keyboard: [
+        await sendFunnelVideo(chatId, "step3-video.mp4", {
+          caption: "Quer tentar a sorte? 👀",
+          reply_markup: { inline_keyboard: [
             [{ text: "Quero tentar a sorte 🎰",   callback_data: "tentar_roleta_1", style: "success" }],
             [{ text: "Tô com muita sorte hoje 😈", callback_data: "tentar_roleta_1", style: "primary" }],
-          ]}}
-        );
+          ]},
+        }).catch(e => console.error("FUNNEL_ROLETA_INTRO video:", e.message));
         await logEventSafe(chatId, "FUNNEL_ROLETA_INTRO", {});
         return;
       }
