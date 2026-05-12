@@ -208,6 +208,28 @@ async function sendVideoWithAction(chatId, file, opts = {}) {
 // ═══════════════════════════════════════════════════════════════════════
 const fileIdCache = new Map();
 
+async function loadFileCacheFromDB() {
+  try {
+    const rows = await prisma.fileCache.findMany();
+    for (const row of rows) fileIdCache.set(row.filename, row.fileId);
+    if (rows.length) console.log(`[cache] carregados ${rows.length} file_ids do banco`);
+  } catch (e) {
+    console.error("[cache] erro ao carregar do banco:", e.message);
+  }
+}
+
+async function saveFileIdToDB(filename, fileId) {
+  try {
+    await prisma.fileCache.upsert({
+      where:  { filename },
+      update: { fileId },
+      create: { filename, fileId },
+    });
+  } catch (e) {
+    console.error("[cache] erro ao salvar no banco:", e.message);
+  }
+}
+
 async function sendFunnelVideo(chatId, filename) {
   const cached = fileIdCache.get(filename);
   if (cached) {
@@ -216,7 +238,7 @@ async function sendFunnelVideo(chatId, filename) {
   const stream = fs.createReadStream(path.join(ASSETS_DIR, filename));
   const sent = await bot.sendVideo(chatId, stream, {}, { filename, contentType: "video/mp4" });
   const fid = sent?.video?.file_id;
-  if (fid) fileIdCache.set(filename, fid);
+  if (fid) { fileIdCache.set(filename, fid); saveFileIdToDB(filename, fid); }
   return sent;
 }
 
@@ -228,9 +250,11 @@ async function sendFunnelPhoto(chatId, filename) {
   const stream = fs.createReadStream(path.join(ASSETS_DIR, filename));
   const sent = await bot.sendPhoto(chatId, stream, {}, { filename, contentType: "image/jpeg" });
   const fid = sent?.photo?.at(-1)?.file_id;
-  if (fid) fileIdCache.set(filename, fid);
+  if (fid) { fileIdCache.set(filename, fid); saveFileIdToDB(filename, fid); }
   return sent;
 }
+
+loadFileCacheFromDB();
 
 // ═══════════════════════════════════════════════════════════════════════
 // PROVA SOCIAL — nomes e mensagens aleatórias de "alguém acabou de entrar"

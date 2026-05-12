@@ -139,7 +139,7 @@ bot.onText(/^\/start/, async (msg) => {
   await schedulePreNudge(chatId);
   await queue.add("jobs",
     { type: "FUNNEL_START", chatId: String(chatId), data: {} },
-    { delay: rand(400, 900), jobId: jid("funnel_start", chatId), removeOnComplete: true, removeOnFail: true }
+    { jobId: jid("funnel_start", chatId), removeOnComplete: true, removeOnFail: true }
   );
 });
 

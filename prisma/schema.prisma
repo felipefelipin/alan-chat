@@ -40,3 +40,9 @@ model Event {
 
   user User @relation(fields: [userId], references: [id])
 }
+
+model FileCache {
+  filename  String   @id
+  fileId    String
+  updatedAt DateTime @updatedAt
+}
