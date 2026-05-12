@@ -1,10 +1,14 @@
 // src/worker.js
 require("dotenv").config();
 
+const fs   = require("fs");
+const path = require("path");
 const { Worker } = require("bullmq");
 const TelegramBot = require("node-telegram-bot-api");
 const { PrismaClient } = require("@prisma/client");
 const { connection } = require("./queue");
+
+const ASSETS_DIR = path.join(__dirname, "..", "public", "assets");
 
 const prisma = new PrismaClient({ log: ["error", "warn"] });
 
@@ -356,8 +360,12 @@ const worker = new Worker(
       }
 
       if (type === "FUNNEL_STEP2") {
-        await bot.sendVideo(chatId, assetUrl("step2-video.mp4"))
-          .catch(e => console.error("FUNNEL_STEP2 video error:", e.message));
+        try {
+          const stream = fs.createReadStream(path.join(ASSETS_DIR, "step2-video.mp4"));
+          await bot.sendVideo(chatId, stream);
+        } catch (e) {
+          console.error("FUNNEL_STEP2 video error:", e.message);
+        }
         await sleep(rand(500, 900));
         await bot.sendMessage(chatId,
           "Que bom... Eu também tô bem, mas bem safadinha hoje 👀💦\n\nSabe, eu só faço chamada de vídeo peladinha pra quem realmente me excita de verdade...\n\nTopa uma chamada bem gostosa e sem censura comigo agora?",
