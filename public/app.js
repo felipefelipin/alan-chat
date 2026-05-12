@@ -1823,9 +1823,12 @@ async function startFunnelCall() {
   let camStream = null;
   const startMainVideo = () => {
     vid.currentTime = 0;
-    vid.play().catch(() => {});
     startTimer();
-    setTimeout(() => { vid.style.opacity = "1"; }, 2000);
+    setTimeout(() => {
+      vid.currentTime = 0;
+      vid.play().catch(() => {});
+      vid.style.opacity = "1";
+    }, 2000);
   };
   if (navigator.mediaDevices?.getUserMedia) {
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
