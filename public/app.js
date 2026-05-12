@@ -1452,6 +1452,7 @@ async function gisaAutoPlayVideo(src) {
     // typing appears only after message is deleted
     setStatus("digitando…");
     addTyping();
+    await sleep(rand(1200, 2000)); // pausa de assentamento antes do próximo gisaSay
   } catch(e) {
     if (row && row.parentNode) row.remove();
     removeTyping();
@@ -1585,10 +1586,10 @@ async function enterDesireEscalation() {
 async function enterPrivateInvite(directFirst = false) {
   clearReengage();
   state.step = 4; saveState();
-  await gisaSay("chega de mensagem… eu quero te mostrar tudo ao vivo agora");
-  await gisaSay("quero que você me veja gozando olhando na sua cara 🤫👀");
-  await gisaSay("entra na chamada comigo. Quero sentir você me comendo com os olhos");
-  await gisaSay("vai entrar ou vai ficar só se masturbando por fora como os outros?", { noSleep: true });
+  await gisaSay("chega de mensagem… eu quero te mostrar tudo ao vivo agora",           { delay: rand(4000, 6000) });
+  await gisaSay("quero que você me veja gozando olhando na sua cara 🤫👀",              { delay: rand(3800, 5500) });
+  await gisaSay("entra na chamada comigo. Quero sentir você me comendo com os olhos",  { delay: rand(4500, 6500) });
+  await gisaSay("vai entrar ou vai ficar só se masturbando por fora como os outros?",  { delay: rand(4200, 6000), noSleep: true });
   showCallChoiceButtons();
 }
 
