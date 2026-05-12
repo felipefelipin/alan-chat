@@ -289,8 +289,10 @@ async function fm(chatId, text, opts = {}, { noTyping = false } = {}) {
   const hasRealText = String(text || "").trim().length > 2;
   const hasButtons  = !!opts?.reply_markup?.inline_keyboard;
   if (hasRealText && !hasButtons && !noTyping) {
+    const len = String(text || "").trim().length;
+    const ms  = Math.min(3000, Math.max(800, 800 + len * 14));
     await bot.sendChatAction(chatId, "typing").catch(() => {});
-    await sleep(400);
+    await sleep(jitter(ms, 0.15));
   }
   const sent = await bot.sendMessage(chatId, text, opts);
   if (sent?.message_id) saveFunnelMsg(chatId, sent.message_id);
