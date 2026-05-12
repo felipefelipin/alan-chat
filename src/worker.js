@@ -405,6 +405,8 @@ const worker = new Worker(
             ],
           },
         });
+        await sleep(300);
+        await bot.sendMessage(chatId, "✅ Pagamento confirmado = Liberação na hora!\nAssim que o pagamento for aprovado você recebe o link do grupo ou meu WhatsApp em menos de 30");
 
         await logEventSafe(chatId, "SEND_PLANS", {});
         return;
