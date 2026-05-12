@@ -373,7 +373,7 @@ const worker = new Worker(
           reply_markup: {
             inline_keyboard: [
               [{ text: "🚀 ACESSO AO VIVO — R$ 29,90",       callback_data: "plan:basic", style: "primary" }],
-              [{ text: "💎 PREMIUM — R$ 49,90 🔥",            callback_data: "plan:plus",  style: "success" }],
+              [{ text: "💎 PREMIUM — R$ 49,90 🔥",            callback_data: "plan:plus"                   }],
               [{ text: "👑 VIP TOTAL — R$ 97,00",             callback_data: "plan:vip",   style: "success" }],
             ],
           },
@@ -501,14 +501,13 @@ const worker = new Worker(
       // ═══════════════════════════════════════════════════════════════════════
 
       if (type === "FUNNEL_START") {
-        // cache-bust garante que o Telegram baixa a versão mais recente
-        await bot.sendPhoto(chatId, assetUrl("intro.jpg") + "?v=" + Date.now());
+        await sendFunnelVideo(chatId, "intro-video.mp4").catch(e => console.error("FUNNEL_START video:", e.message));
         await sleep(rand(400, 700));
         await bot.sendMessage(chatId,
           "Oi gato 😈\n\nAcabei de acordar toda molhada pensando em um homem de verdade...\n\nTá tudo bem por aí?",
           { reply_markup: { inline_keyboard: [
             [{ text: "Tô bem 🔥",            callback_data: "start_sim",   style: "success" }],
-            [{ text: "Tô ótimo, e você? 😏",  callback_data: "start_otimo", style: "success" }],
+            [{ text: "Tô ótimo, e você? 😏",  callback_data: "start_otimo"                   }],
             [{ text: "Tô afim de você 💦",    callback_data: "start_afim",  style: "primary" }],
           ]}}
         );
@@ -525,7 +524,7 @@ const worker = new Worker(
           "Que bom... Eu também tô bem, mas bem safadinha hoje 👀💦\n\nSabe, eu só faço chamada de vídeo peladinha pra quem realmente me excita de verdade...\n\nTopa uma chamada bem gostosa e sem censura comigo agora?",
           { reply_markup: { inline_keyboard: [
             [{ text: "Quero sim 😈",           callback_data: "quero_video",     style: "success" }],
-            [{ text: "Tô afim pra caralho 🔥", callback_data: "quero_video",     style: "success" }],
+            [{ text: "Tô afim pra caralho 🔥", callback_data: "quero_video"                       }],
             [{ text: "Me mostra primeiro",      callback_data: "mostra_primeiro", style: "primary" }],
           ]}}
         );

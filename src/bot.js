@@ -94,7 +94,7 @@ async function sendPlans(chatId) {
       text: "👇",
       extra: { reply_markup: { inline_keyboard: [
         [{ text: "basic", callback_data: "plan:basic", style: "primary" }],
-        [{ text: "plus",  callback_data: "plan:plus",  style: "success" }],
+        [{ text: "plus",  callback_data: "plan:plus"                   }],
         [{ text: "vip",   callback_data: "plan:vip",   style: "success" }],
       ]}},
     }},
