@@ -389,7 +389,7 @@ const worker = new Worker(
         if (user.pagou) return;
         if (user.etapa !== "webapp_pending") return;
 
-        await sendHuman(chatId, "você travou?", {}, { autoSplit: true });
+        await sendHuman(chatId, "Entra logo seu gostoso... 🥵🔥", {}, { autoSplit: true });
         await sendHuman(chatId, "eu não vou deixar isso aberto por muito tempo.", {}, { autoSplit: true });
 
         await logEventSafe(chatId, "PRE_NUDGE_SENT", {});
@@ -538,7 +538,7 @@ const worker = new Worker(
         await sendSocialProof(chatId);
         await sleep(rand(300, 500));
         await bot.sendMessage(chatId,
-          "Perfeito 😏\n\nMas pra me ver toda peladinha, e me ter bem putinha em um privado bem secreto, a gente vai ter que brincar de roleta da sorte.\n\nQuer tentar a sorte?",
+          "Perfeito 😏\n\nMas pra me ver toda peladinha, e me ter bem putinha em um privado bem secreto, a gente vai ter que brincar de roleta da sorte. E você tem que acertar a sequencia de 3 numeros, se tiver essa sorte vai conseguir me ter bem putinha no meu privadinho safado 🥵🔥\n\nQuer tentar a sorte? 👀",
           { reply_markup: { inline_keyboard: [
             [{ text: "Quero tentar a sorte 🎰",   callback_data: "tentar_roleta_1", style: "success" }],
             [{ text: "Tô com muita sorte hoje 😈", callback_data: "tentar_roleta_1", style: "primary" }],
