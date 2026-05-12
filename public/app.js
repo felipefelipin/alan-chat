@@ -1950,6 +1950,7 @@ function addCallNotifBubble(seconds) {
 }
 
 async function doCallPaywall() {
+  await gisaSay("eu tô louca pra gozar pra você, mas pra liberar tudo vc tem que liberar abaixo mb... 💋");
   showCheckoutCta();
 }
 
