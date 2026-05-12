@@ -451,6 +451,13 @@ const worker = new Worker(
         await sleep(900);
 
         if (round === 1) {
+          try {
+            const stream = fs.createReadStream(path.join(ASSETS_DIR, "lose-video.mp4"));
+            await bot.sendVideo(chatId, stream);
+          } catch (e) {
+            console.error("FUNNEL_SPIN lose video error:", e.message);
+          }
+          await sleep(rand(400, 700));
           await bot.sendMessage(chatId,
             `Quase... caiu o <b>${result}</b> 😔\n\nNão foi dessa vez... mas você ainda tem uma última chance.\n\nQuer tentar de novo?`,
             { parse_mode: "HTML", reply_markup: { inline_keyboard: [
