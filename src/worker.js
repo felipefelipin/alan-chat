@@ -736,7 +736,7 @@ const worker = new Worker(
           await sleep(300);
           await fm(chatId, "Entra agora pra me ver peladinha na chamada de vídeo 💦",
             { reply_markup: { inline_keyboard: [[{
-              text: "🚀 ENTRAR NO MINI APP AGORA",
+              text: "ENTRAR NO MEU PRIVADO AGORA 😈",
               web_app: { url: process.env.WEBAPP_URL },
               style: "success",
             }]]}}
