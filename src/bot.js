@@ -79,7 +79,6 @@ async function scheduleRemarketingJobs(chatId, etapa) {
 
 async function sendPlans(chatId) {
   await setEtapa(chatId, "checkout");
-  await scheduleRemarketingJobs(chatId, "checkout");
 
   await queue.add("jobs",
     { type: "SEND_MESSAGE", chatId: String(chatId), data: { text: "tá… agora escolhe como você quer entrar.", autoSplit: true } },

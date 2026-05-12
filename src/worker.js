@@ -508,21 +508,6 @@ const worker = new Worker(
             });
           }
 
-        // ── checkout: viu os planos mas não escolheu ─────────────────────────
-        } else if (etapa === "checkout") {
-          if (stage === "10m") {
-            await sendSocialProof(chatId);
-            await sleep(rand(1200, 2000));
-            await sendHuman(chatId, "você travou na hora de escolher?", {}, { autoSplit: true });
-            await sendHuman(chatId, "enquanto você pensa, outros já estão dentro 👀", {}, { autoSplit: true });
-          } else if (stage === "1h") {
-            await sendHuman(chatId, "ainda tenho uma vaga separada no seu nome...", {}, { autoSplit: true });
-            await sendHuman(chatId, "mas não fico esperando pra sempre 🔒", {}, { autoSplit: true });
-          } else if (stage === "24h") {
-            await sendHuman(chatId, "última chamada.", {}, { autoSplit: true });
-            await sendHuman(chatId, "depois isso fecha e crio fila de espera.", {}, { autoSplit: true });
-          }
-
         // ── pagamento: escolheu plano mas não pagou ──────────────────────────
         } else if (etapa === "pagamento") {
           if (stage === "10m") {
