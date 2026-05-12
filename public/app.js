@@ -1414,8 +1414,9 @@ async function gisaAutoPlayVideo(src) {
       if (vid) { vid.pause(); vid.src = ""; vid.load(); }
       const bubble = row.querySelector(".bubble");
       if (bubble) {
-        // instant content swap, then fade-in only — zero lag before text appears
         bubble.classList.add("bubble-deleted");
+        bubble.classList.remove("bubble-videoCard");
+        bubble.style.width = "";
         bubble.innerHTML = `<span class="deleted-msg"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>Esta mensagem foi apagada</span>`;
         bubble.style.opacity = "0";
         bubble.style.transition = "";

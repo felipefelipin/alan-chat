@@ -10,7 +10,7 @@ module.exports = async function handler(req, res) {
 
   const id = String(chatId);
   const base = `https://api.telegram.org/bot${BOT_TOKEN}`;
-  const assetsBase = `https://${req.headers.host}/assets`;
+  const assetsBase = (process.env.PUBLIC_ASSETS_BASE || `https://${req.headers.host}/assets`).replace(/\/+$/, "");
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   const sendMsg = (text, extra = {}) =>
@@ -29,39 +29,23 @@ module.exports = async function handler(req, res) {
 
   try {
     // 1. Vídeo
-    await sendVideo(`${assetsBase}/checkout-video.mp4`);
-    await sleep(900);
+    const videoRes = await sendVideo(`${assetsBase}/checkout-video.mp4`);
+    const videoJson = await videoRes.json().catch(() => ({}));
+    if (!videoJson.ok) console.error("sendVideo failed:", JSON.stringify(videoJson));
+    await sleep(1200);
 
-    // 2. Intro
+    // 2. Copy + planos
     await sendMsg(
-      `🔥 ATENÇÃO: VAGAS LIMITADAS HOJE\n\nTô aqui toda molhada te esperando...\n\nEscolhe agora e garante seu lugar no Ao Vivo + conteúdo particular.\n\n✅ <b>Pagamento confirmado = Liberação imediata</b>\n\nAssim que pagar, você entra no grupo ou recebe meu WhatsApp <b>em poucos segundos</b>.`
-    );
-    await sleep(700);
-
-    // 3. Pacote 1
-    await sendMsg(
-      `🚀 <b>PACOTE 1 - ACESSO AO VIVO</b>\nR$ 29,90\n\n• Entrada imediata no grupo do Ao Vivo\n• 20 fotos exclusivas\n• Acesso durante toda a live`,
-      { reply_markup: { inline_keyboard: [[{ text: "Entrar no Ao Vivo Agora", callback_data: "plan:basic" }]] } }
-    );
-    await sleep(700);
-
-    // 4. Pacote 2
-    await sendMsg(
-      `💎 <b>PACOTE 2 - PREMIUM (MAIS ESCOLHIDO 🔥)</b>\nR$ 49,90\n\n• Tudo do Pacote 1\n• 40 fotos + 8 vídeos exclusivos\n• Prioridade nos comentários da live\n• Conteúdo extra após o Ao Vivo`,
-      { reply_markup: { inline_keyboard: [[{ text: "Quero o Premium 🔥", callback_data: "plan:plus" }]] } }
-    );
-    await sleep(700);
-
-    // 5. Pacote 3
-    await sendMsg(
-      `👑 <b>PACOTE 3 - VIP TOTAL (Mais Forte)</b>\nR$ 97,00\n\n• Tudo do Pacote 2\n• <b>Meu WhatsApp pessoal</b>\n• <b>Chamada de vídeo particular</b> (15 a 20 minutos peladinha só pra você)\n• Conteúdo exclusivo por 7 dias`,
-      { reply_markup: { inline_keyboard: [[{ text: "Quero o VIP - WhatsApp + Chamada", callback_data: "plan:vip" }]] } }
-    );
-    await sleep(700);
-
-    // 6. Rodapé
-    await sendMsg(
-      `⚡ <b>Entrega imediata após o pagamento!</b>\nAssim que confirmar o pagamento, você receberá o link do grupo ou meu WhatsApp <b>na hora</b>, em menos de 30 segundos. Sem espera.`
+      `🔥 <b>EU PAREÇO INOCENTE... MAS NÃO SOU 😈</b>\n\nCresci sendo vista como a boa moça, carinha de anjinho...\nMas no fundo eu sou uma safada que adora ficar peladinha, rebolando gostoso, abrindo as pernas e gemendo alto na frente de homem de verdade 💦\nAgora eu mostro tudinho: bucetinha molhada, sentando gostoso, gozando de verdade e fazendo tudo que você mandar...\nDeixa eu te contar o que te espera no meu cantinho VIP:\n\n🔥 Acesso TOTAL sem censura (fotos e vídeos explícitos)\n🔥 Ao Vivo interativo: eu faço tudo que você pedir\n🔥 Chamadas de vídeo particulares peladinha\n🎁 Bônus: sorteios e conteúdo extra pra quem é VIP\n\nSe você sempre quis ver essa putinha fingida de santinha gemendo seu nome... essa é a hora, safado 🔥💦\n\n<b>VEM DESVENDAR MEU SEGREDINHO 😈</b>`,
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "VIP 7 DIAS — R$ 19,90",                    callback_data: "plan:basic" }],
+            [{ text: "VIP 30 DIAS + BÔNUS — R$ 29,90 🔥",        callback_data: "plan:plus"  }],
+            [{ text: "VITALÍCIO + WHATSAPP + CHAMADA — R$ 84,90", callback_data: "plan:vip"   }],
+          ],
+        },
+      }
     );
 
     res.json({ ok: true });
