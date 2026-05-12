@@ -340,78 +340,51 @@ const worker = new Worker(
       // ═══════════════════════════════════════════════════════════════════════
 
       if (type === "FUNNEL_START") {
-        // 1) Foto provocante
         await sendPhotoWithAction(chatId, "intro.jpg");
-        await sleep(jitter(rand(900, 1600)));
-
-        // 2) Mensagem com 3 botões
-        await sendHuman(
-          chatId,
+        await sleep(rand(400, 700));
+        await bot.sendMessage(chatId,
           "Oi gato 😈\n\nAcabei de acordar toda molhada pensando em um homem de verdade...\n\nTá tudo bem por aí?",
-          {
-            reply_markup: {
-              inline_keyboard: [
-                [{ text: "Tô bem 🔥",            callback_data: "start_sim"   }],
-                [{ text: "Tô ótimo, e você? 😏",  callback_data: "start_otimo" }],
-                [{ text: "Tô afim de você 💦",    callback_data: "start_afim"  }],
-              ],
-            },
-          }
+          { reply_markup: { inline_keyboard: [
+            [{ text: "Tô bem 🔥",            callback_data: "start_sim"   }],
+            [{ text: "Tô ótimo, e você? 😏",  callback_data: "start_otimo" }],
+            [{ text: "Tô afim de você 💦",    callback_data: "start_afim"  }],
+          ]}}
         );
         await logEventSafe(chatId, "FUNNEL_START", {});
         return;
       }
 
       if (type === "FUNNEL_STEP2") {
-        await sendHuman(
-          chatId,
+        await bot.sendMessage(chatId,
           "Que bom... Eu também tô bem, mas bem safadinha hoje 👀💦\n\nSabe, eu só faço chamada de vídeo peladinha pra quem realmente me excita de verdade...\n\nTopa uma chamada bem gostosa e sem censura comigo agora?",
-          {
-            reply_markup: {
-              inline_keyboard: [
-                [{ text: "Quero sim 😈",            callback_data: "quero_video"     }],
-                [{ text: "Tô afim pra caralho 🔥",  callback_data: "quero_video"     }],
-                [{ text: "Me mostra primeiro",       callback_data: "mostra_primeiro" }],
-              ],
-            },
-          }
+          { reply_markup: { inline_keyboard: [
+            [{ text: "Quero sim 😈",           callback_data: "quero_video"     }],
+            [{ text: "Tô afim pra caralho 🔥", callback_data: "quero_video"     }],
+            [{ text: "Me mostra primeiro",      callback_data: "mostra_primeiro" }],
+          ]}}
         );
         await logEventSafe(chatId, "FUNNEL_STEP2", {});
         return;
       }
 
       if (type === "FUNNEL_ROLETA_INTRO") {
-        await sendHuman(
-          chatId,
+        await bot.sendMessage(chatId,
           "Perfeito 😏\n\nMas pra me ver toda peladinha, e me ter bem putinha em um privado bem secreto, a gente vai ter que brincar de roleta da sorte.\n\nQuer tentar a sorte?",
-          {
-            reply_markup: {
-              inline_keyboard: [
-                [{ text: "Quero tentar a sorte 🎰",    callback_data: "tentar_roleta_1" }],
-                [{ text: "Tô com muita sorte hoje 😈",  callback_data: "tentar_roleta_1" }],
-              ],
-            },
-          }
+          { reply_markup: { inline_keyboard: [
+            [{ text: "Quero tentar a sorte 🎰",   callback_data: "tentar_roleta_1" }],
+            [{ text: "Tô com muita sorte hoje 😈", callback_data: "tentar_roleta_1" }],
+          ]}}
         );
         await logEventSafe(chatId, "FUNNEL_ROLETA_INTRO", {});
         return;
       }
 
       if (type === "FUNNEL_NUM_GRID") {
-        const round = data?.round ?? 1;
-        const text  = round === 2
-          ? "Última chance! Escolhe seu número de 1 a 10:"
-          : "Escolhe um número de 1 a 10:";
-
+        const round  = data?.round ?? 1;
+        const label  = round === 2 ? "Última chance! Escolhe seu número de 1 a 10:" : "Escolhe um número de 1 a 10:";
         const numRow = (nums) => nums.map(n => ({ text: String(n), callback_data: `num${round}_${n}` }));
-
-        await sendHuman(chatId, text, {
-          reply_markup: {
-            inline_keyboard: [
-              numRow([1, 2, 3, 4, 5]),
-              numRow([6, 7, 8, 9, 10]),
-            ],
-          },
+        await bot.sendMessage(chatId, label, {
+          reply_markup: { inline_keyboard: [ numRow([1,2,3,4,5]), numRow([6,7,8,9,10]) ] },
         });
         await logEventSafe(chatId, "FUNNEL_NUM_GRID", { round });
         return;
@@ -420,16 +393,11 @@ const worker = new Worker(
       if (type === "FUNNEL_NUM_CHOSEN") {
         const round  = data?.round  ?? 1;
         const chosen = data?.chosen ?? 1;
-
-        await sendHuman(
-          chatId,
+        await bot.sendMessage(chatId,
           `Beleza! Escolheu o <b>${chosen}</b>.\n\nVou girar a roleta...`,
-          {
-            parse_mode: "HTML",
-            reply_markup: {
-              inline_keyboard: [[{ text: "🎰 Girar Roleta", callback_data: `spin${round}_${chosen}` }]],
-            },
-          }
+          { parse_mode: "HTML", reply_markup: { inline_keyboard: [
+            [{ text: "🎰 Girar Roleta", callback_data: `spin${round}_${chosen}` }],
+          ]}}
         );
         await logEventSafe(chatId, "FUNNEL_NUM_CHOSEN", { round, chosen });
         return;
@@ -439,39 +407,27 @@ const worker = new Worker(
         const round  = data?.round  ?? 1;
         const chosen = data?.chosen ?? 1;
 
-        await sleep(jitter(rand(1800, 3000))); // suspense antes de revelar
+        // 🎰 Roleta real nativa do Telegram
+        await bot.sendDice(chatId, { emoji: "🎰" });
+        await sleep(4000); // aguarda a animação terminar
 
         if (round === 1) {
-          // Sempre perde na primeira tentativa
           let fell = rand(1, 10);
           while (fell === chosen) fell = rand(1, 10);
-
-          await sendHuman(
-            chatId,
+          await bot.sendMessage(chatId,
             `Quase... caiu o <b>${fell}</b> 😔\n\nNão foi dessa vez... mas você ainda tem uma última chance.\n\nQuer tentar de novo?`,
-            {
-              parse_mode: "HTML",
-              reply_markup: {
-                inline_keyboard: [
-                  [{ text: "Quero tentar novamente 🔥", callback_data: "tentar_roleta_2" }],
-                  [{ text: "Desistir",                   callback_data: "desistir"         }],
-                ],
-              },
-            }
+            { parse_mode: "HTML", reply_markup: { inline_keyboard: [
+              [{ text: "Quero tentar novamente 🔥", callback_data: "tentar_roleta_2" }],
+              [{ text: "Desistir",                   callback_data: "desistir"         }],
+            ]}}
           );
         } else {
-          // Sempre ganha na segunda tentativa
-          await sendHuman(
-            chatId,
+          await bot.sendMessage(chatId,
             "🔥🔥 PORRA KKKKKK VC É MUITO SORTUDO CARALHO!! 🔥🔥\n\nDessa vez caiu o seu número!!\n\nAcabei de liberar o acesso pro meu privado.\n\nClica no botão abaixo e entra agora no meu privado pra me ver peladinha na chamada de vídeo 😈💦",
-            {
-              reply_markup: {
-                inline_keyboard: [[{
-                  text: "🚀 ENTRAR NO MINI APP AGORA",
-                  web_app: { url: process.env.WEBAPP_URL },
-                }]],
-              },
-            }
+            { reply_markup: { inline_keyboard: [[{
+              text: "🚀 ENTRAR NO MINI APP AGORA",
+              web_app: { url: process.env.WEBAPP_URL },
+            }]]}}
           );
           await prisma.user.update({
             where: { id: String(chatId) },
