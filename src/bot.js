@@ -33,7 +33,7 @@ function pickEchoWord(text) {
 async function upsertUser(chatId) {
   return prisma.user.upsert({
     where:  { id: String(chatId) },
-    update: {},
+    update: { etapa: "engajado" },
     create: { id: String(chatId), etapa: "engajado", pagou: false },
   });
 }

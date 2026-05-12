@@ -284,12 +284,12 @@ async function deleteFunnelMsgs(chatId) {
 }
 
 // wrapper: typing indicator + envia mensagem e salva o message_id automaticamente
-async function fm(chatId, text, opts = {}) {
+// noTyping: true → sem indicador (prova social, botões)
+async function fm(chatId, text, opts = {}, { noTyping = false } = {}) {
   const hasRealText = String(text || "").trim().length > 2;
-  if (hasRealText) {
+  if (hasRealText && !noTyping) {
     await bot.sendChatAction(chatId, "typing").catch(() => {});
-    const ms = Math.min(3000, Math.max(600, String(text).length * 40));
-    await sleep(ms);
+    await sleep(400);
   }
   const sent = await bot.sendMessage(chatId, text, opts);
   if (sent?.message_id) saveFunnelMsg(chatId, sent.message_id);
@@ -314,7 +314,7 @@ async function sendSocialProof(chatId) {
     `🚨 _${name} entrou há menos de 1 minuto_`,
     `⚡ _+1 homem entrou enquanto você lê isso_`,
   ];
-  await fm(chatId, templates[rand(0, templates.length - 1)], { parse_mode: "Markdown" });
+  await fm(chatId, templates[rand(0, templates.length - 1)], { parse_mode: "Markdown" }, { noTyping: true });
 }
 
 // ═══════════════════════════════════════════════════════════════════════
