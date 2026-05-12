@@ -232,29 +232,61 @@ async function saveFileIdToDB(filename, fileId) {
 
 async function sendFunnelVideo(chatId, filename) {
   const cached = fileIdCache.get(filename);
+  let sent;
   if (cached) {
-    return bot.sendVideo(chatId, cached);
+    sent = await bot.sendVideo(chatId, cached);
+  } else {
+    const stream = fs.createReadStream(path.join(ASSETS_DIR, filename));
+    sent = await bot.sendVideo(chatId, stream, {}, { filename, contentType: "video/mp4" });
+    const fid = sent?.video?.file_id;
+    if (fid) { fileIdCache.set(filename, fid); saveFileIdToDB(filename, fid); }
   }
-  const stream = fs.createReadStream(path.join(ASSETS_DIR, filename));
-  const sent = await bot.sendVideo(chatId, stream, {}, { filename, contentType: "video/mp4" });
-  const fid = sent?.video?.file_id;
-  if (fid) { fileIdCache.set(filename, fid); saveFileIdToDB(filename, fid); }
+  if (sent?.message_id) saveFunnelMsg(chatId, sent.message_id);
   return sent;
 }
 
 async function sendFunnelPhoto(chatId, filename) {
   const cached = fileIdCache.get(filename);
+  let sent;
   if (cached) {
-    return bot.sendPhoto(chatId, cached);
+    sent = await bot.sendPhoto(chatId, cached);
+  } else {
+    const stream = fs.createReadStream(path.join(ASSETS_DIR, filename));
+    sent = await bot.sendPhoto(chatId, stream, {}, { filename, contentType: "image/jpeg" });
+    const fid = sent?.photo?.at(-1)?.file_id;
+    if (fid) { fileIdCache.set(filename, fid); saveFileIdToDB(filename, fid); }
   }
-  const stream = fs.createReadStream(path.join(ASSETS_DIR, filename));
-  const sent = await bot.sendPhoto(chatId, stream, {}, { filename, contentType: "image/jpeg" });
-  const fid = sent?.photo?.at(-1)?.file_id;
-  if (fid) { fileIdCache.set(filename, fid); saveFileIdToDB(filename, fid); }
+  if (sent?.message_id) saveFunnelMsg(chatId, sent.message_id);
   return sent;
 }
 
 loadFileCacheFromDB();
+
+// ═══════════════════════════════════════════════════════════════════════
+// RASTREIO DE MENSAGENS DO FUNIL — para apagar ao chegar no checkout
+// ═══════════════════════════════════════════════════════════════════════
+function saveFunnelMsg(chatId, messageId) {
+  prisma.funnelMessage.create({
+    data: { userId: String(chatId), messageId: Number(messageId) },
+  }).catch(() => {});
+}
+
+async function deleteFunnelMsgs(chatId) {
+  try {
+    const msgs = await prisma.funnelMessage.findMany({ where: { userId: String(chatId) } });
+    for (const m of msgs) {
+      await bot.deleteMessage(chatId, m.messageId).catch(() => {});
+    }
+    await prisma.funnelMessage.deleteMany({ where: { userId: String(chatId) } });
+  } catch (e) { console.error("[funnelMsg] delete error:", e.message); }
+}
+
+// wrapper: envia mensagem e salva o message_id automaticamente
+async function fm(chatId, text, opts = {}) {
+  const sent = await bot.sendMessage(chatId, text, opts);
+  if (sent?.message_id) saveFunnelMsg(chatId, sent.message_id);
+  return sent;
+}
 
 // ═══════════════════════════════════════════════════════════════════════
 // PROVA SOCIAL — nomes e mensagens aleatórias de "alguém acabou de entrar"
@@ -274,7 +306,7 @@ async function sendSocialProof(chatId) {
     `🚨 _${name} entrou há menos de 1 minuto_`,
     `⚡ _+1 homem entrou enquanto você lê isso_`,
   ];
-  await bot.sendMessage(chatId, templates[rand(0, templates.length - 1)], { parse_mode: "Markdown" });
+  await fm(chatId, templates[rand(0, templates.length - 1)], { parse_mode: "Markdown" });
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -288,7 +320,7 @@ async function sendProgressBar(chatId) {
     "🔓 *Verificando seu acesso...*\n\n🟥🟥🟥🟥⬛  `80%`",
     "✅ *Acesso liberado!*\n\n🟥🟥🟥🟥🟥  `100%`",
   ];
-  const msg = await bot.sendMessage(chatId, frames[0], { parse_mode: "Markdown" });
+  const msg = await fm(chatId, frames[0], { parse_mode: "Markdown" });
   const msgId = msg.message_id;
   const delays = [900, 700, 500, 800];
   for (let i = 1; i < frames.length; i++) {
@@ -387,6 +419,8 @@ const worker = new Worker(
 
       if (type === "SEND_PLANS") {
         await prisma.user.update({ where: { id: String(chatId) }, data: { etapa: "checkout" } }).catch(() => {});
+
+        await deleteFunnelMsgs(chatId);
 
         await sendFunnelVideo(chatId, "checkout-video.mp4");
         await sleep(500);
@@ -529,11 +563,11 @@ const worker = new Worker(
       if (type === "FUNNEL_START") {
         await sendFunnelVideo(chatId, "intro-video.mp4").catch(e => console.error("FUNNEL_START video:", e.message));
         await sleep(300);
-        await bot.sendMessage(chatId, "Oi gato 😈");
+        await fm(chatId, "Oi gato 😈");
         await sleep(300);
-        await bot.sendMessage(chatId, "Acabei de acordar toda molhada pensando em um homem de verdade...");
+        await fm(chatId, "Acabei de acordar toda molhada pensando em um homem de verdade...");
         await sleep(300);
-        await bot.sendMessage(chatId, "Tá tudo bem por aí?",
+        await fm(chatId, "Tá tudo bem por aí?",
           { reply_markup: { inline_keyboard: [
             [{ text: "Tô bem 🔥",            callback_data: "start_sim",   style: "success" }],
             [{ text: "Tô ótimo, e você? 😏",  callback_data: "start_otimo"                   }],
@@ -549,11 +583,11 @@ const worker = new Worker(
         await sleep(rand(300, 500));
         await sendSocialProof(chatId);
         await sleep(rand(300, 500));
-        await bot.sendMessage(chatId, "Que bom... Eu também tô bem, mas bem safadinha hoje 👀💦");
+        await fm(chatId, "Que bom... Eu também tô bem, mas bem safadinha hoje 👀💦");
         await sleep(300);
-        await bot.sendMessage(chatId, "Sabe, eu só faço chamada de vídeo peladinha pra quem realmente me excita de verdade...");
+        await fm(chatId, "Sabe, eu só faço chamada de vídeo peladinha pra quem realmente me excita de verdade...");
         await sleep(300);
-        await bot.sendMessage(chatId, "Topa uma chamada bem gostosa e sem censura comigo agora?",
+        await fm(chatId, "Topa uma chamada bem gostosa e sem censura comigo agora?",
           { reply_markup: { inline_keyboard: [
             [{ text: "Quero sim 😈",           callback_data: "quero_video",     style: "success" }],
             [{ text: "Tô afim pra caralho 🔥", callback_data: "quero_video"                       }],
@@ -569,13 +603,13 @@ const worker = new Worker(
         await sleep(rand(300, 500));
         await sendSocialProof(chatId);
         await sleep(rand(300, 500));
-        await bot.sendMessage(chatId, "Perfeito 😏");
+        await fm(chatId, "Perfeito 😏");
         await sleep(300);
-        await bot.sendMessage(chatId, "Mas pra me ver toda peladinha, e me ter bem putinha em um privado bem secreto, a gente vai ter que brincar de roleta da sorte 🎰");
+        await fm(chatId, "Mas pra me ver toda peladinha, e me ter bem putinha em um privado bem secreto, a gente vai ter que brincar de roleta da sorte 🎰");
         await sleep(300);
-        await bot.sendMessage(chatId, "Você tem que acertar a sequencia de 3 numeros, se tiver essa sorte vai conseguir me ter bem putinha no meu privadinho safado 🥵");
+        await fm(chatId, "Você tem que acertar a sequencia de 3 numeros, se tiver essa sorte vai conseguir me ter bem putinha no meu privadinho safado 🥵");
         await sleep(300);
-        await bot.sendMessage(chatId, "Quer tentar a sorte? 👀",
+        await fm(chatId, "Quer tentar a sorte? 👀",
           { reply_markup: { inline_keyboard: [
             [{ text: "Quero tentar a sorte 🎰",   callback_data: "tentar_roleta_1", style: "success" }],
             [{ text: "Tô com muita sorte hoje 😈", callback_data: "tentar_roleta_1", style: "primary" }],
@@ -589,7 +623,7 @@ const worker = new Worker(
         const round  = data?.round ?? 1;
         const label  = round === 2 ? "Última chance! Escolhe seu número de 1 a 10:" : "Escolhe um número de 1 a 10:";
         const numRow = (nums) => nums.map(n => ({ text: String(n), callback_data: `num${round}_${n}`, style: "primary" }));
-        await bot.sendMessage(chatId, label, {
+        await fm(chatId, label, {
           reply_markup: { inline_keyboard: [ numRow([1,2,3,4,5]), numRow([6,7,8,9,10]) ] },
         });
         await logEventSafe(chatId, "FUNNEL_NUM_GRID", { round });
@@ -599,9 +633,9 @@ const worker = new Worker(
       if (type === "FUNNEL_NUM_CHOSEN") {
         const round  = data?.round  ?? 1;
         const chosen = data?.chosen ?? 1;
-        await bot.sendMessage(chatId, `Beleza! Escolheu o ${chosen} 😏`);
+        await fm(chatId, `Beleza! Escolheu o ${chosen} 😏`);
         await sleep(300);
-        await bot.sendMessage(chatId, "CLIQUE ABAIXO PRA GIRAR A ROLETA... 👀🔥",
+        await fm(chatId, "CLIQUE ABAIXO PRA GIRAR A ROLETA... 👀🔥",
           { reply_markup: { inline_keyboard: [
             [{ text: "🎰 Girar Roleta", callback_data: `spin${round}_${chosen}`, style: "success" }],
           ]}}
@@ -634,7 +668,7 @@ const worker = new Worker(
           return `${status}\n\n🎰  ${col(a, locked[0])}  ${col(b, locked[1])}  ${col(c, locked[2])}  🎰`;
         };
 
-        const initMsg = await bot.sendMessage(
+        const initMsg = await fm(
           chatId,
           slotFrame("⚡ <i>girando...</i>", rn(), rn(), rn()),
           { parse_mode: "HTML" }
@@ -674,11 +708,11 @@ const worker = new Worker(
 
           await sendFunnelVideo(chatId, "lose-video.mp4").catch(e => console.error("lose video:", e.message));
           await sleep(300);
-          await bot.sendMessage(chatId, `Quase... caiu ${c1} — ${c2} — ${c3} 😔`);
+          await fm(chatId, `Quase... caiu ${c1} — ${c2} — ${c3} 😔`);
           await sleep(300);
-          await bot.sendMessage(chatId, "Não foi dessa vez...");
+          await fm(chatId, "Não foi dessa vez...");
           await sleep(300);
-          await bot.sendMessage(chatId, "Mas você ainda tem uma última chance. Quer tentar de novo?",
+          await fm(chatId, "Mas você ainda tem uma última chance. Quer tentar de novo?",
             { reply_markup: { inline_keyboard: [
               [{ text: "🔥 Quero tentar novamente", callback_data: "tentar_roleta_2", style: "success" }],
               [{ text: "Desistir",                   callback_data: "desistir",         style: "danger"  }],
@@ -694,13 +728,13 @@ const worker = new Worker(
           await sleep(300);
           await sendFunnelPhoto(chatId, "win-photo.jpg").catch(e => console.error("win photo:", e.message));
           await sleep(300);
-          await bot.sendMessage(chatId, "🔥🔥 PORRA KKKKKK VC É MUITO SORTUDO CARALHO!! 🔥🔥");
+          await fm(chatId, "🔥🔥 PORRA KKKKKK VC É MUITO SORTUDO CARALHO!! 🔥🔥");
           await sleep(300);
-          await bot.sendMessage(chatId, "Dessa vez caiu o seu número!!");
+          await fm(chatId, "Dessa vez caiu o seu número!!");
           await sleep(300);
-          await bot.sendMessage(chatId, "Acabei de liberar o acesso pro meu privado 😈");
+          await fm(chatId, "Acabei de liberar o acesso pro meu privado 😈");
           await sleep(300);
-          await bot.sendMessage(chatId, "Entra agora pra me ver peladinha na chamada de vídeo 💦",
+          await fm(chatId, "Entra agora pra me ver peladinha na chamada de vídeo 💦",
             { reply_markup: { inline_keyboard: [[{
               text: "🚀 ENTRAR NO MINI APP AGORA",
               web_app: { url: process.env.WEBAPP_URL },
@@ -708,9 +742,9 @@ const worker = new Worker(
             }]]}}
           );
           await sleep(500);
-          await bot.sendMessage(chatId, "Entra logo seu gostoso... 🥵🔥");
+          await fm(chatId, "Entra logo seu gostoso... 🥵🔥");
           await sleep(300);
-          await bot.sendMessage(chatId, "eu não vou deixar isso aberto por muito tempo.");
+          await fm(chatId, "eu não vou deixar isso aberto por muito tempo.");
           await prisma.user.update({
             where: { id: String(chatId) },
             data:  { etapa: "webapp_pending" },
