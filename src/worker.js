@@ -303,23 +303,6 @@ async function fm(chatId, text, opts = {}, { noTyping = false } = {}) {
 // ═══════════════════════════════════════════════════════════════════════
 // PROVA SOCIAL — nomes e mensagens aleatórias de "alguém acabou de entrar"
 // ═══════════════════════════════════════════════════════════════════════
-const SOCIAL_NAMES = [
-  "Lucas", "Matheus", "Gabriel", "Pedro", "Rafael",
-  "Bruno", "Diego", "Rodrigo", "Thiago", "Felipe",
-  "Eduardo", "Anderson", "Marcelo", "Carlos", "Vinicius",
-];
-
-async function sendSocialProof(chatId) {
-  const name = SOCIAL_NAMES[rand(0, SOCIAL_NAMES.length - 1)];
-  const templates = [
-    `🔥 _${name} acabou de entrar no privado agora_`,
-    `👀 _${name} liberou o acesso há pouco_`,
-    `💦 _${name} está no privado nesse momento_`,
-    `🚨 _${name} entrou há menos de 1 minuto_`,
-    `⚡ _+1 homem entrou enquanto você lê isso_`,
-  ];
-  await fm(chatId, templates[rand(0, templates.length - 1)], { parse_mode: "Markdown" }, { noTyping: true });
-}
 
 // ═══════════════════════════════════════════════════════════════════════
 // BARRA DE PROGRESSO — animação antes do checkout
@@ -485,8 +468,6 @@ const worker = new Worker(
         // ── webapp_pending: ganhou a roleta mas não entrou no mini app ──────
         if (etapa === "webapp_pending") {
           if (stage === "10m") {
-            await sendSocialProof(chatId);
-            await sleep(rand(800, 1200));
             await bot.sendMessage(chatId, "👇", {
               reply_markup: { inline_keyboard: [[{
                 text: "🔒 ENTRAR NO PRIVADO AGORA",
@@ -495,8 +476,6 @@ const worker = new Worker(
               }]]},
             });
           } else if (stage === "1h") {
-            await sendSocialProof(chatId);
-            await sleep(rand(1000, 1800));
             await sendHuman(chatId, "faz uma hora que você me deixou esperando...", {}, { autoSplit: true });
             await sendHuman(chatId, "vou fechar o seu acesso daqui a pouco 🔒", {}, { autoSplit: true });
             await sleep(rand(800, 1200));
@@ -576,8 +555,6 @@ const worker = new Worker(
       }
 
       if (type === "FUNNEL_STEP2") {
-        await sendSocialProof(chatId);
-        await sleep(rand(300, 500));
         await fm(chatId, "Que bom... Eu também tô bem, mas bem safadinha hoje 👀💦");
         await sleep(300);
         await fm(chatId, "Sabe, eu só faço chamada de vídeo peladinha pra quem realmente me excita de verdade...");
@@ -595,8 +572,6 @@ const worker = new Worker(
       }
 
       if (type === "FUNNEL_ROLETA_INTRO") {
-        await sendSocialProof(chatId);
-        await sleep(rand(300, 500));
         await fm(chatId, "Perfeito 😏");
         await sleep(300);
         await fm(chatId, "Mas pra me ver toda peladinha, e me ter bem putinha em um privado bem secreto, a gente vai ter que brincar de roleta da sorte 🎰");
@@ -718,8 +693,6 @@ const worker = new Worker(
           await sleep(800);
 
           await sendProgressBar(chatId);
-          await sleep(300);
-          await sendSocialProof(chatId);
           await sleep(300);
           await sendFunnelPhoto(chatId, "win-photo.jpg").catch(e => console.error("win photo:", e.message));
           await sleep(300);
