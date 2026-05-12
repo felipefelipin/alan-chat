@@ -554,32 +554,65 @@ const worker = new Worker(
       if (type === "FUNNEL_SPIN") {
         const round  = data?.round  ?? 1;
         const chosen = data?.chosen ?? 1;
-
-        // Animação de roleta — edita a mesma mensagem com números aleatórios
-        // simulando a roleta girando e desacelerando
-        const spinMsg = await bot.sendMessage(chatId, "🎰  *. . .*", { parse_mode: "Markdown" });
-        const msgId   = spinMsg.message_id;
-
-        const delays = [110, 120, 140, 170, 210, 260, 330, 420, 540]; // desacelera gradual
-        for (const d of delays) {
-          await sleep(d);
-          await bot.editMessageText(`🎰  *${rand(1, 10)}*`, {
-            chat_id: chatId, message_id: msgId, parse_mode: "Markdown",
-          }).catch(() => {});
-        }
+        const rn     = () => rand(1, 10);
 
         // Resultado final controlado
-        const result = round === 1
-          ? (() => { let r = rand(1, 10); while (r === chosen) r = rand(1, 10); return r; })()
-          : chosen;
+        // Round 1: perde — 3 colunas diferentes, nenhuma igual ao escolhido
+        // Round 2: ganha — jackpot, todas as 3 colunas = número escolhido
+        let c1, c2, c3;
+        if (round === 2) {
+          c1 = c2 = c3 = chosen;
+        } else {
+          do { c1 = rn(); } while (c1 === chosen);
+          do { c2 = rn(); } while (c2 === chosen || c2 === c1);
+          do { c3 = rn(); } while (c3 === chosen || c3 === c1 || c3 === c2);
+        }
 
-        await sleep(650);
-        await bot.editMessageText(`🎰  *${result}*`, {
-          chat_id: chatId, message_id: msgId, parse_mode: "Markdown",
+        // Monta o frame do slot machine
+        // locked[i] = true → coluna travada (bold)
+        const slotFrame = (status, a, b, c, locked = [false, false, false]) => {
+          const col = (n, l) => l ? `<b>[${n}]</b>` : `[${n}]`;
+          return `${status}\n\n🎰  ${col(a, locked[0])}  ${col(b, locked[1])}  ${col(c, locked[2])}  🎰`;
+        };
+
+        const initMsg = await bot.sendMessage(
+          chatId,
+          slotFrame("⚡ <i>girando...</i>", rn(), rn(), rn()),
+          { parse_mode: "HTML" }
+        );
+        const msgId = initMsg.message_id;
+
+        const edit = (text) => bot.editMessageText(text, {
+          chat_id: chatId, message_id: msgId, parse_mode: "HTML",
         }).catch(() => {});
-        await sleep(900);
+
+        // Fase 1: giro rápido (todas colunas aleatórias)
+        for (const d of [110, 120, 130, 140]) {
+          await sleep(d);
+          await edit(slotFrame("⚡ <i>girando...</i>", rn(), rn(), rn()));
+        }
+
+        // Fase 2: desacelera (todas ainda aleatórias)
+        for (const d of [180, 230, 290]) {
+          await sleep(d);
+          await edit(slotFrame("🔄 <i>desacelerando...</i>", rn(), rn(), rn()));
+        }
+
+        // Fase 3: coluna esquerda trava
+        await sleep(370);
+        await edit(slotFrame("🔥 <i>parando...</i>", c1, rn(), rn(), [true, false, false]));
+
+        // Fase 4: coluna do meio trava
+        await sleep(520);
+        await edit(slotFrame("💥 <i>vai...</i>", c1, c2, rn(), [true, true, false]));
+
+        // Fase 5: resultado final — coluna direita trava
+        await sleep(700);
 
         if (round === 1) {
+          await edit(`😔 <b>Quase jackpot!</b>\n\n🎰  [${c1}]  [${c2}]  [${c3}]  🎰`);
+          await sleep(900);
+
           try {
             const stream = fs.createReadStream(path.join(ASSETS_DIR, "lose-video.mp4"));
             await bot.sendVideo(chatId, stream);
@@ -588,17 +621,21 @@ const worker = new Worker(
           }
           await sleep(rand(400, 700));
           await bot.sendMessage(chatId,
-            `Quase... caiu o <b>${result}</b> 😔\n\nNão foi dessa vez... mas você ainda tem uma última chance.\n\nQuer tentar de novo?`,
+            `Quase... caiu <b>${c1} — ${c2} — ${c3}</b> 😔\n\nNão foi dessa vez... mas você ainda tem uma última chance.\n\nQuer tentar de novo?`,
             { parse_mode: "HTML", reply_markup: { inline_keyboard: [
-              [{ text: "Quero tentar novamente 🔥", callback_data: "tentar_roleta_2" }],
+              [{ text: "🔥 Quero tentar novamente", callback_data: "tentar_roleta_2" }],
               [{ text: "Desistir",                   callback_data: "desistir"         }],
             ]}}
           );
         } else {
+          await edit(`💥 <b>J A C K P O T ! !</b> 💥\n\n🎰  <b>[${c1}]</b>  <b>[${c2}]</b>  <b>[${c3}]</b>  🎰`);
+          await sleep(800);
+
           await sendProgressBar(chatId);
           await sleep(rand(300, 600));
           await sendSocialProof(chatId);
           await sleep(rand(500, 800));
+
           try {
             const stream = fs.createReadStream(path.join(ASSETS_DIR, "win-photo.jpg"));
             await bot.sendPhoto(chatId, stream);
