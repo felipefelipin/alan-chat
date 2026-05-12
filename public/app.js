@@ -2280,6 +2280,7 @@ function exitStories(fromSwipe = false, swipeScreen = null) {
     video.onended   = null;
  
     _storyExiting = false;
+    app.style.zIndex = "";
     mountChat();
   }, STORY_DURATION + 30);
 }
@@ -2313,8 +2314,11 @@ function showStories() {
     zIndex:        "10",
     transform:     "translateZ(0)",
     willChange:    "transform",
-    pointerEvents: "none",   // UI overlay recebe todos os toques
+    pointerEvents: "none",
   });
+  // #app has position:fixed with no explicit z-index (auto ≈ 0), so the video
+  // at z-index:10 would cover the story UI inside #app. Lift #app above the video.
+  app.style.zIndex = "20";
 
   // 1) play() síncrono no gesto do usuário — desbloqueia o áudio no iOS WKWebView
   //    (pode falhar se o vídeo já terminou, mas o desbloqueio já acontece)
