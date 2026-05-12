@@ -1202,7 +1202,7 @@ object-fit:cover;
   content: "";
   position: absolute;
   inset: 0;
-  background: url("/assets/chat-bg.png") center / auto;
+  background: var(--wall) center / auto;
   background-repeat: repeat;
   opacity: .12;
   pointer-events: none;

@@ -50,6 +50,7 @@ function preloadMedia() {
     a.src = ASSETS.privateMusic;
     a.preload = "auto";
   } catch {}
+  try { new Image().src = "/assets/chat-bg.png?v=9"; } catch {}
 }
 
 async function fadeVolume(audio, from, to, ms = 700) {
@@ -187,6 +188,7 @@ function bindKeyboardUX() {
 
   input.addEventListener("focus", () => {
     isKeyboardOpen = true;
+    requestAnimationFrame(() => scrollBottom(true));
   });
 
   input.addEventListener("blur", () => {
@@ -499,6 +501,15 @@ function mountChat() {
   restoreHistory();
   bindKeyboardUX();
   handleScrollDetection();
+
+  // Force GPU compositor layer to activate before first touch
+  requestAnimationFrame(() => {
+    const chat = document.getElementById("chat");
+    if (!chat) return;
+    const s = chat.scrollTop;
+    chat.scrollTop = s + 1;
+    chat.scrollTop = s;
+  });
 }
 
 // ==================== FIX #2+3: SVG ICONS GLOBAIS (usados por startCall) ====================
