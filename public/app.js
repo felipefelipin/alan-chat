@@ -1950,7 +1950,18 @@ function addCallNotifBubble(seconds) {
 }
 
 async function doCallPaywall() {
+  await sleep(2000);
+  await gisaSay("mais pera... 😅");
+  await sleep(rand(1200, 2000));
+  await gisaSay("não dá pra continuar assim não");
+  await sleep(rand(1500, 2500));
   await gisaSay("eu tô louca pra gozar pra você, mas pra liberar tudo vc tem que liberar abaixo mb... 💋");
+  await sleep(rand(1000, 1800));
+  await gisaSay("isso aqui foi só pra te deixar louco. A real começa quando você desbloquear");
+  await sleep(rand(1500, 2200));
+  await gisaSay("a maioria dos caras já clicou e tá me vendo gozar agora… vai ficar de fora... 🤦‍♀️?");
+  await sleep(rand(1000, 1600));
+  await gisaSay("desbloqueia agora e volta rápido que eu tô pingando te esperando");
   showCheckoutCta();
 }
 
