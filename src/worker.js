@@ -284,10 +284,11 @@ async function deleteFunnelMsgs(chatId) {
 }
 
 // wrapper: typing indicator + envia mensagem e salva o message_id automaticamente
-// noTyping: true → sem indicador (prova social, botões)
+// sem typing se: texto curto, tem inline_keyboard, ou noTyping: true
 async function fm(chatId, text, opts = {}, { noTyping = false } = {}) {
   const hasRealText = String(text || "").trim().length > 2;
-  if (hasRealText && !noTyping) {
+  const hasButtons  = !!opts?.reply_markup?.inline_keyboard;
+  if (hasRealText && !hasButtons && !noTyping) {
     await bot.sendChatAction(chatId, "typing").catch(() => {});
     await sleep(400);
   }
