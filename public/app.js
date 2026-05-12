@@ -2108,22 +2108,12 @@ async function handleUserText(text) {
 }
 
 function openCheckout() {
-  const chatId = tg?.initDataUnsafe?.user?.id;
-
-  // Fecha imediatamente — sem esperar o servidor
-  try { if (tg?.close) { tg.close(); } } catch {}
-
-  // Request em background (keepalive garante entrega mesmo após fechar o WebView)
-  if (chatId) {
-    fetch("/api/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chatId: String(chatId) }),
-      keepalive: true,
-    }).catch(() => {});
+  if (tg?.sendData) {
+    // Envia pro bot via Telegram e fecha o WebApp automaticamente
+    try { tg.sendData(JSON.stringify({ action: "checkout" })); } catch {}
+  } else {
+    window.open(CHECKOUT_URL, "_blank");
   }
-
-  if (!tg?.close) window.open(CHECKOUT_URL, "_blank");
 }
 
 let _paywallOverlay = null;
