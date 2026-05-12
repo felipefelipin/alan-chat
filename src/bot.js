@@ -246,6 +246,7 @@ bot.on("callback_query", async (q) => {
     // ── Funil roleta — passo 1 → 2 ─────────────────────────────────────────
     if (["start_sim", "start_otimo", "start_afim"].includes(data)) {
       await bot.answerCallbackQuery(q.id).catch(() => {});
+      await cancelPreNudge(chatId);
       await queue.add("jobs",
         { type: "FUNNEL_STEP2", chatId: String(chatId), data: {} },
         { delay: rand(150, 300), removeOnComplete: true, removeOnFail: true }
@@ -256,6 +257,7 @@ bot.on("callback_query", async (q) => {
     // ── Funil roleta — passo 2 → intro roleta ──────────────────────────────
     if (["quero_video", "mostra_primeiro"].includes(data)) {
       await bot.answerCallbackQuery(q.id).catch(() => {});
+      await cancelPreNudge(chatId);
       await queue.add("jobs",
         { type: "FUNNEL_ROLETA_INTRO", chatId: String(chatId), data: {} },
         { delay: rand(150, 300), removeOnComplete: true, removeOnFail: true }
@@ -266,6 +268,7 @@ bot.on("callback_query", async (q) => {
     // ── Grade numérica round 1 ──────────────────────────────────────────────
     if (data === "tentar_roleta_1") {
       await bot.answerCallbackQuery(q.id).catch(() => {});
+      await cancelPreNudge(chatId);
       await queue.add("jobs",
         { type: "FUNNEL_NUM_GRID", chatId: String(chatId), data: { round: 1 } },
         { delay: rand(100, 250), removeOnComplete: true, removeOnFail: true }
@@ -276,6 +279,7 @@ bot.on("callback_query", async (q) => {
     // ── Grade numérica round 2 ──────────────────────────────────────────────
     if (data === "tentar_roleta_2") {
       await bot.answerCallbackQuery(q.id).catch(() => {});
+      await cancelPreNudge(chatId);
       await queue.add("jobs",
         { type: "FUNNEL_NUM_GRID", chatId: String(chatId), data: { round: 2 } },
         { delay: rand(100, 250), removeOnComplete: true, removeOnFail: true }
@@ -287,6 +291,7 @@ bot.on("callback_query", async (q) => {
     const m1 = data.match(/^num1_(\d+)$/);
     if (m1) {
       await bot.answerCallbackQuery(q.id).catch(() => {});
+      await cancelPreNudge(chatId);
       await queue.add("jobs",
         { type: "FUNNEL_NUM_CHOSEN", chatId: String(chatId), data: { round: 1, chosen: parseInt(m1[1]) } },
         { delay: rand(100, 250), removeOnComplete: true, removeOnFail: true }
@@ -298,6 +303,7 @@ bot.on("callback_query", async (q) => {
     const m2 = data.match(/^num2_(\d+)$/);
     if (m2) {
       await bot.answerCallbackQuery(q.id).catch(() => {});
+      await cancelPreNudge(chatId);
       await queue.add("jobs",
         { type: "FUNNEL_NUM_CHOSEN", chatId: String(chatId), data: { round: 2, chosen: parseInt(m2[1]) } },
         { delay: rand(100, 250), removeOnComplete: true, removeOnFail: true }
@@ -309,6 +315,7 @@ bot.on("callback_query", async (q) => {
     const s1 = data.match(/^spin1_(\d+)$/);
     if (s1) {
       await bot.answerCallbackQuery(q.id).catch(() => {});
+      await cancelPreNudge(chatId);
       await queue.add("jobs",
         { type: "FUNNEL_SPIN", chatId: String(chatId), data: { round: 1, chosen: parseInt(s1[1]) } },
         { delay: rand(100, 200), removeOnComplete: true, removeOnFail: true }
@@ -320,6 +327,7 @@ bot.on("callback_query", async (q) => {
     const s2 = data.match(/^spin2_(\d+)$/);
     if (s2) {
       await bot.answerCallbackQuery(q.id).catch(() => {});
+      await cancelPreNudge(chatId);
       await queue.add("jobs",
         { type: "FUNNEL_SPIN", chatId: String(chatId), data: { round: 2, chosen: parseInt(s2[1]) } },
         { delay: rand(100, 200), removeOnComplete: true, removeOnFail: true }
