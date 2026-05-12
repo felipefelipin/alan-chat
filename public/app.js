@@ -2010,23 +2010,27 @@ async function startScript() {
   if (state.flags.startedChat) return;
   state.flags.startedChat = true;
   state.step = 1; saveState();
-
-  // Fica com "visto por último" por 5s (já aparece assim desde mountChat), depois online
-  await sleep(5000);
-  setStatus("online");
-  state.flags.botOnline = true; saveState();
-  await sleep(5000);
-  const firstName = tg?.initDataUnsafe?.user?.first_name || "";
-  const greeting = firstName
-    ? `porra… você demorou hein ${firstName} 😈`
-    : "porra… você demorou hein 😈";
-  await gisaSay(greeting, { delay: rand(4500, 6500) });
-  await sleep(2500);
-  await gisaSay("tô toda molhada só de saber que você entrou aqui atrás de mim", { delay: rand(6000, 8000) });
-  await sleep(rand(2000, 3000));
-  await gisaSendVideo(ASSETS.teaseVideo, "Vídeo Privado");
-  await sleep(rand(5000, 7000));
-  await gisaSay("mas fala a verdade… você aguenta me ver pelada de verdade ou vai só ficar olhando como os fracos?... 👀", { delay: rand(8000, 11000) });
+  _flowRunning = true;
+  try {
+    // Fica com "visto por último" por 5s (já aparece assim desde mountChat), depois online
+    await sleep(5000);
+    setStatus("online");
+    state.flags.botOnline = true; saveState();
+    await sleep(5000);
+    const firstName = tg?.initDataUnsafe?.user?.first_name || "";
+    const greeting = firstName
+      ? `porra… você demorou hein ${firstName} 😈`
+      : "porra… você demorou hein 😈";
+    await gisaSay(greeting, { delay: rand(4500, 6500) });
+    await sleep(2500);
+    await gisaSay("tô toda molhada só de saber que você entrou aqui atrás de mim", { delay: rand(6000, 8000) });
+    await sleep(rand(2000, 3000));
+    await gisaSendVideo(ASSETS.teaseVideo, "Vídeo Privado");
+    await sleep(rand(5000, 7000));
+    await gisaSay("mas fala a verdade… você aguenta me ver pelada de verdade ou vai só ficar olhando como os fracos?... 👀", { delay: rand(8000, 11000) });
+  } finally {
+    _flowRunning = false;
+  }
   state._t1 = setTimeout(async () => {
     if (state.step !== 1) return;
     await gisaSay("tá aí ou já correu covarde? 👀");
