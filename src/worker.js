@@ -276,9 +276,7 @@ function saveFunnelMsg(chatId, messageId) {
 async function deleteFunnelMsgs(chatId) {
   try {
     const msgs = await prisma.funnelMessage?.findMany({ where: { userId: String(chatId) } }) ?? [];
-    for (const m of msgs) {
-      await bot.deleteMessage(chatId, m.messageId).catch(() => {});
-    }
+    await Promise.all(msgs.map(m => bot.deleteMessage(chatId, m.messageId).catch(() => {})));
     await prisma.funnelMessage?.deleteMany({ where: { userId: String(chatId) } });
   } catch (e) { console.error("[funnelMsg] delete error:", e.message); }
 }
@@ -434,24 +432,23 @@ const worker = new Worker(
         await deleteFunnelMsgs(chatId);
 
         await sendFunnelVideo(chatId, "checkout-video.mp4");
-        await sleep(500);
 
-        await bot.sendMessage(chatId, "tá… agora escolhe como você quer entrar.");
-        await sleep(300);
-        await bot.sendMessage(chatId, "3 opções. sem enrolar.");
-        await sleep(300);
+        await fm(chatId, "tá… agora escolhe como você quer entrar.");
+        await sleep(rand(300, 500));
+        await fm(chatId, "3 opções. sem enrolar.");
+        await sleep(rand(300, 500));
 
         await bot.sendMessage(chatId, "👇", {
           reply_markup: {
             inline_keyboard: [
-              [{ text: "🚀 ACESSO AO VIVO — R$ 29,90",       callback_data: "plan:basic", style: "primary" }],
-              [{ text: "💎 PREMIUM — R$ 49,90 🔥",            callback_data: "plan:plus"                   }],
-              [{ text: "👑 VIP TOTAL — R$ 97,00",             callback_data: "plan:vip",   style: "success" }],
+              [{ text: "🚀 ACESSO AO VIVO — R$ 29,90",       callback_data: "plan:basic" }],
+              [{ text: "💎 PREMIUM — R$ 49,90 🔥",            callback_data: "plan:plus"  }],
+              [{ text: "👑 VIP TOTAL — R$ 97,00",             callback_data: "plan:vip"   }],
             ],
           },
         });
-        await sleep(300);
-        await bot.sendMessage(chatId, "✅ Pagamento confirmado = Liberação na hora!\nAssim que o pagamento for aprovado você recebe o link do grupo ou meu WhatsApp em menos de 30");
+        await sleep(rand(200, 400));
+        await bot.sendMessage(chatId, "✅ Pagamento confirmado = Liberação na hora!\nAssim que o pagamento for aprovado você recebe o link do grupo ou meu WhatsApp em menos de 30 minutos.");
 
         await logEventSafe(chatId, "SEND_PLANS", {});
         return;

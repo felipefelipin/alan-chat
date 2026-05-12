@@ -79,25 +79,9 @@ async function scheduleRemarketingJobs(chatId, etapa) {
 
 async function sendPlans(chatId) {
   await setEtapa(chatId, "checkout");
-
   await queue.add("jobs",
-    { type: "SEND_MESSAGE", chatId: String(chatId), data: { text: "tá… agora escolhe como você quer entrar.", autoSplit: true } },
-    { delay: rand(1200, 2100), removeOnComplete: true, removeOnFail: true }
-  );
-  await queue.add("jobs",
-    { type: "SEND_MESSAGE", chatId: String(chatId), data: { text: "3 jeitos. sem enrolar.", autoSplit: true } },
-    { delay: rand(2600, 4200), removeOnComplete: true, removeOnFail: true }
-  );
-  await queue.add("jobs",
-    { type: "SEND_MESSAGE", chatId: String(chatId), data: {
-      text: "👇",
-      extra: { reply_markup: { inline_keyboard: [
-        [{ text: "basic", callback_data: "plan:basic", style: "primary" }],
-        [{ text: "plus",  callback_data: "plan:plus"                   }],
-        [{ text: "vip",   callback_data: "plan:vip",   style: "success" }],
-      ]}},
-    }},
-    { delay: rand(4200, 5600), removeOnComplete: true, removeOnFail: true }
+    { type: "SEND_PLANS", chatId: String(chatId), data: {} },
+    { removeOnComplete: true, removeOnFail: true }
   );
 }
 
