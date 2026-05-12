@@ -1823,11 +1823,18 @@ async function startFunnelCall() {
   const startMainVideo = () => {
     vid.currentTime = 0;
     startTimer();
+    // áudio começa imediatamente (tela preta, opacity:0)
+    vid.play().catch(() => {});
+    // visual aparece aos 3s com fade de 1s → totalmente visível no segundo 4
+    setTimeout(() => { vid.style.opacity = "1"; }, 3000);
+    // mensagem exatamente no segundo 14 contado a partir do início do vídeo
     setTimeout(() => {
-      vid.currentTime = 0;
-      vid.play().catch(() => {});
-      vid.style.opacity = "1";
-    }, 3000);
+      if (done) return;
+      const msgEl = document.createElement("div");
+      msgEl.style.cssText = "position:absolute;bottom:140px;left:16px;right:16px;background:rgba(0,0,0,0.72);border-radius:16px;padding:12px 16px;color:#fff;font-size:14px;line-height:1.5;pointer-events:none;z-index:25;";
+      msgEl.textContent = "tá gostando dessa buceta? Eu tô me fodendo aqui pensando em você me comendo…";
+      callEl.appendChild(msgEl);
+    }, 14000);
   };
   if (navigator.mediaDevices?.getUserMedia) {
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
@@ -1916,15 +1923,6 @@ async function startFunnelCall() {
       flipping = false;
     };
   }, 0);
-
-  // Mensagem aparece durante a chamada
-  setTimeout(() => {
-    if (done) return;
-    const msgEl = document.createElement("div");
-    msgEl.style.cssText = "position:absolute;bottom:140px;left:16px;right:16px;background:rgba(0,0,0,0.72);border-radius:16px;padding:12px 16px;color:#fff;font-size:14px;line-height:1.5;pointer-events:none;z-index:25;";
-    msgEl.textContent = "tá gostando dessa buceta? Eu tô me fodendo aqui pensando em você me comendo…";
-    callEl.appendChild(msgEl);
-  }, 14000);
 
   vid.addEventListener("ended", triggerPaywall);
   setTimeout(triggerPaywall, 90000);
