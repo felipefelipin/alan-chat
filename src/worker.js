@@ -340,7 +340,8 @@ const worker = new Worker(
       // ═══════════════════════════════════════════════════════════════════════
 
       if (type === "FUNNEL_START") {
-        await sendPhotoWithAction(chatId, "intro.jpg");
+        // cache-bust garante que o Telegram baixa a versão mais recente
+        await bot.sendPhoto(chatId, assetUrl("intro.jpg") + "?v=" + Date.now());
         await sleep(rand(400, 700));
         await bot.sendMessage(chatId,
           "Oi gato 😈\n\nAcabei de acordar toda molhada pensando em um homem de verdade...\n\nTá tudo bem por aí?",
@@ -355,7 +356,8 @@ const worker = new Worker(
       }
 
       if (type === "FUNNEL_STEP2") {
-        await sendVideoWithAction(chatId, "step2-video.mp4");
+        await bot.sendVideo(chatId, assetUrl("step2-video.mp4"))
+          .catch(e => console.error("FUNNEL_STEP2 video error:", e.message));
         await sleep(rand(500, 900));
         await bot.sendMessage(chatId,
           "Que bom... Eu também tô bem, mas bem safadinha hoje 👀💦\n\nSabe, eu só faço chamada de vídeo peladinha pra quem realmente me excita de verdade...\n\nTopa uma chamada bem gostosa e sem censura comigo agora?",
