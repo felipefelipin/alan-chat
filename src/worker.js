@@ -355,6 +355,8 @@ const worker = new Worker(
       }
 
       if (type === "FUNNEL_STEP2") {
+        await sendVideoWithAction(chatId, "step2-video.mp4");
+        await sleep(rand(500, 900));
         await bot.sendMessage(chatId,
           "Que bom... Eu também tô bem, mas bem safadinha hoje 👀💦\n\nSabe, eu só faço chamada de vídeo peladinha pra quem realmente me excita de verdade...\n\nTopa uma chamada bem gostosa e sem censura comigo agora?",
           { reply_markup: { inline_keyboard: [
@@ -407,15 +409,33 @@ const worker = new Worker(
         const round  = data?.round  ?? 1;
         const chosen = data?.chosen ?? 1;
 
-        // 🎰 Roleta real nativa do Telegram
-        await bot.sendDice(chatId, { emoji: "🎰" });
-        await sleep(4000); // aguarda a animação terminar
+        // Animação de roleta — edita a mesma mensagem com números aleatórios
+        // simulando a roleta girando e desacelerando
+        const spinMsg = await bot.sendMessage(chatId, "🎰  *. . .*", { parse_mode: "Markdown" });
+        const msgId   = spinMsg.message_id;
+
+        const delays = [110, 120, 140, 170, 210, 260, 330, 420, 540]; // desacelera gradual
+        for (const d of delays) {
+          await sleep(d);
+          await bot.editMessageText(`🎰  *${rand(1, 10)}*`, {
+            chat_id: chatId, message_id: msgId, parse_mode: "Markdown",
+          }).catch(() => {});
+        }
+
+        // Resultado final controlado
+        const result = round === 1
+          ? (() => { let r = rand(1, 10); while (r === chosen) r = rand(1, 10); return r; })()
+          : chosen;
+
+        await sleep(650);
+        await bot.editMessageText(`🎰  *${result}*`, {
+          chat_id: chatId, message_id: msgId, parse_mode: "Markdown",
+        }).catch(() => {});
+        await sleep(900);
 
         if (round === 1) {
-          let fell = rand(1, 10);
-          while (fell === chosen) fell = rand(1, 10);
           await bot.sendMessage(chatId,
-            `Quase... caiu o <b>${fell}</b> 😔\n\nNão foi dessa vez... mas você ainda tem uma última chance.\n\nQuer tentar de novo?`,
+            `Quase... caiu o <b>${result}</b> 😔\n\nNão foi dessa vez... mas você ainda tem uma última chance.\n\nQuer tentar de novo?`,
             { parse_mode: "HTML", reply_markup: { inline_keyboard: [
               [{ text: "Quero tentar novamente 🔥", callback_data: "tentar_roleta_2" }],
               [{ text: "Desistir",                   callback_data: "desistir"         }],
