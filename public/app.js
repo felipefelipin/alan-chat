@@ -7,14 +7,16 @@ if (tg) {
   }
 }
 
-// Impede que o botão voltar do navegador/Telegram recarregue o app e quebre o fluxo
+// Impede que o botão voltar feche o mini app ou quebre o fluxo
+// BackButton.show() faz o Telegram redirecionar o back do sistema pro handler JS
+if (tg?.BackButton) {
+  tg.BackButton.show();
+  tg.BackButton.onClick(() => {}); // no-op: sem poder sobre o chat
+}
 history.pushState(null, "", location.href);
 window.addEventListener("popstate", () => {
   history.pushState(null, "", location.href);
 });
-if (tg?.BackButton) {
-  tg.BackButton.onClick(() => {});
-}
 
 const app = document.getElementById("app");
 
