@@ -10,453 +10,261 @@ const prisma = new PrismaClient();
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 
 const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-
-// helper: BullMQ nessa versão não aceita ":" em jobId
-const jid = (...parts) => parts.join("-");
-
-function pickEchoWord(text) {
-  const t = String(text || "")
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
-    .split(/\s+/)
-    .filter(Boolean);
-
-  const stop = new Set([
-    "oi",
-    "ola",
-    "olá",
-    "sim",
-    "nao",
-    "não",
-    "to",
-    "tô",
-    "ta",
-    "tá",
-    "ok",
-    "blz",
-  ]);
-
-  const cand = t.filter((w) => w.length >= 3 && w.length <= 10 && !stop.has(w));
-  return cand[0] || null;
-}
+const jid  = (...parts) => parts.join("-");
 
 async function upsertUser(chatId) {
   return prisma.user.upsert({
-    where: { id: String(chatId) },
+    where:  { id: String(chatId) },
     update: {},
-    create: {
-      id: String(chatId),
-      etapa: "engajado",
-      pagou: false,
-    },
+    create: { id: String(chatId), etapa: "start", pagou: false },
   });
 }
 
 async function setEtapa(chatId, etapa) {
-  await prisma.user.update({
-    where: { id: String(chatId) },
-    data: { etapa },
-  });
+  await prisma.user.update({ where: { id: String(chatId) }, data: { etapa } });
 }
 
-async function schedulePreNudge(chatId) {
-  const delay = rand(60_000, 120_000);
-  await queue.add(
+function enqueue(type, chatId, data, delay = 0) {
+  return queue.add(
     "jobs",
-    { type: "PRE_NUDGE", chatId: String(chatId), data: {} },
-    {
-      delay,
-      jobId: jid("pre_nudge", chatId),
-      removeOnComplete: true,
-      removeOnFail: true,
-    }
+    { type, chatId: String(chatId), data },
+    { delay, removeOnComplete: true, removeOnFail: true }
   );
 }
 
-async function cancelPreNudge(chatId) {
-  try {
-    const job = await queue.getJob(jid("pre_nudge", chatId));
-    if (job) await job.remove();
-  } catch {}
-}
-
-/**
- * START SCRIPT (com foto antes do "ei…")
- */
-async function sendStartScript(chatId) {
-  await setEtapa(chatId, "engajado");
-  await cancelPreNudge(chatId);
-  await schedulePreNudge(chatId);
-
-  let total = 0;
-  let idx = 0;
-
-  // ✅ FOTO (via worker -> URL pública)
-  // GARANTA que exista: public/assets/intro.jpg
-  total += rand(700, 1400);
-  idx += 1;
-  await queue.add(
-    "jobs",
-    {
-      type: "SEND_PHOTO",
-      chatId: String(chatId),
-      data: { file: "intro.jpg", caption: "" },
-    },
-    { delay: total, jobId: jid("start", chatId, idx), removeOnComplete: true, removeOnFail: true }
-  );
-
-  // ✅ timing mais humano (delays maiores)
-  const script = [
-    { text: "ei…", d: rand(1400, 2400) },
-    { text: "eu sou a gisa.", d: rand(1800, 3000), allowHumanError: true },
-    { text: "me dá 10s?", d: rand(1900, 3300) },
-    { text: "eu te mostro uma coisa rapidinho.", d: rand(2200, 3800) },
-  ];
-
-  for (const s of script) {
-    total += s.d;
-    idx += 1;
-    await queue.add(
-      "jobs",
-      {
-        type: "SEND_MESSAGE",
-        chatId: String(chatId),
-        data: {
-          text: s.text,
-          autoSplit: true,
-          allowHumanError: !!s.allowHumanError,
-        },
-      },
-      { delay: total, jobId: jid("start", chatId, idx), removeOnComplete: true, removeOnFail: true }
-    );
-  }
-
-  total += rand(2400, 4200);
-  idx += 1;
-  await queue.add(
-    "jobs",
-    {
-      type: "SEND_MESSAGE",
-      chatId: String(chatId),
-      data: {
-        text: "só me diz… você tá sozinho(a) agora?",
-        autoSplit: true,
-      },
-    },
-    { delay: total, jobId: jid("start", chatId, idx), removeOnComplete: true, removeOnFail: true }
-  );
-}
-
-/**
- * CHECKOUT PLANS
- */
-async function sendPlans(chatId) {
-  await setEtapa(chatId, "checkout");
-
-  await queue.add(
-    "jobs",
-    {
-      type: "SEND_MESSAGE",
-      chatId: String(chatId),
-      data: { text: "tá… agora escolhe como você quer entrar.", autoSplit: true },
-    },
-    { delay: rand(1200, 2100), removeOnComplete: true, removeOnFail: true }
-  );
-
-  await queue.add(
-    "jobs",
-    {
-      type: "SEND_MESSAGE",
-      chatId: String(chatId),
-      data: { text: "3 jeitos. sem enrolar.", autoSplit: true },
-    },
-    { delay: rand(2600, 4200), removeOnComplete: true, removeOnFail: true }
-  );
-
-  const extra = {
-    reply_markup: {
-      inline_keyboard: [
-        [{ text: "basic", callback_data: "plan:basic" }],
-        [{ text: "plus", callback_data: "plan:plus" }],
-        [{ text: "vip", callback_data: "plan:vip" }],
-      ],
-    },
+// Teclado numérico 1-10 em duas linhas
+function numGrid(round) {
+  return {
+    inline_keyboard: [
+      [1, 2, 3, 4, 5].map(n  => ({ text: String(n), callback_data: `num${round}_${n}` })),
+      [6, 7, 8, 9, 10].map(n => ({ text: String(n), callback_data: `num${round}_${n}` })),
+    ],
   };
-
-  // ✅ nunca texto vazio (Telegram exige)
-  await queue.add(
-    "jobs",
-    { type: "SEND_MESSAGE", chatId: String(chatId), data: { text: "👇", extra } },
-    { delay: rand(4200, 5600), removeOnComplete: true, removeOnFail: true }
-  );
 }
 
+// ─── Checkout + pagamento ─────────────────────────────────────────────────────
 async function createCheckoutAndSend(chatId, plano) {
   const { preferenceId, initPoint } = await mpCreatePreference({ chatId, plano });
 
   await prisma.payment.create({
-    data: {
-      userId: String(chatId),
-      plano,
-      status: "pending",
-      preferenceId,
-      initPoint,
-    },
+    data: { userId: String(chatId), plano, status: "pending", preferenceId, initPoint },
   });
 
-  await queue.add(
-    "jobs",
-    { type: "SEND_MESSAGE", chatId: String(chatId), data: { text: "boa.", autoSplit: true } },
-    { delay: rand(1200, 2000), removeOnComplete: true, removeOnFail: true }
-  );
-
-  await queue.add(
-    "jobs",
-    {
-      type: "SEND_MESSAGE",
-      chatId: String(chatId),
-      data: { text: "paga aqui e volta pra mim.", autoSplit: true },
-    },
-    { delay: rand(2800, 4600), removeOnComplete: true, removeOnFail: true }
-  );
-
-  await queue.add(
-    "jobs",
-    {
-      type: "SEND_MESSAGE",
-      chatId: String(chatId),
-      data: {
-        text: "👇",
-        extra: {
-          reply_markup: { inline_keyboard: [[{ text: "💳 pagar agora", url: initPoint }]] },
-        },
-      },
-    },
-    { delay: rand(4600, 6200), removeOnComplete: true, removeOnFail: true }
-  );
+  await enqueue("SEND_MESSAGE", chatId, { text: "boa.", autoSplit: true },             rand(1200, 2000));
+  await enqueue("SEND_MESSAGE", chatId, { text: "paga aqui e volta pra mim.", autoSplit: true }, rand(2800, 4600));
+  await enqueue("SEND_MESSAGE", chatId, {
+    text: "👇",
+    extra: { reply_markup: { inline_keyboard: [[{ text: "💳 pagar agora", url: initPoint }]] } },
+  }, rand(4600, 6200));
 
   await setEtapa(chatId, "pagamento");
 }
 
-/**
- * /start
- */
+// =============================================================================
+// /start
+// =============================================================================
 bot.onText(/^\/start/, async (msg) => {
   const chatId = msg.chat.id;
   await upsertUser(chatId);
-  await sendStartScript(chatId);
-});
+  await setEtapa(chatId, "start");
 
-/**
- * Resposta do usuário (ENGAJADO → vídeo + exclusividade + botões)
- */
-bot.on("message", async (msg) => {
-  const chatId = msg.chat.id;
+  let t = rand(500, 1000);
 
-  // ignora comandos aqui (já tratado /start)
-  if (msg.text && msg.text.startsWith("/")) return;
+  // 1) Foto provocante
+  await enqueue("SEND_PHOTO", chatId, { file: "intro.jpg", caption: "" }, t);
 
-  const user = await prisma.user.findUnique({ where: { id: String(chatId) } });
-  if (!user) return;
-
-  // ✅ anti-bagunça: se já saiu de "engajado", não dispara o funil de novo
-  if (user.etapa !== "engajado") return;
-
-  const echoWord = pickEchoWord(msg.text);
-  await cancelPreNudge(chatId);
-
-  let total = 0;
-  let idx = 0;
-
-  // 1) ok…
-  total += rand(900, 1600);
-  idx += 1;
-  await queue.add(
-    "jobs",
-    {
-      type: "SEND_MESSAGE",
-      chatId: String(chatId),
-      data: { text: "ok…", autoSplit: true, echoWord },
-    },
-    { delay: total, jobId: jid("webapp", chatId, idx), removeOnComplete: true, removeOnFail: true }
-  );
-
-  // 2) vídeo no Telegram (autoDelete em 5s)
-  // GARANTA que exista: public/assets/intro.mp4
-  total += rand(1800, 2800);
-  idx += 1;
-  await queue.add(
-    "jobs",
-    {
-      type: "SEND_VIDEO",
-      chatId: String(chatId),
-      data: {
-        file: "intro.mp4",
-        caption: "", // caption vazio ok
-        autoDeleteMs: 5000,
+  // 2) Mensagem + 3 botões
+  t += rand(1600, 2600);
+  await enqueue("SEND_MESSAGE", chatId, {
+    text: "Oi gato 😈\n\nAcabei de acordar toda molhada pensando em um homem de verdade...\n\nTá tudo bem por aí?",
+    extra: {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "Tô bem 🔥",           callback_data: "start_sim"   }],
+          [{ text: "Tô ótimo, e você? 😏", callback_data: "start_otimo" }],
+          [{ text: "Tô afim de você 💦",   callback_data: "start_afim"  }],
+        ],
       },
     },
-    { delay: total, jobId: jid("webapp", chatId, idx), removeOnComplete: true, removeOnFail: true }
-  );
+  }, t);
+});
 
-  // 3) após apagar: textos
-  total += rand(1600, 2600);
-  idx += 1;
-  await queue.add(
-    "jobs",
-    {
-      type: "SEND_MESSAGE",
-      chatId: String(chatId),
-      data: { text: "meu bem, vou te levar pra um lugar mais exclusivo", autoSplit: true },
-    },
-    { delay: total, jobId: jid("webapp", chatId, idx), removeOnComplete: true, removeOnFail: true }
-  );
+// =============================================================================
+// Callbacks
+// =============================================================================
+bot.on("callback_query", async (q) => {
+  const chatId = q.message?.chat?.id;
+  const data   = q.data || "";
+  if (!chatId || !data) return;
 
-  total += rand(1500, 2400);
-  idx += 1;
-  await queue.add(
-    "jobs",
-    {
-      type: "SEND_MESSAGE",
-      chatId: String(chatId),
-      data: { text: "pra vc poder ver melhor…", autoSplit: true },
-    },
-    { delay: total, jobId: jid("webapp", chatId, idx), removeOnComplete: true, removeOnFail: true }
-  );
+  await bot.answerCallbackQuery(q.id).catch(() => {});
 
-  // 4) call-to-action
-  total += rand(1600, 2400);
-  idx += 1;
-  await queue.add(
-    "jobs",
-    {
-      type: "SEND_MESSAGE",
-      chatId: String(chatId),
-      data: { text: "entra no privado comigo 🔒", autoSplit: true },
-    },
-    { delay: total, jobId: jid("webapp", chatId, idx), removeOnComplete: true, removeOnFail: true }
-  );
+  try {
 
-  // 5) botões (✅ texto não-vazio)
-  // ✅ URL do WebApp na raiz (você já corrigiu o env; aqui mantemos cache-bust)
-  total += rand(1200, 2000);
-  idx += 1;
-  await queue.add(
-    "jobs",
-    {
-      type: "SEND_MESSAGE",
-      chatId: String(chatId),
-      data: {
-        text: "👇",
-        autoSplit: false,
+    // ── Passo 1 → Passo 2 ───────────────────────────────────────────────────
+    if (["start_sim", "start_otimo", "start_afim"].includes(data)) {
+      await setEtapa(chatId, "step2");
+      await enqueue("SEND_MESSAGE", chatId, {
+        text: "Que bom... Eu também tô bem, mas bem safadinha hoje 👀💦\n\nSabe, eu só faço chamada de vídeo peladinha pra quem realmente me excita de verdade...\n\nTopa uma chamada bem gostosa e sem censura comigo agora?",
         extra: {
           reply_markup: {
             inline_keyboard: [
-              [
-                {
-                  text: "ENTRAR NO PRIVADO 🔒",
-                  web_app: { url: process.env.WEBAPP_URL + "?v=" + Date.now() },
-                },
-              ],
-              [{ text: "FICAR POR AQUI", callback_data: "webapp:later" }],
+              [{ text: "Quero sim 😈",              callback_data: "quero_video"     }],
+              [{ text: "Tô afim pra caralho 🔥",    callback_data: "quero_video"     }],
+              [{ text: "Me mostra primeiro",         callback_data: "mostra_primeiro" }],
             ],
           },
         },
-      },
-    },
-    { delay: total, jobId: jid("webapp", chatId, idx), removeOnComplete: true, removeOnFail: true }
-  );
-
-  // 6) depois dos botões
-  total += rand(1600, 2400);
-  idx += 1;
-  await queue.add(
-    "jobs",
-    {
-      type: "SEND_MESSAGE",
-      chatId: String(chatId),
-      data: { text: "entra aqui comigo", autoSplit: true },
-    },
-    { delay: total, jobId: jid("webapp", chatId, idx), removeOnComplete: true, removeOnFail: true }
-  );
-
-  total += rand(1400, 2300);
-  idx += 1;
-  await queue.add(
-    "jobs",
-    {
-      type: "SEND_MESSAGE",
-      chatId: String(chatId),
-      data: { text: "vai ser rapidinho…", autoSplit: true, allowHumanError: true },
-    },
-    { delay: total, jobId: jid("webapp", chatId, idx), removeOnComplete: true, removeOnFail: true }
-  );
-
-  // ✅ etapa correta pro PRE_NUDGE funcionar
-  await setEtapa(chatId, "webapp_pending");
-});
-
-/**
- * Recebe retorno do WebApp: action=checkout
- */
-bot.on("web_app_data", async (msg) => {
-  const chatId = msg.chat.id;
-
-  await cancelPreNudge(chatId);
-
-  let payload = null;
-  try {
-    payload = JSON.parse(msg.web_app_data.data);
-  } catch {
-    payload = { action: msg.web_app_data.data };
-  }
-
-  if (payload?.action === "checkout") {
-    await sendPlans(chatId);
-  }
-});
-
-/**
- * Callbacks
- */
-bot.on("callback_query", async (q) => {
-  const chatId = q.message?.chat?.id;
-  const data = q.data;
-
-  if (!chatId || !data) return;
-
-  try {
-    if (data === "webapp:later") {
-      await bot.answerCallbackQuery(q.id, { text: "tá…" });
-
-      // volta pro engajado, mas sem disparar fluxo sozinho
-      await setEtapa(chatId, "engajado");
-
-      await queue.add(
-        "jobs",
-        {
-          type: "SEND_MESSAGE",
-          chatId: String(chatId),
-          data: { text: "tá… quando quiser, volta aqui.", autoSplit: true },
-        },
-        { delay: rand(900, 1600), removeOnComplete: true, removeOnFail: true }
-      );
-
+      }, rand(800, 1500));
       return;
     }
 
+    // ── Passo 2 → Passo 3 (intro roleta) ────────────────────────────────────
+    if (["quero_video", "mostra_primeiro"].includes(data)) {
+      await setEtapa(chatId, "roleta");
+      await enqueue("SEND_MESSAGE", chatId, {
+        text: "Perfeito 😏\n\nMas pra me ver toda peladinha, e me ter bem putinha em um privado bem secreto, a gente vai ter que brincar de roleta da sorte.\n\nQuer tentar a sorte?",
+        extra: {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: "Quero tentar a sorte 🎰",   callback_data: "tentar_roleta_1" }],
+              [{ text: "Tô com muita sorte hoje 😈", callback_data: "tentar_roleta_1" }],
+            ],
+          },
+        },
+      }, rand(800, 1500));
+      return;
+    }
+
+    // ── Roleta round 1 — grade numérica ─────────────────────────────────────
+    if (data === "tentar_roleta_1") {
+      await enqueue("SEND_MESSAGE", chatId, {
+        text: "Escolhe um número de 1 a 10:",
+        extra: { reply_markup: numGrid(1) },
+      }, rand(600, 1100));
+      return;
+    }
+
+    // ── Roleta round 2 — grade numérica ─────────────────────────────────────
+    if (data === "tentar_roleta_2") {
+      await enqueue("SEND_MESSAGE", chatId, {
+        text: "Última chance! Escolhe seu número de 1 a 10:",
+        extra: { reply_markup: numGrid(2) },
+      }, rand(600, 1100));
+      return;
+    }
+
+    // ── Número escolhido — round 1 ───────────────────────────────────────────
+    const m1 = data.match(/^num1_(\d+)$/);
+    if (m1) {
+      const chosen = m1[1];
+      await enqueue("SEND_MESSAGE", chatId, {
+        text: `Beleza! Escolheu o <b>${chosen}</b>.\n\nVou girar a roleta...`,
+        extra: {
+          parse_mode: "HTML",
+          reply_markup: {
+            inline_keyboard: [[{ text: "🎰 Girar Roleta", callback_data: `spin1_${chosen}` }]],
+          },
+        },
+      }, rand(700, 1300));
+      return;
+    }
+
+    // ── Número escolhido — round 2 ───────────────────────────────────────────
+    const m2 = data.match(/^num2_(\d+)$/);
+    if (m2) {
+      const chosen = m2[1];
+      await enqueue("SEND_MESSAGE", chatId, {
+        text: `Beleza! Escolheu o <b>${chosen}</b>.\n\nVou girar a roleta...`,
+        extra: {
+          parse_mode: "HTML",
+          reply_markup: {
+            inline_keyboard: [[{ text: "🎰 Girar Roleta", callback_data: `spin2_${chosen}` }]],
+          },
+        },
+      }, rand(700, 1300));
+      return;
+    }
+
+    // ── Girar round 1 — SEMPRE PERDE ────────────────────────────────────────
+    const s1 = data.match(/^spin1_(\d+)$/);
+    if (s1) {
+      const chosen = parseInt(s1[1]);
+      let fell = rand(1, 10);
+      while (fell === chosen) fell = rand(1, 10); // garante número diferente
+
+      await enqueue("SEND_MESSAGE", chatId, {
+        text: `Quase... caiu o <b>${fell}</b> 😔\n\nNão foi dessa vez... mas você ainda tem uma última chance.\n\nQuer tentar de novo?`,
+        extra: {
+          parse_mode: "HTML",
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: "Quero tentar novamente 🔥", callback_data: "tentar_roleta_2" }],
+              [{ text: "Desistir",                   callback_data: "desistir"         }],
+            ],
+          },
+        },
+      }, rand(2000, 3200)); // delay maior pra criar suspense
+      return;
+    }
+
+    // ── Girar round 2 — SEMPRE GANHA ────────────────────────────────────────
+    const s2 = data.match(/^spin2_(\d+)$/);
+    if (s2) {
+      await enqueue("SEND_MESSAGE", chatId, {
+        text: "🔥🔥 PORRA KKKKKK VC É MUITO SORTUDO CARALHO!! 🔥🔥\n\nDessa vez caiu o seu número!!\n\nAcabei de liberar o acesso pro meu privado.\n\nClica no botão abaixo e entra agora no meu privado pra me ver peladinha na chamada de vídeo 😈💦",
+        extra: {
+          reply_markup: {
+            inline_keyboard: [[{
+              text: "🚀 ENTRAR NO MINI APP AGORA",
+              web_app: { url: process.env.WEBAPP_URL },
+            }]],
+          },
+        },
+      }, rand(2000, 3200));
+      await setEtapa(chatId, "webapp_pending");
+      return;
+    }
+
+    // ── Desistir ─────────────────────────────────────────────────────────────
+    if (data === "desistir") {
+      await enqueue("SEND_MESSAGE", chatId, {
+        text: "Ah que pena... Se mudar de ideia é só me chamar 😈",
+      }, rand(700, 1300));
+      return;
+    }
+
+    // ── Seleção de plano (vindo do checkout) ─────────────────────────────────
     if (data.startsWith("plan:")) {
       const plano = data.split(":")[1];
-      await bot.answerCallbackQuery(q.id, { text: "ok." });
       await createCheckoutAndSend(chatId, plano);
       return;
     }
+
+    // ── Webapp later ─────────────────────────────────────────────────────────
+    if (data === "webapp:later") {
+      await setEtapa(chatId, "start");
+      await enqueue("SEND_MESSAGE", chatId, {
+        text: "tá… quando quiser, volta aqui.",
+        autoSplit: true,
+      }, rand(900, 1600));
+      return;
+    }
+
   } catch (e) {
     console.error("callback error:", e);
-    try {
-      await bot.answerCallbackQuery(q.id, { text: "deu ruim aqui. tenta de novo." });
-    } catch {}
   }
 });
 
-console.log("bot v3 pro rodando...");
+// =============================================================================
+// web_app_data — fallback quando mini app usa sendData()
+// =============================================================================
+bot.on("web_app_data", async (msg) => {
+  const chatId = msg.chat.id;
+  let payload = {};
+  try { payload = JSON.parse(msg.web_app_data.data); } catch {}
+  console.log("[web_app_data] chatId:", chatId, "payload:", payload);
+  // checkout é tratado via api/checkout.js (serverless)
+});
+
+console.log("bot v4 — fluxo roleta rodando...");
