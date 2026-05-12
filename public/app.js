@@ -1533,14 +1533,12 @@ async function enterTeaseBuildup() {
   await gisaSendAudio(ASSETS.audioMimimi);
   await gisaSay("eu não abro as pernas pra qualquer um que aparece, mas como gostei de vc... 😏", { delay: rand(7000, 10000) });
   await sleep(5000);
-  setStatus("gravando um vídeo...");
-  await sleep(15000);
   setStatus("enviando vídeo...");
   await sleep(3000);
   setStatus("");
   addVideoBubble(ASSETS.teaseVideo2, "Vídeo Privado");
   await sleep(5000);
-  await gisaSay("quer que eu tire essa lingerie toda agora pra você ver minha buceta? 😈🔥", { delay: rand(7000, 9000) });
+  await gisaSay("tou com um brinquedinho aqui na minha mão, bem grande e grosso, quer ver eu enfiando ele todo dentro da minha bucetinha? 🔥🥵", { delay: rand(7000, 9000) });
   state._t1 = setTimeout(async () => {
     if (state.step !== 2) return;
     await gisaSay("vou tirar mesmo assim… mas só porque você tá me deixando louca");
@@ -1730,7 +1728,7 @@ async function startFunnelCall() {
   vid.setAttribute("playsinline", "");
   vid.setAttribute("webkit-playsinline", "");
   vid.muted = false;
-  vid.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;opacity:0;transition:opacity 0.4s ease;";
+  vid.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;opacity:0;transition:opacity 1s ease;";
   callEl.appendChild(vid);
 
   // ── Overlay: topo com nome + timer ─────────────────────────────────────────
@@ -1829,7 +1827,7 @@ async function startFunnelCall() {
       vid.currentTime = 0;
       vid.play().catch(() => {});
       vid.style.opacity = "1";
-    }, 2000);
+    }, 3000);
   };
   if (navigator.mediaDevices?.getUserMedia) {
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
@@ -1926,7 +1924,7 @@ async function startFunnelCall() {
     msgEl.style.cssText = "position:absolute;bottom:140px;left:16px;right:16px;background:rgba(0,0,0,0.72);border-radius:16px;padding:12px 16px;color:#fff;font-size:14px;line-height:1.5;pointer-events:none;z-index:25;";
     msgEl.textContent = "tá gostando dessa buceta? Eu tô me fodendo aqui pensando em você me comendo…";
     callEl.appendChild(msgEl);
-  }, rand(12000, 18000));
+  }, 14000);
 
   vid.addEventListener("ended", triggerPaywall);
   setTimeout(triggerPaywall, 90000);
@@ -1952,18 +1950,6 @@ function addCallNotifBubble(seconds) {
 }
 
 async function doCallPaywall() {
-  await sleep(2000);
-  await gisaSay("mais pera... 😅");
-  await sleep(rand(1200, 2000));
-  await gisaSay("não dá pra continuar assim não");
-  await sleep(rand(1500, 2500));
-  await gisaSay("eu tô louca pra gozar pra você, mas só libero tudo mais vc tem que liberar abaixo");
-  await sleep(rand(1000, 1800));
-  await gisaSay("isso aqui foi só pra te deixar louco. A real começa quando você desbloquear");
-  await sleep(rand(1500, 2200));
-  await gisaSay("a maioria dos caras já clicou e tá me vendo gozar agora… vai ficar de fora... 🤦‍♀️?");
-  await sleep(rand(1000, 1600));
-  await gisaSay("desbloqueia agora e volta rápido que eu tô pingando te esperando");
   showCheckoutCta();
 }
 
