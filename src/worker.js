@@ -503,8 +503,11 @@ const worker = new Worker(
       if (type === "FUNNEL_START") {
         await sendFunnelVideo(chatId, "intro-video.mp4").catch(e => console.error("FUNNEL_START video:", e.message));
         await sleep(rand(400, 700));
-        await bot.sendMessage(chatId,
-          "Oi gato 😈\n\nAcabei de acordar toda molhada pensando em um homem de verdade...\n\nTá tudo bem por aí?",
+        await sendHuman(chatId, "Oi gato 😈");
+        await sleep(rand(500, 800));
+        await sendHuman(chatId, "Acabei de acordar toda molhada pensando em um homem de verdade...");
+        await sleep(rand(500, 800));
+        await bot.sendMessage(chatId, "Tá tudo bem por aí?",
           { reply_markup: { inline_keyboard: [
             [{ text: "Tô bem 🔥",            callback_data: "start_sim",   style: "success" }],
             [{ text: "Tô ótimo, e você? 😏",  callback_data: "start_otimo"                   }],
@@ -520,8 +523,11 @@ const worker = new Worker(
         await sleep(rand(300, 500));
         await sendSocialProof(chatId);
         await sleep(rand(300, 500));
-        await bot.sendMessage(chatId,
-          "Que bom... Eu também tô bem, mas bem safadinha hoje 👀💦\n\nSabe, eu só faço chamada de vídeo peladinha pra quem realmente me excita de verdade...\n\nTopa uma chamada bem gostosa e sem censura comigo agora?",
+        await sendHuman(chatId, "Que bom... Eu também tô bem, mas bem safadinha hoje 👀💦");
+        await sleep(rand(500, 800));
+        await sendHuman(chatId, "Sabe, eu só faço chamada de vídeo peladinha pra quem realmente me excita de verdade...");
+        await sleep(rand(500, 800));
+        await bot.sendMessage(chatId, "Topa uma chamada bem gostosa e sem censura comigo agora?",
           { reply_markup: { inline_keyboard: [
             [{ text: "Quero sim 😈",           callback_data: "quero_video",     style: "success" }],
             [{ text: "Tô afim pra caralho 🔥", callback_data: "quero_video"                       }],
@@ -537,8 +543,13 @@ const worker = new Worker(
         await sleep(rand(300, 500));
         await sendSocialProof(chatId);
         await sleep(rand(300, 500));
-        await bot.sendMessage(chatId,
-          "Perfeito 😏\n\nMas pra me ver toda peladinha, e me ter bem putinha em um privado bem secreto, a gente vai ter que brincar de roleta da sorte. E você tem que acertar a sequencia de 3 numeros, se tiver essa sorte vai conseguir me ter bem putinha no meu privadinho safado 🥵🔥\n\nQuer tentar a sorte? 👀",
+        await sendHuman(chatId, "Perfeito 😏");
+        await sleep(rand(500, 800));
+        await sendHuman(chatId, "Mas pra me ver toda peladinha, e me ter bem putinha em um privado bem secreto, a gente vai ter que brincar de roleta da sorte 🎰");
+        await sleep(rand(500, 800));
+        await sendHuman(chatId, "Você tem que acertar a sequencia de 3 numeros, se tiver essa sorte vai conseguir me ter bem putinha no meu privadinho safado 🥵🔥");
+        await sleep(rand(500, 800));
+        await bot.sendMessage(chatId, "Quer tentar a sorte? 👀",
           { reply_markup: { inline_keyboard: [
             [{ text: "Quero tentar a sorte 🎰",   callback_data: "tentar_roleta_1", style: "success" }],
             [{ text: "Tô com muita sorte hoje 😈", callback_data: "tentar_roleta_1", style: "primary" }],
@@ -562,9 +573,10 @@ const worker = new Worker(
       if (type === "FUNNEL_NUM_CHOSEN") {
         const round  = data?.round  ?? 1;
         const chosen = data?.chosen ?? 1;
-        await bot.sendMessage(chatId,
-          `Beleza! Escolheu o <b>${chosen}</b>.\n\nVou girar a roleta...`,
-          { parse_mode: "HTML", reply_markup: { inline_keyboard: [
+        await sendHuman(chatId, `Beleza! Escolheu o ${chosen} 😏`);
+        await sleep(rand(400, 700));
+        await bot.sendMessage(chatId, "Vou girar a roleta...",
+          { reply_markup: { inline_keyboard: [
             [{ text: "🎰 Girar Roleta", callback_data: `spin${round}_${chosen}`, style: "success" }],
           ]}}
         );
@@ -636,9 +648,12 @@ const worker = new Worker(
 
           await sendFunnelVideo(chatId, "lose-video.mp4").catch(e => console.error("lose video:", e.message));
           await sleep(rand(300, 500));
-          await bot.sendMessage(chatId,
-            `Quase... caiu <b>${c1} — ${c2} — ${c3}</b> 😔\n\nNão foi dessa vez... mas você ainda tem uma última chance.\n\nQuer tentar de novo?`,
-            { parse_mode: "HTML", reply_markup: { inline_keyboard: [
+          await sendHuman(chatId, `Quase... caiu ${c1} — ${c2} — ${c3} 😔`);
+          await sleep(rand(500, 800));
+          await sendHuman(chatId, "Não foi dessa vez...");
+          await sleep(rand(500, 800));
+          await bot.sendMessage(chatId, "Mas você ainda tem uma última chance. Quer tentar de novo?",
+            { reply_markup: { inline_keyboard: [
               [{ text: "🔥 Quero tentar novamente", callback_data: "tentar_roleta_2", style: "success" }],
               [{ text: "Desistir",                   callback_data: "desistir",         style: "danger"  }],
             ]}}
@@ -654,8 +669,13 @@ const worker = new Worker(
 
           await sendFunnelPhoto(chatId, "win-photo.jpg").catch(e => console.error("win photo:", e.message));
           await sleep(rand(300, 500));
-          await bot.sendMessage(chatId,
-            "🔥🔥 PORRA KKKKKK VC É MUITO SORTUDO CARALHO!! 🔥🔥\n\nDessa vez caiu o seu número!!\n\nAcabei de liberar o acesso pro meu privado.\n\nClica no botão abaixo e entra agora no meu privado pra me ver peladinha na chamada de vídeo 😈💦",
+          await sendHuman(chatId, "🔥🔥 PORRA KKKKKK VC É MUITO SORTUDO CARALHO!! 🔥🔥");
+          await sleep(rand(500, 800));
+          await sendHuman(chatId, "Dessa vez caiu o seu número!!");
+          await sleep(rand(500, 800));
+          await sendHuman(chatId, "Acabei de liberar o acesso pro meu privado 😈");
+          await sleep(rand(500, 800));
+          await bot.sendMessage(chatId, "Entra agora pra me ver peladinha na chamada de vídeo 💦",
             { reply_markup: { inline_keyboard: [[{
               text: "🚀 ENTRAR NO MINI APP AGORA",
               web_app: { url: process.env.WEBAPP_URL },
