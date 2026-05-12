@@ -61,8 +61,25 @@ async function cancelPreNudge(chatId) {
 /**
  * CHECKOUT PLANS (fallback via web_app_data)
  */
+async function scheduleRemarketingJobs(chatId, etapa) {
+  const base = `rmkt-${etapa}-${chatId}`;
+  await queue.add("jobs",
+    { type: "REMARKETING", chatId: String(chatId), data: { stage: "10m", etapa } },
+    { delay: 10 * 60 * 1000, jobId: `${base}-10m`, removeOnComplete: true, removeOnFail: true }
+  );
+  await queue.add("jobs",
+    { type: "REMARKETING", chatId: String(chatId), data: { stage: "1h", etapa } },
+    { delay: 60 * 60 * 1000, jobId: `${base}-1h`, removeOnComplete: true, removeOnFail: true }
+  );
+  await queue.add("jobs",
+    { type: "REMARKETING", chatId: String(chatId), data: { stage: "24h", etapa } },
+    { delay: 24 * 60 * 60 * 1000, jobId: `${base}-24h`, removeOnComplete: true, removeOnFail: true }
+  );
+}
+
 async function sendPlans(chatId) {
   await setEtapa(chatId, "checkout");
+  await scheduleRemarketingJobs(chatId, "checkout");
 
   await queue.add("jobs",
     { type: "SEND_MESSAGE", chatId: String(chatId), data: { text: "tá… agora escolhe como você quer entrar.", autoSplit: true } },
@@ -109,6 +126,7 @@ async function createCheckoutAndSend(chatId, plano) {
   );
 
   await setEtapa(chatId, "pagamento");
+  await scheduleRemarketingJobs(chatId, "pagamento");
 }
 
 // =============================================================================

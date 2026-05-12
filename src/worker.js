@@ -6,7 +6,7 @@ const path = require("path");
 const { Worker } = require("bullmq");
 const TelegramBot = require("node-telegram-bot-api");
 const { PrismaClient } = require("@prisma/client");
-const { connection } = require("./queue");
+const { connection, queue } = require("./queue");
 
 const ASSETS_DIR = path.join(__dirname, "..", "public", "assets");
 
@@ -203,6 +203,69 @@ async function sendVideoWithAction(chatId, file, opts = {}) {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+// PROVA SOCIAL — nomes e mensagens aleatórias de "alguém acabou de entrar"
+// ═══════════════════════════════════════════════════════════════════════
+const SOCIAL_NAMES = [
+  "Lucas", "Matheus", "Gabriel", "Pedro", "Rafael",
+  "Bruno", "Diego", "Rodrigo", "Thiago", "Felipe",
+  "Eduardo", "Anderson", "Marcelo", "Carlos", "Vinicius",
+];
+
+async function sendSocialProof(chatId) {
+  const name = SOCIAL_NAMES[rand(0, SOCIAL_NAMES.length - 1)];
+  const templates = [
+    `🔥 _${name} acabou de entrar no privado agora_`,
+    `👀 _${name} liberou o acesso há pouco_`,
+    `💦 _${name} está no privado nesse momento_`,
+    `🚨 _${name} entrou há menos de 1 minuto_`,
+    `⚡ _+1 homem entrou enquanto você lê isso_`,
+  ];
+  await bot.sendMessage(chatId, templates[rand(0, templates.length - 1)], { parse_mode: "Markdown" });
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// BARRA DE PROGRESSO — animação antes do checkout
+// ═══════════════════════════════════════════════════════════════════════
+async function sendProgressBar(chatId) {
+  const frames = [
+    "🔓 *Verificando seu acesso...*\n\n⬛⬛⬛⬛⬛  `0%`",
+    "🔓 *Verificando seu acesso...*\n\n🟥⬛⬛⬛⬛  `20%`",
+    "🔓 *Verificando seu acesso...*\n\n🟥🟥🟥⬛⬛  `60%`",
+    "🔓 *Verificando seu acesso...*\n\n🟥🟥🟥🟥⬛  `80%`",
+    "✅ *Acesso liberado!*\n\n🟥🟥🟥🟥🟥  `100%`",
+  ];
+  const msg = await bot.sendMessage(chatId, frames[0], { parse_mode: "Markdown" });
+  const msgId = msg.message_id;
+  const delays = [900, 700, 500, 800];
+  for (let i = 1; i < frames.length; i++) {
+    await sleep(delays[i - 1]);
+    await bot.editMessageText(frames[i], {
+      chat_id: chatId, message_id: msgId, parse_mode: "Markdown",
+    }).catch(() => {});
+  }
+  await sleep(700);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// REMARKETING — agenda 3 ondas (10m / 1h / 24h) por etapa
+// ═══════════════════════════════════════════════════════════════════════
+async function scheduleRemarketingJobs(chatId, etapa) {
+  const base = `rmkt-${etapa}-${chatId}`;
+  await queue.add("jobs",
+    { type: "REMARKETING", chatId: String(chatId), data: { stage: "10m", etapa } },
+    { delay: 10 * 60 * 1000, jobId: `${base}-10m`, removeOnComplete: true, removeOnFail: true }
+  );
+  await queue.add("jobs",
+    { type: "REMARKETING", chatId: String(chatId), data: { stage: "1h", etapa } },
+    { delay: 60 * 60 * 1000, jobId: `${base}-1h`, removeOnComplete: true, removeOnFail: true }
+  );
+  await queue.add("jobs",
+    { type: "REMARKETING", chatId: String(chatId), data: { stage: "24h", etapa } },
+    { delay: 24 * 60 * 60 * 1000, jobId: `${base}-24h`, removeOnComplete: true, removeOnFail: true }
+  );
+}
+
 async function logEventSafe(chatId, type, payload) {
   try {
     await prisma.event.create({
@@ -308,19 +371,81 @@ const worker = new Worker(
         const user = await prisma.user.findUnique({ where: { id: String(chatId) } });
         if (!user) return;
         if (user.pagou) return;
-        if (user.etapa !== "pagamento") return;
 
-        const stage = data?.stage;
-        if (stage === "10m") {
-          await sendHuman(chatId, "você sumiu…", {}, { autoSplit: true });
-          await sendHuman(chatId, "ficou com medo?", {}, { autoSplit: true });
-        } else if (stage === "1h") {
-          await sendHuman(chatId, "eu quase fechei aquilo pra você", {}, { autoSplit: true });
-        } else if (stage === "24h") {
-          await sendHuman(chatId, "última vez que vou te chamar aqui…", {}, { autoSplit: true });
+        const stage  = data?.stage;
+        const etapa  = data?.etapa;
+
+        // Só dispara se o lead ainda está na mesma etapa que gerou o agendamento
+        if (user.etapa !== etapa) return;
+
+        // ── webapp_pending: ganhou a roleta mas não entrou no mini app ──────
+        if (etapa === "webapp_pending") {
+          if (stage === "10m") {
+            await sendSocialProof(chatId);
+            await sleep(rand(1200, 2000));
+            await sendHuman(chatId, "ei... você abriu e sumiu 😔", {}, { autoSplit: true });
+            await sendHuman(chatId, "o privado ainda tá esperando você", {}, { autoSplit: true });
+            await sleep(rand(800, 1200));
+            await bot.sendMessage(chatId, "👇", {
+              reply_markup: { inline_keyboard: [[{
+                text: "🔒 ENTRAR NO PRIVADO AGORA",
+                web_app: { url: process.env.WEBAPP_URL },
+              }]]},
+            });
+          } else if (stage === "1h") {
+            await sendSocialProof(chatId);
+            await sleep(rand(1000, 1800));
+            await sendHuman(chatId, "faz uma hora que você me deixou esperando...", {}, { autoSplit: true });
+            await sendHuman(chatId, "vou fechar o seu acesso daqui a pouco 🔒", {}, { autoSplit: true });
+            await sleep(rand(800, 1200));
+            await bot.sendMessage(chatId, "👇", {
+              reply_markup: { inline_keyboard: [[{
+                text: "🔒 GARANTIR MEU ACESSO AGORA",
+                web_app: { url: process.env.WEBAPP_URL },
+              }]]},
+            });
+          } else if (stage === "24h") {
+            await sendHuman(chatId, "última vez que te chamo aqui.", {}, { autoSplit: true });
+            await sendHuman(chatId, "amanhã eu fecho esse acesso pra sempre 🔒", {}, { autoSplit: true });
+            await sleep(rand(700, 1100));
+            await bot.sendMessage(chatId, "👇", {
+              reply_markup: { inline_keyboard: [[{
+                text: "🔥 ÚLTIMA CHANCE — ENTRAR AGORA",
+                web_app: { url: process.env.WEBAPP_URL },
+              }]]},
+            });
+          }
+
+        // ── checkout: viu os planos mas não escolheu ─────────────────────────
+        } else if (etapa === "checkout") {
+          if (stage === "10m") {
+            await sendSocialProof(chatId);
+            await sleep(rand(1200, 2000));
+            await sendHuman(chatId, "você travou na hora de escolher?", {}, { autoSplit: true });
+            await sendHuman(chatId, "enquanto você pensa, outros já estão dentro 👀", {}, { autoSplit: true });
+          } else if (stage === "1h") {
+            await sendHuman(chatId, "ainda tenho uma vaga separada no seu nome...", {}, { autoSplit: true });
+            await sendHuman(chatId, "mas não fico esperando pra sempre 🔒", {}, { autoSplit: true });
+          } else if (stage === "24h") {
+            await sendHuman(chatId, "última chamada.", {}, { autoSplit: true });
+            await sendHuman(chatId, "depois isso fecha e crio fila de espera.", {}, { autoSplit: true });
+          }
+
+        // ── pagamento: escolheu plano mas não pagou ──────────────────────────
+        } else if (etapa === "pagamento") {
+          if (stage === "10m") {
+            await sendHuman(chatId, "você sumiu...", {}, { autoSplit: true });
+            await sendHuman(chatId, "seu link ainda tá ativo, mas expira em breve ⏳", {}, { autoSplit: true });
+          } else if (stage === "1h") {
+            await sendHuman(chatId, "ficou com medo?", {}, { autoSplit: true });
+            await sendHuman(chatId, "não tem motivo... entra e me descobre 😈", {}, { autoSplit: true });
+          } else if (stage === "24h") {
+            await sendHuman(chatId, "última chance real.", {}, { autoSplit: true });
+            await sendHuman(chatId, "amanhã fecho e crio fila de espera 🔒", {}, { autoSplit: true });
+          }
         }
 
-        await logEventSafe(chatId, "REMARKETING_SENT", { stage });
+        await logEventSafe(chatId, "REMARKETING_SENT", { stage, etapa });
         return;
       }
 
@@ -367,6 +492,8 @@ const worker = new Worker(
           console.error("FUNNEL_STEP2 video error:", e.message);
         }
         await sleep(rand(500, 900));
+        await sendSocialProof(chatId);
+        await sleep(rand(700, 1100));
         await bot.sendMessage(chatId,
           "Que bom... Eu também tô bem, mas bem safadinha hoje 👀💦\n\nSabe, eu só faço chamada de vídeo peladinha pra quem realmente me excita de verdade...\n\nTopa uma chamada bem gostosa e sem censura comigo agora?",
           { reply_markup: { inline_keyboard: [
@@ -387,6 +514,8 @@ const worker = new Worker(
           console.error("FUNNEL_ROLETA_INTRO video error:", e.message);
         }
         await sleep(rand(500, 900));
+        await sendSocialProof(chatId);
+        await sleep(rand(600, 1000));
         await bot.sendMessage(chatId,
           "Perfeito 😏\n\nMas pra me ver toda peladinha, e me ter bem putinha em um privado bem secreto, a gente vai ter que brincar de roleta da sorte.\n\nQuer tentar a sorte?",
           { reply_markup: { inline_keyboard: [
@@ -466,6 +595,10 @@ const worker = new Worker(
             ]}}
           );
         } else {
+          await sendProgressBar(chatId);
+          await sleep(rand(300, 600));
+          await sendSocialProof(chatId);
+          await sleep(rand(500, 800));
           try {
             const stream = fs.createReadStream(path.join(ASSETS_DIR, "win-photo.jpg"));
             await bot.sendPhoto(chatId, stream);
@@ -484,6 +617,7 @@ const worker = new Worker(
             where: { id: String(chatId) },
             data:  { etapa: "webapp_pending" },
           }).catch(() => {});
+          await scheduleRemarketingJobs(chatId, "webapp_pending");
         }
 
         await logEventSafe(chatId, "FUNNEL_SPIN", { round, chosen });
