@@ -266,18 +266,20 @@ loadFileCacheFromDB();
 // RASTREIO DE MENSAGENS DO FUNIL — para apagar ao chegar no checkout
 // ═══════════════════════════════════════════════════════════════════════
 function saveFunnelMsg(chatId, messageId) {
-  prisma.funnelMessage.create({
-    data: { userId: String(chatId), messageId: Number(messageId) },
-  }).catch(() => {});
+  try {
+    prisma.funnelMessage?.create({
+      data: { userId: String(chatId), messageId: Number(messageId) },
+    }).catch(() => {});
+  } catch (e) {}
 }
 
 async function deleteFunnelMsgs(chatId) {
   try {
-    const msgs = await prisma.funnelMessage.findMany({ where: { userId: String(chatId) } });
+    const msgs = await prisma.funnelMessage?.findMany({ where: { userId: String(chatId) } }) ?? [];
     for (const m of msgs) {
       await bot.deleteMessage(chatId, m.messageId).catch(() => {});
     }
-    await prisma.funnelMessage.deleteMany({ where: { userId: String(chatId) } });
+    await prisma.funnelMessage?.deleteMany({ where: { userId: String(chatId) } });
   } catch (e) { console.error("[funnelMsg] delete error:", e.message); }
 }
 
