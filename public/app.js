@@ -2108,9 +2108,15 @@ async function handleUserText(text) {
 }
 
 function openCheckout() {
-  if (tg?.sendData) {
-    // Envia pro bot via Telegram e fecha o WebApp automaticamente
-    try { tg.sendData(JSON.stringify({ action: "checkout" })); } catch {}
+  const chatId = tg?.initDataUnsafe?.user?.id;
+  try { if (tg?.close) tg.close(); } catch {}
+  if (chatId) {
+    fetch("/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chatId: String(chatId) }),
+      keepalive: true,
+    }).catch(() => {});
   } else {
     window.open(CHECKOUT_URL, "_blank");
   }

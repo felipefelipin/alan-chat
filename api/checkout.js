@@ -1,7 +1,4 @@
 // api/checkout.js — Vercel Serverless Function
-const fs   = require("fs");
-const path = require("path");
-
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
 
@@ -13,47 +10,41 @@ module.exports = async function handler(req, res) {
 
   const id   = String(chatId);
   const base = `https://api.telegram.org/bot${BOT_TOKEN}`;
+  const ASSETS = (process.env.PUBLIC_ASSETS_BASE || "https://alana-chat.vercel.app/assets").replace(/\/+$/, "");
 
-  const sendMsg = (text, extra = {}) =>
-    fetch(`${base}/sendMessage`, {
+  const tg = (method, body) =>
+    fetch(`${base}/${method}`, {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ chat_id: id, parse_mode: "HTML", text, ...extra }),
-    });
-
-  // Envia vídeo via upload direto (não depende de URL pública)
-  async function sendVideoFile(filename) {
-    const filePath = path.join(process.cwd(), "public", "assets", filename);
-    const buf  = fs.readFileSync(filePath);
-    const blob = new Blob([buf], { type: "video/mp4" });
-    const form = new FormData();
-    form.append("chat_id", id);
-    form.append("video",   blob, filename);
-    const res = await fetch(`${base}/sendVideo`, { method: "POST", body: form });
-    const json = await res.json().catch(() => ({}));
-    if (!json.ok) console.error("sendVideo failed:", JSON.stringify(json));
-    return json;
-  }
+      body:    JSON.stringify(body),
+    }).then(r => r.json()).catch(() => ({}));
 
   try {
-    await sendVideoFile("checkout-video.mp4");
+    await tg("sendVideo", { chat_id: id, video: `${ASSETS}/checkout-video.mp4` });
 
-    await sendMsg(
-      `🔥 <b>EU PAREÇO INOCENTE... MAS NÃO SOU 😈</b>\n\nCresci sendo vista como a boa moça, carinha de anjinho...\nMas no fundo eu sou uma safada que adora ficar peladinha, rebolando gostoso, abrindo as pernas e gemendo alto na frente de homem de verdade 💦\nAgora eu mostro tudinho: bucetinha molhada, sentando gostoso, gozando de verdade e fazendo tudo que você mandar...\nDeixa eu te contar o que te espera no meu cantinho VIP:\n\n🔥 Acesso TOTAL sem censura (fotos e vídeos explícitos)\n🔥 Ao Vivo interativo: eu faço tudo que você pedir\n🔥 Chamadas de vídeo particulares peladinha\n🎁 Bônus: sorteios e conteúdo extra pra quem é VIP\n\nSe você sempre quis ver essa putinha fingida de santinha gemendo seu nome... essa é a hora, safado 🔥💦\n\n<b>VEM DESVENDAR MEU SEGREDINHO 😈</b>`,
-      {
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: "VIP 7 DIAS — R$ 19,90",                    callback_data: "plan:basic", style: "primary" }],
-            [{ text: "VIP 30 DIAS + BÔNUS — R$ 29,90 🔥",        callback_data: "plan:plus"                   }],
-            [{ text: "VITALÍCIO + WHATSAPP + CHAMADA — R$ 84,90", callback_data: "plan:vip",   style: "success" }],
-          ],
-        },
-      }
-    );
+    await tg("sendMessage", { chat_id: id, text: "tá… agora escolhe como você quer entrar." });
+    await tg("sendMessage", { chat_id: id, text: "3 opções. sem enrolar." });
+
+    await tg("sendMessage", {
+      chat_id: id,
+      text: "👇",
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "🚀 ACESSO AO VIVO — R$ 29,90", callback_data: "plan:basic" }],
+          [{ text: "💎 PREMIUM — R$ 49,90 🔥",      callback_data: "plan:plus"  }],
+          [{ text: "👑 VIP TOTAL — R$ 97,00",        callback_data: "plan:vip"   }],
+        ],
+      },
+    });
+
+    await tg("sendMessage", {
+      chat_id: id,
+      text: "✅ Pagamento confirmado = Liberação na hora!\nAssim que o pagamento for aprovado você recebe o link do grupo ou meu WhatsApp em menos de 30 minutos.",
+    });
 
     res.json({ ok: true });
   } catch (e) {
     console.error("checkout error:", e);
-    res.status(500).json({ error: "failed to send" });
+    res.status(500).json({ error: "failed" });
   }
 };
