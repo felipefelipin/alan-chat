@@ -27,12 +27,8 @@ module.exports = async function handler(req, res) {
       body: JSON.stringify({ chat_id: id, video }),
     });
 
-  // Responde imediatamente pro cliente (Mini App já fechou)
-  // e continua enviando as mensagens em background
-  res.json({ ok: true });
-
   try {
-    // 1. Vídeo — lead começa aqui e desce
+    // 1. Vídeo
     await sendVideo(`${assetsBase}/checkout-video.mp4`);
     await sleep(900);
 
@@ -67,7 +63,10 @@ module.exports = async function handler(req, res) {
     await sendMsg(
       `⚡ <b>Entrega imediata após o pagamento!</b>\nAssim que confirmar o pagamento, você receberá o link do grupo ou meu WhatsApp <b>na hora</b>, em menos de 30 segundos. Sem espera.`
     );
+
+    res.json({ ok: true });
   } catch (e) {
     console.error("checkout error:", e);
+    res.status(500).json({ error: "failed to send" });
   }
 };
