@@ -502,11 +502,11 @@ const worker = new Worker(
 
       if (type === "FUNNEL_START") {
         await sendFunnelVideo(chatId, "intro-video.mp4").catch(e => console.error("FUNNEL_START video:", e.message));
-        await sleep(rand(400, 700));
-        await sendHuman(chatId, "Oi gato 😈");
-        await sleep(rand(500, 800));
-        await sendHuman(chatId, "Acabei de acordar toda molhada pensando em um homem de verdade...");
-        await sleep(rand(500, 800));
+        await sleep(300);
+        await bot.sendMessage(chatId, "Oi gato 😈");
+        await sleep(300);
+        await bot.sendMessage(chatId, "Acabei de acordar toda molhada pensando em um homem de verdade...");
+        await sleep(300);
         await bot.sendMessage(chatId, "Tá tudo bem por aí?",
           { reply_markup: { inline_keyboard: [
             [{ text: "Tô bem 🔥",            callback_data: "start_sim",   style: "success" }],
@@ -523,10 +523,10 @@ const worker = new Worker(
         await sleep(rand(300, 500));
         await sendSocialProof(chatId);
         await sleep(rand(300, 500));
-        await sendHuman(chatId, "Que bom... Eu também tô bem, mas bem safadinha hoje 👀💦");
-        await sleep(rand(500, 800));
-        await sendHuman(chatId, "Sabe, eu só faço chamada de vídeo peladinha pra quem realmente me excita de verdade...");
-        await sleep(rand(500, 800));
+        await bot.sendMessage(chatId, "Que bom... Eu também tô bem, mas bem safadinha hoje 👀💦");
+        await sleep(300);
+        await bot.sendMessage(chatId, "Sabe, eu só faço chamada de vídeo peladinha pra quem realmente me excita de verdade...");
+        await sleep(300);
         await bot.sendMessage(chatId, "Topa uma chamada bem gostosa e sem censura comigo agora?",
           { reply_markup: { inline_keyboard: [
             [{ text: "Quero sim 😈",           callback_data: "quero_video",     style: "success" }],
@@ -543,12 +543,12 @@ const worker = new Worker(
         await sleep(rand(300, 500));
         await sendSocialProof(chatId);
         await sleep(rand(300, 500));
-        await sendHuman(chatId, "Perfeito 😏");
-        await sleep(rand(500, 800));
-        await sendHuman(chatId, "Mas pra me ver toda peladinha, e me ter bem putinha em um privado bem secreto, a gente vai ter que brincar de roleta da sorte 🎰");
-        await sleep(rand(500, 800));
-        await sendHuman(chatId, "Você tem que acertar a sequencia de 3 numeros, se tiver essa sorte vai conseguir me ter bem putinha no meu privadinho safado 🥵🔥");
-        await sleep(rand(500, 800));
+        await bot.sendMessage(chatId, "Perfeito 😏");
+        await sleep(300);
+        await bot.sendMessage(chatId, "Mas pra me ver toda peladinha, e me ter bem putinha em um privado bem secreto, a gente vai ter que brincar de roleta da sorte 🎰");
+        await sleep(300);
+        await bot.sendMessage(chatId, "Você tem que acertar a sequencia de 3 numeros, se tiver essa sorte vai conseguir me ter bem putinha no meu privadinho safado 🥵🔥");
+        await sleep(300);
         await bot.sendMessage(chatId, "Quer tentar a sorte? 👀",
           { reply_markup: { inline_keyboard: [
             [{ text: "Quero tentar a sorte 🎰",   callback_data: "tentar_roleta_1", style: "success" }],
@@ -573,8 +573,8 @@ const worker = new Worker(
       if (type === "FUNNEL_NUM_CHOSEN") {
         const round  = data?.round  ?? 1;
         const chosen = data?.chosen ?? 1;
-        await sendHuman(chatId, `Beleza! Escolheu o ${chosen} 😏`);
-        await sleep(rand(400, 700));
+        await bot.sendMessage(chatId, `Beleza! Escolheu o ${chosen} 😏`);
+        await sleep(300);
         await bot.sendMessage(chatId, "Vou girar a roleta...",
           { reply_markup: { inline_keyboard: [
             [{ text: "🎰 Girar Roleta", callback_data: `spin${round}_${chosen}`, style: "success" }],
@@ -647,11 +647,11 @@ const worker = new Worker(
           await sleep(900);
 
           await sendFunnelVideo(chatId, "lose-video.mp4").catch(e => console.error("lose video:", e.message));
-          await sleep(rand(300, 500));
-          await sendHuman(chatId, `Quase... caiu ${c1} — ${c2} — ${c3} 😔`);
-          await sleep(rand(500, 800));
-          await sendHuman(chatId, "Não foi dessa vez...");
-          await sleep(rand(500, 800));
+          await sleep(300);
+          await bot.sendMessage(chatId, `Quase... caiu ${c1} — ${c2} — ${c3} 😔`);
+          await sleep(300);
+          await bot.sendMessage(chatId, "Não foi dessa vez...");
+          await sleep(300);
           await bot.sendMessage(chatId, "Mas você ainda tem uma última chance. Quer tentar de novo?",
             { reply_markup: { inline_keyboard: [
               [{ text: "🔥 Quero tentar novamente", callback_data: "tentar_roleta_2", style: "success" }],
@@ -663,18 +663,17 @@ const worker = new Worker(
           await sleep(800);
 
           await sendProgressBar(chatId);
-          await sleep(rand(300, 600));
+          await sleep(300);
           await sendSocialProof(chatId);
-          await sleep(rand(500, 800));
-
+          await sleep(300);
           await sendFunnelPhoto(chatId, "win-photo.jpg").catch(e => console.error("win photo:", e.message));
-          await sleep(rand(300, 500));
-          await sendHuman(chatId, "🔥🔥 PORRA KKKKKK VC É MUITO SORTUDO CARALHO!! 🔥🔥");
-          await sleep(rand(500, 800));
-          await sendHuman(chatId, "Dessa vez caiu o seu número!!");
-          await sleep(rand(500, 800));
-          await sendHuman(chatId, "Acabei de liberar o acesso pro meu privado 😈");
-          await sleep(rand(500, 800));
+          await sleep(300);
+          await bot.sendMessage(chatId, "🔥🔥 PORRA KKKKKK VC É MUITO SORTUDO CARALHO!! 🔥🔥");
+          await sleep(300);
+          await bot.sendMessage(chatId, "Dessa vez caiu o seu número!!");
+          await sleep(300);
+          await bot.sendMessage(chatId, "Acabei de liberar o acesso pro meu privado 😈");
+          await sleep(300);
           await bot.sendMessage(chatId, "Entra agora pra me ver peladinha na chamada de vídeo 💦",
             { reply_markup: { inline_keyboard: [[{
               text: "🚀 ENTRAR NO MINI APP AGORA",
@@ -682,6 +681,10 @@ const worker = new Worker(
               style: "success",
             }]]}}
           );
+          await sleep(500);
+          await bot.sendMessage(chatId, "Entra logo seu gostoso... 🥵🔥");
+          await sleep(300);
+          await bot.sendMessage(chatId, "eu não vou deixar isso aberto por muito tempo.");
           await prisma.user.update({
             where: { id: String(chatId) },
             data:  { etapa: "webapp_pending" },
