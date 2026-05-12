@@ -2128,14 +2128,34 @@ function openCheckout() {
 
 let _paywallOverlay = null;
 
+function _dismissPaywall(overlay) {
+  const sheet = overlay.querySelector("#pwSheet");
+  if (sheet) {
+    sheet.style.transition = "transform 0.32s cubic-bezier(0.4,0,1,1)";
+    sheet.style.transform  = "translateY(100%)";
+  }
+  overlay.style.background = "rgba(0,0,0,0)";
+  setTimeout(() => { if (overlay.parentNode) overlay.remove(); }, 340);
+}
+
 function reopenPaywall() {
   if (!_paywallOverlay) return;
-  document.body.appendChild(_paywallOverlay);
-  requestAnimationFrame(() => {
-    _paywallOverlay.style.opacity = "1";
+  const overlay = _paywallOverlay;
+  const sheet   = overlay.querySelector("#pwSheet");
+  if (sheet) {
+    sheet.style.transition = "";
+    sheet.style.transform  = "translateY(100%)";
+  }
+  overlay.style.background = "rgba(0,0,0,0)";
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    overlay.style.background = "rgba(0,0,0,0.72)";
+    if (sheet) {
+      sheet.style.transition = "transform 0.42s cubic-bezier(0.34,1.56,0.64,1)";
+      sheet.style.transform  = "translateY(0)";
+    }
     document.getElementById("paywallBgVideo")?.play().catch(() => {});
-    document.getElementById("checkoutTopVideo")?.play().catch(() => {});
-  });
+  }));
 }
 
 function showCheckoutCta() {
@@ -2145,9 +2165,9 @@ function showCheckoutCta() {
   overlay.id = "paywallOverlay";
   _paywallOverlay = overlay;
   overlay.style.cssText = `
-    position:fixed;inset:0;z-index:9800;background:#0a0a0a;
-    display:flex;flex-direction:column;align-items:stretch;
-    opacity:0;transition:opacity 0.4s ease;overflow-y:auto;
+    position:fixed;inset:0;z-index:9800;
+    background:rgba(0,0,0,0);
+    transition:background 0.28s ease;
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
   `;
 
@@ -2155,75 +2175,85 @@ function showCheckoutCta() {
     <style>
       @keyframes glowG{0%,100%{box-shadow:0 0 22px rgba(0,230,118,.65),0 4px 18px rgba(0,200,83,.5)}50%{box-shadow:0 0 44px rgba(0,230,118,1),0 8px 32px rgba(0,200,83,.8)}}
       @keyframes ctaPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
-      @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
       @keyframes liveGlow{0%,100%{box-shadow:0 0 8px rgba(255,59,48,.5);opacity:1}50%{box-shadow:0 0 18px rgba(255,59,48,.9),0 0 28px rgba(255,59,48,.4);opacity:.85}}
+      @keyframes pwSlideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+      @keyframes pwImgIn{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:scale(1)}}
+      @keyframes pwFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+      @keyframes pwBtnPop{0%{opacity:0;transform:scale(0.88)}70%{transform:scale(1.04)}100%{opacity:1;transform:scale(1)}}
     </style>
 
-    <div style="width:100%;overflow:hidden;flex-shrink:0;">
-      <img src="/assets/cta-thumb.jpg"
-        style="width:100%;display:block;height:52vw;max-height:290px;min-height:190px;object-fit:cover;object-position:top;" />
-    </div>
+    <div id="pwSheet" style="
+      position:absolute;bottom:0;left:0;right:0;
+      background:#0a0a0a;
+      border-radius:22px 22px 0 0;
+      overflow:hidden;
+      max-height:92vh;overflow-y:auto;
+      box-shadow:0 -8px 40px rgba(0,0,0,0.55);
+      animation:pwSlideUp 0.42s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    ">
 
-    <div style="flex:1;position:relative;overflow:hidden;">
-      <video id="paywallBgVideo" src="/assets/paywall-bg.mp4" autoplay loop muted playsinline
-        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.32;pointer-events:none;transform:translateZ(0);"></video>
-      <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,10,10,.40),rgba(10,10,10,.55));pointer-events:none;"></div>
+      <div style="width:100%;overflow:hidden;flex-shrink:0;opacity:0;animation:pwImgIn 0.34s ease 0.08s forwards;">
+        <img src="/assets/cta-thumb.jpg"
+          style="width:100%;display:block;height:52vw;max-height:290px;min-height:190px;object-fit:cover;object-position:top;" />
+      </div>
 
-      <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;
-                  padding:26px 24px calc(env(safe-area-inset-bottom,20px) + 24px);
-                  animation:fadeUp 0.5s ease 0.2s both;">
+      <div style="flex:1;position:relative;overflow:hidden;">
+        <video id="paywallBgVideo" src="/assets/paywall-bg.mp4" autoplay loop muted playsinline
+          style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.32;pointer-events:none;transform:translateZ(0);"></video>
+        <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,10,10,.40),rgba(10,10,10,.55));pointer-events:none;"></div>
 
-        <div style="background:rgba(255,59,48,.14);border:1px solid rgba(255,59,48,.32);
-                    border-radius:20px;padding:5px 16px;margin-bottom:22px;
-                    animation:liveGlow 1.4s ease-in-out infinite;">
-          <span style="color:#ff6b6b;font-size:12.5px;font-weight:700;letter-spacing:.5px;">🔴 AO VIVO AGORA</span>
+        <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;
+                    padding:26px 24px calc(env(safe-area-inset-bottom,20px) + 24px);">
+
+          <div style="background:rgba(255,59,48,.14);border:1px solid rgba(255,59,48,.32);
+                      border-radius:20px;padding:5px 16px;margin-bottom:22px;
+                      opacity:0;animation:liveGlow 1.4s ease-in-out 0.56s infinite, pwFadeUp 0.26s ease 0.22s forwards;">
+            <span style="color:#ff6b6b;font-size:12.5px;font-weight:700;letter-spacing:.5px;">🔴 AO VIVO AGORA</span>
+          </div>
+
+          <div style="color:#fff;font-size:22px;font-weight:800;text-align:center;line-height:1.3;letter-spacing:-.3px;margin-bottom:10px;
+                      opacity:0;animation:pwFadeUp 0.26s ease 0.30s forwards;">
+            Desbloqueia e volta<br/>imediatamente pra chamada
+          </div>
+
+          <div style="color:rgba(255,255,255,.58);font-size:15px;text-align:center;line-height:1.55;margin-bottom:32px;
+                      opacity:0;animation:pwFadeUp 0.26s ease 0.38s forwards;">
+            Eu tô te esperando pelada e safada.
+          </div>
+
+          <button id="goCheckoutBtn" style="
+            width:100%;padding:18px 20px;border-radius:18px;border:none;
+            background:linear-gradient(135deg,#00e676 0%,#00c853 55%,#009624 100%);
+            color:#fff;font-size:17px;font-weight:900;letter-spacing:.3px;
+            cursor:pointer;-webkit-tap-highlight-color:transparent;
+            box-shadow:0 0 28px rgba(0,230,118,.7),0 6px 22px rgba(0,200,83,.55);
+            animation:glowG 1.8s ease-in-out 0.86s infinite, ctaPulse 2.6s ease-in-out 0.86s infinite, pwBtnPop 0.38s cubic-bezier(0.34,1.56,0.64,1) 0.46s both;
+            margin-bottom:22px;
+          ">🔥 DESBLOQUEAR ACESSO COMPLETO AGORA</button>
+
+          <button id="paywallDismiss" style="
+            background:none;border:none;color:rgba(255,255,255,.28);
+            font-size:13px;cursor:pointer;padding:8px;
+            opacity:0;animation:pwFadeUp 0.22s ease 0.58s forwards;
+            -webkit-tap-highlight-color:transparent;
+          ">Ver conversa</button>
+
         </div>
-
-        <div style="color:#fff;font-size:22px;font-weight:800;text-align:center;line-height:1.3;letter-spacing:-.3px;margin-bottom:10px;">
-          Desbloqueia e volta<br/>imediatamente pra chamada
-        </div>
-
-        <div style="color:rgba(255,255,255,.58);font-size:15px;text-align:center;line-height:1.55;margin-bottom:32px;">
-          Eu tô te esperando pelada e safada.
-        </div>
-
-        <button id="goCheckoutBtn" style="
-          width:100%;padding:18px 20px;border-radius:18px;border:none;
-          background:linear-gradient(135deg,#00e676 0%,#00c853 55%,#009624 100%);
-          color:#fff;font-size:17px;font-weight:900;letter-spacing:.3px;
-          cursor:pointer;-webkit-tap-highlight-color:transparent;
-          box-shadow:0 0 28px rgba(0,230,118,.7),0 6px 22px rgba(0,200,83,.55);
-          animation:glowG 1.8s ease-in-out infinite, ctaPulse 2.6s ease-in-out infinite;
-          margin-bottom:22px;
-        ">🔥 DESBLOQUEAR ACESSO COMPLETO AGORA</button>
-
-        <button id="paywallDismiss" style="
-          background:none;border:none;color:rgba(255,255,255,.28);
-          font-size:13px;cursor:pointer;padding:8px;
-          -webkit-tap-highlight-color:transparent;
-        ">Ver conversa</button>
-
       </div>
     </div>
   `;
 
   document.body.appendChild(overlay);
-  requestAnimationFrame(() => {
-
-    requestAnimationFrame(() => {
-      overlay.style.opacity = "1";
-      document.getElementById("paywallBgVideo")?.play().catch(() => {});
-    });
-  });
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    overlay.style.background = "rgba(0,0,0,0.72)";
+    document.getElementById("paywallBgVideo")?.play().catch(() => {});
+  }));
 
   setTimeout(() => {
     const btn = document.getElementById("goCheckoutBtn");
     if (btn) btn.onclick = openCheckout;
     const dismiss = document.getElementById("paywallDismiss");
-    if (dismiss) dismiss.onclick = () => {
-      overlay.style.opacity = "0";
-      setTimeout(() => overlay.remove(), 400);
-    };
+    if (dismiss) dismiss.onclick = () => _dismissPaywall(overlay);
   }, 0);
 
   setTimeout(async () => {
