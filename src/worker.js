@@ -364,10 +364,13 @@ const worker = new Worker(
       if (type === "SEND_PLANS") {
         await prisma.user.update({ where: { id: String(chatId) }, data: { etapa: "checkout" } }).catch(() => {});
 
-        await sendHuman(chatId, "tá… agora escolhe como você quer entrar.", {}, { autoSplit: true });
-        await sleep(jitter(rand(1000, 1800)));
-        await sendHuman(chatId, "3 opções. sem enrolar.", {}, { autoSplit: true });
-        await sleep(jitter(rand(800, 1400)));
+        await sendFunnelVideo(chatId, "checkout-video.mp4");
+        await sleep(500);
+
+        await bot.sendMessage(chatId, "tá… agora escolhe como você quer entrar.");
+        await sleep(300);
+        await bot.sendMessage(chatId, "3 opções. sem enrolar.");
+        await sleep(300);
 
         await bot.sendMessage(chatId, "👇", {
           reply_markup: {
