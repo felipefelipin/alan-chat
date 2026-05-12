@@ -32,7 +32,7 @@ module.exports = async function handler(req, res) {
     const videoRes = await sendVideo(`${assetsBase}/checkout-video.mp4`);
     const videoJson = await videoRes.json().catch(() => ({}));
     if (!videoJson.ok) console.error("sendVideo failed:", JSON.stringify(videoJson));
-    await sleep(1200);
+    await sleep(3500);
 
     // 2. Copy + planos
     await sendMsg(
