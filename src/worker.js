@@ -204,6 +204,35 @@ async function sendVideoWithAction(chatId, file, opts = {}) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
+// CACHE DE file_id — após 1º upload o Telegram serve direto do CDN deles
+// ═══════════════════════════════════════════════════════════════════════
+const fileIdCache = new Map();
+
+async function sendFunnelVideo(chatId, filename) {
+  const cached = fileIdCache.get(filename);
+  if (cached) {
+    return bot.sendVideo(chatId, cached);
+  }
+  const stream = fs.createReadStream(path.join(ASSETS_DIR, filename));
+  const sent = await bot.sendVideo(chatId, stream);
+  const fid = sent?.video?.file_id;
+  if (fid) fileIdCache.set(filename, fid);
+  return sent;
+}
+
+async function sendFunnelPhoto(chatId, filename) {
+  const cached = fileIdCache.get(filename);
+  if (cached) {
+    return bot.sendPhoto(chatId, cached);
+  }
+  const stream = fs.createReadStream(path.join(ASSETS_DIR, filename));
+  const sent = await bot.sendPhoto(chatId, stream);
+  const fid = sent?.photo?.at(-1)?.file_id;
+  if (fid) fileIdCache.set(filename, fid);
+  return sent;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
 // PROVA SOCIAL — nomes e mensagens aleatórias de "alguém acabou de entrar"
 // ═══════════════════════════════════════════════════════════════════════
 const SOCIAL_NAMES = [
@@ -485,15 +514,10 @@ const worker = new Worker(
       }
 
       if (type === "FUNNEL_STEP2") {
-        try {
-          const stream = fs.createReadStream(path.join(ASSETS_DIR, "step2-video.mp4"));
-          await bot.sendVideo(chatId, stream);
-        } catch (e) {
-          console.error("FUNNEL_STEP2 video error:", e.message);
-        }
-        await sleep(rand(500, 900));
+        await sendFunnelVideo(chatId, "step2-video.mp4").catch(e => console.error("FUNNEL_STEP2 video:", e.message));
+        await sleep(rand(300, 500));
         await sendSocialProof(chatId);
-        await sleep(rand(700, 1100));
+        await sleep(rand(300, 500));
         await bot.sendMessage(chatId,
           "Que bom... Eu também tô bem, mas bem safadinha hoje 👀💦\n\nSabe, eu só faço chamada de vídeo peladinha pra quem realmente me excita de verdade...\n\nTopa uma chamada bem gostosa e sem censura comigo agora?",
           { reply_markup: { inline_keyboard: [
@@ -507,15 +531,10 @@ const worker = new Worker(
       }
 
       if (type === "FUNNEL_ROLETA_INTRO") {
-        try {
-          const stream = fs.createReadStream(path.join(ASSETS_DIR, "step3-video.mp4"));
-          await bot.sendVideo(chatId, stream);
-        } catch (e) {
-          console.error("FUNNEL_ROLETA_INTRO video error:", e.message);
-        }
-        await sleep(rand(500, 900));
+        await sendFunnelVideo(chatId, "step3-video.mp4").catch(e => console.error("FUNNEL_ROLETA_INTRO video:", e.message));
+        await sleep(rand(300, 500));
         await sendSocialProof(chatId);
-        await sleep(rand(600, 1000));
+        await sleep(rand(300, 500));
         await bot.sendMessage(chatId,
           "Perfeito 😏\n\nMas pra me ver toda peladinha, e me ter bem putinha em um privado bem secreto, a gente vai ter que brincar de roleta da sorte.\n\nQuer tentar a sorte?",
           { reply_markup: { inline_keyboard: [
@@ -613,13 +632,8 @@ const worker = new Worker(
           await edit(`😔 <b>Quase jackpot!</b>\n\n🎰  [${c1}]  [${c2}]  [${c3}]  🎰`);
           await sleep(900);
 
-          try {
-            const stream = fs.createReadStream(path.join(ASSETS_DIR, "lose-video.mp4"));
-            await bot.sendVideo(chatId, stream);
-          } catch (e) {
-            console.error("FUNNEL_SPIN lose video error:", e.message);
-          }
-          await sleep(rand(400, 700));
+          await sendFunnelVideo(chatId, "lose-video.mp4").catch(e => console.error("lose video:", e.message));
+          await sleep(rand(300, 500));
           await bot.sendMessage(chatId,
             `Quase... caiu <b>${c1} — ${c2} — ${c3}</b> 😔\n\nNão foi dessa vez... mas você ainda tem uma última chance.\n\nQuer tentar de novo?`,
             { parse_mode: "HTML", reply_markup: { inline_keyboard: [
@@ -636,13 +650,8 @@ const worker = new Worker(
           await sendSocialProof(chatId);
           await sleep(rand(500, 800));
 
-          try {
-            const stream = fs.createReadStream(path.join(ASSETS_DIR, "win-photo.jpg"));
-            await bot.sendPhoto(chatId, stream);
-          } catch (e) {
-            console.error("FUNNEL_SPIN win photo error:", e.message);
-          }
-          await sleep(rand(400, 700));
+          await sendFunnelPhoto(chatId, "win-photo.jpg").catch(e => console.error("win photo:", e.message));
+          await sleep(rand(300, 500));
           await bot.sendMessage(chatId,
             "🔥🔥 PORRA KKKKKK VC É MUITO SORTUDO CARALHO!! 🔥🔥\n\nDessa vez caiu o seu número!!\n\nAcabei de liberar o acesso pro meu privado.\n\nClica no botão abaixo e entra agora no meu privado pra me ver peladinha na chamada de vídeo 😈💦",
             { reply_markup: { inline_keyboard: [[{

@@ -248,7 +248,7 @@ bot.on("callback_query", async (q) => {
       await bot.answerCallbackQuery(q.id).catch(() => {});
       await queue.add("jobs",
         { type: "FUNNEL_STEP2", chatId: String(chatId), data: {} },
-        { delay: rand(600, 1200), removeOnComplete: true, removeOnFail: true }
+        { delay: rand(150, 300), removeOnComplete: true, removeOnFail: true }
       );
       return;
     }
@@ -258,7 +258,7 @@ bot.on("callback_query", async (q) => {
       await bot.answerCallbackQuery(q.id).catch(() => {});
       await queue.add("jobs",
         { type: "FUNNEL_ROLETA_INTRO", chatId: String(chatId), data: {} },
-        { delay: rand(600, 1200), removeOnComplete: true, removeOnFail: true }
+        { delay: rand(150, 300), removeOnComplete: true, removeOnFail: true }
       );
       return;
     }
@@ -268,7 +268,7 @@ bot.on("callback_query", async (q) => {
       await bot.answerCallbackQuery(q.id).catch(() => {});
       await queue.add("jobs",
         { type: "FUNNEL_NUM_GRID", chatId: String(chatId), data: { round: 1 } },
-        { delay: rand(400, 900), removeOnComplete: true, removeOnFail: true }
+        { delay: rand(100, 250), removeOnComplete: true, removeOnFail: true }
       );
       return;
     }
@@ -278,7 +278,7 @@ bot.on("callback_query", async (q) => {
       await bot.answerCallbackQuery(q.id).catch(() => {});
       await queue.add("jobs",
         { type: "FUNNEL_NUM_GRID", chatId: String(chatId), data: { round: 2 } },
-        { delay: rand(400, 900), removeOnComplete: true, removeOnFail: true }
+        { delay: rand(100, 250), removeOnComplete: true, removeOnFail: true }
       );
       return;
     }
@@ -289,7 +289,7 @@ bot.on("callback_query", async (q) => {
       await bot.answerCallbackQuery(q.id).catch(() => {});
       await queue.add("jobs",
         { type: "FUNNEL_NUM_CHOSEN", chatId: String(chatId), data: { round: 1, chosen: parseInt(m1[1]) } },
-        { delay: rand(500, 1000), removeOnComplete: true, removeOnFail: true }
+        { delay: rand(100, 250), removeOnComplete: true, removeOnFail: true }
       );
       return;
     }
@@ -300,7 +300,7 @@ bot.on("callback_query", async (q) => {
       await bot.answerCallbackQuery(q.id).catch(() => {});
       await queue.add("jobs",
         { type: "FUNNEL_NUM_CHOSEN", chatId: String(chatId), data: { round: 2, chosen: parseInt(m2[1]) } },
-        { delay: rand(500, 1000), removeOnComplete: true, removeOnFail: true }
+        { delay: rand(100, 250), removeOnComplete: true, removeOnFail: true }
       );
       return;
     }
@@ -311,7 +311,7 @@ bot.on("callback_query", async (q) => {
       await bot.answerCallbackQuery(q.id).catch(() => {});
       await queue.add("jobs",
         { type: "FUNNEL_SPIN", chatId: String(chatId), data: { round: 1, chosen: parseInt(s1[1]) } },
-        { delay: rand(400, 800), removeOnComplete: true, removeOnFail: true }
+        { delay: rand(100, 200), removeOnComplete: true, removeOnFail: true }
       );
       return;
     }
@@ -322,7 +322,7 @@ bot.on("callback_query", async (q) => {
       await bot.answerCallbackQuery(q.id).catch(() => {});
       await queue.add("jobs",
         { type: "FUNNEL_SPIN", chatId: String(chatId), data: { round: 2, chosen: parseInt(s2[1]) } },
-        { delay: rand(400, 800), removeOnComplete: true, removeOnFail: true }
+        { delay: rand(100, 200), removeOnComplete: true, removeOnFail: true }
       );
       return;
     }
@@ -332,7 +332,7 @@ bot.on("callback_query", async (q) => {
       await bot.answerCallbackQuery(q.id).catch(() => {});
       await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: { text: "Ah que pena... Se mudar de ideia é só me chamar 😈" } },
-        { delay: rand(700, 1300), removeOnComplete: true, removeOnFail: true }
+        { delay: rand(300, 600), removeOnComplete: true, removeOnFail: true }
       );
       return;
     }
