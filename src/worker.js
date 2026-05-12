@@ -414,9 +414,6 @@ const worker = new Worker(
         if (etapa === "webapp_pending") {
           if (stage === "10m") {
             await sendSocialProof(chatId);
-            await sleep(rand(1200, 2000));
-            await sendHuman(chatId, "ei... você abriu e sumiu 😔", {}, { autoSplit: true });
-            await sendHuman(chatId, "o privado ainda tá esperando você", {}, { autoSplit: true });
             await sleep(rand(800, 1200));
             await bot.sendMessage(chatId, "👇", {
               reply_markup: { inline_keyboard: [[{
