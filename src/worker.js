@@ -460,9 +460,9 @@ const worker = new Worker(
         await bot.sendMessage(chatId, "👇", {
           reply_markup: {
             inline_keyboard: [
-              [{ text: "🔥 GRUPO SEM CENSURA — R$ 29,90",             callback_data: "plan:basic" }],
-              [{ text: "💦 GRUPO + AO VIVO COMIGO — R$ 49,90",       callback_data: "plan:plus"  }],
-              [{ text: "😈 PRIVADO — SÓ EU E VOCÊ — R$ 97,00",       callback_data: "plan:vip"   }],
+              [{ text: "🔥 GRUPO SEM CENSURA — R$ 29,90",             callback_data: "plan:basic"                   }],
+              [{ text: "💦 GRUPO + AO VIVO COMIGO — R$ 49,90",       callback_data: "plan:plus",  style: "success" }],
+              [{ text: "😈 PRIVADO — SÓ EU E VOCÊ — R$ 97,00",       callback_data: "plan:vip"                    }],
             ],
           },
         });
@@ -578,8 +578,8 @@ const worker = new Worker(
         await fm(chatId, "você consegue me ajudar com isso ou você é fresco? 🔥",
           { reply_markup: { inline_keyboard: [
             [{ text: "Sou homem de verdade 😈",   callback_data: "start_sim",   style: "success" }],
-            [{ text: "Te decepcionar? Jamais 🔥",  callback_data: "start_otimo"                   }],
-            [{ text: "O que você tava fazendo? 👀", callback_data: "start_afim",  style: "primary" }],
+            [{ text: "Te decepcionar? Jamais 🔥",  callback_data: "start_otimo", style: "success" }],
+            [{ text: "O que você tava fazendo? 👀", callback_data: "start_afim",  style: "success" }],
           ]}}
         );
         await logEventSafe(chatId, "FUNNEL_START", {});
@@ -595,8 +595,8 @@ const worker = new Worker(
           caption: "e isso é só o começo... você aguenta ver mais? 😈",
           reply_markup: { inline_keyboard: [
             [{ text: "Aguento sim 😈",   callback_data: "quero_video",     style: "success" }],
-            [{ text: "Quero ver tudo 🔥", callback_data: "quero_video"                       }],
-            [{ text: "Continua... 👀",    callback_data: "mostra_primeiro", style: "primary" }],
+            [{ text: "Quero ver tudo 🔥", callback_data: "quero_video",     style: "success" }],
+            [{ text: "Continua... 👀",    callback_data: "mostra_primeiro", style: "success" }],
           ]},
         }).catch(e => console.error("FUNNEL_STEP2 video:", e.message));
         await logEventSafe(chatId, "FUNNEL_STEP2", {});
@@ -614,7 +614,7 @@ const worker = new Worker(
           caption: "tenta a sorte e me tem do jeito que você quiser 🔥",
           reply_markup: { inline_keyboard: [
             [{ text: "Quero tentar 🎰",        callback_data: "tentar_roleta_1", style: "success" }],
-            [{ text: "Tô com sorte hoje 😈",    callback_data: "tentar_roleta_1", style: "primary" }],
+            [{ text: "Tô com sorte hoje 😈",    callback_data: "tentar_roleta_1", style: "success" }],
           ]},
         }).catch(e => console.error("FUNNEL_ROLETA_INTRO video:", e.message));
         await logEventSafe(chatId, "FUNNEL_ROLETA_INTRO", {});
