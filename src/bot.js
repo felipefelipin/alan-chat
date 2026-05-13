@@ -98,10 +98,10 @@ async function createCheckoutAndSend(chatId, plano) {
 
   // send inline — no worker dependency
   await sleep(rand(1200, 2000));
-  await bot.sendMessage(chatId, "boa.");
+  await bot.sendMessage(chatId, "Perfeito! Seu pedido foi gerado com sucesso 🔥");
 
   await sleep(rand(1800, 2600));
-  await bot.sendMessage(chatId, "gerou seu Pix aqui...");
+  await bot.sendMessage(chatId, "Aqui está seu Pix para pagamento:");
 
   await sleep(rand(1000, 1600));
 
@@ -111,7 +111,7 @@ async function createCheckoutAndSend(chatId, plano) {
     await sleep(rand(700, 1200));
     const amountFmt = `R$ ${Number(amount).toFixed(2).replace(".", ",")}`;
     await bot.sendPhoto(chatId, buf, {
-      caption: `🔑 *${amountFmt}* — escaneie o QR Code pelo seu banco`,
+      caption: `💸 *${amountFmt}* — Escaneie o QR Code pelo app do seu banco`,
       parse_mode: "Markdown",
     });
   }
@@ -119,14 +119,18 @@ async function createCheckoutAndSend(chatId, plano) {
   await sleep(rand(800, 1400));
 
   if (pixCode) {
+    await bot.sendMessage(chatId, "Ou copie o código Pix abaixo:");
+    await sleep(rand(400, 700));
     await bot.sendMessage(chatId,
-      `*Pix Copia e Cola:*\n\`\`\`\n${pixCode}\n\`\`\``,
+      `\`\`\`\n${pixCode}\n\`\`\``,
       { parse_mode: "Markdown" }
     );
   }
 
   await sleep(rand(600, 1000));
-  await bot.sendMessage(chatId, "✅ Pague e me manda uma mensagem. Libero em menos de 5 minutos 😈");
+  const planNames = { basic: "Grupo Sem Censura", plus: "Grupo + Ao Vivo", vip: "Privado — Só Eu e Você" };
+  const planTitle = planNames[plano] ?? plano;
+  await bot.sendMessage(chatId, `Assim que o pagamento for confirmado, o link do *${planTitle}* cai aqui automaticamente 🔒✅`, { parse_mode: "Markdown" });
 
   await scheduleRemarketingJobs(chatId, "pagamento");
 }
