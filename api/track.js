@@ -1,0 +1,21 @@
+// api/track.js — Vercel Serverless Function
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
+
+module.exports = async function handler(req, res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  if (req.method !== "POST") return res.status(405).end();
+
+  const { chatId, event } = req.body || {};
+  if (!chatId || !event) return res.status(400).json({ error: "missing params" });
+
+  try {
+    await prisma.event.create({
+      data: { userId: String(chatId), type: event, payload: {} },
+    });
+  } catch (e) {
+    console.error("track error:", e.message);
+  }
+
+  res.json({ ok: true });
+};

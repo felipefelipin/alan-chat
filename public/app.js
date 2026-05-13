@@ -5,6 +5,16 @@ if (tg) {
   if (typeof tg.disableVerticalSwipes === "function") {
     tg.disableVerticalSwipes();
   }
+  // tracking de abertura
+  const _trackChatId = tg?.initDataUnsafe?.user?.id;
+  if (_trackChatId) {
+    fetch("/api/track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chatId: String(_trackChatId), event: "MINIAPP_OPEN" }),
+      keepalive: true,
+    }).catch(() => {});
+  }
 }
 
 if (tg?.BackButton) {
@@ -2116,8 +2126,20 @@ async function handleUserText(text) {
   finally { _flowRunning = false; }
 }
 
+function trackEvent(event) {
+  const chatId = tg?.initDataUnsafe?.user?.id;
+  if (!chatId) return;
+  fetch("/api/track", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chatId: String(chatId), event }),
+    keepalive: true,
+  }).catch(() => {});
+}
+
 function openCheckout() {
   try { localStorage.setItem("gisa_checkout_done", "1"); } catch {}
+  trackEvent("MINIAPP_CHECKOUT_CLICK");
   const chatId = tg?.initDataUnsafe?.user?.id;
   if (chatId) {
     // fetch primeiro, fecha o app depois — garante que a requisição sai antes do WebView morrer
