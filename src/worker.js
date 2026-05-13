@@ -732,7 +732,7 @@ const worker = new Worker(
           await sleep(300);
           await fm(chatId, "Acabei de liberar o acesso pro meu privado 😈");
           await sleep(300);
-          await fm(chatId, "Entra agora pra me ver peladinha na chamada de vídeo 💦",
+          await fm(chatId, "abre aqui e vem me vêr peladinha 👇",
             { reply_markup: { inline_keyboard: [[{
               text: "ENTRAR NO MEU PRIVADO AGORA 😈",
               web_app: { url: process.env.WEBAPP_URL + "?v=" + Date.now() },
@@ -740,9 +740,7 @@ const worker = new Worker(
             }]]}}
           );
           await sleep(500);
-          await fm(chatId, "Entra logo seu gostoso... 🥵🔥");
-          await sleep(300);
-          await fm(chatId, "eu não vou deixar isso aberto por muito tempo.");
+          await fm(chatId, "vai aparecer uma confirmação — é só clicar em abrir, fique tranquilo que o aplicativo é aqui dentro do telegram mesmo amor... 😈");
           await prisma.user.update({
             where: { id: String(chatId) },
             data:  { etapa: "webapp_pending" },
