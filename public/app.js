@@ -2108,6 +2108,7 @@ async function handleUserText(text) {
 }
 
 function openCheckout() {
+  try { localStorage.setItem("gisa_checkout_done", "1"); } catch {}
   const chatId = tg?.initDataUnsafe?.user?.id;
   try { if (tg?.close) tg.close(); } catch {}
   if (chatId) {
@@ -3001,14 +3002,18 @@ async function endCall() {
 preloadMedia();
 loadState();
 
-// Sempre reinicia o fluxo do chat do zero a cada sessão
-state.history        = [];
-state.step           = 0;
-state.flags.startedChat = false;
-state.flags.routing     = false;
-
-mountChat();
-setTimeout(startScript, 220);
+if (localStorage.getItem("gisa_checkout_done") === "1") {
+  // Usuário já foi pro checkout — bloqueia o fluxo e manda direto pro CTA
+  mountChat();
+  setTimeout(() => showCheckoutCta(), 300);
+} else {
+  state.history        = [];
+  state.step           = 0;
+  state.flags.startedChat = false;
+  state.flags.routing     = false;
+  mountChat();
+  setTimeout(startScript, 220);
+}
 
 if (window.visualViewport) {
   let _lastVH = window.visualViewport.height;
