@@ -716,7 +716,6 @@ const worker = new Worker(
             caption: "Mas você ainda tem uma última chance. Quer tentar de novo?",
             reply_markup: { inline_keyboard: [
               [{ text: "🔥 Quero tentar novamente", callback_data: "tentar_roleta_2" }],
-              [{ text: "Desistir",                   callback_data: "desistir"         }],
             ]},
           }).catch(e => console.error("lose video:", e.message));
         } else {
