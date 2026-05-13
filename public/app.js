@@ -1679,7 +1679,17 @@ function showIncomingCall() {
     ringtone.loop = true; ringtone.volume = 0.85;
     ringtone.play().catch(() => {});
   } catch {}
-  const stopRing = () => { try { if (ringtone) { ringtone.pause(); ringtone.src = ""; } } catch {} };
+
+  let vibrateInterval = null;
+  if (navigator.vibrate) {
+    navigator.vibrate([1000, 800, 1000, 800]);
+    vibrateInterval = setInterval(() => navigator.vibrate([1000, 800, 1000, 800]), 3600);
+  }
+
+  const stopRing = () => {
+    try { if (ringtone) { ringtone.pause(); ringtone.src = ""; } } catch {}
+    try { if (vibrateInterval) clearInterval(vibrateInterval); navigator.vibrate(0); } catch {}
+  };
 
   const el = document.createElement("div");
   el.id = "incomingCallScreen";
