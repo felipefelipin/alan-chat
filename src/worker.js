@@ -460,7 +460,7 @@ const worker = new Worker(
         await bot.sendMessage(chatId, "👇", {
           reply_markup: {
             inline_keyboard: [
-              [{ text: "🔥 MEU GRUPO — TUDO SEM CENSURA — R$ 29,90", callback_data: "plan:basic" }],
+              [{ text: "🔥 GRUPO SEM CENSURA — R$ 29,90",             callback_data: "plan:basic" }],
               [{ text: "💦 GRUPO + AO VIVO COMIGO — R$ 49,90",       callback_data: "plan:plus"  }],
               [{ text: "😈 PRIVADO — SÓ EU E VOCÊ — R$ 97,00",       callback_data: "plan:vip"   }],
             ],
@@ -748,7 +748,6 @@ const worker = new Worker(
             where: { id: String(chatId) },
             data:  { etapa: "webapp_pending" },
           }).catch(() => {});
-          await scheduleRemarketingJobs(chatId, "webapp_pending");
         }
 
         await logEventSafe(chatId, "FUNNEL_SPIN", { round, chosen });

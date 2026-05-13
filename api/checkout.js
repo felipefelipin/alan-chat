@@ -50,7 +50,7 @@ module.exports = async function handler(req, res) {
       text: "👇 Escolhe seu plano:",
       reply_markup: {
         inline_keyboard: [
-          [{ text: "🔥 MEU GRUPO — TUDO SEM CENSURA — R$ 29,90", callback_data: "plan:basic" }],
+          [{ text: "🔥 GRUPO SEM CENSURA — R$ 29,90",             callback_data: "plan:basic" }],
           [{ text: "💦 GRUPO + AO VIVO COMIGO — R$ 49,90",       callback_data: "plan:plus"  }],
           [{ text: "😈 PRIVADO — SÓ EU E VOCÊ — R$ 97,00",       callback_data: "plan:vip"   }],
         ],
