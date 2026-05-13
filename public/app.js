@@ -3027,6 +3027,19 @@ if (localStorage.getItem("gisa_checkout_done") === "1") {
   setTimeout(startScript, 220);
 }
 
+function pauseAllMedia() {
+  try { if (state.music) { state.music.pause(); } } catch {}
+  document.querySelectorAll("video, audio").forEach(el => { try { el.pause(); } catch {} });
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) pauseAllMedia();
+});
+
+try {
+  tg?.onEvent?.("deactivated", pauseAllMedia);
+} catch {}
+
 if (window.visualViewport) {
   let _lastVH = window.visualViewport.height;
   let _rafId = null;
