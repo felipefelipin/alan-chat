@@ -573,7 +573,7 @@ const worker = new Worker(
         await sleep(300);
         await fm(chatId, "psiu... ei gostoso? 😈");
         await sleep(300);
-        await fm(chatId, "tô aqui bem molhadinha pensando em besteira");
+        await fm(chatId, "tô aqui bem molhadinha pensando em uma rola bem grande e grossa… 🥵");
         await sleep(300);
         await fm(chatId, "você consegue me ajudar com isso ou você é fresco? 🔥",
           { reply_markup: { inline_keyboard: [
@@ -587,7 +587,7 @@ const worker = new Worker(
       }
 
       if (type === "FUNNEL_STEP2") {
-        await fm(chatId, "então eu acho que vc pode me ter bem putinha hoje 🔥");
+        await fm(chatId, "Já que você tá tão confiante e curioso pra ver mais, vou te dar oque vc quer, safado… 🤫🔥");
         await sleep(300);
         await fm(chatId, "olha como eu estou aqui sozinha te esperando...");
         await sleep(300);
@@ -606,12 +606,14 @@ const worker = new Worker(
       if (type === "FUNNEL_ROLETA_INTRO") {
         await fm(chatId, "imagina você aqui comigo agora em gostoso? 😈🔥");
         await sleep(300);
-        await fm(chatId, "mas vc deu sorte que eu tenho um privadinho que consigo fazer uma chamada de vídeo pelada bem gostosa e bem putinha. exclusiva pra vc, mas pra vc merecer entrar no meu privado...");
+        await fm(chatId, "mas vc deu sorte que no meu privadinho eu consigo fazer uma chamada de vídeo ao vivo pelada bem putinha exclusiva so pra vc… 😈");
+        await sleep(300);
+        await fm(chatId, "maaaas pra vc merecer entrar no meu privado...😌");
         await sleep(300);
         await fm(chatId, "você precisa ter sorte, e conseguir acertar o número na minha roleta.. 😈");
         await sleep(300);
         await sendFunnelVideo(chatId, "step3-video.mp4", {
-          caption: "tenta a sorte e me tem do jeito que você quiser 🔥",
+          caption: "tenta a sorte e se vc conseguir vc vai me ter do jeito que você pedir… 🥵🔥",
           reply_markup: { inline_keyboard: [
             [{ text: "Quero tentar 🎰",        callback_data: "tentar_roleta_1", style: "success" }],
             [{ text: "Tô com sorte hoje 😈",    callback_data: "tentar_roleta_1", style: "success" }],
