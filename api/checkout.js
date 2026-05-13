@@ -21,13 +21,15 @@ module.exports = async function handler(req, res) {
     }).then(r => r.json()).catch(() => ({}));
 
   try {
-    // 1. Vídeo
+    // 1. Vídeo — tenta file_id primeiro (mais rápido), fallback pra URL
     await tg("sendChatAction", { chat_id: id, action: "upload_video" });
-    await tg("sendVideo", {
+    const videoSrc = process.env.CHECKOUT_VIDEO_FILE_ID || `${ASSETS}/checkout-video.mp4`;
+    const videoResult = await tg("sendVideo", {
       chat_id: id,
-      video: `${ASSETS}/checkout-video.mp4`,
+      video: videoSrc,
       supports_streaming: true,
     });
+    if (!videoResult.ok) console.error("sendVideo failed:", JSON.stringify(videoResult));
 
     // 2. Typing antes da mensagem promocional
     await sleep(1800);
