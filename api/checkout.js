@@ -20,9 +20,6 @@ module.exports = async function handler(req, res) {
       body:    JSON.stringify(body),
     }).then(r => r.json()).catch(() => ({}));
 
-  // responde imediatamente pro cliente, continua enviando em background
-  res.json({ ok: true });
-
   try {
     // 1. Vídeo
     await tg("sendChatAction", { chat_id: id, action: "upload_video" });
@@ -32,22 +29,20 @@ module.exports = async function handler(req, res) {
       supports_streaming: true,
     });
 
-    // 2. Pausa pra pessoa ver o vídeo
-    await sleep(3000);
-
-    // 3. Mensagem promocional (sem botões)
+    // 2. Typing antes da mensagem promocional
+    await sleep(1800);
     await tg("sendChatAction", { chat_id: id, action: "typing" });
-    await sleep(2200);
+    await sleep(1800);
+
+    // 3. Mensagem promocional
     await tg("sendMessage", {
       chat_id: id,
       parse_mode: "HTML",
       text: `🔥 <b>EU PAREÇO INOCENTE... MAS NÃO SOU 😈</b>\n\nCresci sendo vista como a boa moça, carinha de anjinho...\nMas no fundo eu sou uma safada que adora ficar peladinha, rebolando gostoso, abrindo as pernas e gemendo alto na frente de homem de verdade 💦\n\nAgora eu mostro tudinho: bucetinha molhada, sentando gostoso, gozando de verdade e fazendo tudo que você mandar...\n\nDeixa eu te contar o que te espera no meu cantinho VIP:\n\n🔥 Acesso TOTAL sem censura (fotos e vídeos explícitos)\n🔥 Ao Vivo interativo: eu faço tudo que você pedir\n🔥 Chamadas de vídeo particulares peladinha\n🎁 Bônus: sorteios e conteúdo extra pra quem é VIP\n\nSe você sempre quis ver essa putinha fingida de santinha gemendo seu nome... essa é a hora, safado 🔥💦\n\n<b>VEM DESVENDAR MEU SEGREDINHO 😈</b>`,
     });
 
-    // 4. Pausa antes dos planos
-    await sleep(2000);
-
-    // 5. Tabela de valores (botões)
+    // 4. Tabela de valores
+    await sleep(1200);
     await tg("sendMessage", {
       chat_id: id,
       text: "👇 Escolhe seu plano:",
@@ -60,16 +55,16 @@ module.exports = async function handler(req, res) {
       },
     });
 
-    // 6. Pausa antes da mensagem de liberação
-    await sleep(1500);
-
-    // 7. Mensagem de liberação pós-pagamento
+    // 5. Mensagem de liberação pós-pagamento
+    await sleep(1000);
     await tg("sendMessage", {
       chat_id: id,
       text: "✅ Pagamento confirmado = liberação na hora!\n\nAssim que o pagamento for aprovado você recebe o acesso em menos de 5 minutos 🔒",
     });
 
+    res.json({ ok: true });
   } catch (e) {
-    console.error("checkout flow error:", e);
+    console.error("checkout error:", e);
+    res.status(500).json({ error: "failed" });
   }
 };
