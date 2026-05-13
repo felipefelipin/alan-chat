@@ -330,19 +330,22 @@ async function sendProgressBar(chatId) {
 // ═══════════════════════════════════════════════════════════════════════
 // REMARKETING — agenda 3 ondas (10m / 1h / 24h) por etapa
 // ═══════════════════════════════════════════════════════════════════════
-async function scheduleRemarketingJobs(chatId, etapa) {
+async function scheduleRemarketingJobs(chatId, etapa, delays = {}) {
   const base = `rmkt-${etapa}-${chatId}`;
+  const d1 = delays.first  ?? 10 * 60 * 1000;
+  const d2 = delays.second ?? 60 * 60 * 1000;
+  const d3 = delays.third  ?? 24 * 60 * 60 * 1000;
   await queue.add("jobs",
     { type: "REMARKETING", chatId: String(chatId), data: { stage: "10m", etapa } },
-    { delay: 10 * 60 * 1000, jobId: `${base}-10m`, removeOnComplete: true, removeOnFail: true }
+    { delay: d1, jobId: `${base}-10m`, removeOnComplete: true, removeOnFail: true }
   );
   await queue.add("jobs",
     { type: "REMARKETING", chatId: String(chatId), data: { stage: "1h", etapa } },
-    { delay: 60 * 60 * 1000, jobId: `${base}-1h`, removeOnComplete: true, removeOnFail: true }
+    { delay: d2, jobId: `${base}-1h`, removeOnComplete: true, removeOnFail: true }
   );
   await queue.add("jobs",
     { type: "REMARKETING", chatId: String(chatId), data: { stage: "24h", etapa } },
-    { delay: 24 * 60 * 60 * 1000, jobId: `${base}-24h`, removeOnComplete: true, removeOnFail: true }
+    { delay: d3, jobId: `${base}-24h`, removeOnComplete: true, removeOnFail: true }
   );
 }
 
@@ -760,7 +763,7 @@ const worker = new Worker(
             where: { id: String(chatId) },
             data:  { etapa: "webapp_pending" },
           }).catch(() => {});
-          await scheduleRemarketingJobs(chatId, "webapp_pending");
+          await scheduleRemarketingJobs(chatId, "webapp_pending", { first: 30 * 60 * 1000 });
         }
 
         await logEventSafe(chatId, "FUNNEL_SPIN", { round, chosen });
