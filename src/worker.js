@@ -503,7 +503,7 @@ const worker = new Worker(
             await bot.sendMessage(chatId, "👇", {
               reply_markup: { inline_keyboard: [[{
                 text: "🔒 ENTRAR NO PRIVADO AGORA",
-                web_app: { url: process.env.WEBAPP_URL },
+                web_app: { url: process.env.WEBAPP_URL + "?v=" + Date.now() },
                 style: "success",
               }]]},
             });
@@ -514,7 +514,7 @@ const worker = new Worker(
             await bot.sendMessage(chatId, "👇", {
               reply_markup: { inline_keyboard: [[{
                 text: "🔒 GARANTIR MEU ACESSO AGORA",
-                web_app: { url: process.env.WEBAPP_URL },
+                web_app: { url: process.env.WEBAPP_URL + "?v=" + Date.now() },
                 style: "success",
               }]]},
             });
@@ -525,7 +525,7 @@ const worker = new Worker(
             await bot.sendMessage(chatId, "👇", {
               reply_markup: { inline_keyboard: [[{
                 text: "🔥 ÚLTIMA CHANCE — ENTRAR AGORA",
-                web_app: { url: process.env.WEBAPP_URL },
+                web_app: { url: process.env.WEBAPP_URL + "?v=" + Date.now() },
                 style: "danger",
               }]]},
             });
@@ -736,7 +736,7 @@ const worker = new Worker(
           await fm(chatId, "Entra agora pra me ver peladinha na chamada de vídeo 💦",
             { reply_markup: { inline_keyboard: [[{
               text: "ENTRAR NO MEU PRIVADO AGORA 😈",
-              web_app: { url: process.env.WEBAPP_URL },
+              web_app: { url: process.env.WEBAPP_URL + "?v=" + Date.now() },
               style: "success",
             }]]}}
           );

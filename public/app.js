@@ -3005,10 +3005,20 @@ async function endCall() {
 
 // ==================== INIT ====================
 preloadMedia();
+
+// Se o bot enviou um novo link (?v=...) diferente do anterior, é sessão nova — reseta o checkout
+try {
+  const urlV   = new URLSearchParams(location.search).get("v");
+  const savedV = localStorage.getItem("gisa_url_v");
+  if (urlV && urlV !== savedV) {
+    localStorage.removeItem("gisa_checkout_done");
+    localStorage.setItem("gisa_url_v", urlV);
+  }
+} catch {}
+
 loadState();
 
 if (localStorage.getItem("gisa_checkout_done") === "1") {
-  // Usuário já foi pro checkout — bloqueia o fluxo e manda direto pro CTA
   mountChat();
   setTimeout(() => showCheckoutCta(), 300);
 } else {
