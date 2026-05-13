@@ -1888,7 +1888,7 @@ async function startFunnelCall() {
   const triggerPaywall = async () => {
     if (done) return; done = true;
     cleanup();
-    try { vid.pause(); } catch {}
+    try { vid.pause(); vid.src = ""; } catch {}
 
     // ── "Chamada encerrada" overlay (estilo WhatsApp) ───────────────
     const m = Math.floor(elapsed / 60), s = elapsed % 60;
