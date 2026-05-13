@@ -676,18 +676,17 @@ const worker = new Worker(
           await edit(`😔 <b>Quase jackpot!</b>\n\n🎰  [${c1}]  [${c2}]  [${c3}]  🎰`);
           await sleep(900);
 
-          await sendFunnelVideo(chatId, "lose-video.mp4").catch(e => console.error("lose video:", e.message));
-          await sleep(300);
           await fm(chatId, `Quase... caiu ${c1} — ${c2} — ${c3} 😔`);
           await sleep(300);
           await fm(chatId, "Não foi dessa vez...");
           await sleep(300);
-          await fm(chatId, "Mas você ainda tem uma última chance. Quer tentar de novo?",
-            { reply_markup: { inline_keyboard: [
-              [{ text: "🔥 Quero tentar novamente", callback_data: "tentar_roleta_2", style: "success" }],
-              [{ text: "Desistir",                   callback_data: "desistir",         style: "danger"  }],
-            ]}}
-          );
+          await sendFunnelVideo(chatId, "lose-video.mp4", {
+            caption: "Mas você ainda tem uma última chance. Quer tentar de novo?",
+            reply_markup: { inline_keyboard: [
+              [{ text: "🔥 Quero tentar novamente", callback_data: "tentar_roleta_2" }],
+              [{ text: "Desistir",                   callback_data: "desistir"         }],
+            ]},
+          }).catch(e => console.error("lose video:", e.message));
         } else {
           await edit(`💥 <b>J A C K P O T ! !</b> 💥\n\n🎰  <b>[${c1}]</b>  <b>[${c2}]</b>  <b>[${c3}]</b>  🎰`);
           await sleep(800);
