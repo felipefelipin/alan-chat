@@ -1279,7 +1279,12 @@ function renderItem(item, animated = false) {
   wrapper.innerHTML = renderRowHTML(item, animated).trim();
   const row = wrapper.firstElementChild;
   if (row) {
-    state.chatEl.appendChild(row);
+    const typingRow = document.getElementById("typingRow");
+    if (typingRow) {
+      state.chatEl.insertBefore(row, typingRow);
+    } else {
+      state.chatEl.appendChild(row);
+    }
     const vid = row.querySelector("[data-vdur]");
     if (vid) {
       const durText = row.querySelector("[data-dur-text]");
