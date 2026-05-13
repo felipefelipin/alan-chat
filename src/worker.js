@@ -724,7 +724,7 @@ const worker = new Worker(
 
           await sendProgressBar(chatId);
           await sleep(300);
-          await sendFunnelPhoto(chatId, "win-photo.jpg").catch(e => console.error("win photo:", e.message));
+          await sendFunnelVideo(chatId, "win-video.mp4").catch(e => console.error("win video:", e.message));
           await sleep(300);
           await fm(chatId, "🔥🔥 PORRA KKKKKK VC É MUITO SORTUDO CARALHO!! 🔥🔥");
           await sleep(300);
