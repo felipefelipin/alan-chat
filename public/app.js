@@ -2057,11 +2057,7 @@ async function startScript() {
     setStatus("online");
     state.flags.botOnline = true; saveState();
     await sleep(5000);
-    const firstName = tg?.initDataUnsafe?.user?.first_name || "";
-    const greeting = firstName
-      ? `porra… você demorou hein ${firstName} 😈`
-      : "porra… você demorou hein 😈";
-    await gisaSay(greeting, { delay: rand(4500, 6500) });
+    await gisaSay("porra... você demorou hein 😈", { delay: rand(4500, 6500) });
     await sleep(2500);
     await gisaSay("tô toda molhada só de saber que você entrou aqui atrás de mim", { delay: rand(6000, 8000) });
     await sleep(rand(2000, 3000));
