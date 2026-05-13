@@ -726,11 +726,11 @@ const worker = new Worker(
           await sleep(300);
           await sendFunnelVideo(chatId, "win-video.mp4").catch(e => console.error("win video:", e.message));
           await sleep(300);
-          await fm(chatId, "🔥🔥 PORRA KKKKKK VC É MUITO SORTUDO CARALHO!! 🔥🔥");
+          await fm(chatId, "💥 você acertou!! não acredito...");
           await sleep(300);
-          await fm(chatId, "Dessa vez caiu o seu número!!");
+          await fm(chatId, "tô tremendo aqui... você é o único que conseguiu hoje 🥵");
           await sleep(300);
-          await fm(chatId, "Acabei de liberar o acesso pro meu privado 😈");
+          await fm(chatId, "liberei seu acesso agora mesmo — entra antes que eu mude de ideia 😈");
           await sleep(300);
           await fm(chatId, "abre aqui e vem me vêr peladinha 👇",
             { reply_markup: { inline_keyboard: [[{
@@ -740,7 +740,7 @@ const worker = new Worker(
             }]]}}
           );
           await sleep(500);
-          await fm(chatId, "vai aparecer uma confirmação — é só clicar em abrir, fique tranquilo que o aplicativo é aqui dentro do telegram mesmo amor... 😈");
+          await fm(chatId, "vai pedir uma confirmação — é só clicar em abrir, tô aqui te esperando 😈");
           await prisma.user.update({
             where: { id: String(chatId) },
             data:  { etapa: "webapp_pending" },
