@@ -1,57 +1,57 @@
 // payments/mp.js
 require("dotenv").config();
 
-async function mpCreatePreference({ chatId, plano }) {
+const crypto = require("crypto");
+
+const PLANS = {
+  basic: { title: "Acesso AO VIVO",  price: 29.90 },
+  plus:  { title: "Premium",          price: 49.90 },
+  vip:   { title: "VIP TOTAL",        price: 97.00 },
+};
+
+async function mpCreatePix({ chatId, plano }) {
   const accessToken = process.env.MP_ACCESS_TOKEN;
   if (!accessToken) throw new Error("MP_ACCESS_TOKEN missing");
 
-  // ajuste preços/itens como quiser
-  const plans = {
-    basic: { title: "plano basic", price: 19.9 },
-    plus: { title: "plano plus", price: 39.9 },
-    vip: { title: "plano vip", price: 79.9 },
-  };
-
-  const chosen = plans[plano];
-  if (!chosen) throw new Error("invalid plano");
+  const chosen = PLANS[plano];
+  if (!chosen) throw new Error("invalid plano: " + plano);
 
   const body = {
-    items: [
-      {
-        title: chosen.title,
-        quantity: 1,
-        unit_price: chosen.price,
-        currency_id: "BRL",
-      },
-    ],
-    external_reference: String(chatId),
-    notification_url: process.env.WEBHOOK_URL, // ex: https://xxxx.ngrok-free.dev/webhook
-    auto_return: "approved",
-    back_urls: {
-      success: "https://example.com/success",
-      pending: "https://example.com/pending",
-      failure: "https://example.com/failure",
+    transaction_amount: chosen.price,
+    description:        chosen.title,
+    payment_method_id:  "pix",
+    payer: {
+      email: `user${chatId}@pixbot.com`,
     },
+    external_reference: String(chatId),
     metadata: { chatId: String(chatId), plano },
   };
 
-  const res = await fetch("https://api.mercadopago.com/checkout/preferences", {
+  const res = await fetch("https://api.mercadopago.com/v1/payments", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
+      Authorization:       `Bearer ${accessToken}`,
+      "Content-Type":      "application/json",
+      "X-Idempotency-Key": crypto.randomUUID(),
     },
     body: JSON.stringify(body),
   });
 
   const json = await res.json();
   if (!res.ok) {
-    throw new Error(`mp preference error: ${res.status} ${JSON.stringify(json)}`);
+    throw new Error(`mp pix error: ${res.status} ${JSON.stringify(json)}`);
   }
 
+  const txData = json.point_of_interaction?.transaction_data;
+  if (!txData) throw new Error("mp pix: no transaction_data in response");
+
   return {
-    preferenceId: json.id,
-    initPoint: json.init_point,
+    paymentId:   String(json.id),
+    pixCode:     txData.qr_code,
+    pixQrBase64: txData.qr_code_base64,
+    status:      json.status,
+    amount:      chosen.price,
+    plano,
   };
 }
 
@@ -65,4 +65,4 @@ async function mpGetPayment(paymentId) {
   return json;
 }
 
-module.exports = { mpCreatePreference, mpGetPayment };
+module.exports = { mpCreatePix, mpGetPayment };

@@ -4,7 +4,7 @@ require("dotenv").config();
 const TelegramBot = require("node-telegram-bot-api");
 const { PrismaClient } = require("@prisma/client");
 const { queue } = require("./queue");
-const { mpCreatePreference } = require("../payments/mp");
+const { mpCreatePix } = require("../payments/mp");
 
 const prisma = new PrismaClient();
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
@@ -86,10 +86,10 @@ async function sendPlans(chatId) {
 }
 
 async function createCheckoutAndSend(chatId, plano) {
-  const { preferenceId, initPoint } = await mpCreatePreference({ chatId, plano });
+  const { paymentId, pixCode, pixQrBase64, amount } = await mpCreatePix({ chatId, plano });
 
   await prisma.payment.create({
-    data: { userId: String(chatId), plano, status: "pending", preferenceId, initPoint },
+    data: { userId: String(chatId), plano, status: "pending", preferenceId: paymentId, initPoint: pixCode },
   });
 
   await queue.add("jobs",
@@ -97,15 +97,12 @@ async function createCheckoutAndSend(chatId, plano) {
     { delay: rand(1200, 2000), removeOnComplete: true, removeOnFail: true }
   );
   await queue.add("jobs",
-    { type: "SEND_MESSAGE", chatId: String(chatId), data: { text: "paga aqui e volta pra mim.", autoSplit: true } },
-    { delay: rand(2800, 4600), removeOnComplete: true, removeOnFail: true }
+    { type: "SEND_MESSAGE", chatId: String(chatId), data: { text: "gerou seu Pix aqui...", autoSplit: true } },
+    { delay: rand(2800, 4000), removeOnComplete: true, removeOnFail: true }
   );
   await queue.add("jobs",
-    { type: "SEND_MESSAGE", chatId: String(chatId), data: {
-      text: "👇",
-      extra: { reply_markup: { inline_keyboard: [[{ text: "💳 pagar agora", url: initPoint, style: "success" }]] } },
-    }},
-    { delay: rand(4600, 6200), removeOnComplete: true, removeOnFail: true }
+    { type: "SEND_PIX", chatId: String(chatId), data: { pixCode, pixQrBase64, amount } },
+    { delay: rand(4500, 6000), removeOnComplete: true, removeOnFail: true }
   );
 
   await setEtapa(chatId, "pagamento");

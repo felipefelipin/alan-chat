@@ -412,6 +412,38 @@ const worker = new Worker(
         return;
       }
 
+      if (type === "SEND_PIX") {
+        const { pixCode, pixQrBase64, amount } = data || {};
+
+        if (pixQrBase64) {
+          const buf = Buffer.from(pixQrBase64, "base64");
+          const amountFmt = `R$ ${Number(amount).toFixed(2).replace(".", ",")}`;
+          try {
+            await bot.sendChatAction(chatId, "upload_photo");
+          } catch {}
+          await sleep(rand(700, 1200));
+          await bot.sendPhoto(chatId, buf, {
+            caption: `🔑 *${amountFmt}* — escaneie o QR Code pelo seu banco`,
+            parse_mode: "Markdown",
+          });
+        }
+
+        await sleep(rand(800, 1400));
+
+        if (pixCode) {
+          await bot.sendMessage(chatId,
+            `*Pix Copia e Cola:*\n\`\`\`\n${pixCode}\n\`\`\``,
+            { parse_mode: "Markdown" }
+          );
+        }
+
+        await sleep(rand(600, 1000));
+        await bot.sendMessage(chatId, "✅ Pague e me manda uma mensagem. Libero em menos de 5 minutos 😈");
+
+        await logEventSafe(chatId, "SEND_PIX", { amount });
+        return;
+      }
+
       if (type === "SEND_PLANS") {
         await prisma.user.update({ where: { id: String(chatId) }, data: { etapa: "checkout" } }).catch(() => {});
 
