@@ -22,12 +22,10 @@ module.exports = async function handler(req, res) {
   try {
     await tg("sendVideo", { chat_id: id, video: `${ASSETS}/checkout-video.mp4` });
 
-    await tg("sendMessage", { chat_id: id, text: "tá… agora escolhe como você quer entrar." });
-    await tg("sendMessage", { chat_id: id, text: "3 opções. sem enrolar." });
-
     await tg("sendMessage", {
       chat_id: id,
-      text: "👇",
+      parse_mode: "HTML",
+      text: `🔥 <b>EU PAREÇO INOCENTE... MAS NÃO SOU 😈</b>\n\nCresci sendo vista como a boa moça, carinha de anjinho...\nMas no fundo eu sou uma safada que adora ficar peladinha, rebolando gostoso, abrindo as pernas e gemendo alto na frente de homem de verdade 💦\n\nAgora eu mostro tudinho: bucetinha molhada, sentando gostoso, gozando de verdade e fazendo tudo que você mandar...\n\nDeixa eu te contar o que te espera no meu cantinho VIP:\n\n🔥 Acesso TOTAL sem censura (fotos e vídeos explícitos)\n🔥 Ao Vivo interativo: eu faço tudo que você pedir\n🔥 Chamadas de vídeo particulares peladinha\n🎁 Bônus: sorteios e conteúdo extra pra quem é VIP\n\nSe você sempre quis ver essa putinha fingida de santinha gemendo seu nome... essa é a hora, safado 🔥💦\n\n<b>VEM DESVENDAR MEU SEGREDINHO 😈</b>`,
       reply_markup: {
         inline_keyboard: [
           [{ text: "🚀 ACESSO AO VIVO — R$ 29,90", callback_data: "plan:basic" }],
@@ -35,11 +33,6 @@ module.exports = async function handler(req, res) {
           [{ text: "👑 VIP TOTAL — R$ 97,00",        callback_data: "plan:vip"   }],
         ],
       },
-    });
-
-    await tg("sendMessage", {
-      chat_id: id,
-      text: "✅ Pagamento confirmado = Liberação na hora!\nAssim que o pagamento for aprovado você recebe o link do grupo ou meu WhatsApp em menos de 30 minutos.",
     });
 
     res.json({ ok: true });
