@@ -499,34 +499,47 @@ const worker = new Worker(
 
         // ── webapp_pending: ganhou a roleta mas não entrou no mini app ──────
         if (etapa === "webapp_pending") {
+          const webappUrl = process.env.WEBAPP_URL + "?v=" + Date.now();
           if (stage === "10m") {
-            await bot.sendMessage(chatId, "👇", {
+            await sendFunnelPhoto(chatId, "rmkt-1.jpg");
+            await sleep(rand(800, 1200));
+            await fm(chatId, "ei... você me esqueceu? 😔");
+            await sleep(rand(300, 500));
+            await fm(chatId, "tô aqui desde que você ganhou, esperando você abrir");
+            await sleep(rand(300, 500));
+            await fm(chatId, "é só clicar no botão e apertar ABRIR quando perguntar — te garanto que vale 😈", {
               reply_markup: { inline_keyboard: [[{
-                text: "🔒 ENTRAR NO PRIVADO AGORA",
-                web_app: { url: process.env.WEBAPP_URL + "?v=" + Date.now() },
+                text: "🔒 ENTRAR NO MEU PRIVADO AGORA",
+                web_app: { url: webappUrl },
                 style: "success",
               }]]},
             });
           } else if (stage === "1h") {
-            await sendHuman(chatId, "faz uma hora que você me deixou esperando...", {}, { autoSplit: true });
-            await sendHuman(chatId, "vou fechar o seu acesso daqui a pouco 🔒", {}, { autoSplit: true });
+            await sendFunnelPhoto(chatId, "rmkt-2.jpg");
             await sleep(rand(800, 1200));
-            await bot.sendMessage(chatId, "👇", {
+            await fm(chatId, "faz uma hora que tô aqui te esperando sozinha...");
+            await sleep(rand(300, 500));
+            await fm(chatId, "já tô pensando em passar esse acesso pra outra pessoa 🔒");
+            await sleep(rand(300, 500));
+            await fm(chatId, "você ganhou isso, não desperdiça — clica e aperta ABRIR 😈", {
               reply_markup: { inline_keyboard: [[{
                 text: "🔒 GARANTIR MEU ACESSO AGORA",
-                web_app: { url: process.env.WEBAPP_URL + "?v=" + Date.now() },
+                web_app: { url: webappUrl },
                 style: "success",
               }]]},
             });
           } else if (stage === "24h") {
-            await sendHuman(chatId, "última vez que te chamo aqui.", {}, { autoSplit: true });
-            await sendHuman(chatId, "amanhã eu fecho esse acesso pra sempre 🔒", {}, { autoSplit: true });
-            await sleep(rand(700, 1100));
-            await bot.sendMessage(chatId, "👇", {
+            await sendFunnelPhoto(chatId, "rmkt-3.jpg");
+            await sleep(rand(800, 1200));
+            await fm(chatId, "última vez que te chamo aqui.");
+            await sleep(rand(300, 500));
+            await fm(chatId, "amanhã fecho seu acesso e não reabro mais 🔒");
+            await sleep(rand(300, 500));
+            await fm(chatId, "foi você que ganhou, não abre mão disso agora 🔥", {
               reply_markup: { inline_keyboard: [[{
                 text: "🔥 ÚLTIMA CHANCE — ENTRAR AGORA",
-                web_app: { url: process.env.WEBAPP_URL + "?v=" + Date.now() },
-                style: "danger",
+                web_app: { url: webappUrl },
+                style: "success",
               }]]},
             });
           }
@@ -747,6 +760,7 @@ const worker = new Worker(
             where: { id: String(chatId) },
             data:  { etapa: "webapp_pending" },
           }).catch(() => {});
+          await scheduleRemarketingJobs(chatId, "webapp_pending");
         }
 
         await logEventSafe(chatId, "FUNNEL_SPIN", { round, chosen });
