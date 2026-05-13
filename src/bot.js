@@ -9,7 +9,8 @@ const { mpCreatePix } = require("../payments/mp");
 const prisma = new PrismaClient();
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 
-const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const rand  = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 // helper: BullMQ nessa versão não aceita ":" em jobId
 const jid = (...parts) => parts.join("-");
@@ -88,24 +89,45 @@ async function sendPlans(chatId) {
 async function createCheckoutAndSend(chatId, plano) {
   const { paymentId, pixCode, pixQrBase64, amount } = await mpCreatePix({ chatId, plano });
 
-  await prisma.payment.create({
+  // save to DB without blocking the flow
+  prisma.payment.create({
     data: { userId: String(chatId), plano, status: "pending", preferenceId: paymentId, initPoint: pixCode },
-  });
-
-  await queue.add("jobs",
-    { type: "SEND_MESSAGE", chatId: String(chatId), data: { text: "boa.", autoSplit: true } },
-    { delay: rand(1200, 2000), removeOnComplete: true, removeOnFail: true }
-  );
-  await queue.add("jobs",
-    { type: "SEND_MESSAGE", chatId: String(chatId), data: { text: "gerou seu Pix aqui...", autoSplit: true } },
-    { delay: rand(2800, 4000), removeOnComplete: true, removeOnFail: true }
-  );
-  await queue.add("jobs",
-    { type: "SEND_PIX", chatId: String(chatId), data: { pixCode, pixQrBase64, amount } },
-    { delay: rand(4500, 6000), removeOnComplete: true, removeOnFail: true }
-  );
+  }).catch(e => console.error("payment save error:", e));
 
   await setEtapa(chatId, "pagamento");
+
+  // send inline — no worker dependency
+  await sleep(rand(1200, 2000));
+  await bot.sendMessage(chatId, "boa.");
+
+  await sleep(rand(1800, 2600));
+  await bot.sendMessage(chatId, "gerou seu Pix aqui...");
+
+  await sleep(rand(1000, 1600));
+
+  if (pixQrBase64) {
+    const buf = Buffer.from(pixQrBase64, "base64");
+    await bot.sendChatAction(chatId, "upload_photo").catch(() => {});
+    await sleep(rand(700, 1200));
+    const amountFmt = `R$ ${Number(amount).toFixed(2).replace(".", ",")}`;
+    await bot.sendPhoto(chatId, buf, {
+      caption: `🔑 *${amountFmt}* — escaneie o QR Code pelo seu banco`,
+      parse_mode: "Markdown",
+    });
+  }
+
+  await sleep(rand(800, 1400));
+
+  if (pixCode) {
+    await bot.sendMessage(chatId,
+      `*Pix Copia e Cola:*\n\`\`\`\n${pixCode}\n\`\`\``,
+      { parse_mode: "Markdown" }
+    );
+  }
+
+  await sleep(rand(600, 1000));
+  await bot.sendMessage(chatId, "✅ Pague e me manda uma mensagem. Libero em menos de 5 minutos 😈");
+
   await scheduleRemarketingJobs(chatId, "pagamento");
 }
 

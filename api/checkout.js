@@ -20,8 +20,6 @@ module.exports = async function handler(req, res) {
     }).then(r => r.json()).catch(() => ({}));
 
   try {
-    await tg("sendVideo", { chat_id: id, video: `${ASSETS}/checkout-video.mp4` });
-
     await tg("sendMessage", {
       chat_id: id,
       parse_mode: "HTML",
