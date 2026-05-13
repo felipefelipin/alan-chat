@@ -228,7 +228,7 @@ bot.on("callback_query", async (q) => {
   try {
     // ── Funil roleta — passo 1 → 2 ─────────────────────────────────────────
     if (["start_sim", "start_otimo", "start_afim"].includes(data)) {
-      await bot.answerCallbackQuery(q.id).catch(() => {});
+      await bot.answerCallbackQuery(q.id, { text: "boa… 😈" }).catch(() => {});
       await cancelPreNudge(chatId);
       await queue.add("jobs",
         { type: "FUNNEL_STEP2", chatId: String(chatId), data: {} },
@@ -239,7 +239,7 @@ bot.on("callback_query", async (q) => {
 
     // ── Funil roleta — passo 2 → intro roleta ──────────────────────────────
     if (["quero_video", "mostra_primeiro"].includes(data)) {
-      await bot.answerCallbackQuery(q.id).catch(() => {});
+      await bot.answerCallbackQuery(q.id, { text: "vem ver… 🔥" }).catch(() => {});
       await cancelPreNudge(chatId);
       await queue.add("jobs",
         { type: "FUNNEL_ROLETA_INTRO", chatId: String(chatId), data: {} },
@@ -250,7 +250,7 @@ bot.on("callback_query", async (q) => {
 
     // ── Grade numérica round 1 ──────────────────────────────────────────────
     if (data === "tentar_roleta_1") {
-      await bot.answerCallbackQuery(q.id).catch(() => {});
+      await bot.answerCallbackQuery(q.id, { text: "girando… 🎰" }).catch(() => {});
       await cancelPreNudge(chatId);
       await queue.add("jobs",
         { type: "FUNNEL_NUM_GRID", chatId: String(chatId), data: { round: 1 } },
@@ -261,7 +261,7 @@ bot.on("callback_query", async (q) => {
 
     // ── Grade numérica round 2 ──────────────────────────────────────────────
     if (data === "tentar_roleta_2") {
-      await bot.answerCallbackQuery(q.id).catch(() => {});
+      await bot.answerCallbackQuery(q.id, { text: "última chance… 🎰" }).catch(() => {});
       await cancelPreNudge(chatId);
       await queue.add("jobs",
         { type: "FUNNEL_NUM_GRID", chatId: String(chatId), data: { round: 2 } },
@@ -273,7 +273,7 @@ bot.on("callback_query", async (q) => {
     // ── Número escolhido round 1 ────────────────────────────────────────────
     const m1 = data.match(/^num1_(\d+)$/);
     if (m1) {
-      await bot.answerCallbackQuery(q.id).catch(() => {});
+      await bot.answerCallbackQuery(q.id, { text: "boa escolha 👀" }).catch(() => {});
       await cancelPreNudge(chatId);
       await queue.add("jobs",
         { type: "FUNNEL_NUM_CHOSEN", chatId: String(chatId), data: { round: 1, chosen: parseInt(m1[1]) } },
@@ -285,7 +285,7 @@ bot.on("callback_query", async (q) => {
     // ── Número escolhido round 2 ────────────────────────────────────────────
     const m2 = data.match(/^num2_(\d+)$/);
     if (m2) {
-      await bot.answerCallbackQuery(q.id).catch(() => {});
+      await bot.answerCallbackQuery(q.id, { text: "boa escolha 👀" }).catch(() => {});
       await cancelPreNudge(chatId);
       await queue.add("jobs",
         { type: "FUNNEL_NUM_CHOSEN", chatId: String(chatId), data: { round: 2, chosen: parseInt(m2[1]) } },
@@ -297,7 +297,7 @@ bot.on("callback_query", async (q) => {
     // ── Girar round 1 ──────────────────────────────────────────────────────
     const s1 = data.match(/^spin1_(\d+)$/);
     if (s1) {
-      await bot.answerCallbackQuery(q.id).catch(() => {});
+      await bot.answerCallbackQuery(q.id, { text: "vai… 🎰" }).catch(() => {});
       await cancelPreNudge(chatId);
       await queue.add("jobs",
         { type: "FUNNEL_SPIN", chatId: String(chatId), data: { round: 1, chosen: parseInt(s1[1]) } },
@@ -309,7 +309,7 @@ bot.on("callback_query", async (q) => {
     // ── Girar round 2 ──────────────────────────────────────────────────────
     const s2 = data.match(/^spin2_(\d+)$/);
     if (s2) {
-      await bot.answerCallbackQuery(q.id).catch(() => {});
+      await bot.answerCallbackQuery(q.id, { text: "vai… 🎰" }).catch(() => {});
       await cancelPreNudge(chatId);
       await queue.add("jobs",
         { type: "FUNNEL_SPIN", chatId: String(chatId), data: { round: 2, chosen: parseInt(s2[1]) } },
@@ -320,7 +320,7 @@ bot.on("callback_query", async (q) => {
 
     // ── Desistir ────────────────────────────────────────────────────────────
     if (data === "desistir") {
-      await bot.answerCallbackQuery(q.id).catch(() => {});
+      await bot.answerCallbackQuery(q.id, { text: "tá bom…" }).catch(() => {});
       await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: { text: "Ah que pena... Se mudar de ideia é só me chamar 😈" } },
         { delay: rand(300, 600), jobId: jid("desistir", chatId), removeOnComplete: true, removeOnFail: true }
