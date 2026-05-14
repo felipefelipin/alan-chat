@@ -23,7 +23,7 @@ module.exports = async function handler(req, res) {
     await bot.sendMessage(id, "👇", {
       reply_markup: {
         inline_keyboard: [
-          [{ text: "🔥 GRUPO SEM CENSURA — R$ 14,90",        callback_data: "plan:basic"                  }],
+          [{ text: "🔥 GRUPO SEM CENSURA — R$ 14,90",        callback_data: "plan:basic",  style: "success" }],
           [{ text: "💦 GRUPO + AO VIVO COMIGO — R$ 24,90",   callback_data: "plan:plus",  style: "success" }],
           [{ text: "😈 PRIVADO — SÓ EU E VOCÊ — R$ 34,90",   callback_data: "plan:vip",   style: "success" }],
         ],
