@@ -463,9 +463,9 @@ const worker = new Worker(
         await bot.sendMessage(chatId, "👇", {
           reply_markup: {
             inline_keyboard: [
-              [{ text: "🔥 GRUPO SEM CENSURA — R$ 29,90",             callback_data: "plan:basic"                   }],
-              [{ text: "💦 GRUPO + AO VIVO COMIGO — R$ 49,90",       callback_data: "plan:plus",  style: "success" }],
-              [{ text: "😈 PRIVADO — SÓ EU E VOCÊ — R$ 97,00",       callback_data: "plan:vip"                    }],
+              [{ text: "🔥 GRUPO SEM CENSURA — R$ 14,90",             callback_data: "plan:basic"                   }],
+              [{ text: "💦 GRUPO + AO VIVO COMIGO — R$ 24,90",       callback_data: "plan:plus",  style: "success" }],
+              [{ text: "😈 PRIVADO — SÓ EU E VOCÊ — R$ 34,90",       callback_data: "plan:vip"                    }],
             ],
           },
         });

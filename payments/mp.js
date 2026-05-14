@@ -4,9 +4,9 @@ require("dotenv").config();
 const crypto = require("crypto");
 
 const PLANS = {
-  basic: { title: "Grupo Sem Censura",      price: 29.90 },
-  plus:  { title: "Grupo + Ao Vivo",        price: 49.90 },
-  vip:   { title: "Privado — Só Eu e Você", price: 97.00 },
+  basic: { title: "Grupo Sem Censura",      price: 14.90 },
+  plus:  { title: "Grupo + Ao Vivo",        price: 24.90 },
+  vip:   { title: "Privado — Só Eu e Você", price: 34.90 },
 };
 
 async function mpCreatePix({ chatId, plano }) {

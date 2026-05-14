@@ -10,6 +10,7 @@
     "worker": "node src/worker.js",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
+    "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy"
