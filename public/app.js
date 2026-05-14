@@ -1849,6 +1849,7 @@ async function startFunnelCall() {
     background:#111;
     transform:scaleX(-1);
     z-index:15;
+    transition:bottom .25s ease;
   `;
   callEl.appendChild(pip);
 
@@ -1860,11 +1861,13 @@ async function startFunnelCall() {
   const _fcHide = () => {
     topBar.style.opacity = "0"; topBar.style.pointerEvents = "none";
     bottomBar.style.opacity = "0"; bottomBar.style.pointerEvents = "none";
+    pip.style.bottom = "calc(env(safe-area-inset-bottom,34px) + 20px)";
     _fcVisible = false;
   };
   const _fcShow = () => {
     topBar.style.opacity = "1"; topBar.style.pointerEvents = "";
     bottomBar.style.opacity = "1"; bottomBar.style.pointerEvents = "";
+    pip.style.bottom = "calc(env(safe-area-inset-bottom,34px) + 108px)";
     _fcVisible = true;
     clearTimeout(_fcTimer);
     _fcTimer = setTimeout(_fcHide, 4000);
