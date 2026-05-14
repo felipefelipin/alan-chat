@@ -2108,6 +2108,11 @@ function resumeCountdown() {
   if (!_cd.resolve || _cd.remaining <= 0) return;
   const shell = document.querySelector(".chatShell");
   if (!shell) return;
+  // esconde barra de input (pode ter sido recriada pelo mountChat)
+  const composer = document.querySelector(".composer");
+  if (composer) composer.style.display = "none";
+  const inp = document.getElementById("input");
+  if (inp) { inp.readOnly = true; inp.tabIndex = -1; }
   // recria badge se sumiu (ex: mountChat recriou o DOM)
   if (!document.getElementById("countdownBadge")) {
     _mountCdBadge(shell, _cd.remaining);
@@ -2135,6 +2140,8 @@ function _cdTick() {
   if (_cd.remaining <= 0) {
     clearInterval(_cd.interval); _cd.interval = null;
     document.getElementById("countdownBadge")?.remove();
+    const composer = document.querySelector(".composer");
+    if (composer) composer.style.display = "";
     const res = _cd.resolve; _cd.resolve = null;
     if (res) res();
   }
@@ -2170,6 +2177,8 @@ function showCountdown(seconds) {
     try { document.activeElement?.blur(); } catch {}
     const inp = document.getElementById("input");
     if (inp) { inp.readOnly = true; inp.tabIndex = -1; }
+    const composer = document.querySelector(".composer");
+    if (composer) composer.style.display = "none";
 
     const shell = document.querySelector(".chatShell");
     if (!shell) { resolve(); return; }
