@@ -33,9 +33,9 @@ module.exports = async function handler(req, res) {
     await tgSend("👇", {
       reply_markup: {
         inline_keyboard: [
-          [{ text: "🔥 GRUPO SEM CENSURA — R$ 14,90",        callback_data: "plan:basic" }],
-          [{ text: "💦 GRUPO + AO VIVO COMIGO — R$ 24,90",   callback_data: "plan:plus"  }],
-          [{ text: "😈 PRIVADO — SÓ EU E VOCÊ — R$ 34,90",   callback_data: "plan:vip"   }],
+          [{ text: "🥉 GRUPO SEM CENSURA — R$ 14,90",        callback_data: "plan:basic" }],
+          [{ text: "🥈 GRUPO + AO VIVO COMIGO — R$ 24,90",   callback_data: "plan:plus"  }],
+          [{ text: "🥇 PRIVADO — SÓ EU E VOCÊ — R$ 34,90",   callback_data: "plan:vip"   }],
         ],
       },
     });
