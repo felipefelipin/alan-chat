@@ -1772,6 +1772,7 @@ async function startFunnelCall() {
     padding:calc(env(safe-area-inset-top,44px) + 12px) 16px 20px;
     background:linear-gradient(to bottom,rgba(0,0,0,.55),transparent);
     display:flex;flex-direction:column;align-items:center;gap:3px;
+    transition:opacity .25s ease;
   `;
   topBar.innerHTML = `
     <div style="color:#fff;font-size:17px;font-weight:600;letter-spacing:-.3px;">${CONTACT.name}</div>
@@ -1799,6 +1800,7 @@ async function startFunnelCall() {
     padding:20px 40px calc(env(safe-area-inset-bottom,34px) + 20px);
     background:linear-gradient(to top,rgba(0,0,0,.6),transparent);
     display:flex;justify-content:space-around;align-items:center;
+    transition:opacity .25s ease;
   `;
   bottomBar.innerHTML = `
     <div style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;" id="funnelMuteBtn">
@@ -1851,6 +1853,30 @@ async function startFunnelCall() {
   callEl.appendChild(pip);
 
   document.body.appendChild(callEl);
+
+  // ── tap para esconder/mostrar controles (estilo WhatsApp) ──────
+  let _fcVisible = true;
+  let _fcTimer = null;
+  const _fcHide = () => {
+    topBar.style.opacity = "0"; topBar.style.pointerEvents = "none";
+    bottomBar.style.opacity = "0"; bottomBar.style.pointerEvents = "none";
+    _fcVisible = false;
+  };
+  const _fcShow = () => {
+    topBar.style.opacity = "1"; topBar.style.pointerEvents = "";
+    bottomBar.style.opacity = "1"; bottomBar.style.pointerEvents = "";
+    _fcVisible = true;
+    clearTimeout(_fcTimer);
+    _fcTimer = setTimeout(_fcHide, 4000);
+  };
+  callEl.addEventListener("touchend", (e) => {
+    const touch = e.changedTouches[0];
+    if (!touch) return;
+    const hit = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (bottomBar.contains(hit) || topBar.contains(hit)) return;
+    if (_fcVisible) _fcHide(); else _fcShow();
+  }, { passive: true });
+  _fcTimer = setTimeout(_fcHide, 4000);
 
   // Câmera frontal do lead — vídeo principal só inicia após resposta de permissão
   let camStream = null;
@@ -1919,7 +1945,7 @@ async function startFunnelCall() {
   // Botão encerrar
   setTimeout(() => {
     const endBtn = document.getElementById("funnelEndCall");
-    if (endBtn) endBtn.onclick = triggerPaywall;
+    if (endBtn) endBtn.onclick = () => { clearTimeout(_fcTimer); triggerPaywall(); };
 
     // ── Silenciar ───────────────────────────────────────────────────
     let isMuted = false;
@@ -1986,10 +2012,12 @@ async function doCallPaywall() {
 }
 
 function lockChat() {
-  const composer = document.querySelector(".composer");
-  if (!composer || composer.dataset.locked) return;
-  composer.dataset.locked = "1";
-  composer.style.cssText = "padding:0;flex-direction:column;background:var(--topbar);border-top:1px solid rgba(255,255,255,.07);";
+  if (document.getElementById("chatLockBar")) return;
+  const full = document.querySelector(".full");
+  if (!full) return;
+  const composer = document.createElement("div");
+  composer.id = "chatLockBar";
+  composer.style.cssText = "padding:0;display:flex;flex-direction:column;background:var(--topbar);border-top:1px solid rgba(255,255,255,.07);flex-shrink:0;";
   composer.innerHTML = `
     <style>
       @keyframes glowG{0%,100%{box-shadow:0 0 18px rgba(0,230,118,.6),0 4px 16px rgba(0,200,83,.45)}50%{box-shadow:0 0 36px rgba(0,230,118,.95),0 6px 26px rgba(0,200,83,.75)}}
@@ -2023,6 +2051,7 @@ function lockChat() {
       Chat Encerrado
     </div>
   `;
+  full.appendChild(composer);
 }
 
 // estado global do countdown — permite pausar/retomar
