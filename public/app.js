@@ -2103,9 +2103,9 @@ function showCountdown(seconds) {
     const shell = document.querySelector(".chatShell");
     if (!shell) { resolve(); return; }
 
-    // vídeo já foi montado em mountChatBgVideo — só garante que está tocando
+    // reinicia vídeo do segundo 0 para sincronizar com a contagem
     const vid = document.getElementById("chatBgVideo");
-    if (vid) vid.play().catch(() => {});
+    if (vid) { vid.currentTime = 0; vid.play().catch(() => {}); }
 
     // contador flutuante sobre o chat
     const cdEl = document.createElement("div");
@@ -2133,14 +2133,14 @@ function showCountdown(seconds) {
         color:rgba(255,255,255,.85);font-size:14px;font-weight:600;
         text-shadow:0 1px 8px rgba(0,0,0,.9);text-align:center;padding:0 32px;
         min-height:20px;
-      ">ela está se preparando pra você...</div>
+      ">PREPARANDO SESSÃO AO VIVO...</div>
     `;
     shell.appendChild(cdEl);
 
     const getMsg = (n) => {
-      if (n >= 10) return "ela está se preparando pra você...";
-      if (n >= 5)  return "quase lá... 🔥";
-      return "conectando agora...";
+      if (n >= 10) return "PREPARANDO SESSÃO AO VIVO...";
+      if (n >= 5)  return "ESTABELECENDO CONEXÃO... 🔥";
+      return "CONECTANDO AGORA...";
     };
 
     let remaining = seconds;
@@ -2165,10 +2165,9 @@ function showCountdown(seconds) {
 
 function showLiveCallCta() {
   return new Promise(resolve => {
-    // pausa vídeo no frame 0 e aumenta opacidade suavemente
+    // pausa no frame atual (segundo 15 do vídeo) e aumenta opacidade suavemente
     const bgVid = document.getElementById("chatBgVideo");
     if (bgVid) {
-      bgVid.currentTime = 0;
       bgVid.pause();
       requestAnimationFrame(() => {
         bgVid.style.transition = "opacity 0.7s ease";
