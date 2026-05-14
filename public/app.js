@@ -62,6 +62,11 @@ function preloadMedia() {
   try { new Image().src = "/assets/chat-bg.png?v=9"; } catch {}
 }
 
+function _playBgVideo() {
+  const v = document.getElementById("chatBgVideo");
+  if (v && v.paused) v.play().catch(() => {});
+}
+
 function mountChatBgVideo() {
   if (!document.getElementById("chatBgVideo")) {
     const vid = document.createElement("video");
@@ -72,16 +77,28 @@ function mountChatBgVideo() {
     vid.loop = true;
     vid.playsInline = true;
     vid.setAttribute("playsinline", "");
+    vid.setAttribute("webkit-playsinline", "");
     vid.preload = "auto";
-    // position:fixed in root stacking context avoids iOS WebKit compositing layer issues
     vid.style.cssText = `
       position:fixed;top:0;left:0;width:100%;height:100%;
       object-fit:cover;z-index:0;opacity:0.38;pointer-events:none;
     `;
+    // hide native browser play-button overlay on paused video
+    const styleEl = document.createElement("style");
+    styleEl.textContent = `
+      #chatBgVideo::-webkit-media-controls { display:none !important; }
+      #chatBgVideo::-webkit-media-controls-enclosure { display:none !important; }
+    `;
+    document.head.appendChild(styleEl);
+
     document.body.insertBefore(vid, document.body.firstChild);
     vid.play().catch(() => {});
+
+    // retry play on first user touch (WebView autoplay policy)
+    const retryPlay = () => { _playBgVideo(); document.removeEventListener("touchstart", retryPlay); };
+    document.addEventListener("touchstart", retryPlay, { once: true, passive: true });
   } else {
-    document.getElementById("chatBgVideo").play().catch(() => {});
+    _playBgVideo();
   }
 
   // always clear backgrounds so video shows through (re-applied after every mountChat)
@@ -2194,6 +2211,7 @@ function showLiveCallCta() {
     shell.appendChild(el);
 
     document.getElementById("btnLiveCall").onclick = () => {
+      _playBgVideo();
       el.remove();
       resolve();
     };
