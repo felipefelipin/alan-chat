@@ -93,17 +93,14 @@ function mountChatBgVideo() {
     `;
     document.body.insertBefore(vid, document.body.firstChild);
 
-    // define src depois de inserir no DOM — aproveita cache do preload
+    // define src depois de inserir no DOM — pré-carrega sem tocar
     vid.src = ASSETS.countdownVideo;
-
-    const tryPlay = () => vid.play().catch(() => {});
-    vid.addEventListener("canplay", tryPlay, { once: true });
-    tryPlay();
-
-    // retry no primeiro toque (política de autoplay do WebView)
-    document.addEventListener("touchstart", tryPlay, { once: true, passive: true });
+    vid.load();
+    // NÃO toca aqui — showCountdown faz seek para 0 e dá play
   } else {
-    _playBgVideo();
+    // video já existe mas pode ter sido removido do fundo — só ajusta estado
+    const v = document.getElementById("chatBgVideo");
+    if (v) { v.pause(); v.currentTime = 0; }
   }
 
   // always clear backgrounds so video shows through (re-applied after every mountChat)
@@ -2108,9 +2105,18 @@ function showCountdown(seconds) {
     const shell = document.querySelector(".chatShell");
     if (!shell) { resolve(); return; }
 
-    // reinicia vídeo do segundo 0 para sincronizar com a contagem
+    // inicia vídeo do segundo 0 — usa seeked para garantir o frame correto
     const vid = document.getElementById("chatBgVideo");
-    if (vid) { vid.currentTime = 0; vid.play().catch(() => {}); }
+    if (vid) {
+      const doPlay = () => vid.play().catch(() => {});
+      vid.pause();
+      vid.currentTime = 0;
+      vid.addEventListener("seeked", doPlay, { once: true });
+      // fallback: se seeked não disparar (já estava em 0), toca direto
+      setTimeout(doPlay, 80);
+      // retry no primeiro toque do usuário
+      document.addEventListener("touchstart", doPlay, { once: true, passive: true });
+    }
 
     // contador flutuante sobre o chat
     const cdEl = document.createElement("div");
