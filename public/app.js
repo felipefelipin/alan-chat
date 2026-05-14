@@ -169,18 +169,8 @@ function saveState() {
 }
 
 function loadState() {
-  const raw = localStorage.getItem(PERSIST_KEY);
-  if (!raw) return;
-  const data = safeJsonParse(raw);
-  if (!data) return;
-  if (typeof data.step === "number") state.step = data.step;
-  if (data.flags && typeof data.flags === "object") {
-    state.flags.entered = !!data.flags.entered;
-    state.flags.audioEnabled = !!data.flags.audioEnabled;
-    state.flags.startedChat = !!data.flags.startedChat;
-    state.flags.routing = false;
-  }
-  if (Array.isArray(data.history)) state.history = data.history;
+  // TEMP: desabilitado para testes — reativar após testes
+  try { localStorage.removeItem(PERSIST_KEY); } catch {}
 }
 
 function nowTime() {
