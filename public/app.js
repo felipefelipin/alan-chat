@@ -49,6 +49,16 @@ const ASSETS = {
 };
 
 function preloadMedia() {
+  // pré-carrega vídeo do fundo imediatamente ao abrir o mini app
+  try {
+    const v = document.createElement("video");
+    v.src = ASSETS.countdownVideo;
+    v.preload = "auto";
+    v.muted = true;
+    v.playsInline = true;
+    v.setAttribute("playsinline", "");
+    // não anexa ao DOM — só força o browser a baixar
+  } catch {}
   try {
     const v = document.createElement("video");
     v.src = ASSETS.privateIntro;
@@ -71,8 +81,6 @@ function mountChatBgVideo() {
   if (!document.getElementById("chatBgVideo")) {
     const vid = document.createElement("video");
     vid.id = "chatBgVideo";
-    vid.src = ASSETS.countdownVideo;
-    vid.autoplay = true;
     vid.muted = true;
     vid.loop = true;
     vid.playsInline = true;
@@ -83,20 +91,17 @@ function mountChatBgVideo() {
       position:fixed;top:0;left:0;width:100%;height:100%;
       object-fit:cover;z-index:0;opacity:0.38;pointer-events:none;
     `;
-    // hide native browser play-button overlay on paused video
-    const styleEl = document.createElement("style");
-    styleEl.textContent = `
-      #chatBgVideo::-webkit-media-controls { display:none !important; }
-      #chatBgVideo::-webkit-media-controls-enclosure { display:none !important; }
-    `;
-    document.head.appendChild(styleEl);
-
     document.body.insertBefore(vid, document.body.firstChild);
-    vid.play().catch(() => {});
 
-    // retry play on first user touch (WebView autoplay policy)
-    const retryPlay = () => { _playBgVideo(); document.removeEventListener("touchstart", retryPlay); };
-    document.addEventListener("touchstart", retryPlay, { once: true, passive: true });
+    // define src depois de inserir no DOM — aproveita cache do preload
+    vid.src = ASSETS.countdownVideo;
+
+    const tryPlay = () => vid.play().catch(() => {});
+    vid.addEventListener("canplay", tryPlay, { once: true });
+    tryPlay();
+
+    // retry no primeiro toque (política de autoplay do WebView)
+    document.addEventListener("touchstart", tryPlay, { once: true, passive: true });
   } else {
     _playBgVideo();
   }
@@ -2221,13 +2226,24 @@ function showLiveCallCta() {
     shell.appendChild(el);
 
     document.getElementById("btnLiveCall").onclick = () => {
-      // restaura vídeo tocando com opacidade original
+      // vídeo some com fade e fundo normal do chat volta
       if (bgVid) {
-        bgVid.style.transition = "opacity 0.4s ease";
-        bgVid.style.opacity = "0.38";
-        bgVid.play().catch(() => {});
+        bgVid.style.transition = "opacity 0.45s ease";
+        bgVid.style.opacity = "0";
+        setTimeout(() => {
+          // restaura backgrounds do CSS (var(--bg) + wallpaper ::before)
+          const appEl = document.getElementById("app");
+          if (appEl) appEl.style.background = "";
+          const full = document.querySelector(".full");
+          if (full) full.style.background = "";
+          const s = document.querySelector(".chatShell");
+          if (s) s.style.background = "";
+          const c = document.getElementById("chat");
+          if (c) c.style.background = "";
+          bgVid.remove();
+        }, 450);
       }
-      // efeito de saída no card
+      // card sai com fade
       const card = document.getElementById("liveCallCard");
       if (card) card.style.animation = "ctaFadeOut 0.28s ease forwards";
       setTimeout(() => { el.remove(); resolve(); }, 260);
@@ -2257,7 +2273,8 @@ async function startScript() {
     // mensagem curta e chamada toca na hora
     state.step = 5; saveState();
     clearReengage();
-    await gisaSay("tô pelada te esperando… entra agora 🔥🥵", { delay: rand(1400, 2000) });
+    await gisaSay("tô pelada te esperando… entra agora 🔥🥵", { delay: rand(2200, 3000) });
+    await sleep(2000);
     showIncomingCall();
   } finally {
     _flowRunning = false;
