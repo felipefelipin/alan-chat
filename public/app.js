@@ -512,49 +512,11 @@ function mountChat() {
         <div class="chat" id="chat"></div>
       </div>
 
-      <div class="composer">
-        <button class="composerAttach" type="button"><span class="composerPlusMark">+</span></button>
-        <div class="composerField">
-          <input id="input" autocomplete="off" placeholder="Mensagem" />
-        </div>
-        <button class="composerCamera" type="button">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="12" cy="13" r="4" stroke="#ffffff" stroke-width="1.6"/>
-          </svg>
-        </button>
-        <button class="composerMic" id="composerMic" type="button">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="9" y="2" width="6" height="12" rx="3" stroke="#ffffff" stroke-width="1.6"/>
-            <path d="M5 10a7 7 0 0 0 14 0" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/>
-            <line x1="12" y1="19" x2="12" y2="22" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/>
-            <line x1="9" y1="22" x2="15" y2="22" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/>
-          </svg>
-        </button>
-        <button class="send is-hidden" id="send">
-          <svg width="21" height="21" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-          </svg>
-        </button>
-      </div>
     </div>
   `;
 
-  const sendBtn = document.getElementById("send");
-  const input   = document.getElementById("input");
-  const micBtn  = document.getElementById("composerMic");
-
-  sendBtn.onclick = onSend;
-  input.addEventListener("keydown", (e) => { if (e.key === "Enter") onSend(); });
-  input.addEventListener("input", () => {
-    const hasText = !!input.value.trim();
-    sendBtn.classList.toggle("is-hidden", !hasText);
-    micBtn.classList.toggle("is-hidden", hasText);
-  });
-
   state.chatEl = document.getElementById("chat");
   restoreHistory();
-  bindKeyboardUX();
   handleScrollDetection();
 
   // Force GPU compositor layer to activate before first touch
