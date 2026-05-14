@@ -45,6 +45,7 @@ const ASSETS = {
   teaseVideo3: "/assets/tease3.mp4",
   teasePhoto: "/assets/tease-photo.jpg",
   audioMimimi: "/assets/audio-mimimi.mp3",
+  countdownVideo: "/assets/checkout-video.mp4",
 };
 
 function preloadMedia() {
@@ -59,6 +60,39 @@ function preloadMedia() {
     a.preload = "auto";
   } catch {}
   try { new Image().src = "/assets/chat-bg.png?v=9"; } catch {}
+}
+
+function mountChatBgVideo() {
+  if (!document.getElementById("chatBgVideo")) {
+    const vid = document.createElement("video");
+    vid.id = "chatBgVideo";
+    vid.src = ASSETS.countdownVideo;
+    vid.autoplay = true;
+    vid.muted = true;
+    vid.loop = true;
+    vid.playsInline = true;
+    vid.setAttribute("playsinline", "");
+    vid.preload = "auto";
+    // position:fixed in root stacking context avoids iOS WebKit compositing layer issues
+    vid.style.cssText = `
+      position:fixed;top:0;left:0;width:100%;height:100%;
+      object-fit:cover;z-index:0;opacity:0.38;pointer-events:none;
+    `;
+    document.body.insertBefore(vid, document.body.firstChild);
+    vid.play().catch(() => {});
+  } else {
+    document.getElementById("chatBgVideo").play().catch(() => {});
+  }
+
+  // always clear backgrounds so video shows through (re-applied after every mountChat)
+  const appEl = document.getElementById("app");
+  if (appEl) appEl.style.background = "transparent";
+  const full = document.querySelector(".full");
+  if (full) full.style.background = "transparent";
+  const shell = document.querySelector(".chatShell");
+  if (shell) shell.style.background = "transparent";
+  const chat = document.getElementById("chat");
+  if (chat) chat.style.background = "transparent";
 }
 
 async function fadeVolume(audio, from, to, ms = 700) {
@@ -176,7 +210,7 @@ function vibrate(ms = 18) {
 }
 
 // ── FIX #4: showHome aponta para mountChat ────────────────────────────────────
-function showHome() { mountChat(); }
+function showHome() { mountChat(); mountChatBgVideo(); }
 
 // ==================== KEYBOARD UX ====================
 function bindKeyboardUX() {
@@ -378,6 +412,7 @@ function mountPremiumIntro() {
     try { if (state.music) { state.music.pause(); state.music.currentTime = 0; } } catch {}
     await runRoutingOverlayV4();
     mountChat();
+    mountChatBgVideo();
     await sleep(220);
     startScript().catch(e => { if (!(e instanceof FlowCancelledError)) console.error(e); });
   };
@@ -977,6 +1012,7 @@ window.startVideoCall = async function () {
     ringtoneVC.pause();
     try { stream.getTracks().forEach(t => t.stop()); } catch {}
     mountChat();
+    mountChatBgVideo();
   };
 
   // ── SPEAKER ────────────────────────────────────────────────────
@@ -1575,16 +1611,11 @@ async function enterTeaseBuildup() {
   addVideoBubble(ASSETS.teaseVideo2, "Vídeo Privado");
   await sleep(5000);
   await gisaSay("tou com um brinquedinho aqui na minha mão, bem grande e grosso, quer ver eu enfiando ele todo dentro da minha bucetinha? 🔥🥵", { delay: rand(7000, 9000) });
-  state._t1 = setTimeout(async () => {
+  showAdvanceButton("Quero ver tudo 😈", () => {
     if (state.step !== 2) return;
-    await gisaSay("vou tirar mesmo assim… mas só porque você tá me deixando louca");
-    state._t2 = setTimeout(async () => {
-      if (state.step !== 2) return;
-      await gisaSay("pede pra eu continuar, vai… ou vou parar aqui e te deixar na vontade.");
-      await sleep(800);
-      await enterDesireEscalation();
-    }, 60 * 1000);
-  }, 2 * 60 * 1000);
+    _flowRunning = true;
+    enterDesireEscalation().catch(() => {}).finally(() => { _flowRunning = false; });
+  });
 }
 
 async function enterDesireEscalation() {
@@ -2001,18 +2032,8 @@ function addCallNotifBubble(seconds) {
 }
 
 async function doCallPaywall() {
-  await sleep(2000);
-  await gisaSay("mais pera... 😅");
-  await sleep(rand(1200, 2000));
-  await gisaSay("não dá pra continuar assim não");
-  await sleep(rand(1500, 2500));
-  await gisaSay("eu tô louca pra gozar pra você, mas pra liberar tudo vc tem que liberar abaixo mb... 💋");
-  await sleep(rand(1000, 1800));
-  await gisaSay("isso aqui foi só pra te deixar louco. A real começa quando você desbloquear");
-  await sleep(rand(1500, 2200));
-  await gisaSay("a maioria dos caras já clicou e tá me vendo gozar agora… vai ficar de fora... 🤦‍♀️?");
-  await sleep(rand(1000, 1600));
-  await gisaSay("desbloqueia agora e volta rápido que eu tô pingando te esperando");
+  await sleep(1000);
+  await gisaSay("desbloqueia agora e volta rápido que eu tô te esperando 🔥", { delay: rand(3000, 4500) });
   showCheckoutCta();
 }
 
@@ -2056,35 +2077,108 @@ function lockChat() {
   `;
 }
 
+function showCountdown(seconds) {
+  return new Promise(resolve => {
+    // trava teclado — remove foco de qualquer input
+    try { document.activeElement?.blur(); } catch {}
+    const inp = document.getElementById("input");
+    if (inp) { inp.readOnly = true; inp.tabIndex = -1; }
+
+    const shell = document.querySelector(".chatShell");
+    if (!shell) { resolve(); return; }
+
+    // vídeo já foi montado em mountChatBgVideo — só garante que está tocando
+    const vid = document.getElementById("chatBgVideo");
+    if (vid) vid.play().catch(() => {});
+
+    // contador flutuante sobre o chat
+    const cdEl = document.createElement("div");
+    cdEl.id = "countdownBadge";
+    cdEl.style.cssText = `
+      position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+      z-index:10;display:flex;flex-direction:column;align-items:center;gap:12px;
+      pointer-events:none;
+    `;
+    cdEl.innerHTML = `
+      <style>
+        @keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.4)}}
+        @keyframes cdPop{0%{transform:scale(1.3);opacity:0}100%{transform:scale(1);opacity:1}}
+      </style>
+      <div style="display:flex;align-items:center;gap:8px;background:rgba(255,59,48,.15);border:1.5px solid rgba(255,59,48,.6);border-radius:20px;padding:6px 14px;">
+        <span style="width:10px;height:10px;border-radius:50%;background:#ff3b30;display:inline-block;animation:livePulse 1s ease-in-out infinite;flex-shrink:0;"></span>
+        <span style="color:#ff3b30;font-size:14px;font-weight:800;letter-spacing:1px;text-transform:uppercase;text-shadow:0 0 12px rgba(255,59,48,.6);">AO VIVO EM</span>
+      </div>
+      <div id="cdTimer" style="
+        color:#fff;font-size:88px;font-weight:900;letter-spacing:-3px;line-height:1;
+        font-variant-numeric:tabular-nums;text-shadow:0 2px 24px rgba(0,0,0,.95);
+        animation:cdPop .25s ease-out;
+      ">${seconds}</div>
+      <div id="cdMsg" style="
+        color:rgba(255,255,255,.85);font-size:14px;font-weight:600;
+        text-shadow:0 1px 8px rgba(0,0,0,.9);text-align:center;padding:0 32px;
+        min-height:20px;
+      ">ela está se preparando pra você...</div>
+    `;
+    shell.appendChild(cdEl);
+
+    const getMsg = (n) => {
+      if (n >= 10) return "ela está se preparando pra você...";
+      if (n >= 5)  return "quase lá... 🔥";
+      return "conectando agora...";
+    };
+
+    let remaining = seconds;
+    const interval = setInterval(() => {
+      remaining--;
+      const timerEl = document.getElementById("cdTimer");
+      const msgEl   = document.getElementById("cdMsg");
+      if (timerEl) {
+        timerEl.style.animation = "none";
+        requestAnimationFrame(() => { timerEl.style.animation = "cdPop .25s ease-out"; });
+        timerEl.textContent = remaining;
+      }
+      if (msgEl) msgEl.textContent = getMsg(remaining);
+      if (remaining <= 0) {
+        clearInterval(interval);
+        cdEl.remove();
+        resolve();
+      }
+    }, 1000);
+  });
+}
+
 async function startScript() {
   if (state.flags.startedChat) return;
   state.flags.startedChat = true;
   state.step = 1; saveState();
+
+  // fluxo passivo — esconde o input
+  const composer = document.querySelector(".composer");
+  if (composer) composer.style.display = "none";
+
+  // contador com vídeo no fundo
+  await showCountdown(15);
+
   _flowRunning = true;
   try {
-    // Fica com "visto por último" por 5s (já aparece assim desde mountChat), depois online
-    await sleep(5000);
+    // visto por último → online
     setStatus("online");
     state.flags.botOnline = true; saveState();
-    await sleep(5000);
-    await gisaSay("porra... você demorou hein 😈", { delay: rand(4500, 6500) });
-    await sleep(2500);
-    await gisaSay("tô toda molhada só de saber que você entrou aqui atrás de mim", { delay: rand(6000, 8000) });
+
+    // mensagens chegam sozinhas
+    await sleep(rand(1500, 2500));
+    await gisaSay("ei 👀", { delay: rand(1500, 2500) });
+    await sleep(rand(2500, 3500));
+    await gisaSay("tava esperando você aparecer aqui...", { delay: rand(3000, 4500) });
     await sleep(rand(2000, 3000));
-    await gisaSendVideo(ASSETS.teaseVideo, "Vídeo Privado");
-    await sleep(rand(5000, 7000));
-    await gisaSay("mas fala a verdade… você aguenta me ver pelada de verdade ou vai só ficar olhando como os fracos?... 👀", { delay: rand(8000, 11000) });
+    await gisaSay("quero te mostrar uma coisa ao vivo agora 🔥", { delay: rand(3000, 4500) });
+    await sleep(rand(1500, 2500));
+
+    // chamada entra
+    await enterCallConnecting();
   } finally {
     _flowRunning = false;
   }
-  state._t1 = setTimeout(async () => {
-    if (state.step !== 1) return;
-    await gisaSay("tá aí ou já correu covarde? 👀");
-    state._t2 = setTimeout(async () => {
-      if (state.step !== 1) return;
-      await gisaSay("typical… entra, olha e some. Mas eu não sou pra qualquer um não, safado.");
-    }, 2 * 60 * 1000);
-  }, 2 * 60 * 1000);
 }
 
 async function handleUserText(text) {
@@ -2369,6 +2463,7 @@ function exitStories(fromSwipe = false, swipeScreen = null) {
     _storyExiting = false;
     app.style.zIndex = "";
     mountChat();
+    mountChatBgVideo();
   }, STORY_DURATION + 30);
 }
 
@@ -3045,6 +3140,7 @@ loadState();
 
 if (localStorage.getItem("gisa_checkout_done") === "1") {
   mountChat();
+  mountChatBgVideo();
   setTimeout(() => showCheckoutCta(), 300);
 } else {
   state.history        = [];
@@ -3052,6 +3148,7 @@ if (localStorage.getItem("gisa_checkout_done") === "1") {
   state.flags.startedChat = false;
   state.flags.routing     = false;
   mountChat();
+  mountChatBgVideo();
   setTimeout(startScript, 220);
 }
 
