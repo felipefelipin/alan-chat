@@ -49,15 +49,24 @@ const ASSETS = {
 };
 
 function preloadMedia() {
-  // pré-carrega vídeo do fundo imediatamente ao abrir o mini app
+  // cria o vídeo de fundo JÁ no DOM desde o início — elimina delay de carregamento
   try {
     const v = document.createElement("video");
+    v.id = "chatBgVideo";
     v.src = ASSETS.countdownVideo;
     v.preload = "auto";
     v.muted = true;
+    v.loop = true;
     v.playsInline = true;
     v.setAttribute("playsinline", "");
-    // não anexa ao DOM — só força o browser a baixar
+    v.setAttribute("webkit-playsinline", "");
+    // invisível — mountChatBgVideo irá posicioná-lo e mostrar quando necessário
+    v.style.cssText = `
+      position:fixed;top:0;left:0;width:100%;height:100%;
+      object-fit:cover;z-index:0;opacity:0;pointer-events:none;display:none;
+    `;
+    v.load();
+    document.body.insertBefore(v, document.body.firstChild);
   } catch {}
   try {
     const v = document.createElement("video");
@@ -78,32 +87,15 @@ function _playBgVideo() {
 }
 
 function mountChatBgVideo() {
-  if (!document.getElementById("chatBgVideo")) {
-    const vid = document.createElement("video");
-    vid.id = "chatBgVideo";
-    vid.muted = true;
-    vid.loop = true;
-    vid.playsInline = true;
-    vid.setAttribute("playsinline", "");
-    vid.setAttribute("webkit-playsinline", "");
-    vid.preload = "auto";
-    vid.style.cssText = `
-      position:fixed;top:0;left:0;width:100%;height:100%;
-      object-fit:cover;z-index:0;opacity:0.38;pointer-events:none;
-    `;
-    document.body.insertBefore(vid, document.body.firstChild);
+  const vid = document.getElementById("chatBgVideo");
+  if (!vid) return; // criado em preloadMedia — se não existe ainda não faz nada
 
-    // define src depois de inserir no DOM — pré-carrega sem tocar
-    vid.src = ASSETS.countdownVideo;
-    vid.load();
-    // NÃO toca aqui — showCountdown faz seek para 0 e dá play
-  } else {
-    // video já existe mas pode ter sido removido do fundo — só ajusta estado
-    const v = document.getElementById("chatBgVideo");
-    if (v) { v.pause(); v.currentTime = 0; }
-  }
+  // exibe o vídeo (estava hidden durante o preload)
+  vid.style.display = "";
+  vid.style.opacity = "0";   // começa invisível — showCountdown faz fade in
 
-  // always clear backgrounds so video shows through (re-applied after every mountChat)
+  // limpa backgrounds para o vídeo aparecer
+  document.body.style.background = "transparent";
   const appEl = document.getElementById("app");
   if (appEl) appEl.style.background = "transparent";
   const full = document.querySelector(".full");
@@ -2095,9 +2087,85 @@ function lockChat() {
   `;
 }
 
+// estado global do countdown — permite pausar/retomar
+const _cd = { interval: null, remaining: 0, resolve: null };
+
+function _cdGetMsg(n) {
+  if (n >= 10) return "PREPARANDO SESSÃO AO VIVO...";
+  if (n >= 5)  return "ESTABELECENDO CONEXÃO... 🔥";
+  return "CONECTANDO AGORA...";
+}
+
+function pauseCountdown() {
+  if (!_cd.resolve) return;
+  if (_cd.interval) { clearInterval(_cd.interval); _cd.interval = null; }
+  const vid = document.getElementById("chatBgVideo");
+  if (vid && !vid.paused) vid.pause();
+}
+
+function resumeCountdown() {
+  if (!_cd.resolve || _cd.remaining <= 0) return;
+  const shell = document.querySelector(".chatShell");
+  if (!shell) return;
+  // recria badge se sumiu (ex: mountChat recriou o DOM)
+  if (!document.getElementById("countdownBadge")) {
+    _mountCdBadge(shell, _cd.remaining);
+  } else {
+    const t = document.getElementById("cdTimer");
+    const m = document.getElementById("cdMsg");
+    if (t) t.textContent = _cd.remaining;
+    if (m) m.textContent = _cdGetMsg(_cd.remaining);
+  }
+  const vid = document.getElementById("chatBgVideo");
+  if (vid) { vid.style.opacity = "0.55"; vid.play().catch(() => {}); }
+  _cd.interval = setInterval(_cdTick, 1000);
+}
+
+function _cdTick() {
+  _cd.remaining--;
+  const t = document.getElementById("cdTimer");
+  const m = document.getElementById("cdMsg");
+  if (t) {
+    t.style.animation = "none";
+    requestAnimationFrame(() => { t.style.animation = "cdPop .25s ease-out"; });
+    t.textContent = _cd.remaining;
+  }
+  if (m) m.textContent = _cdGetMsg(_cd.remaining);
+  if (_cd.remaining <= 0) {
+    clearInterval(_cd.interval); _cd.interval = null;
+    document.getElementById("countdownBadge")?.remove();
+    const res = _cd.resolve; _cd.resolve = null;
+    if (res) res();
+  }
+}
+
+function _mountCdBadge(shell, initial) {
+  const cdEl = document.createElement("div");
+  cdEl.id = "countdownBadge";
+  cdEl.style.cssText = `
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    z-index:10;display:flex;flex-direction:column;align-items:center;gap:12px;
+    pointer-events:none;
+  `;
+  cdEl.innerHTML = `
+    <style>
+      @keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(1.5)}}
+      @keyframes cdPop{0%{transform:scale(1.35);opacity:0}100%{transform:scale(1);opacity:1}}
+      @keyframes badgeGlow{0%,100%{box-shadow:0 0 12px rgba(255,59,48,.7),0 0 28px rgba(255,59,48,.35)}50%{box-shadow:0 0 22px rgba(255,59,48,1),0 0 52px rgba(255,59,48,.6)}}
+      @keyframes timerGlow{0%,100%{text-shadow:0 0 18px rgba(255,80,60,.5),0 2px 24px rgba(0,0,0,.95)}50%{text-shadow:0 0 38px rgba(255,80,60,.9),0 2px 24px rgba(0,0,0,.95)}}
+    </style>
+    <div style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(200,20,10,.92),rgba(230,50,20,.88));border-radius:999px;padding:9px 18px;animation:badgeGlow 1.2s ease-in-out infinite;box-shadow:0 0 18px rgba(255,59,48,.7),0 0 36px rgba(255,59,48,.35);">
+      <span style="width:11px;height:11px;border-radius:50%;background:#fff;display:inline-block;animation:livePulse 0.9s ease-in-out infinite;flex-shrink:0;box-shadow:0 0 8px rgba(255,255,255,.9);"></span>
+      <span style="color:#fff;font-size:15px;font-weight:900;letter-spacing:2px;text-transform:uppercase;text-shadow:0 1px 8px rgba(0,0,0,.5);">🔴 AO VIVO EM</span>
+    </div>
+    <div id="cdTimer" style="color:#fff;font-size:96px;font-weight:900;letter-spacing:-4px;line-height:1;font-variant-numeric:tabular-nums;animation:cdPop .25s ease-out, timerGlow 1.4s ease-in-out infinite;">${initial}</div>
+    <div id="cdMsg" style="color:rgba(255,255,255,.9);font-size:13px;font-weight:700;letter-spacing:.08em;text-shadow:0 1px 10px rgba(0,0,0,.95);text-align:center;padding:0 28px;min-height:20px;">${_cdGetMsg(initial)}</div>
+  `;
+  shell.appendChild(cdEl);
+}
+
 function showCountdown(seconds) {
   return new Promise(resolve => {
-    // trava teclado — remove foco de qualquer input
     try { document.activeElement?.blur(); } catch {}
     const inp = document.getElementById("input");
     if (inp) { inp.readOnly = true; inp.tabIndex = -1; }
@@ -2105,80 +2173,25 @@ function showCountdown(seconds) {
     const shell = document.querySelector(".chatShell");
     if (!shell) { resolve(); return; }
 
-    // inicia vídeo do segundo 0 — usa seeked para garantir o frame correto
+    // inicia vídeo com fade in desde o segundo 0
     const vid = document.getElementById("chatBgVideo");
     if (vid) {
-      const doPlay = () => vid.play().catch(() => {});
       vid.pause();
       vid.currentTime = 0;
+      const doPlay = () => {
+        vid.play().catch(() => {});
+        vid.style.transition = "opacity 0.6s ease";
+        vid.style.opacity = "0.55";
+      };
       vid.addEventListener("seeked", doPlay, { once: true });
-      // fallback: se seeked não disparar (já estava em 0), toca direto
       setTimeout(doPlay, 80);
-      // retry no primeiro toque do usuário
-      document.addEventListener("touchstart", doPlay, { once: true, passive: true });
+      document.addEventListener("touchstart", () => vid.play().catch(() => {}), { once: true, passive: true });
     }
 
-    // contador flutuante sobre o chat
-    const cdEl = document.createElement("div");
-    cdEl.id = "countdownBadge";
-    cdEl.style.cssText = `
-      position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-      z-index:10;display:flex;flex-direction:column;align-items:center;gap:12px;
-      pointer-events:none;
-    `;
-    cdEl.innerHTML = `
-      <style>
-        @keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(1.5)}}
-        @keyframes cdPop{0%{transform:scale(1.35);opacity:0}100%{transform:scale(1);opacity:1}}
-        @keyframes badgeGlow{0%,100%{box-shadow:0 0 12px rgba(255,59,48,.7),0 0 28px rgba(255,59,48,.35)}50%{box-shadow:0 0 22px rgba(255,59,48,1),0 0 52px rgba(255,59,48,.6)}}
-        @keyframes timerGlow{0%,100%{text-shadow:0 0 18px rgba(255,80,60,.5),0 2px 24px rgba(0,0,0,.95)}50%{text-shadow:0 0 38px rgba(255,80,60,.9),0 2px 24px rgba(0,0,0,.95)}}
-      </style>
-      <div style="
-        display:flex;align-items:center;gap:10px;
-        background:linear-gradient(135deg,rgba(200,20,10,.92),rgba(230,50,20,.88));
-        border-radius:999px;padding:9px 18px;
-        animation:badgeGlow 1.2s ease-in-out infinite;
-        box-shadow:0 0 18px rgba(255,59,48,.7),0 0 36px rgba(255,59,48,.35);
-      ">
-        <span style="width:11px;height:11px;border-radius:50%;background:#fff;display:inline-block;animation:livePulse 0.9s ease-in-out infinite;flex-shrink:0;box-shadow:0 0 8px rgba(255,255,255,.9);"></span>
-        <span style="color:#fff;font-size:15px;font-weight:900;letter-spacing:2px;text-transform:uppercase;text-shadow:0 1px 8px rgba(0,0,0,.5);">🔴 AO VIVO EM</span>
-      </div>
-      <div id="cdTimer" style="
-        color:#fff;font-size:96px;font-weight:900;letter-spacing:-4px;line-height:1;
-        font-variant-numeric:tabular-nums;
-        animation:cdPop .25s ease-out, timerGlow 1.4s ease-in-out infinite;
-      ">${seconds}</div>
-      <div id="cdMsg" style="
-        color:rgba(255,255,255,.9);font-size:13px;font-weight:700;letter-spacing:.08em;
-        text-shadow:0 1px 10px rgba(0,0,0,.95);text-align:center;padding:0 28px;
-        min-height:20px;
-      ">PREPARANDO SESSÃO AO VIVO...</div>
-    `;
-    shell.appendChild(cdEl);
-
-    const getMsg = (n) => {
-      if (n >= 10) return "PREPARANDO SESSÃO AO VIVO...";
-      if (n >= 5)  return "ESTABELECENDO CONEXÃO... 🔥";
-      return "CONECTANDO AGORA...";
-    };
-
-    let remaining = seconds;
-    const interval = setInterval(() => {
-      remaining--;
-      const timerEl = document.getElementById("cdTimer");
-      const msgEl   = document.getElementById("cdMsg");
-      if (timerEl) {
-        timerEl.style.animation = "none";
-        requestAnimationFrame(() => { timerEl.style.animation = "cdPop .25s ease-out"; });
-        timerEl.textContent = remaining;
-      }
-      if (msgEl) msgEl.textContent = getMsg(remaining);
-      if (remaining <= 0) {
-        clearInterval(interval);
-        cdEl.remove();
-        resolve();
-      }
-    }, 1000);
+    _mountCdBadge(shell, seconds);
+    _cd.remaining = seconds;
+    _cd.resolve   = resolve;
+    _cd.interval  = setInterval(_cdTick, 1000);
   });
 }
 
@@ -2245,7 +2258,8 @@ function showLiveCallCta() {
         bgVid.style.transition = "opacity 0.45s ease";
         bgVid.style.opacity = "0";
         setTimeout(() => {
-          // restaura backgrounds do CSS (var(--bg) + wallpaper ::before)
+          // restaura backgrounds do CSS
+          document.body.style.background = "";
           const appEl = document.getElementById("app");
           if (appEl) appEl.style.background = "";
           const full = document.querySelector(".full");
@@ -2254,7 +2268,7 @@ function showLiveCallCta() {
           if (s) s.style.background = "";
           const c = document.getElementById("chat");
           if (c) c.style.background = "";
-          bgVid.remove();
+          bgVid.style.display = "none";
         }, 450);
       }
       // card sai com fade
@@ -2578,6 +2592,7 @@ function exitStories(fromSwipe = false, swipeScreen = null) {
     app.style.zIndex = "";
     mountChat();
     mountChatBgVideo();
+    resumeCountdown();
   }, STORY_DURATION + 30);
 }
 
@@ -2588,7 +2603,7 @@ function exitStories(fromSwipe = false, swipeScreen = null) {
 
 // ─── showStories ─────────────────────────────────────────────────────────────
 function showStories() {
-  // Fecha teclado antes de abrir o story para não sobrepor
+  pauseCountdown();
   const activeEl = document.activeElement;
   if (activeEl && typeof activeEl.blur === "function") activeEl.blur();
 
@@ -3008,11 +3023,12 @@ function sendStoryReaction(emojiEl) {
 
 // ==================== PROFILE ====================
 function openProfile() {
+  pauseCountdown();
   const contact = CONTACT;
   app.innerHTML = `
     <div class="slideInRight" style="background:#0a0a0a;color:#fff;height:100vh;overflow:auto;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
       <div style="position:sticky;top:0;height:52px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;background:#111111;z-index:10;">
-        <span onclick="mountChat()" style="position:absolute;left:14px;font-size:28px;cursor:pointer;">‹</span>
+        <span onclick="mountChat();mountChatBgVideo();resumeCountdown();" style="position:absolute;left:14px;font-size:28px;cursor:pointer;">‹</span>
         Dados do contato
       </div>
       <div style="display:flex;flex-direction:column;align-items:center;margin-top:24px;">
