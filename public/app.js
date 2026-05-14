@@ -903,33 +903,24 @@ window.startVideoCall = async function () {
   const vcVideo  = document.getElementById("vcVideo");
   const vcScreen = document.getElementById("vcScreen");
 
-  vcVideo.srcObject = stream;
-  vcVideo.onloadedmetadata = () => {
-    vcVideo.play();
-    requestAnimationFrame(() => {
-      vcScreen.style.opacity   = "1";
-      vcScreen.style.transform = "scale(1)";
-      _vcHideTimer = setTimeout(_vcHideControls, 4000);
-    });
-  };
-
   // ── tap para esconder/mostrar controles (estilo WhatsApp) ──────
-  const _vcOverlayEls = () => [
-    document.getElementById("vcTopBar"),
-    document.getElementById("vcFlip"),
-    document.getElementById("vcControlsBar"),
-  ].filter(Boolean);
   let _vcControlsVisible = true;
   let _vcHideTimer = null;
+  function _vcHideControls() {
+    [document.getElementById("vcTopBar"),
+     document.getElementById("vcFlip"),
+     document.getElementById("vcControlsBar")]
+      .forEach(el => { if (el) { el.style.opacity = "0"; el.style.pointerEvents = "none"; } });
+    _vcControlsVisible = false;
+  }
   function _vcShowControls() {
-    _vcOverlayEls().forEach(el => { el.style.opacity = "1"; el.style.pointerEvents = ""; });
+    [document.getElementById("vcTopBar"),
+     document.getElementById("vcFlip"),
+     document.getElementById("vcControlsBar")]
+      .forEach(el => { if (el) { el.style.opacity = "1"; el.style.pointerEvents = ""; } });
     _vcControlsVisible = true;
     clearTimeout(_vcHideTimer);
     _vcHideTimer = setTimeout(_vcHideControls, 4000);
-  }
-  function _vcHideControls() {
-    _vcOverlayEls().forEach(el => { el.style.opacity = "0"; el.style.pointerEvents = "none"; });
-    _vcControlsVisible = false;
   }
   vcScreen.addEventListener("touchend", (e) => {
     const touch = e.changedTouches[0];
@@ -944,6 +935,21 @@ window.startVideoCall = async function () {
     if (_vcControlsVisible) _vcHideControls();
     else _vcShowControls();
   }, { passive: true });
+
+  vcVideo.srcObject = stream;
+  vcVideo.onloadedmetadata = () => {
+    vcVideo.play();
+    requestAnimationFrame(() => {
+      vcScreen.style.opacity   = "1";
+      vcScreen.style.transform = "scale(1)";
+      clearTimeout(_vcHideTimer);
+      _vcHideTimer = setTimeout(_vcHideControls, 4000);
+    });
+  };
+  // fallback: se onloadedmetadata não disparar, esconde após 5s
+  setTimeout(() => {
+    if (!_vcHideTimer) _vcHideTimer = setTimeout(_vcHideControls, 4000);
+  }, 1000);
 
   // ── helpers ────────────────────────────────────────────────────
   function setBg(id, color) {
