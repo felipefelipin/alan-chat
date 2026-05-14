@@ -2359,7 +2359,7 @@ function openCheckout() {
       body: JSON.stringify({ chatId: String(chatId) }),
       keepalive: true,
     }).catch(() => {});
-    setTimeout(() => { try { if (tg?.close) tg.close(); } catch {} }, 300);
+    try { if (tg?.close) tg.close(); } catch {}
   } else {
     window.open(CHECKOUT_URL, "_blank");
   }
