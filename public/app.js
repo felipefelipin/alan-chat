@@ -1869,14 +1869,6 @@ async function startFunnelCall() {
       vid.style.opacity = "1"; // fade-in de 1s (definido no CSS do elemento)
       vid.play().catch(() => {});
 
-      // mensagem 14 segundos após o vídeo ser revelado
-      setTimeout(() => {
-        if (done) return;
-        const msgEl = document.createElement("div");
-        msgEl.style.cssText = "position:absolute;bottom:140px;left:16px;right:16px;background:rgba(0,0,0,0.72);border-radius:16px;padding:12px 16px;color:#fff;font-size:14px;line-height:1.5;pointer-events:none;z-index:25;";
-        msgEl.textContent = "tá gostando dessa buceta? Eu tô me fodendo aqui pensando em você me comendo…";
-        callEl.appendChild(msgEl);
-      }, 14000);
     }, 4000);
   };
   if (navigator.mediaDevices?.getUserMedia) {
