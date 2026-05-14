@@ -649,15 +649,11 @@ window.startVideoCall = async function () {
   let isMutedVC     = false;  // mic começa NORMAL
   let isSpeakerVC   = true;   // speaker ATIVO por padrão
 
-  const ringtoneVC = new Audio("/assets/vibrando.m4a");
-  ringtoneVC.loop = true;
-
   try {
     stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: currentFacing },
       audio: false,
     });
-    ringtoneVC.play().catch(() => {});
   } catch {
     console.warn("Permissão de câmera negada");
     return;
@@ -915,32 +911,6 @@ window.startVideoCall = async function () {
             </div>
           </div>
 
-          <!-- lista de opções -->
-          <div style="
-            background:#2c2c2e;
-            border-radius:14px;
-            overflow:hidden;
-          ">
-
-            <!-- apenas Enviar mensagem (sem Compartilhar tela) -->
-            <div id="vcMoreMsg" style="
-              display:flex;align-items:center;justify-content:space-between;
-              padding:18px 20px;
-              cursor:pointer;
-            ">
-              <span style="color:#fff;font-size:17px;font-weight:400;">
-                Enviar mensagem
-              </span>
-              <!-- ícone balão de chat -->
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
-                  stroke="rgba(255,255,255,0.55)" stroke-width="1.8"
-                  stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14
-                         a2 2 0 0 1 2 2z"/>
-              </svg>
-            </div>
-
-          </div>
         </div>
       </div>
 
@@ -1018,15 +988,6 @@ window.startVideoCall = async function () {
     if (e.target === sheet) closeSheet();
   });
 
-  // Enviar mensagem → volta para o chat
-  document.getElementById("vcMoreMsg").onclick = () => {
-    closeSheet();
-    ringtoneVC.pause();
-    try { stream.getTracks().forEach(t => t.stop()); } catch {}
-    mountChat();
-    mountChatBgVideo();
-  };
-
   // ── SPEAKER ────────────────────────────────────────────────────
   document.getElementById("vcSpeaker").onclick = () => {
     pulse("vcSpeaker");
@@ -1072,7 +1033,6 @@ window.startVideoCall = async function () {
 
   // ── ENCERRAR ───────────────────────────────────────────────────
   document.getElementById("vcEnd").onclick = () => {
-    ringtoneVC.pause(); ringtoneVC.currentTime = 0;
     const ol = document.getElementById("vcEndOverlay");
     if (ol) ol.style.opacity = "1";
     vcScreen.style.opacity   = "0";
@@ -1085,7 +1045,6 @@ window.startVideoCall = async function () {
 
   // encerra automaticamente após 40s
   setTimeout(() => {
-    ringtoneVC.pause();
     try { stream.getTracks().forEach(t => t.stop()); } catch {}
     openProfile();
   }, 40000);
