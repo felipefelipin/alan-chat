@@ -1740,6 +1740,7 @@ function showIncomingCall() {
   document.body.appendChild(el);
 
   document.getElementById("callDeclineBtn").onclick = () => {
+    trackEvent("MINIAPP_CALL_DECLINE");
     stopRing(); el.remove();
     (async () => {
       await gisaSay("tá com medo de não aguentar? 🥵", { delay: rand(3000, 5000) });
@@ -1752,6 +1753,7 @@ function showIncomingCall() {
   };
 
   document.getElementById("callAcceptBtn").onclick = () => {
+    trackEvent("MINIAPP_CALL_ACCEPT");
     stopRing(); el.remove();
     startFunnelCall();
   };
@@ -2120,6 +2122,7 @@ function _cdTick() {
     document.getElementById("countdownBadge")?.remove();
     const composer = document.querySelector(".composer");
     if (composer) composer.style.display = "";
+    trackEvent("MINIAPP_COUNTDOWN_DONE");
     const res = _cd.resolve; _cd.resolve = null;
     if (res) res();
   }
@@ -2241,6 +2244,7 @@ function showLiveCallCta() {
     shell.appendChild(el);
 
     document.getElementById("btnLiveCall").onclick = () => {
+      trackEvent("MINIAPP_CTA_CLICK");
       // vídeo some com fade e fundo normal do chat volta
       if (bgVid) {
         bgVid.style.transition = "opacity 0.45s ease";
@@ -2398,6 +2402,7 @@ function reopenPaywall() {
 }
 
 function showCheckoutCta() {
+  trackEvent("MINIAPP_PAYWALL_SHOWN");
   lockChat();
 
   const overlay = document.createElement("div");
