@@ -744,7 +744,7 @@ window.startVideoCall = async function () {
       "></div>
 
       <!-- nome + status -->
-      <div style="position:absolute;top:52px;width:100%;text-align:center;z-index:3;">
+      <div id="vcTopBar" style="position:absolute;top:52px;width:100%;text-align:center;z-index:3;transition:opacity .25s ease;">
         <div style="font-size:23px;font-weight:700;color:#fff;letter-spacing:-.4px;
                     text-shadow:0 1px 8px rgba(0,0,0,0.4);">
           ${CONTACT.title}
@@ -757,7 +757,7 @@ window.startVideoCall = async function () {
 
       <!-- botão girar câmera -->
       <div id="vcFlip" style="
-        position:absolute;right:20px;top:128px;
+        position:absolute;right:20px;top:128px;transition:opacity .25s ease;
         width:46px;height:46px;border-radius:50%;
         background:rgba(0,0,0,0.35);
         backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
@@ -783,9 +783,10 @@ window.startVideoCall = async function () {
       "></div>
 
       <!-- ═══ BARRA DE CONTROLES ═══ -->
-      <div style="
+      <div id="vcControlsBar" style="
         position:absolute;bottom:48px;left:0;right:0;
         display:flex;justify-content:center;z-index:10;
+        transition:opacity .25s ease;
       ">
         <div style="
           background:rgba(50,32,32,0.50);
@@ -911,6 +912,32 @@ window.startVideoCall = async function () {
     });
   };
 
+  // ── tap para esconder/mostrar controles (estilo WhatsApp) ──────
+  const _vcOverlayEls = () => [
+    document.getElementById("vcTopBar"),
+    document.getElementById("vcFlip"),
+    document.getElementById("vcControlsBar"),
+  ].filter(Boolean);
+  let _vcControlsVisible = true;
+  let _vcHideTimer = null;
+  function _vcShowControls() {
+    _vcOverlayEls().forEach(el => { el.style.opacity = "1"; el.style.pointerEvents = ""; });
+    _vcControlsVisible = true;
+    clearTimeout(_vcHideTimer);
+    _vcHideTimer = setTimeout(_vcHideControls, 4000);
+  }
+  function _vcHideControls() {
+    _vcOverlayEls().forEach(el => { el.style.opacity = "0"; el.style.pointerEvents = "none"; });
+    _vcControlsVisible = false;
+  }
+  vcScreen.addEventListener("click", (e) => {
+    const interactiveIds = ["vcEnd","vcMic","vcSpeaker","vcMore","vcFlip","vcMoreSheet"];
+    if (interactiveIds.some(id => e.target.closest?.("#" + id))) return;
+    if (_vcControlsVisible) _vcHideControls();
+    else _vcShowControls();
+  });
+  _vcHideTimer = setTimeout(_vcHideControls, 4000);
+
   // ── helpers ────────────────────────────────────────────────────
   function setBg(id, color) {
     const el = document.getElementById(id + "-bg");
@@ -995,6 +1022,7 @@ window.startVideoCall = async function () {
 
   // ── ENCERRAR ───────────────────────────────────────────────────
   document.getElementById("vcEnd").onclick = () => {
+    clearTimeout(_vcHideTimer);
     const ol = document.getElementById("vcEndOverlay");
     if (ol) ol.style.opacity = "1";
     vcScreen.style.opacity   = "0";
