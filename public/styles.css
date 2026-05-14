@@ -1208,6 +1208,7 @@ object-fit:cover;
   pointer-events: none;
   z-index: 0;
 }
+.chatShell.vid-active::before { display: none !important; }
 
 .chat {
   position: absolute;

@@ -89,6 +89,7 @@ function _playBgVideo() {
 function mountChatBgVideo() {
   const vid = document.getElementById("chatBgVideo");
   if (!vid) return; // criado em preloadMedia — se não existe ainda não faz nada
+  if (vid.dataset.done === "1") return; // CTA já passou — não reativar vídeo
 
   // exibe o vídeo (estava hidden durante o preload)
   vid.style.display = "";
@@ -101,7 +102,7 @@ function mountChatBgVideo() {
   const full = document.querySelector(".full");
   if (full) full.style.background = "transparent";
   const shell = document.querySelector(".chatShell");
-  if (shell) shell.style.background = "transparent";
+  if (shell) { shell.style.background = "transparent"; shell.classList.add("vid-active"); }
   const chat = document.getElementById("chat");
   if (chat) chat.style.background = "transparent";
 }
@@ -2265,10 +2266,11 @@ function showLiveCallCta() {
           const full = document.querySelector(".full");
           if (full) full.style.background = "";
           const s = document.querySelector(".chatShell");
-          if (s) s.style.background = "";
+          if (s) { s.style.background = ""; s.classList.remove("vid-active"); }
           const c = document.getElementById("chat");
           if (c) c.style.background = "";
           bgVid.style.display = "none";
+          bgVid.dataset.done = "1";
         }, 450);
       }
       // card sai com fade
