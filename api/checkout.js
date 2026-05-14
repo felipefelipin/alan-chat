@@ -27,7 +27,9 @@ module.exports = async function handler(req, res) {
   const WEBAPP_URL = process.env.WEBAPP_URL || "https://alana-chat.vercel.app";
 
   try {
-    await tgSendVideo(`${WEBAPP_URL}/assets/pagamento.mp4`);
+    // vídeo opcional — falha não bloqueia as mensagens
+    try { await tgSendVideo(`${WEBAPP_URL}/assets/pagamento.mp4`); } catch {}
+
     await tgSend("tá… agora escolhe como você quer entrar.");
     await tgSend("3 opções. sem enrolar.");
     await tgSend("👇", {
