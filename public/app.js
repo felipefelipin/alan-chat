@@ -2122,21 +2122,29 @@ function showCountdown(seconds) {
     `;
     cdEl.innerHTML = `
       <style>
-        @keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.4)}}
-        @keyframes cdPop{0%{transform:scale(1.3);opacity:0}100%{transform:scale(1);opacity:1}}
+        @keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(1.5)}}
+        @keyframes cdPop{0%{transform:scale(1.35);opacity:0}100%{transform:scale(1);opacity:1}}
+        @keyframes badgeGlow{0%,100%{box-shadow:0 0 12px rgba(255,59,48,.7),0 0 28px rgba(255,59,48,.35)}50%{box-shadow:0 0 22px rgba(255,59,48,1),0 0 52px rgba(255,59,48,.6)}}
+        @keyframes timerGlow{0%,100%{text-shadow:0 0 18px rgba(255,80,60,.5),0 2px 24px rgba(0,0,0,.95)}50%{text-shadow:0 0 38px rgba(255,80,60,.9),0 2px 24px rgba(0,0,0,.95)}}
       </style>
-      <div style="display:flex;align-items:center;gap:8px;background:rgba(255,59,48,.15);border:1.5px solid rgba(255,59,48,.6);border-radius:20px;padding:6px 14px;">
-        <span style="width:10px;height:10px;border-radius:50%;background:#ff3b30;display:inline-block;animation:livePulse 1s ease-in-out infinite;flex-shrink:0;"></span>
-        <span style="color:#ff3b30;font-size:14px;font-weight:800;letter-spacing:1px;text-transform:uppercase;text-shadow:0 0 12px rgba(255,59,48,.6);">AO VIVO EM</span>
+      <div style="
+        display:flex;align-items:center;gap:10px;
+        background:linear-gradient(135deg,rgba(200,20,10,.92),rgba(230,50,20,.88));
+        border-radius:999px;padding:9px 18px;
+        animation:badgeGlow 1.2s ease-in-out infinite;
+        box-shadow:0 0 18px rgba(255,59,48,.7),0 0 36px rgba(255,59,48,.35);
+      ">
+        <span style="width:11px;height:11px;border-radius:50%;background:#fff;display:inline-block;animation:livePulse 0.9s ease-in-out infinite;flex-shrink:0;box-shadow:0 0 8px rgba(255,255,255,.9);"></span>
+        <span style="color:#fff;font-size:15px;font-weight:900;letter-spacing:2px;text-transform:uppercase;text-shadow:0 1px 8px rgba(0,0,0,.5);">🔴 AO VIVO EM</span>
       </div>
       <div id="cdTimer" style="
-        color:#fff;font-size:88px;font-weight:900;letter-spacing:-3px;line-height:1;
-        font-variant-numeric:tabular-nums;text-shadow:0 2px 24px rgba(0,0,0,.95);
-        animation:cdPop .25s ease-out;
+        color:#fff;font-size:96px;font-weight:900;letter-spacing:-4px;line-height:1;
+        font-variant-numeric:tabular-nums;
+        animation:cdPop .25s ease-out, timerGlow 1.4s ease-in-out infinite;
       ">${seconds}</div>
       <div id="cdMsg" style="
-        color:rgba(255,255,255,.85);font-size:14px;font-weight:600;
-        text-shadow:0 1px 8px rgba(0,0,0,.9);text-align:center;padding:0 32px;
+        color:rgba(255,255,255,.9);font-size:13px;font-weight:700;letter-spacing:.08em;
+        text-shadow:0 1px 10px rgba(0,0,0,.95);text-align:center;padding:0 28px;
         min-height:20px;
       ">PREPARANDO SESSÃO AO VIVO...</div>
     `;
