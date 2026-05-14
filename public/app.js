@@ -909,6 +909,7 @@ window.startVideoCall = async function () {
     requestAnimationFrame(() => {
       vcScreen.style.opacity   = "1";
       vcScreen.style.transform = "scale(1)";
+      _vcHideTimer = setTimeout(_vcHideControls, 4000);
     });
   };
 
@@ -930,13 +931,19 @@ window.startVideoCall = async function () {
     _vcOverlayEls().forEach(el => { el.style.opacity = "0"; el.style.pointerEvents = "none"; });
     _vcControlsVisible = false;
   }
-  vcScreen.addEventListener("click", (e) => {
-    const interactiveIds = ["vcEnd","vcMic","vcSpeaker","vcMore","vcFlip","vcMoreSheet"];
-    if (interactiveIds.some(id => e.target.closest?.("#" + id))) return;
+  vcScreen.addEventListener("touchend", (e) => {
+    const touch = e.changedTouches[0];
+    if (!touch) return;
+    const hit = document.elementFromPoint(touch.clientX, touch.clientY);
+    const bar   = document.getElementById("vcControlsBar");
+    const flip  = document.getElementById("vcFlip");
+    const sheet = document.getElementById("vcMoreSheet");
+    if ((bar   && bar.contains(hit))   ||
+        (flip  && flip.contains(hit))  ||
+        (sheet && sheet.contains(hit))) return;
     if (_vcControlsVisible) _vcHideControls();
     else _vcShowControls();
-  });
-  _vcHideTimer = setTimeout(_vcHideControls, 4000);
+  }, { passive: true });
 
   // ── helpers ────────────────────────────────────────────────────
   function setBg(id, color) {
@@ -2258,9 +2265,9 @@ async function startScript() {
 
   _flowRunning = true;
   try {
-    // mensagem curta e chamada toca na hora
     state.step = 5; saveState();
     clearReengage();
+    await sleep(3000);
     await gisaSay("tô pelada te esperando… entra agora 🔥🥵", { delay: rand(2200, 3000) });
     await sleep(2000);
     showIncomingCall();
