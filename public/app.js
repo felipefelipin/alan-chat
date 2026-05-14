@@ -2353,14 +2353,17 @@ function openCheckout() {
   trackEvent("MINIAPP_CHECKOUT_CLICK");
   const chatId = tg?.initDataUnsafe?.user?.id;
   if (chatId) {
-    // fetch primeiro, fecha o app depois — garante que a requisição sai antes do WebView morrer
+    const close = () => { try { if (tg?.close) tg.close(); } catch {} };
     fetch("/api/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chatId: String(chatId) }),
       keepalive: true,
-    }).catch(() => {});
-    setTimeout(() => { try { if (tg?.close) tg.close(); } catch {} }, 300);
+    })
+      .then(close)
+      .catch(close);
+    // fallback: fecha após 4s caso fetch trave
+    setTimeout(close, 4000);
   } else {
     window.open(CHECKOUT_URL, "_blank");
   }
