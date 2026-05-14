@@ -8,16 +8,26 @@ module.exports = async function handler(req, res) {
   const BOT_TOKEN = process.env.BOT_TOKEN;
   if (!BOT_TOKEN) return res.status(500).json({ error: "no bot token" });
 
-  const base = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+  const apiBase = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
   const tgSend = (text, extra = {}) =>
-    fetch(base, {
+    fetch(`${apiBase}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chat_id: String(chatId), text, ...extra }),
     });
 
+  const tgSendVideo = (videoUrl, extra = {}) =>
+    fetch(`${apiBase}/sendVideo`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: String(chatId), video: videoUrl, ...extra }),
+    });
+
+  const WEBAPP_URL = process.env.WEBAPP_URL || "https://alana-chat.vercel.app";
+
   try {
+    await tgSendVideo(`${WEBAPP_URL}/assets/pagamento.mp4`);
     await tgSend("tá… agora escolhe como você quer entrar.");
     await tgSend("3 opções. sem enrolar.");
     await tgSend("👇", {
