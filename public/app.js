@@ -2147,6 +2147,59 @@ function showCountdown(seconds) {
   });
 }
 
+function showLiveCallCta() {
+  return new Promise(resolve => {
+    const shell = document.querySelector(".chatShell");
+    if (!shell) { resolve(); return; }
+
+    const el = document.createElement("div");
+    el.id = "liveCallCta";
+    el.style.cssText = `
+      position:absolute;inset:0;z-index:20;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:24px 20px;pointer-events:none;
+    `;
+    el.innerHTML = `
+      <style>
+        @keyframes ctaPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,59,48,.55)}70%{box-shadow:0 0 0 18px rgba(255,59,48,0)}}
+        @keyframes ctaFadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+      </style>
+      <div style="
+        animation:ctaFadeUp .4s ease both;
+        display:flex;flex-direction:column;align-items:center;gap:20px;
+        background:rgba(10,10,10,.82);border:1px solid rgba(255,59,48,.3);
+        border-radius:24px;padding:28px 20px;
+        backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+        max-width:340px;width:100%;
+      ">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="width:10px;height:10px;border-radius:50%;background:#ff3b30;display:inline-block;animation:livePulse 1s ease-in-out infinite;flex-shrink:0;"></span>
+          <span style="color:#ff3b30;font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;">AO VIVO AGORA</span>
+        </div>
+        <p style="
+          color:rgba(255,255,255,.9);font-size:15px;font-weight:600;text-align:center;
+          line-height:1.5;margin:0;text-shadow:0 1px 8px rgba(0,0,0,.8);
+        ">Clique no botão abaixo pra receber uma chamada de vídeo de Alana Lemes 🔥🥵</p>
+        <button id="btnLiveCall" style="
+          width:100%;padding:18px 16px;border-radius:18px;border:0;cursor:pointer;
+          background:linear-gradient(135deg,#ff3b30,#ff6b35);
+          color:#fff;font-size:14px;font-weight:900;letter-spacing:.04em;
+          text-transform:uppercase;line-height:1.3;
+          animation:ctaPulse 1.6s ease-in-out infinite;
+          pointer-events:auto;
+          -webkit-tap-highlight-color:transparent;
+        ">📲 PEDIR PRA ALANA ENTRAR AO VIVO COMIGO AGORA!</button>
+      </div>
+    `;
+    shell.appendChild(el);
+
+    document.getElementById("btnLiveCall").onclick = () => {
+      el.remove();
+      resolve();
+    };
+  });
+}
+
 async function startScript() {
   if (state.flags.startedChat) return;
   state.flags.startedChat = true;
@@ -2159,22 +2212,14 @@ async function startScript() {
   // contador com vídeo no fundo
   await showCountdown(15);
 
+  // CTA para cair a chamada
+  setStatus("online");
+  state.flags.botOnline = true; saveState();
+  await showLiveCallCta();
+
   _flowRunning = true;
   try {
-    // visto por último → online
-    setStatus("online");
-    state.flags.botOnline = true; saveState();
-
-    // mensagens chegam sozinhas
-    await sleep(rand(1500, 2500));
-    await gisaSay("ei 👀", { delay: rand(1500, 2500) });
-    await sleep(rand(2500, 3500));
-    await gisaSay("tava esperando você aparecer aqui...", { delay: rand(3000, 4500) });
-    await sleep(rand(2000, 3000));
-    await gisaSay("quero te mostrar uma coisa ao vivo agora 🔥", { delay: rand(3000, 4500) });
-    await sleep(rand(1500, 2500));
-
-    // chamada entra
+    // chamada entra direto após clique
     await enterCallConnecting();
   } finally {
     _flowRunning = false;
