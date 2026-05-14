@@ -171,6 +171,7 @@ function saveState() {
 function loadState() {
   // TEMP: desabilitado para testes — reativar após testes
   try { localStorage.removeItem(PERSIST_KEY); } catch {}
+  try { localStorage.removeItem("gisa_checkout_done"); } catch {}
 }
 
 function nowTime() {
