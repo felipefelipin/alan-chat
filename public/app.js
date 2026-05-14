@@ -649,7 +649,7 @@ window.startVideoCall = async function () {
   let isMutedVC     = false;  // mic começa NORMAL
   let isSpeakerVC   = true;   // speaker ATIVO por padrão
 
-  const ringtoneVC = new Audio("/assets/ringtone.mp3");
+  const ringtoneVC = new Audio("/assets/vibrando.m4a");
   ringtoneVC.loop = true;
 
   try {
