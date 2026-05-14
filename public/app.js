@@ -1681,13 +1681,6 @@ function showIncomingCall() {
     if (inp) { inp.readOnly = true; inp.blur(); setTimeout(() => { inp.readOnly = false; }, 300); }
   } catch {}
 
-  let ringtone = null;
-  try {
-    ringtone = new Audio(ASSETS.ringtone);
-    ringtone.loop = true; ringtone.volume = 0.85;
-    ringtone.play().catch(() => {});
-  } catch {}
-
   let vibrateInterval = null;
   if (navigator.vibrate) {
     navigator.vibrate([1000, 800, 1000, 800]);
@@ -1695,7 +1688,6 @@ function showIncomingCall() {
   }
 
   const stopRing = () => {
-    try { if (ringtone) { ringtone.pause(); ringtone.src = ""; } } catch {}
     try { if (vibrateInterval) clearInterval(vibrateInterval); navigator.vibrate(0); } catch {}
   };
 
