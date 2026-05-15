@@ -1861,6 +1861,7 @@ async function startFunnelCall() {
     transform:scaleX(-1);
     z-index:15;
     transition:bottom .25s ease;
+    display:none;
   `;
   callEl.appendChild(pip);
 
@@ -1872,13 +1873,13 @@ async function startFunnelCall() {
   const _fcHide = () => {
     topBar.style.opacity = "0"; topBar.style.pointerEvents = "none";
     bottomBar.style.opacity = "0"; bottomBar.style.pointerEvents = "none";
-    pip.style.bottom = "calc(env(safe-area-inset-bottom,34px) + 20px)";
+    if (pip.style.display !== "none") pip.style.bottom = "calc(env(safe-area-inset-bottom,34px) + 20px)";
     _fcVisible = false;
   };
   const _fcShow = () => {
     topBar.style.opacity = "1"; topBar.style.pointerEvents = "";
     bottomBar.style.opacity = "1"; bottomBar.style.pointerEvents = "";
-    pip.style.bottom = "calc(env(safe-area-inset-bottom,34px) + 108px)";
+    if (pip.style.display !== "none") pip.style.bottom = "calc(env(safe-area-inset-bottom,34px) + 108px)";
     _fcVisible = true;
     clearTimeout(_fcTimer);
     _fcTimer = setTimeout(_fcHide, 4000);
@@ -1910,8 +1911,8 @@ async function startFunnelCall() {
   };
   if (navigator.mediaDevices?.getUserMedia) {
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
-      .then(s => { camStream = s; pip.srcObject = s; pip.play().catch(() => {}); })
-      .catch(() => { pip.style.display = "none"; })
+      .then(s => { camStream = s; pip.srcObject = s; pip.style.display = ""; pip.play().catch(() => {}); })
+      .catch(() => {})
       .finally(startMainVideo);
   } else {
     pip.style.display = "none";
