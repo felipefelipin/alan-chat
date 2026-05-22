@@ -2283,7 +2283,7 @@ async function startScript() {
   if (composer) composer.style.display = "none";
 
   // contador com vídeo no fundo
-  await showCountdown(15);
+  await showCountdown(8);
 
   // CTA para cair a chamada
   setStatus("online");
