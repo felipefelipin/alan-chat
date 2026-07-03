@@ -457,15 +457,14 @@ const worker = new Worker(
 
         await fm(chatId, "tá… agora escolhe como você quer entrar.");
         await sleep(rand(300, 500));
-        await fm(chatId, "3 opções. sem enrolar.");
+        await fm(chatId, "2 opções. sem enrolar.");
         await sleep(rand(300, 500));
 
         await bot.sendMessage(chatId, "👇", {
           reply_markup: {
             inline_keyboard: [
-              [{ text: "🔥 GRUPO SEM CENSURA — R$ 14,90",             callback_data: "plan:basic"                   }],
-              [{ text: "💦 GRUPO + AO VIVO COMIGO — R$ 24,90",       callback_data: "plan:plus",  style: "success" }],
-              [{ text: "😈 PRIVADO — SÓ EU E VOCÊ — R$ 34,90",       callback_data: "plan:vip"                    }],
+              [{ text: "🔥 MENSAL — R$ 24,90",    callback_data: "plan:mensal"                    }],
+              [{ text: "😈 VITALÍCIO — R$ 34,90", callback_data: "plan:vitalicio", style: "success" }],
             ],
           },
         });

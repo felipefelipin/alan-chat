@@ -9,27 +9,14 @@ const { mpCreatePix } = require("../payments/mp");
 const prisma = new PrismaClient();
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 
+process.on("unhandledRejection", (err) => console.error("unhandledRejection:", err));
+process.on("uncaughtException", (err) => console.error("uncaughtException:", err));
+
 const rand  = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 // helper: BullMQ nessa versão não aceita ":" em jobId
 const jid = (...parts) => parts.join("-");
-
-function pickEchoWord(text) {
-  const t = String(text || "")
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
-    .split(/\s+/)
-    .filter(Boolean);
-
-  const stop = new Set([
-    "oi", "ola", "olá", "sim", "nao", "não",
-    "to", "tô", "ta", "tá", "ok", "blz",
-  ]);
-
-  const cand = t.filter((w) => w.length >= 3 && w.length <= 10 && !stop.has(w));
-  return cand[0] || null;
-}
 
 async function upsertUser(chatId) {
   return prisma.user.upsert({
@@ -128,7 +115,7 @@ async function createCheckoutAndSend(chatId, plano) {
   }
 
   await sleep(rand(600, 1000));
-  const planNames = { basic: "Grupo Sem Censura", plus: "Grupo + Ao Vivo", vip: "Privado — Só Eu e Você" };
+  const planNames = { mensal: "Acesso Mensal", vitalicio: "Acesso Vitalício" };
   const planTitle = planNames[plano] ?? plano;
   await bot.sendMessage(chatId, `Assim que o pagamento for confirmado, o link do *${planTitle}* cai aqui automaticamente 🔒✅`, { parse_mode: "Markdown" });
 
@@ -136,92 +123,49 @@ async function createCheckoutAndSend(chatId, plano) {
 }
 
 // =============================================================================
-// /start — dispara o novo funil (FUNNEL_START no worker)
+// Funil direto — vídeo intro + mensagem + planos + chamada de vídeo
+// =============================================================================
+const START_MESSAGE = `Oi gostoso, sou a Alana Lemes 💋
+Se você gostou do que viu, imagina agora ao vivo e em cores... só eu e você numa chamada de vídeo bem safada, sem limite e sem censura.
+No meu Grupo VIP você tem:
+
+Conteúdos exclusivos todos os dias (fotos e vídeos bem +18)
+Vídeos sem censura que não posto em lugar nenhum
+Prioridade pra fazer chamada de vídeo comigo
+
+Quer me ver peladinha ao vivo gemendo pra você? Quer que eu faça tudo o que você mandar?
+👉 Clique em "QUERO" agora que eu irei te passar o link do grupo VIP e com direito a chamada de vídeo comigo peladinha.
+Tô bem molhada e esperando você... não demora gostoso 💦
+Alana Lemes 😈`;
+
+async function runDirectFunnel(chatId) {
+  await queue.add("jobs",
+    { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "intro.mp4", caption: "" } },
+    { delay: rand(400, 900), jobId: jid("start", chatId, 1), removeOnComplete: true, removeOnFail: true }
+  );
+
+  await queue.add("jobs",
+    { type: "SEND_MESSAGE", chatId: String(chatId), data: {
+      text: START_MESSAGE,
+      autoSplit: false,
+      extra: { reply_markup: { inline_keyboard: [
+        [{ text: "🔥 MENSAL — R$ 24,90", callback_data: "plan:mensal" }],
+        [{ text: "😈 VITALÍCIO — R$ 34,90", callback_data: "plan:vitalicio" }],
+        [{ text: "Chamada de Vídeo 📹", callback_data: "chamada_video" }],
+      ]}},
+    }},
+    { delay: rand(2200, 3200), jobId: jid("start", chatId, 2), removeOnComplete: true, removeOnFail: true }
+  );
+}
+
+// =============================================================================
+// /start — dispara o funil direto
 // =============================================================================
 bot.onText(/^\/start/, async (msg) => {
   const chatId = msg.chat.id;
   await upsertUser(chatId);
   await cancelPreNudge(chatId);
-  await schedulePreNudge(chatId);
-  await queue.add("jobs",
-    { type: "FUNNEL_START", chatId: String(chatId), data: {} },
-    { jobId: jid("funnel_start", chatId), removeOnComplete: true, removeOnFail: true }
-  );
-});
-
-// =============================================================================
-// Mensagem de texto livre (usuário em etapa "engajado")
-// =============================================================================
-bot.on("message", async (msg) => {
-  const chatId = msg.chat.id;
-  if (msg.text && msg.text.startsWith("/")) return;
-
-  const user = await prisma.user.findUnique({ where: { id: String(chatId) } });
-  if (!user) return;
-  if (user.etapa !== "engajado") return;
-
-  const echoWord = pickEchoWord(msg.text);
-  await cancelPreNudge(chatId);
-
-  let total = 0;
-  let idx = 0;
-
-  total += rand(900, 1600); idx += 1;
-  await queue.add("jobs",
-    { type: "SEND_MESSAGE", chatId: String(chatId), data: { text: "ok…", autoSplit: true, echoWord } },
-    { delay: total, jobId: jid("webapp", chatId, idx), removeOnComplete: true, removeOnFail: true }
-  );
-
-  total += rand(1800, 2800); idx += 1;
-  await queue.add("jobs",
-    { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "intro.mp4", caption: "", autoDeleteMs: 5000 } },
-    { delay: total, jobId: jid("webapp", chatId, idx), removeOnComplete: true, removeOnFail: true }
-  );
-
-  total += rand(1600, 2600); idx += 1;
-  await queue.add("jobs",
-    { type: "SEND_MESSAGE", chatId: String(chatId), data: { text: "meu bem, vou te levar pra um lugar mais exclusivo", autoSplit: true } },
-    { delay: total, jobId: jid("webapp", chatId, idx), removeOnComplete: true, removeOnFail: true }
-  );
-
-  total += rand(1500, 2400); idx += 1;
-  await queue.add("jobs",
-    { type: "SEND_MESSAGE", chatId: String(chatId), data: { text: "pra vc poder ver melhor…", autoSplit: true } },
-    { delay: total, jobId: jid("webapp", chatId, idx), removeOnComplete: true, removeOnFail: true }
-  );
-
-  total += rand(1600, 2400); idx += 1;
-  await queue.add("jobs",
-    { type: "SEND_MESSAGE", chatId: String(chatId), data: { text: "entra no privado comigo 🔒", autoSplit: true } },
-    { delay: total, jobId: jid("webapp", chatId, idx), removeOnComplete: true, removeOnFail: true }
-  );
-
-  total += rand(1200, 2000); idx += 1;
-  await queue.add("jobs",
-    { type: "SEND_MESSAGE", chatId: String(chatId), data: {
-      text: "👇",
-      autoSplit: false,
-      extra: { reply_markup: { inline_keyboard: [
-        [{ text: "ENTRAR NO PRIVADO 🔒", web_app: { url: process.env.WEBAPP_URL + "?v=" + Date.now() } }],
-        [{ text: "FICAR POR AQUI",       callback_data: "webapp:later" }],
-      ]}},
-    }},
-    { delay: total, jobId: jid("webapp", chatId, idx), removeOnComplete: true, removeOnFail: true }
-  );
-
-  total += rand(1600, 2400); idx += 1;
-  await queue.add("jobs",
-    { type: "SEND_MESSAGE", chatId: String(chatId), data: { text: "entra aqui comigo", autoSplit: true } },
-    { delay: total, jobId: jid("webapp", chatId, idx), removeOnComplete: true, removeOnFail: true }
-  );
-
-  total += rand(1400, 2300); idx += 1;
-  await queue.add("jobs",
-    { type: "SEND_MESSAGE", chatId: String(chatId), data: { text: "vai ser rapidinho…", autoSplit: true, allowHumanError: true } },
-    { delay: total, jobId: jid("webapp", chatId, idx), removeOnComplete: true, removeOnFail: true }
-  );
-
-  await setEtapa(chatId, "webapp_pending");
+  await runDirectFunnel(chatId);
 });
 
 // =============================================================================
@@ -249,105 +193,20 @@ bot.on("callback_query", async (q) => {
   if (!chatId || !data) return;
 
   try {
-    // ── Funil roleta — passo 1 → 2 ─────────────────────────────────────────
-    if (["start_sim", "start_otimo", "start_afim"].includes(data)) {
-      await bot.answerCallbackQuery(q.id, { text: "boa… 😈" }).catch(() => {});
-      await cancelPreNudge(chatId);
+    // ── Chamada de vídeo → libera botão do mini app ─────────────────────────
+    if (data === "chamada_video") {
+      await bot.answerCallbackQuery(q.id, { text: "😈" }).catch(() => {});
       await queue.add("jobs",
-        { type: "FUNNEL_STEP2", chatId: String(chatId), data: {} },
-        { delay: rand(150, 300), jobId: jid("step2", chatId), removeOnComplete: true, removeOnFail: true }
+        { type: "SEND_MESSAGE", chatId: String(chatId), data: {
+          text: "entra aqui que eu já vou te chamar 👇",
+          extra: { reply_markup: { inline_keyboard: [
+            [{ text: "ENTRAR NO PRIVADO 🔒", web_app: { url: process.env.WEBAPP_URL + "?v=" + Date.now() } }],
+          ]}},
+        }},
+        { delay: rand(600, 1200), jobId: jid("chamada_video", chatId), removeOnComplete: true, removeOnFail: true }
       );
-      return;
-    }
-
-    // ── Funil roleta — passo 2 → intro roleta ──────────────────────────────
-    if (["quero_video", "mostra_primeiro"].includes(data)) {
-      await bot.answerCallbackQuery(q.id, { text: "vem ver… 🔥" }).catch(() => {});
-      await cancelPreNudge(chatId);
-      await queue.add("jobs",
-        { type: "FUNNEL_ROLETA_INTRO", chatId: String(chatId), data: {} },
-        { delay: rand(150, 300), jobId: jid("roleta_intro", chatId), removeOnComplete: true, removeOnFail: true }
-      );
-      return;
-    }
-
-    // ── Grade numérica round 1 ──────────────────────────────────────────────
-    if (data === "tentar_roleta_1") {
-      await bot.answerCallbackQuery(q.id, { text: "girando… 🎰" }).catch(() => {});
-      await cancelPreNudge(chatId);
-      await queue.add("jobs",
-        { type: "FUNNEL_NUM_GRID", chatId: String(chatId), data: { round: 1 } },
-        { delay: rand(100, 250), jobId: jid("num_grid", 1, chatId), removeOnComplete: true, removeOnFail: true }
-      );
-      return;
-    }
-
-    // ── Grade numérica round 2 ──────────────────────────────────────────────
-    if (data === "tentar_roleta_2") {
-      await bot.answerCallbackQuery(q.id, { text: "última chance… 🎰" }).catch(() => {});
-      await cancelPreNudge(chatId);
-      await queue.add("jobs",
-        { type: "FUNNEL_NUM_GRID", chatId: String(chatId), data: { round: 2 } },
-        { delay: rand(100, 250), jobId: jid("num_grid", 2, chatId), removeOnComplete: true, removeOnFail: true }
-      );
-      return;
-    }
-
-    // ── Número escolhido round 1 ────────────────────────────────────────────
-    const m1 = data.match(/^num1_(\d+)$/);
-    if (m1) {
-      await bot.answerCallbackQuery(q.id, { text: "boa escolha 👀" }).catch(() => {});
-      await cancelPreNudge(chatId);
-      await queue.add("jobs",
-        { type: "FUNNEL_NUM_CHOSEN", chatId: String(chatId), data: { round: 1, chosen: parseInt(m1[1]) } },
-        { delay: rand(100, 250), jobId: jid("num_chosen", 1, chatId), removeOnComplete: true, removeOnFail: true }
-      );
-      return;
-    }
-
-    // ── Número escolhido round 2 ────────────────────────────────────────────
-    const m2 = data.match(/^num2_(\d+)$/);
-    if (m2) {
-      await bot.answerCallbackQuery(q.id, { text: "boa escolha 👀" }).catch(() => {});
-      await cancelPreNudge(chatId);
-      await queue.add("jobs",
-        { type: "FUNNEL_NUM_CHOSEN", chatId: String(chatId), data: { round: 2, chosen: parseInt(m2[1]) } },
-        { delay: rand(100, 250), jobId: jid("num_chosen", 2, chatId), removeOnComplete: true, removeOnFail: true }
-      );
-      return;
-    }
-
-    // ── Girar round 1 ──────────────────────────────────────────────────────
-    const s1 = data.match(/^spin1_(\d+)$/);
-    if (s1) {
-      await bot.answerCallbackQuery(q.id, { text: "vai… 🎰" }).catch(() => {});
-      await cancelPreNudge(chatId);
-      await queue.add("jobs",
-        { type: "FUNNEL_SPIN", chatId: String(chatId), data: { round: 1, chosen: parseInt(s1[1]) } },
-        { delay: rand(100, 200), jobId: jid("spin", 1, chatId), removeOnComplete: true, removeOnFail: true }
-      );
-      return;
-    }
-
-    // ── Girar round 2 ──────────────────────────────────────────────────────
-    const s2 = data.match(/^spin2_(\d+)$/);
-    if (s2) {
-      await bot.answerCallbackQuery(q.id, { text: "vai… 🎰" }).catch(() => {});
-      await cancelPreNudge(chatId);
-      await queue.add("jobs",
-        { type: "FUNNEL_SPIN", chatId: String(chatId), data: { round: 2, chosen: parseInt(s2[1]) } },
-        { delay: rand(100, 200), jobId: jid("spin", 2, chatId), removeOnComplete: true, removeOnFail: true }
-      );
-      return;
-    }
-
-    // ── Desistir ────────────────────────────────────────────────────────────
-    if (data === "desistir") {
-      await bot.answerCallbackQuery(q.id, { text: "tá bom…" }).catch(() => {});
-      await queue.add("jobs",
-        { type: "SEND_MESSAGE", chatId: String(chatId), data: { text: "Ah que pena... Se mudar de ideia é só me chamar 😈" } },
-        { delay: rand(300, 600), jobId: jid("desistir", chatId), removeOnComplete: true, removeOnFail: true }
-      );
+      await setEtapa(chatId, "webapp_pending");
+      await schedulePreNudge(chatId);
       return;
     }
 
