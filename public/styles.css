@@ -805,13 +805,13 @@ body{
   width:100%;
   height:100%;
   object-fit:cover;
-  opacity:.32;
+  opacity:.72;
   z-index:1;
 }
 .lsOverlay{
   position:absolute;
   inset:0;
-  background:rgba(0,0,0,.45);
+  background:rgba(0,0,0,.25);
   z-index:2;
 }
 .lsParticles{
@@ -941,11 +941,13 @@ body{
   font-size:18px;
   font-weight:700;
   letter-spacing:-.01em;
+  text-shadow:0 2px 14px rgba(0,0,0,.65);
 }
 .lsSubtitle{
   margin-top:-10px;
   font-size:13.5px;
-  color:rgba(245,246,255,.62);
+  color:rgba(245,246,255,.72);
+  text-shadow:0 2px 12px rgba(0,0,0,.6);
 }
 
 .lsStatusList{
