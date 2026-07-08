@@ -189,7 +189,7 @@ bot.on("callback_query", async (q) => {
     if (data === "ver_conteudinhos") {
       await bot.answerCallbackQuery(q.id, { text: "😈" }).catch(() => {});
       await queue.add("jobs",
-        { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "photo_5062262078608968721_w.jpg", caption: "" } },
+        { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "photo_5071206571341188083_w.jpg", caption: "" } },
         { delay: rand(300, 700), jobId: jid("conteudinhos", chatId, 1), removeOnComplete: true, removeOnFail: true }
       );
       await queue.add("jobs",
