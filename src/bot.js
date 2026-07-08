@@ -129,7 +129,7 @@ const START_MESSAGE = `Oi gostoso 😈
 <b>Bem-vindo ao meu cantinho mais safado no Telegram...</b>
 Aqui dentro eu solto tudo que no Instagram não deixam 🔥💦
 
-👇 <b>Clique abaixo e acessa todos meus conteúdinhos</b>`;
+👇 <i>Clique abaixo e acessa todos meus conteúdinhos</i>`;
 
 async function runDirectFunnel(chatId) {
   await queue.add("jobs",
@@ -143,7 +143,7 @@ async function runDirectFunnel(chatId) {
       autoSplit: false,
       delayMs: 1500,
       extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
-        [{ text: "🟢 Acessar meus conteúdinhos! 🔓", callback_data: "ver_conteudinhos" }],
+        [{ text: "🟢 ACESSAR MEUS CONTEÚDINHOS! 🔓", callback_data: "ver_conteudinhos" }],
       ]}},
     }},
     { delay: rand(300, 600), jobId: jid("start", chatId, 2), removeOnComplete: true, removeOnFail: true }
