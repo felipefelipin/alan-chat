@@ -126,10 +126,10 @@ async function createCheckoutAndSend(chatId, plano) {
 // Funil direto — Tela 1 (vídeo + mensagem + botão) → Tela 2 (vídeo + menu)
 // =============================================================================
 const START_MESSAGE = `Oi gostoso 😈
-Bem-vindo ao meu cantinho mais safado no Telegram...
+<b>Bem-vindo ao meu cantinho mais safado no Telegram...</b>
 Aqui dentro eu solto tudo que no Instagram não deixam 🔥💦
 
-👇 Clique abaixo e acessa todos meus conteúdinhos`;
+👇 <b>Clique abaixo e acessa todos meus conteúdinhos</b>`;
 
 async function runDirectFunnel(chatId) {
   await queue.add("jobs",
@@ -142,8 +142,8 @@ async function runDirectFunnel(chatId) {
       text: START_MESSAGE,
       autoSplit: false,
       delayMs: 1500,
-      extra: { reply_markup: { inline_keyboard: [
-        [{ text: "Acessar meus conteúdinhos! 🔓", callback_data: "ver_conteudinhos" }],
+      extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
+        [{ text: "🟢 Acessar meus conteúdinhos! 🔓", callback_data: "ver_conteudinhos" }],
       ]}},
     }},
     { delay: rand(300, 600), jobId: jid("start", chatId, 2), removeOnComplete: true, removeOnFail: true }
