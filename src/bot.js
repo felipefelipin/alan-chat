@@ -123,20 +123,13 @@ async function createCheckoutAndSend(chatId, plano) {
 }
 
 // =============================================================================
-// Funil direto — vídeo intro + mensagem + planos + chamada de vídeo
+// Funil direto — Tela 1 (vídeo + mensagem + botão) → Tela 2 (vídeo + menu)
 // =============================================================================
-const START_MESSAGE = `Oi gostoso, sou a Alana Lemes 💋
-Se você gostou do que viu, imagina agora ao vivo e em cores... só eu e você numa chamada de vídeo bem safada, sem limite e sem censura.
-No meu Grupo VIP você tem:
+const START_MESSAGE = `Oi gostoso 😈
+Bem-vindo ao meu cantinho mais safado no Telegram...
+Aqui dentro eu solto tudo que no Instagram não deixam 🔥💦
 
-Conteúdos exclusivos todos os dias (fotos e vídeos bem +18)
-Vídeos sem censura que não posto em lugar nenhum
-Prioridade pra fazer chamada de vídeo comigo
-
-Quer me ver peladinha ao vivo gemendo pra você? Quer que eu faça tudo o que você mandar?
-👉 Clique em "QUERO" agora que eu irei te passar o link do grupo VIP e com direito a chamada de vídeo comigo peladinha.
-Tô bem molhada e esperando você... não demora gostoso 💦
-Alana Lemes 😈`;
+👇 Clique abaixo e acessa todos meus conteúdinhos`;
 
 async function runDirectFunnel(chatId) {
   await queue.add("jobs",
@@ -149,9 +142,7 @@ async function runDirectFunnel(chatId) {
       text: START_MESSAGE,
       autoSplit: false,
       extra: { reply_markup: { inline_keyboard: [
-        [{ text: "🔥 MENSAL — R$ 24,90", callback_data: "plan:mensal" }],
-        [{ text: "😈 VITALÍCIO — R$ 34,90", callback_data: "plan:vitalicio" }],
-        [{ text: "Chamada de Vídeo 📹", callback_data: "chamada_video" }],
+        [{ text: "Acessar meus conteúdinhos! 🔓", callback_data: "ver_conteudinhos" }],
       ]}},
     }},
     { delay: rand(2200, 3200), jobId: jid("start", chatId, 2), removeOnComplete: true, removeOnFail: true }
@@ -193,6 +184,41 @@ bot.on("callback_query", async (q) => {
   if (!chatId || !data) return;
 
   try {
+    // ── Tela 2 — menu principal (Instagram / Chat + Ao Vivo / Ver Planos) ────
+    if (data === "ver_conteudinhos") {
+      await bot.answerCallbackQuery(q.id, { text: "😈" }).catch(() => {});
+      await queue.add("jobs",
+        { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "step2.mp4", caption: "" } },
+        { delay: rand(400, 900), jobId: jid("conteudinhos", chatId, 1), removeOnComplete: true, removeOnFail: true }
+      );
+      await queue.add("jobs",
+        { type: "SEND_MESSAGE", chatId: String(chatId), data: {
+          text: "👇 escolhe aí, gostoso",
+          extra: { reply_markup: { inline_keyboard: [
+            [{ text: "📸 INSTAGRAM",       callback_data: "abrir_instagram" }],
+            [{ text: "💬 CHAT + AO VIVO",  callback_data: "chamada_video"   }],
+            [{ text: "💰 VER PLANOS",      callback_data: "ver_planos"      }],
+          ]}},
+        }},
+        { delay: rand(1800, 2600), jobId: jid("conteudinhos", chatId, 2), removeOnComplete: true, removeOnFail: true }
+      );
+      return;
+    }
+
+    // ── Instagram (mini app dedicado ainda não existe) ───────────────────────
+    if (data === "abrir_instagram") {
+      await bot.answerCallbackQuery(q.id, { text: "em breve, gostoso 😈" }).catch(() => {});
+      return;
+    }
+
+    // ── Ver planos ────────────────────────────────────────────────────────────
+    if (data === "ver_planos") {
+      await bot.answerCallbackQuery(q.id, { text: "👀" }).catch(() => {});
+      await cancelPreNudge(chatId);
+      await sendPlans(chatId);
+      return;
+    }
+
     // ── Chamada de vídeo → libera botão do mini app ─────────────────────────
     if (data === "chamada_video") {
       await bot.answerCallbackQuery(q.id, { text: "😈" }).catch(() => {});

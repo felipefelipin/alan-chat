@@ -29,20 +29,20 @@ window.addEventListener("popstate", () => {
 const app = document.getElementById("app");
 
 const ASSETS = {
-  privateIntro: "/assets/private-intro-v1.mp4",
+  privateIntro: "/assets/IMG_4913.MP4",
   privateMusic: "/assets/private-music.mp3",
   intro: "/assets/intro.mp4",
-  callVideo: "/assets/call.mp4",
+  callVideo: "/assets/IMG_7063.MP4",
   ringtone: "/assets/ringtone.mp3",
-  avatar: "/assets/avatar-gisa.jpg",
+  avatar: "/assets/photo_5067007776952880376_w.jpg",
   media1: "/assets/grid-1.jpg",
   media2: "/assets/grid-2.jpg",
   media3: "/assets/grid-3.jpg",
   media4: "/assets/grid-4.jpg",
   lingerie: "/assets/lingerie.jpg",
-  teaseVideo: "/assets/tease.mp4",
+  teaseVideo: "/assets/IMG_4755.MP4",
   teaseVideo2: "/assets/tease2.mp4",
-  teaseVideo3: "/assets/tease3.mp4",
+  teaseVideo3: "/assets/IMG_7330.MP4",
   teasePhoto: "/assets/tease-photo.jpg",
   audioMimimi: "/assets/audio-mimimi.mp3",
   countdownVideo: "/assets/checkout-video.mp4",
@@ -2521,7 +2521,7 @@ function showCheckoutCta() {
   if (document.getElementById("storyVideo")) return;
   const video = document.createElement("video");
   video.id = "storyVideo";
-  video.src = "/assets/story-video.mp4";
+  video.src = "/assets/IMG_7071.MP4";
   video.preload = "auto";
   video.muted = false;
   video.playsInline = true;
@@ -2633,7 +2633,7 @@ function showStories() {
   // 2) Recarrega o vídeo do início; oncanplay dispara quando pronto e toca com áudio
   //    já desbloqueado pelo play() acima
   video.oncanplay = null;
-  video.src = "/assets/story-video.mp4";
+  video.src = "/assets/IMG_7071.MP4";
   video.load();
   video.oncanplay = () => {
     video.oncanplay = null;
