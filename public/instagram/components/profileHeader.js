@@ -1,0 +1,70 @@
+// components/profileHeader.js
+import { el } from "../utils/dom.js";
+
+const CHECK_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#3897f0"/><path d="M7 12.5l3 3 7-7" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const LINK_SVG = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8e93a3" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1.2 1.2"/><path d="M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1.1-1.1"/></svg>`;
+const MUSIC_SVG = `<svg width="13" height="13" viewBox="0 0 24 24" fill="#8e93a3"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`;
+
+function statBlock(value, label) {
+  return el("div", { class: "ig-stat" }, [
+    el("span", { class: "ig-stat-value" }, String(value)),
+    el("span", { class: "ig-stat-label" }, label),
+  ]);
+}
+
+export function createProfileHeader(profile, highlights, { onAvatarTap, onHighlightTap } = {}) {
+  const avatarRing = el("div", { class: "ig-avatar-ring", onClick: () => onAvatarTap?.() }, [
+    el("img", { class: "ig-avatar", src: profile.avatar, alt: profile.name, loading: "eager" }),
+  ]);
+
+  const nameRow = el("div", { class: "ig-name-row" }, [
+    el("span", { class: "ig-name" }, profile.name.replace(/\s*💖$/, "")),
+    profile.verified ? el("span", { class: "ig-verified", html: CHECK_SVG }) : null,
+  ]);
+
+  const stats = el("div", { class: "ig-stats" }, [
+    statBlock(profile.postsCount, "posts"),
+    statBlock(profile.followers, "seguidores"),
+    statBlock(profile.following, "seguindo"),
+  ]);
+
+  const bio = el("div", { class: "ig-bio" }, profile.bioLines.map((line) => el("div", {}, line)));
+
+  const linkRow = el("a", { class: "ig-link-row", href: profile.link.url, target: "_blank", rel: "noopener" }, [
+    el("span", { class: "ig-row-icon", html: LINK_SVG }),
+    el("span", { class: "ig-link-text" }, profile.link.label),
+  ]);
+
+  const musicRow = el("div", { class: "ig-music-row" }, [
+    el("span", { class: "ig-row-icon", html: MUSIC_SVG }),
+    el("span", { class: "ig-music-text" }, profile.music),
+  ]);
+
+  const actions = el("div", { class: "ig-actions" }, [
+    el("button", { class: "ig-btn ig-btn-follow", type: "button" }, "Seguir"),
+    el("button", { class: "ig-btn ig-btn-message", type: "button" }, "Mensagem"),
+  ]);
+
+  const highlightsRow = el("div", { class: "ig-highlights" },
+    highlights.map((h) =>
+      el("button", { class: "ig-highlight", type: "button", onClick: () => onHighlightTap?.(h) }, [
+        el("span", { class: "ig-highlight-ring" }, [
+          el("img", { class: "ig-highlight-img", src: h.cover, alt: h.label, loading: "lazy" }),
+        ]),
+        el("span", { class: "ig-highlight-label" }, h.label),
+      ])
+    )
+  );
+
+  const topRow = el("div", { class: "ig-top-row" }, [avatarRing, stats]);
+
+  return el("section", { class: "ig-profile-header" }, [
+    topRow,
+    nameRow,
+    bio,
+    linkRow,
+    musicRow,
+    actions,
+    highlightsRow,
+  ]);
+}

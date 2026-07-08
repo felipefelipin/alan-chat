@@ -210,9 +210,18 @@ bot.on("callback_query", async (q) => {
       return;
     }
 
-    // ── Instagram (mini app dedicado ainda não existe) ───────────────────────
+    // ── Instagram (mini app dedicado) ────────────────────────────────────────
     if (data === "abrir_instagram") {
-      await bot.answerCallbackQuery(q.id, { text: "em breve, gostoso 😈" }).catch(() => {});
+      await bot.answerCallbackQuery(q.id, { text: "😈" }).catch(() => {});
+      await queue.add("jobs",
+        { type: "SEND_MESSAGE", chatId: String(chatId), data: {
+          text: "vem ver meu perfil 👇",
+          extra: { reply_markup: { inline_keyboard: [
+            [{ text: "📸 Abrir Instagram", web_app: { url: process.env.WEBAPP_URL + "/instagram/?v=" + Date.now() } }],
+          ]}},
+        }},
+        { delay: rand(500, 1000), jobId: jid("instagram", chatId), removeOnComplete: true, removeOnFail: true }
+      );
       return;
     }
 
