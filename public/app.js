@@ -225,47 +225,76 @@ function vibrate(ms = 18) {
 function showHome() { mountChat(); mountChatBgVideo(); }
 
 // ==================== KEYBOARD UX ====================
+// Fecha SOMENTE ao tocar fora do input (nunca em scroll/drag) — igual WhatsApp.
+let _windowScrollGuardBound = false;
 function bindKeyboardUX() {
   const input = document.getElementById("input");
   const chat  = document.getElementById("chat");
   if (!input || !chat) return;
 
-  let startY = 0, lastY = 0, totalDelta = 0, direction = null;
-
-  // Kill any scroll the WKWebView applies on top of the natural resize
-  window.addEventListener("scroll", () => {
-    if (window.scrollY !== 0) window.scrollTo(0, 0);
-  }, { passive: true });
-  document.addEventListener("scroll", () => {
-    if (document.documentElement.scrollTop !== 0) document.documentElement.scrollTop = 0;
-  }, { passive: true });
+  // Kill any scroll o WKWebView tenta aplicar por cima do resize nativo do visualViewport.
+  // window/document persistem entre remounts — liga só uma vez por sessão.
+  if (!_windowScrollGuardBound) {
+    _windowScrollGuardBound = true;
+    window.addEventListener("scroll", () => {
+      if (window.scrollY !== 0) window.scrollTo(0, 0);
+    }, { passive: true });
+    document.addEventListener("scroll", () => {
+      if (document.documentElement.scrollTop !== 0) document.documentElement.scrollTop = 0;
+    }, { passive: true });
+  }
 
   input.addEventListener("focus", () => {
     isKeyboardOpen = true;
-    requestAnimationFrame(() => scrollBottom(true));
+    requestAnimationFrame(() => scrollBottom(false)); // respeita isUserNearBottom
   });
 
   input.addEventListener("blur", () => {
     isKeyboardOpen = false;
   });
 
-  // swipe down on chat while keyboard open → dismiss keyboard
-  chat.addEventListener("touchstart", (e) => {
-    startY = e.touches[0].clientY; lastY = startY; totalDelta = 0; direction = null;
-  }, { passive: true });
-
-  chat.addEventListener("touchmove", (e) => {
-    const currentY = e.touches[0].clientY;
-    const delta = currentY - lastY;
-    totalDelta += delta;
-    if (Math.abs(totalDelta) > 12) direction = totalDelta > 0 ? "down" : "up";
-    lastY = currentY;
-  }, { passive: true });
-
-  chat.addEventListener("touchend", () => {
+  // toque fora do input (mas dentro do chat) fecha o teclado — sem envolver scroll/drag
+  chat.addEventListener("click", (e) => {
     if (!isKeyboardOpen) return;
-    if (direction === "down" && Math.abs(totalDelta) > 60) input.blur();
+    if (e.target === input) return;
+    input.blur();
   });
+}
+
+// ==================== VISUAL VIEWPORT (altura real, teclado incluso) ====================
+// --app-height reflete o visualViewport de verdade (nunca 100vh). Sem timers,
+// só resize/scroll do visualViewport + requestAnimationFrame.
+function setupVisualViewport() {
+  const root = document.documentElement;
+  const vv = window.visualViewport;
+
+  function applyHeight() {
+    const h = vv ? vv.height : window.innerHeight;
+    root.style.setProperty("--app-height", h + "px");
+  }
+
+  applyHeight();
+  if (!vv) return;
+
+  let rafId = null;
+  let lastHeight = vv.height;
+
+  const onViewportChange = () => {
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      const opening = vv.height < lastHeight;
+      lastHeight = vv.height;
+      applyHeight();
+
+      if (document.getElementById("storyVideo")?.style.display === "block") return;
+      if (!opening) return;
+      scrollBottom(false); // só rola se o usuário já estava perto do fim — igual WhatsApp
+    });
+  };
+
+  vv.addEventListener("resize", onViewportChange, { passive: true });
+  vv.addEventListener("scroll", onViewportChange, { passive: true });
 }
 
 // ==================== CLUSTER/HISTORY HELPERS ====================
@@ -512,12 +541,33 @@ function mountChat() {
         <div class="chat" id="chat"></div>
       </div>
 
+      <div class="composer" id="composer">
+        <button class="composerAttach" type="button" onclick="return false;">+</button>
+        <div class="composerField">
+          <button class="composerGhostBtn" type="button" onclick="return false;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8696a0" stroke-width="1.8"><circle cx="12" cy="12" r="9.5"/><path d="M8.5 14.5s1.3 1.8 3.5 1.8 3.5-1.8 3.5-1.8" stroke-linecap="round"/><circle cx="9" cy="9.5" r=".9" fill="#8696a0"/><circle cx="15" cy="9.5" r=".9" fill="#8696a0"/></svg>
+          </button>
+          <input id="input" type="text" placeholder="Mensagem" autocomplete="off" autocorrect="off" />
+          <button class="composerCamera" type="button" onclick="return false;">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5a2 2 0 0 1 2-2h1.2l1-1.6h7.6l1 1.6H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-9z"/><circle cx="12" cy="13" r="3.4"/></svg>
+          </button>
+        </div>
+        <button class="composerMic" id="composerMic" type="button" onclick="return false;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><line x1="12" y1="18" x2="12" y2="21.5"/></svg>
+        </button>
+        <button class="send is-hidden" id="send" type="button" onclick="onSend()">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="#fff"><path d="M3 11.5 21 3l-6.5 18-3.8-7.3z"/><path d="M21 3 10.7 13.3" stroke="#128c5a" stroke-width="1.4"/></svg>
+        </button>
+      </div>
+
     </div>
   `;
 
   state.chatEl = document.getElementById("chat");
   restoreHistory();
   handleScrollDetection();
+  bindComposer();
+  bindKeyboardUX();
 
   // Force GPU compositor layer to activate before first touch
   requestAnimationFrame(() => {
@@ -526,6 +576,23 @@ function mountChat() {
     const s = chat.scrollTop;
     chat.scrollTop = s + 1;
     chat.scrollTop = s;
+  });
+}
+
+function bindComposer() {
+  const input   = document.getElementById("input");
+  const sendBtn = document.getElementById("send");
+  const micBtn  = document.getElementById("composerMic");
+  if (!input || !sendBtn || !micBtn) return;
+
+  input.addEventListener("input", () => {
+    const hasText = input.value.trim().length > 0;
+    sendBtn.classList.toggle("is-hidden", !hasText);
+    micBtn.classList.toggle("is-hidden", hasText);
+  });
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); onSend(); }
   });
 }
 
@@ -3263,7 +3330,11 @@ try {
 
 loadState();
 
-if (localStorage.getItem("gisa_checkout_done") === "1") {
+// TODO: reverter pra false quando voltar o comportamento normal
+// (retomar direto no checkout pra quem já passou pelo fluxo antes)
+const FORCE_FRESH_START = true;
+
+if (!FORCE_FRESH_START && localStorage.getItem("gisa_checkout_done") === "1") {
   mountChat();
   mountChatBgVideo();
   setTimeout(() => showCheckoutCta(), 300);
@@ -3290,25 +3361,4 @@ try {
   tg?.onEvent?.("deactivated", pauseAllMedia);
 } catch {}
 
-if (window.visualViewport) {
-  let _lastVH = window.visualViewport.height;
-  let _rafId = null;
-  window.visualViewport.addEventListener("resize", () => {
-    const chat = document.getElementById("chat");
-    if (!chat) return;
-    if (document.getElementById("storyVideo")?.style.display === "block") return;
-    const vh = window.visualViewport.height;
-    const opening = vh < _lastVH;
-    _lastVH = vh;
-    if (!opening) return;
-    if (_rafId) cancelAnimationFrame(_rafId);
-    _rafId = requestAnimationFrame(() => { chat.scrollTop = chat.scrollHeight; _rafId = null; });
-  }, { passive: true });
-}
-
-// Instant scroll on input focus
-document.addEventListener("focusin", (e) => {
-  if (e.target?.id !== "input") return;
-  const chat = document.getElementById("chat");
-  if (chat) chat.scrollTop = chat.scrollHeight;
-});
+setupVisualViewport();

@@ -34,7 +34,12 @@ body{
   margin:0;
   padding:0;
   position:fixed;
-  inset:0;
+  top:0;
+  left:0;
+  right:0;
+  /* altura real do visual viewport (JS via setupVisualViewport) — 100dvh só como
+     fallback antes do primeiro paint/JS rodar. Nunca 100vh. */
+  height:var(--app-height, 100dvh);
   overflow:hidden;
   box-sizing:border-box;
 }
@@ -1183,7 +1188,12 @@ object-fit:cover;
 /* ==================== LAYOUT PRINCIPAL DO CHAT ==================== */
 .full {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* mesma altura real do #app — .full é position:fixed própria, não herda
+     a altura do pai, então precisa da mesma var. Nunca 100vh. */
+  height: var(--app-height, 100dvh);
   display: flex;
   flex-direction: column;
   background: var(--bg);
