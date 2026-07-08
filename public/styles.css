@@ -903,82 +903,213 @@ body{
   filter:brightness(.96);
 }
 
-/* routing */
-.routeOverlay{
+/* ==================== LOADING SCREEN (conexão premium) ==================== */
+.lsScreen{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,.88);
-  display:flex;
-  align-items:center;
-  justify-content:center;
   z-index:9999;
-  padding:16px;
-}
-.routeOverlay.fadeOut{
-  opacity:0;
-  transition:opacity .32s ease;
-}
-.routeBox{
-  width:min(520px,92vw);
-  border-radius:20px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(18,20,24,.92);
-  padding:18px 16px;
-  box-shadow:var(--shadow);
-  color:#fff;
-}
-.routeTitle{
-  font-weight:800;
-  letter-spacing:.14em;
-  text-transform:uppercase;
-  font-size:11px;
-  color:rgba(255,255,255,.86);
-  margin-bottom:14px;
-}
-.routeLoader{
-  height:2px;
-  background:rgba(255,255,255,.14);
-  border-radius:999px;
   overflow:hidden;
-  position:relative;
-  margin-bottom:12px;
+  background:#050106;
+  opacity:0;
+  transform:translateZ(0) scale(1.015);
+  filter:blur(0px);
+  transition:opacity .42s ease, filter .42s ease, transform .5s cubic-bezier(.22,.61,.36,1);
+  will-change:opacity, transform, filter;
 }
-.routeLoader:after{
-  content:"";
+.lsScreen-visible{
+  opacity:1;
+  transform:translateZ(0) scale(1);
+}
+.lsScreen-exit{
+  opacity:0;
+  filter:blur(18px);
+  transform:translateZ(0) scale(1.04);
+}
+
+.lsVideo{
   position:absolute;
-  top:0;
-  left:-30%;
-  width:30%;
+  inset:0;
+  width:100%;
   height:100%;
-  background:rgba(255,255,255,.88);
-  animation:loadbar 1.05s infinite;
+  object-fit:cover;
+  opacity:.32;
+  z-index:1;
 }
-@keyframes loadbar{
-  0%{left:-30%}
-  100%{left:100%}
+.lsOverlay{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,.45);
+  z-index:2;
 }
-.routeSteps{
+.lsParticles{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:3;
+  pointer-events:none;
+}
+
+.lsHud{
+  position:relative;
+  z-index:4;
+  height:100%;
   display:flex;
   flex-direction:column;
-  gap:6px;
-}
-.routeStep{
-  font-size:14px;
-  color:rgba(255,255,255,.9);
-}
-.routeStep .check{
-  display:inline-flex;
   align-items:center;
   justify-content:center;
-  width:18px;
-  height:18px;
-  border-radius:50%;
-  background:rgba(214,176,122,.16);
-  color:var(--accent2);
-  margin-left:6px;
-  font-weight:900;
+  gap:18px;
+  padding:calc(28px + env(safe-area-inset-top)) 26px calc(28px + env(safe-area-inset-bottom));
+  text-align:center;
+  color:#f5f6ff;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,Arial,sans-serif;
 }
-.routeStep .dots{letter-spacing:.24em}
+
+.lsRingWrap{
+  position:relative;
+  width:168px;
+  height:168px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+.lsRingGlow{
+  position:absolute;
+  inset:-14px;
+  border-radius:50%;
+  background:conic-gradient(from 0deg, transparent 0%, #ff2fb0 22%, #8b5cf6 45%, #3ec8ff 68%, transparent 92%);
+  filter:blur(16px);
+  opacity:.65;
+  transform:translateZ(0) rotate(0deg);
+  will-change:transform;
+  animation:lsSpin 3.4s linear infinite;
+}
+@keyframes lsSpin{
+  to{ transform:translateZ(0) rotate(360deg); }
+}
+.lsRingSvg{
+  position:relative;
+  width:100%;
+  height:100%;
+  transform:rotate(-90deg) translateZ(0);
+}
+.lsRingTrack{
+  fill:none;
+  stroke:rgba(255,255,255,.14);
+  stroke-width:3;
+}
+.lsRingProgress{
+  fill:none;
+  stroke-width:3;
+  stroke-linecap:round;
+  filter:drop-shadow(0 0 6px rgba(255,47,176,.65)) drop-shadow(0 0 12px rgba(62,200,255,.35));
+  transition:stroke-dashoffset .12s linear;
+}
+.lsRingCenter{
+  position:absolute;
+  width:56px;
+  height:56px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#f5f6ff;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.16);
+  -webkit-backdrop-filter:blur(10px);
+  backdrop-filter:blur(10px);
+  box-shadow:0 0 22px rgba(139,92,246,.35);
+}
+.lsRingCenter svg{ width:24px; height:24px; }
+
+.lsTitle{
+  font-size:18px;
+  font-weight:700;
+  letter-spacing:-.01em;
+}
+.lsSubtitle{
+  margin-top:-10px;
+  font-size:13.5px;
+  color:rgba(245,246,255,.62);
+}
+
+.lsStatusList{
+  width:100%;
+  max-width:320px;
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+  margin-top:4px;
+  border-radius:16px;
+  padding:14px 16px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);
+  -webkit-backdrop-filter:blur(14px);
+  backdrop-filter:blur(14px);
+}
+.lsStatusItem{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  opacity:0;
+  transform:translateY(6px);
+  transition:opacity .38s ease, transform .38s ease;
+}
+.lsStatusItem-visible{
+  opacity:1;
+  transform:translateY(0);
+}
+.lsStatusIcon{
+  width:20px;
+  height:20px;
+  flex-shrink:0;
+  display:flex;
+  color:#8b5cf6;
+}
+.lsStatusIcon svg{ width:100%; height:100%; }
+.lsStatusLabel{
+  flex:1;
+  text-align:left;
+  font-size:13.5px;
+  color:rgba(245,246,255,.88);
+}
+.lsStatusCheck{
+  color:#3ec8ff;
+  font-size:13px;
+  font-weight:700;
+}
+
+.lsProgressWrap{
+  width:100%;
+  max-width:320px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+  margin-top:2px;
+}
+.lsProgressBar{
+  width:100%;
+  height:4px;
+  border-radius:999px;
+  background:rgba(255,255,255,.12);
+  overflow:hidden;
+}
+.lsProgressFill{
+  width:100%;
+  height:100%;
+  border-radius:999px;
+  background:linear-gradient(90deg, #ff2fb0, #8b5cf6 55%, #3ec8ff);
+  transform:scaleX(0);
+  transform-origin:left center;
+  will-change:transform;
+}
+.lsProgressLabel{
+  font-size:12px;
+  letter-spacing:.04em;
+  color:rgba(245,246,255,.55);
+}
 
 /* call screen */
 .callScreen{

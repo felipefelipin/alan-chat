@@ -595,7 +595,7 @@ function mountPremiumIntro() {
     state.flags.entered = true; saveState();
     try { vid.pause(); } catch {}
     try { if (state.music) { state.music.pause(); state.music.currentTime = 0; } } catch {}
-    await runRoutingOverlayV4();
+    await runConnectionLoadingScreen();
     mountChat();
     mountChatBgVideo();
     await sleep(220);
@@ -610,40 +610,222 @@ function mountPremiumIntro() {
   }, 2800);
 }
 
-// ==================== ROUTING OVERLAY ====================
-async function runRoutingOverlayV4() {
-  if (state.flags.routing) return;
-  state.flags.routing = true;
+// ==================== LOADING SCREEN (conexão premium) ====================
+// Componentes: BackgroundVideo, ParticleSystem, ConnectionHUD, ProgressController.
+// Um único timeline de progresso (rAF) dirige a barra, o anel e a revelação dos
+// status — nada de setTimeouts encadeados pra sincronizar animação. Timers só
+// na sequência final de saída (fade/blur), igual ao resto do app.
 
-  app.insertAdjacentHTML("beforeend", `
-    <div class="routeOverlay" id="routeOverlay">
-      <div class="routeBox">
-        <div class="routeTitle">conectando sessão privada</div>
-        <div class="routeLoader"></div>
-        <div class="routeSteps">
-          <div class="routeStep" id="st1">validando acesso…</div>
-          <div class="routeStep" id="st2" style="opacity:.45;">protegendo ambiente…</div>
-          <div class="routeStep" id="st3" style="opacity:.45;">sincronizando conversa…</div>
-        </div>
+const LS_STATUS_ITEMS = [
+  { icon: "shield", label: "Criptografia ativa" },
+  { icon: "server", label: "Servidor disponível" },
+  { icon: "bolt",   label: "Baixa latência" },
+  { icon: "sync",   label: "Sincronizando conversa" },
+  { icon: "live",   label: "Preparando chat ao vivo" },
+];
+
+function lsIcon(name) {
+  const icons = {
+    shield: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    server: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="6" rx="1.6"/><rect x="3" y="14" width="18" height="6" rx="1.6"/><circle cx="7" cy="7" r=".9" fill="currentColor" stroke="none"/><circle cx="7" cy="17" r=".9" fill="currentColor" stroke="none"/></svg>`,
+    bolt: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>`,
+    sync: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>`,
+    live: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/><path d="M7 9a7 7 0 0 0 0 6M17 9a7 7 0 0 1 0 6" stroke-linecap="round"/></svg>`,
+  };
+  return icons[name] || "";
+}
+
+// Layer 1 — vídeo de fundo em tela cheia, loop, mudo
+function mountBackgroundVideo(host, src) {
+  const video = document.createElement("video");
+  video.className = "lsVideo";
+  video.src = src;
+  video.muted = true;
+  video.loop = true;
+  video.playsInline = true;
+  video.setAttribute("playsinline", "");
+  video.setAttribute("webkit-playsinline", "");
+  video.preload = "auto";
+  host.appendChild(video);
+  video.play().catch(() => {});
+  return video;
+}
+
+// Layer 3 — partículas discretas subindo devagar (canvas, rAF próprio)
+function mountParticleSystem(host) {
+  const canvas = document.createElement("canvas");
+  canvas.className = "lsParticles";
+  host.appendChild(canvas);
+  const ctx = canvas.getContext("2d");
+
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  let w = 0, h = 0, particles = [];
+  let rafId = null, running = true;
+
+  function resize() {
+    w = canvas.clientWidth; h = canvas.clientHeight;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function spawn(n) {
+    particles = Array.from({ length: n }, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      r: 0.6 + Math.random() * 1.5,
+      vy: -(0.08 + Math.random() * 0.16),
+      vx: (Math.random() - 0.5) * 0.05,
+      a: 0.12 + Math.random() * 0.3,
+    }));
+  }
+
+  resize();
+  spawn(36);
+  window.addEventListener("resize", resize);
+
+  function frame() {
+    if (!running) return;
+    ctx.clearRect(0, 0, w, h);
+    for (const p of particles) {
+      p.x += p.vx; p.y += p.vy;
+      if (p.y < -4) { p.y = h + 4; p.x = Math.random() * w; }
+      if (p.x < -4) p.x = w + 4;
+      if (p.x > w + 4) p.x = -4;
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(255,255,255,${p.a})`;
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    rafId = requestAnimationFrame(frame);
+  }
+  rafId = requestAnimationFrame(frame);
+
+  return {
+    stop() {
+      running = false;
+      if (rafId) cancelAnimationFrame(rafId);
+      window.removeEventListener("resize", resize);
+    },
+  };
+}
+
+// Layers 4-7 — vidro fosco + anel neon + texto + lista de status + barra
+function mountConnectionHUD(host) {
+  const RADIUS = 52;
+  const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+
+  host.insertAdjacentHTML("beforeend", `
+    <div class="lsHud">
+      <div class="lsRingWrap">
+        <div class="lsRingGlow"></div>
+        <svg class="lsRingSvg" viewBox="0 0 120 120">
+          <defs>
+            <linearGradient id="lsRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#ff2fb0"/>
+              <stop offset="55%" stop-color="#8b5cf6"/>
+              <stop offset="100%" stop-color="#3ec8ff"/>
+            </linearGradient>
+          </defs>
+          <circle class="lsRingTrack" cx="60" cy="60" r="${RADIUS}"></circle>
+          <circle class="lsRingProgress" id="lsRingProgress" cx="60" cy="60" r="${RADIUS}"
+            stroke="url(#lsRingGrad)" stroke-dasharray="${CIRCUMFERENCE}" stroke-dashoffset="${CIRCUMFERENCE}"></circle>
+        </svg>
+        <div class="lsRingCenter">${lsIcon("shield")}</div>
+      </div>
+
+      <div class="lsTitle">Verificando conexão segura...</div>
+      <div class="lsSubtitle">Conectando ao chat privado...</div>
+
+      <div class="lsStatusList">
+        ${LS_STATUS_ITEMS.map((item) => `
+          <div class="lsStatusItem">
+            <span class="lsStatusIcon">${lsIcon(item.icon)}</span>
+            <span class="lsStatusLabel">${item.label}</span>
+            <span class="lsStatusCheck">✓</span>
+          </div>
+        `).join("")}
+      </div>
+
+      <div class="lsProgressWrap">
+        <div class="lsProgressBar"><div class="lsProgressFill" id="lsProgressFill"></div></div>
+        <div class="lsProgressLabel" id="lsProgressLabel">Conectando...</div>
       </div>
     </div>
   `);
 
-  await sleep(650);
-  const st2 = document.getElementById("st2");
-  const st3 = document.getElementById("st3");
-  if (st2) st2.style.opacity = "1";
-  await sleep(950);
-  if (st2) st2.innerHTML = `aguarde um instante <span class="dots">…</span>`;
-  await sleep(850);
-  if (st3) { st3.style.opacity = "1"; st3.innerHTML = `conexão pronta <span class="check">✓</span>`; }
-  vibrate(16);
-  await sleep(520);
-  const overlay = document.getElementById("routeOverlay");
-  if (overlay) overlay.classList.add("fadeOut");
-  await sleep(320);
-  if (overlay) overlay.remove();
-  state.flags.routing = false;
+  const ring  = document.getElementById("lsRingProgress");
+  const fill  = document.getElementById("lsProgressFill");
+  const label = document.getElementById("lsProgressLabel");
+  const items = Array.from(host.querySelectorAll(".lsStatusItem"));
+
+  return {
+    setProgress(p) {
+      ring.style.strokeDashoffset = String(CIRCUMFERENCE * (1 - p));
+      fill.style.transform = `scaleX(${p})`;
+    },
+    revealUpTo(count) {
+      items.forEach((el, i) => el.classList.toggle("lsStatusItem-visible", i < count));
+    },
+    setLabel(text) { label.textContent = text; },
+  };
+}
+
+// Orquestrador — resolve a Promise quando a tela termina e já foi removida
+function runConnectionLoadingScreen() {
+  return new Promise((resolve) => {
+    const DURATION = 3000;
+    const ease = (t) => 1 - Math.pow(1 - t, 2); // ease-out suave, sem saltos
+
+    const screen = document.createElement("div");
+    screen.className = "lsScreen";
+    app.appendChild(screen);
+    screen.appendChild(Object.assign(document.createElement("div"), { className: "lsOverlay" }));
+
+    mountBackgroundVideo(screen, ASSETS.privateIntro);
+    const particles = mountParticleSystem(screen);
+    const hud = mountConnectionHUD(screen);
+
+    requestAnimationFrame(() => screen.classList.add("lsScreen-visible"));
+
+    let revealed = 0;
+    let startTime = null;
+    let finished = false;
+
+    function frame(now) {
+      if (finished) return;
+      if (startTime === null) startTime = now;
+      const t = Math.min(1, (now - startTime) / DURATION);
+      hud.setProgress(ease(t));
+
+      const shouldReveal = Math.min(LS_STATUS_ITEMS.length, Math.floor(t * LS_STATUS_ITEMS.length) + 1);
+      if (shouldReveal > revealed) { revealed = shouldReveal; hud.revealUpTo(revealed); }
+
+      if (t >= 1) { finish(); return; }
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+
+    function finish() {
+      if (finished) return;
+      finished = true;
+      hud.setLabel("Conectado ✓");
+      vibrate(14);
+
+      setTimeout(() => {
+        particles.stop();
+        screen.classList.add("lsScreen-exit");
+        screen.addEventListener("transitionend", cleanup, { once: true });
+        setTimeout(cleanup, 420); // rede de segurança caso transitionend não dispare
+      }, 260);
+    }
+
+    let cleaned = false;
+    function cleanup() {
+      if (cleaned) return;
+      cleaned = true;
+      screen.remove();
+      resolve();
+    }
+  });
 }
 
 // ==================== MOUNT CHAT ====================
