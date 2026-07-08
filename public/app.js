@@ -3712,6 +3712,7 @@ if (!FORCE_FRESH_START && localStorage.getItem("gisa_checkout_done") === "1") {
   state.step           = 0;
   state.flags.startedChat = false;
   state.flags.routing     = false;
+  state.flags.entered     = false;
   mountPremiumIntro();
 }
 
