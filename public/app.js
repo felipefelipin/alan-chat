@@ -49,11 +49,22 @@ const ASSETS = {
 };
 
 function preloadMedia() {
-  // aquece o cache do vídeo da tela de conexão pra runConnectionLoadingScreen() não esperar
+  // O vídeo da tela de conexão precisa estar de verdade no DOM pra começar a
+  // baixar no boot do app — WebKit/Safari não prioriza <video> fora da página,
+  // então isso sem appendChild+load() não adiantava nada (delay na entrada).
+  // mountBackgroundVideo() reaproveita esse mesmo elemento depois.
   try {
     const v = document.createElement("video");
+    v.id = "lsPreloadVideo";
     v.src = ASSETS.privateIntro;
+    v.muted = true;
+    v.playsInline = true;
+    v.setAttribute("playsinline", "");
+    v.setAttribute("webkit-playsinline", "");
     v.preload = "auto";
+    v.style.cssText = "position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none;";
+    document.body.appendChild(v);
+    v.load();
   } catch {}
   try { new Image().src = "/assets/chat-bg.png?v=9"; } catch {}
 }
@@ -469,16 +480,26 @@ function lsIcon(name) {
 // Layer 1 — vídeo de fundo em tela cheia, toca uma única vez e congela no
 // último frame (a verificação é sincronizada com a duração real dele).
 function mountBackgroundVideo(host, src) {
-  const video = document.createElement("video");
+  // reaproveita o <video> que já vem baixando desde preloadMedia() (boot do
+  // app) — zero delay, em vez de criar um elemento novo que começa do zero.
+  const preloaded = document.getElementById("lsPreloadVideo");
+  let video;
+  if (preloaded && preloaded.getAttribute("src") === src) {
+    video = preloaded;
+    video.removeAttribute("id");
+    video.style.cssText = "";
+  } else {
+    video = document.createElement("video");
+    video.src = src;
+    video.muted = true;
+    video.playsInline = true;
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
+    video.preload = "auto";
+  }
   video.className = "lsVideo";
-  video.src = src;
-  video.muted = true;
   video.loop = false;
-  video.playsInline = true;
-  video.setAttribute("playsinline", "");
-  video.setAttribute("webkit-playsinline", "");
-  video.preload = "auto";
-  host.appendChild(video);
+  host.appendChild(video); // appendChild move o elemento se já estava no body
   video.play().catch(() => {});
   return video;
 }
