@@ -959,11 +959,52 @@ body{
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  gap:18px;
   padding:calc(28px + env(safe-area-inset-top)) 26px calc(28px + env(safe-area-inset-bottom));
   text-align:center;
   color:#f5f6ff;
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,Arial,sans-serif;
+}
+.lsHudContent{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:18px;
+  opacity:1;
+  transform:scale(1);
+  transition:opacity .4s ease, transform .4s cubic-bezier(.22,.61,.36,1);
+  will-change:opacity, transform;
+}
+.lsHudContent-hidden{
+  opacity:0;
+  transform:scale(.96);
+  pointer-events:none;
+}
+
+.lsEnterBtn{
+  position:relative;
+  z-index:5;
+  padding:16px 44px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.22);
+  background:linear-gradient(135deg, rgba(255,47,176,.24), rgba(139,92,246,.24));
+  color:#fff;
+  font-size:15px;
+  font-weight:600;
+  letter-spacing:.02em;
+  -webkit-backdrop-filter:blur(14px);
+  backdrop-filter:blur(14px);
+  box-shadow:0 0 26px rgba(139,92,246,.4), 0 10px 30px rgba(0,0,0,.45);
+  opacity:0;
+  transform:scale(.95);
+  transition:opacity .5s ease, transform .5s cubic-bezier(.22,.61,.36,1);
+  will-change:opacity, transform;
+}
+.lsEnterBtn:active{
+  transform:scale(.97);
+}
+.lsEnterBtn-visible{
+  opacity:1;
+  transform:scale(1);
 }
 
 .lsRingWrap{

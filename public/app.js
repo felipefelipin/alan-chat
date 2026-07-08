@@ -617,10 +617,10 @@ function mountPremiumIntro() {
 // na sequência final de saída (fade/blur), igual ao resto do app.
 
 const LS_STATUS_ITEMS = [
-  { icon: "shield", label: "Criptografia ativa" },
+  { icon: "shield", label: "Conexão criptografada" },
   { icon: "server", label: "Servidor disponível" },
-  { icon: "bolt",   label: "Baixa latência" },
-  { icon: "sync",   label: "Sincronizando conversa" },
+  { icon: "sync",   label: "Sincronizando mensagens" },
+  { icon: "bolt",   label: "Estabelecendo conexão segura" },
   { icon: "live",   label: "Preparando chat ao vivo" },
 ];
 
@@ -635,13 +635,14 @@ function lsIcon(name) {
   return icons[name] || "";
 }
 
-// Layer 1 — vídeo de fundo em tela cheia, loop, mudo
+// Layer 1 — vídeo de fundo em tela cheia, toca uma única vez e congela no
+// último frame (a verificação é sincronizada com a duração real dele).
 function mountBackgroundVideo(host, src) {
   const video = document.createElement("video");
   video.className = "lsVideo";
   video.src = src;
   video.muted = true;
-  video.loop = true;
+  video.loop = false;
   video.playsInline = true;
   video.setAttribute("playsinline", "");
   video.setAttribute("webkit-playsinline", "");
@@ -708,54 +709,60 @@ function mountParticleSystem(host) {
   };
 }
 
-// Layers 4-7 — vidro fosco + anel neon + texto + lista de status + barra
+// Layers 4-7 — vidro fosco + anel neon + texto + lista de status + barra.
+// Todo o conteúdo de verificação fica em .lsHudContent pra poder sumir sozinho
+// no fim, sem levar o vídeo (que continua visível) nem o anel/botão final junto.
 function mountConnectionHUD(host) {
   const RADIUS = 52;
   const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
   host.insertAdjacentHTML("beforeend", `
     <div class="lsHud">
-      <div class="lsRingWrap">
-        <div class="lsRingGlow"></div>
-        <svg class="lsRingSvg" viewBox="0 0 120 120">
-          <defs>
-            <linearGradient id="lsRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#ff2fb0"/>
-              <stop offset="55%" stop-color="#8b5cf6"/>
-              <stop offset="100%" stop-color="#3ec8ff"/>
-            </linearGradient>
-          </defs>
-          <circle class="lsRingTrack" cx="60" cy="60" r="${RADIUS}"></circle>
-          <circle class="lsRingProgress" id="lsRingProgress" cx="60" cy="60" r="${RADIUS}"
-            stroke="url(#lsRingGrad)" stroke-dasharray="${CIRCUMFERENCE}" stroke-dashoffset="${CIRCUMFERENCE}"></circle>
-        </svg>
-        <div class="lsRingCenter">${lsIcon("shield")}</div>
-      </div>
+      <div class="lsHudContent" id="lsHudContent">
+        <div class="lsRingWrap">
+          <div class="lsRingGlow"></div>
+          <svg class="lsRingSvg" viewBox="0 0 120 120">
+            <defs>
+              <linearGradient id="lsRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ff2fb0"/>
+                <stop offset="55%" stop-color="#8b5cf6"/>
+                <stop offset="100%" stop-color="#3ec8ff"/>
+              </linearGradient>
+            </defs>
+            <circle class="lsRingTrack" cx="60" cy="60" r="${RADIUS}"></circle>
+            <circle class="lsRingProgress" id="lsRingProgress" cx="60" cy="60" r="${RADIUS}"
+              stroke="url(#lsRingGrad)" stroke-dasharray="${CIRCUMFERENCE}" stroke-dashoffset="${CIRCUMFERENCE}"></circle>
+          </svg>
+          <div class="lsRingCenter">${lsIcon("shield")}</div>
+        </div>
 
-      <div class="lsTitle">Verificando conexão segura...</div>
-      <div class="lsSubtitle">Conectando ao chat privado...</div>
+        <div class="lsTitle">Verificando conexão segura...</div>
+        <div class="lsSubtitle">Preparando acesso ao chat ao vivo...</div>
 
-      <div class="lsStatusList">
-        ${LS_STATUS_ITEMS.map((item) => `
-          <div class="lsStatusItem">
-            <span class="lsStatusIcon">${lsIcon(item.icon)}</span>
-            <span class="lsStatusLabel">${item.label}</span>
-            <span class="lsStatusCheck">✓</span>
-          </div>
-        `).join("")}
-      </div>
+        <div class="lsStatusList">
+          ${LS_STATUS_ITEMS.map((item) => `
+            <div class="lsStatusItem">
+              <span class="lsStatusIcon">${lsIcon(item.icon)}</span>
+              <span class="lsStatusLabel">${item.label}</span>
+              <span class="lsStatusCheck">✓</span>
+            </div>
+          `).join("")}
+        </div>
 
-      <div class="lsProgressWrap">
-        <div class="lsProgressBar"><div class="lsProgressFill" id="lsProgressFill"></div></div>
-        <div class="lsProgressLabel" id="lsProgressLabel">Conectando...</div>
+        <div class="lsProgressWrap">
+          <div class="lsProgressBar"><div class="lsProgressFill" id="lsProgressFill"></div></div>
+          <div class="lsProgressLabel" id="lsProgressLabel">Conectando...</div>
+        </div>
       </div>
     </div>
   `);
 
-  const ring  = document.getElementById("lsRingProgress");
-  const fill  = document.getElementById("lsProgressFill");
-  const label = document.getElementById("lsProgressLabel");
-  const items = Array.from(host.querySelectorAll(".lsStatusItem"));
+  const hudEl     = host.querySelector(".lsHud");
+  const contentEl = document.getElementById("lsHudContent");
+  const ring      = document.getElementById("lsRingProgress");
+  const fill      = document.getElementById("lsProgressFill");
+  const label     = document.getElementById("lsProgressLabel");
+  const items     = Array.from(host.querySelectorAll(".lsStatusItem"));
 
   return {
     setProgress(p) {
@@ -766,56 +773,90 @@ function mountConnectionHUD(host) {
       items.forEach((el, i) => el.classList.toggle("lsStatusItem-visible", i < count));
     },
     setLabel(text) { label.textContent = text; },
+    hideContent() {
+      contentEl.classList.add("lsHudContent-hidden");
+      contentEl.addEventListener("transitionend", () => contentEl.remove(), { once: true });
+      setTimeout(() => contentEl.remove(), 500); // rede de segurança
+    },
+    mountEnterButton(onTap) {
+      const btn = document.createElement("button");
+      btn.className = "lsEnterBtn";
+      btn.type = "button";
+      btn.textContent = "Entrar no Chat";
+      hudEl.appendChild(btn);
+      requestAnimationFrame(() => btn.classList.add("lsEnterBtn-visible"));
+      btn.addEventListener("click", onTap, { once: true });
+    },
   };
 }
 
-// Orquestrador — resolve a Promise quando a tela termina e já foi removida
+// Orquestrador — a verificação e o vídeo terminam juntos (progresso vem do
+// currentTime/duration real do vídeo, não de um cronômetro paralelo). Ao
+// concluir, o HUD some e o vídeo fica congelado no último frame até o
+// usuário tocar em "Entrar no Chat" — só aí a Promise resolve.
 function runConnectionLoadingScreen() {
   return new Promise((resolve) => {
-    const DURATION = 3000;
-    const ease = (t) => 1 - Math.pow(1 - t, 2); // ease-out suave, sem saltos
+    const FALLBACK_DURATION = 3000; // só usado se o vídeo falhar/sem metadata
 
     const screen = document.createElement("div");
     screen.className = "lsScreen";
     app.appendChild(screen);
     screen.appendChild(Object.assign(document.createElement("div"), { className: "lsOverlay" }));
 
-    mountBackgroundVideo(screen, ASSETS.privateIntro);
+    const video = mountBackgroundVideo(screen, ASSETS.privateIntro);
     const particles = mountParticleSystem(screen);
     const hud = mountConnectionHUD(screen);
 
     requestAnimationFrame(() => screen.classList.add("lsScreen-visible"));
 
     let revealed = 0;
-    let startTime = null;
-    let finished = false;
+    let rafId = null;
+    let verified = false;
+    let fallbackStart = null;
+
+    function computeProgress(now) {
+      if (video.duration && isFinite(video.duration) && video.duration > 0) {
+        return Math.min(1, video.currentTime / video.duration);
+      }
+      if (fallbackStart === null) fallbackStart = now;
+      return Math.min(1, (now - fallbackStart) / FALLBACK_DURATION);
+    }
 
     function frame(now) {
-      if (finished) return;
-      if (startTime === null) startTime = now;
-      const t = Math.min(1, (now - startTime) / DURATION);
-      hud.setProgress(ease(t));
+      if (verified) return;
+      const p = computeProgress(now);
+      hud.setProgress(p);
 
-      const shouldReveal = Math.min(LS_STATUS_ITEMS.length, Math.floor(t * LS_STATUS_ITEMS.length) + 1);
+      const shouldReveal = Math.min(LS_STATUS_ITEMS.length, Math.floor(p * LS_STATUS_ITEMS.length) + 1);
       if (shouldReveal > revealed) { revealed = shouldReveal; hud.revealUpTo(revealed); }
 
-      if (t >= 1) { finish(); return; }
-      requestAnimationFrame(frame);
+      if (p >= 1) { onVerified(); return; }
+      rafId = requestAnimationFrame(frame);
     }
-    requestAnimationFrame(frame);
+    rafId = requestAnimationFrame(frame);
 
-    function finish() {
-      if (finished) return;
-      finished = true;
+    video.addEventListener("ended", onVerified);
+    video.addEventListener("error", onVerified); // não trava a experiência se o vídeo falhar
+
+    function onVerified() {
+      if (verified) return;
+      verified = true;
+      if (rafId) cancelAnimationFrame(rafId);
+      hud.setProgress(1);
+      hud.revealUpTo(LS_STATUS_ITEMS.length);
       hud.setLabel("Conectado ✓");
       vibrate(14);
 
-      setTimeout(() => {
-        particles.stop();
-        screen.classList.add("lsScreen-exit");
-        screen.addEventListener("transitionend", cleanup, { once: true });
-        setTimeout(cleanup, 420); // rede de segurança caso transitionend não dispare
-      }, 260);
+      // HUD some, vídeo permanece parado no último frame — só o toque avança
+      hud.hideContent();
+      hud.mountEnterButton(onEnterTap);
+    }
+
+    function onEnterTap() {
+      particles.stop();
+      screen.classList.add("lsScreen-exit");
+      screen.addEventListener("transitionend", cleanup, { once: true });
+      setTimeout(cleanup, 420); // rede de segurança caso transitionend não dispare
     }
 
     let cleaned = false;
