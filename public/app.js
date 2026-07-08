@@ -49,62 +49,13 @@ const ASSETS = {
 };
 
 function preloadMedia() {
-  // cria o vídeo de fundo JÁ no DOM desde o início — elimina delay de carregamento
-  try {
-    const v = document.createElement("video");
-    v.id = "chatBgVideo";
-    v.src = ASSETS.countdownVideo;
-    v.preload = "auto";
-    v.muted = true;
-    v.loop = true;
-    v.playsInline = true;
-    v.setAttribute("playsinline", "");
-    v.setAttribute("webkit-playsinline", "");
-    // invisível — mountChatBgVideo irá posicioná-lo e mostrar quando necessário
-    v.style.cssText = `
-      position:fixed;top:0;left:0;width:100%;height:100%;
-      object-fit:cover;z-index:0;opacity:0;pointer-events:none;display:none;
-    `;
-    v.load();
-    document.body.insertBefore(v, document.body.firstChild);
-  } catch {}
+  // aquece o cache do vídeo da tela de conexão pra runConnectionLoadingScreen() não esperar
   try {
     const v = document.createElement("video");
     v.src = ASSETS.privateIntro;
     v.preload = "auto";
   } catch {}
-  try {
-    const a = new Audio();
-    a.src = ASSETS.privateMusic;
-    a.preload = "auto";
-  } catch {}
   try { new Image().src = "/assets/chat-bg.png?v=9"; } catch {}
-}
-
-function _playBgVideo() {
-  const v = document.getElementById("chatBgVideo");
-  if (v && v.paused) v.play().catch(() => {});
-}
-
-function mountChatBgVideo() {
-  const vid = document.getElementById("chatBgVideo");
-  if (!vid) return; // criado em preloadMedia — se não existe ainda não faz nada
-  if (vid.dataset.done === "1") return; // CTA já passou — não reativar vídeo
-
-  // exibe o vídeo (estava hidden durante o preload)
-  vid.style.display = "";
-  vid.style.opacity = "0";   // começa invisível — showCountdown faz fade in
-
-  // limpa backgrounds para o vídeo aparecer
-  document.body.style.background = "transparent";
-  const appEl = document.getElementById("app");
-  if (appEl) appEl.style.background = "transparent";
-  const full = document.querySelector(".full");
-  if (full) full.style.background = "transparent";
-  const shell = document.querySelector(".chatShell");
-  if (shell) { shell.style.background = "transparent"; shell.classList.add("vid-active"); }
-  const chat = document.getElementById("chat");
-  if (chat) chat.style.background = "transparent";
 }
 
 const CONTACT = {
@@ -210,7 +161,7 @@ function vibrate(ms = 18) {
 }
 
 // ── FIX #4: showHome aponta para mountChat ────────────────────────────────────
-function showHome() { mountChat(); mountChatBgVideo(); }
+function showHome() { mountChat(); }
 
 // ==================== KEYBOARD MANAGER ====================
 // Dono único de tudo que envolve o teclado: altura real (visualViewport),
@@ -2901,7 +2852,6 @@ function exitStories(fromSwipe = false, swipeScreen = null) {
     _storyExiting = false;
     app.style.zIndex = "";
     mountChat();
-    mountChatBgVideo();
     resumeCountdown();
   }, STORY_DURATION + 30);
 }
@@ -3338,7 +3288,7 @@ function openProfile() {
   app.innerHTML = `
     <div class="slideInRight" style="background:#0a0a0a;color:#fff;height:100vh;overflow:auto;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
       <div style="position:sticky;top:0;height:52px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;background:#111111;z-index:10;">
-        <span onclick="mountChat();mountChatBgVideo();resumeCountdown();" style="position:absolute;left:14px;font-size:28px;cursor:pointer;">‹</span>
+        <span onclick="mountChat();resumeCountdown();" style="position:absolute;left:14px;font-size:28px;cursor:pointer;">‹</span>
         Dados do contato
       </div>
       <div style="display:flex;flex-direction:column;align-items:center;margin-top:24px;">
@@ -3585,7 +3535,6 @@ const FORCE_FRESH_START = true;
 
 if (!FORCE_FRESH_START && localStorage.getItem("gisa_checkout_done") === "1") {
   mountChat();
-  mountChatBgVideo();
   setTimeout(() => showCheckoutCta(), 300);
 } else {
   state.history        = [];
@@ -3596,7 +3545,6 @@ if (!FORCE_FRESH_START && localStorage.getItem("gisa_checkout_done") === "1") {
   (async () => {
     await runConnectionLoadingScreen();
     mountChat();
-    mountChatBgVideo();
     await sleep(220);
     startScript().catch(e => { if (!(e instanceof FlowCancelledError)) console.error(e); });
   })();
