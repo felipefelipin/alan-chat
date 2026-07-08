@@ -297,6 +297,123 @@ function setupVisualViewport() {
   vv.addEventListener("scroll", onViewportChange, { passive: true });
 }
 
+// ==================== PROFILE PHOTO PREVIEW (long press) ====================
+// Componente reutilizável: press-and-hold num avatar amplia a foto no lugar
+// (estilo WhatsApp). Cresce a partir da posição/tamanho reais (FLIP), anima só
+// transform+opacity (GPU), sem timers de animação — só o timer do long press em si.
+const LONG_PRESS_MS = 340;
+const LONG_PRESS_MOVE_TOLERANCE = 10;
+const LONG_PRESS_DRAG_CANCEL = 60;
+
+let _photoPreview = null; // { overlay, img } enquanto aberto
+
+function attachProfilePhotoPreview(container, { onTap } = {}) {
+  const img = container?.querySelector("img");
+  if (!container || !img) return;
+
+  let timer = null;
+  let startX = 0, startY = 0;
+  let longPressFired = false;
+  let suppressNextClick = false;
+
+  const clearTimer = () => { if (timer) { clearTimeout(timer); timer = null; } };
+
+  const down = (x, y) => {
+    if (_photoPreview) return; // já tem um aberto (ex.: multi-touch) — ignora
+    startX = x; startY = y; longPressFired = false;
+    clearTimer();
+    timer = setTimeout(() => {
+      timer = null;
+      longPressFired = true;
+      suppressNextClick = true;
+      openProfilePhotoPreview(img);
+    }, LONG_PRESS_MS);
+  };
+
+  const move = (x, y) => {
+    const dx = Math.abs(x - startX), dy = Math.abs(y - startY);
+    if (timer && (dx > LONG_PRESS_MOVE_TOLERANCE || dy > LONG_PRESS_MOVE_TOLERANCE)) {
+      clearTimer(); // moveu antes de confirmar o long press — vira scroll normal, não abre
+      return;
+    }
+    if (longPressFired && (dx > LONG_PRESS_DRAG_CANCEL || dy > LONG_PRESS_DRAG_CANCEL)) {
+      closeProfilePhotoPreview(); // arrastou pra fora enquanto aberto — cancela
+      longPressFired = false;
+    }
+  };
+
+  const up = () => {
+    clearTimer();
+    if (longPressFired) { closeProfilePhotoPreview(); longPressFired = false; }
+  };
+
+  container.addEventListener("touchstart", (e) => { const t = e.touches[0]; down(t.clientX, t.clientY); }, { passive: true });
+  container.addEventListener("touchmove",  (e) => { const t = e.touches[0]; move(t.clientX, t.clientY); }, { passive: true });
+  container.addEventListener("touchend", up);
+  container.addEventListener("touchcancel", up);
+
+  // desktop (mouse) — mesmo fluxo, pra funcionar em preview/desktop também
+  container.addEventListener("mousedown", (e) => down(e.clientX, e.clientY));
+  container.addEventListener("mousemove", (e) => { if (timer || longPressFired) move(e.clientX, e.clientY); });
+  container.addEventListener("mouseup", up);
+  container.addEventListener("mouseleave", up);
+
+  container.addEventListener("click", (e) => {
+    if (suppressNextClick) { suppressNextClick = false; e.preventDefault(); e.stopPropagation(); return; }
+    onTap?.();
+  });
+}
+
+function openProfilePhotoPreview(sourceImg) {
+  if (_photoPreview) return;
+
+  const rect = sourceImg.getBoundingClientRect();
+  const src = sourceImg.currentSrc || sourceImg.src;
+
+  const overlay = document.createElement("div");
+  overlay.className = "photoPreviewOverlay";
+  overlay.addEventListener("touchmove", (e) => e.preventDefault(), { passive: false });
+
+  const clone = document.createElement("img");
+  clone.className = "photoPreviewImg";
+  clone.src = src;
+  clone.style.width  = rect.width + "px";
+  clone.style.height = rect.height + "px";
+  clone.style.left   = rect.left + "px";
+  clone.style.top    = rect.top + "px";
+
+  overlay.appendChild(clone);
+  document.body.appendChild(overlay);
+  _photoPreview = { overlay, clone };
+
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const targetScale = Math.min(3.6, Math.max(3, (Math.min(vw, vh) * 0.8) / rect.width));
+  const originX = rect.left + rect.width / 2;
+  const originY = rect.top + rect.height / 2;
+  const dx = vw / 2 - originX;
+  const dy = vh / 2 - originY;
+
+  void clone.offsetWidth; // força o browser a pintar o estado inicial antes de animar (FLIP)
+
+  requestAnimationFrame(() => {
+    overlay.classList.add("photoPreviewOverlay-visible");
+    clone.style.transform = `translate(${dx}px, ${dy}px) scale(${targetScale})`;
+  });
+}
+
+function closeProfilePhotoPreview() {
+  const active = _photoPreview;
+  if (!active) return;
+  _photoPreview = null;
+
+  const { overlay, clone } = active;
+  overlay.classList.remove("photoPreviewOverlay-visible");
+  clone.style.transform = "translate(0, 0) scale(1)";
+
+  overlay.addEventListener("transitionend", () => overlay.remove(), { once: true });
+  setTimeout(() => overlay.remove(), 320); // rede de segurança caso transitionend não dispare
+}
+
 // ==================== CLUSTER/HISTORY HELPERS ====================
 function getFlowTypes() { return new Set(["msg","video","photo","cta","mediaGrid","audio"]); }
 
@@ -514,8 +631,8 @@ function mountChat() {
       <div class="topbar">
         <button class="navBtn" onclick="return false;"><span class="navChevron"></span></button>
 
-        <div data-story-avatar onclick="showStories()" style="width:42px;height:42px;border-radius:50%;border:2px solid ${window.storyViewed ? "rgba(255,255,255,.2)" : "#25D366"};padding:2px;flex-shrink:0;box-sizing:border-box;">
-          <img src="${ASSETS.avatar}?v=1" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;" />
+        <div data-story-avatar id="topbarAvatar" style="width:42px;height:42px;border-radius:50%;border:2px solid ${window.storyViewed ? "rgba(255,255,255,.2)" : "#25D366"};padding:2px;flex-shrink:0;box-sizing:border-box;">
+          <img src="${ASSETS.avatar}?v=1" style="width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:top;display:block;" />
         </div>
 
         <div onclick="openProfile()" style="flex:1;min-width:0;cursor:pointer;">
@@ -568,6 +685,7 @@ function mountChat() {
   handleScrollDetection();
   bindComposer();
   bindKeyboardUX();
+  attachProfilePhotoPreview(document.getElementById("topbarAvatar"), { onTap: showStories });
 
   // Force GPU compositor layer to activate before first touch
   requestAnimationFrame(() => {
@@ -1239,7 +1357,7 @@ function renderAudioBubble(item) {
         </div>
         <div class="audioAvatarWrap">
           <div class="audioAvatarMini">
-            <img src="${ASSETS.avatar}?v=1" alt="" onerror="this.style.display='none'" />
+            <img src="${ASSETS.avatar}?v=1" alt="" style="object-position:top;" onerror="this.style.display='none'" />
           </div>
           <span class="audioMicBadge">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
@@ -2734,7 +2852,7 @@ function showStories() {
         <div style="width:32px;height:32px;margin-right:10px;border-radius:50%;
                     overflow:hidden;flex-shrink:0;">
           <img src="${ASSETS.avatar}?v=1"
-               style="width:100%;height:100%;object-fit:cover;"/>
+               style="width:100%;height:100%;object-fit:cover;object-position:top;"/>
         </div>
         <div style="margin-top:1px;">
           <div style="color:#fff;font-weight:600;font-size:15px;">${CONTACT.title}</div>
@@ -3094,13 +3212,13 @@ function openProfile() {
         Dados do contato
       </div>
       <div style="display:flex;flex-direction:column;align-items:center;margin-top:24px;">
-        <div data-story-avatar onclick="showStories()" style="
+        <div data-story-avatar id="profileMainAvatar" style="
           width:110px;height:110px;border-radius:50%;
           border:4px solid ${window.storyViewed ? "rgba(255,255,255,0.25)" : "#25D366"};
           padding:3px;box-sizing:border-box;cursor:pointer;
           transition:border-color 0.4s ease;
         ">
-          <img src="${ASSETS.avatar}?v=1" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" loading="eager" decoding="sync">
+          <img src="${ASSETS.avatar}?v=1" style="width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:top;" loading="eager" decoding="sync">
         </div>
         <div style="margin-top:14px;font-size:26px;font-weight:700;color:#fff;letter-spacing:-.3px;">${contact.name||contact.title}</div>
         <div style="margin-top:4px;font-size:15px;color:rgba(255,255,255,0.55);">@${contact.username||contact.title}</div>
@@ -3150,6 +3268,7 @@ function openProfile() {
       <div style="height:40px;"></div>
     </div>
   `;
+  attachProfilePhotoPreview(document.getElementById("profileMainAvatar"), { onTap: showStories });
 }
 
 // ── FIX: mediaTab + renderMediaContent adicionados ───────────────────────────
