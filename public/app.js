@@ -40,7 +40,7 @@ const ASSETS = {
   media3: "/assets/grid-3.jpg",
   media4: "/assets/grid-4.jpg",
   lingerie: "/assets/lingerie.jpg",
-  teaseVideo: "/assets/IMG_4755.MP4",
+  teaseVideo: "/assets/IMG_7330.MP4",
   teaseVideo2: "/assets/tease2.mp4",
   teaseVideo3: "/assets/IMG_7330.MP4",
   teasePhoto: "/assets/tease-photo.jpg",
