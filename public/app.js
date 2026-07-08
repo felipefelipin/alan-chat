@@ -107,17 +107,6 @@ function mountChatBgVideo() {
   if (chat) chat.style.background = "transparent";
 }
 
-async function fadeVolume(audio, from, to, ms = 700) {
-  if (!audio) return;
-  const steps = Math.max(10, Math.floor(ms / 60));
-  const stepMs = Math.floor(ms / steps);
-  for (let i = 0; i <= steps; i++) {
-    const p = i / steps;
-    audio.volume = Math.max(0, Math.min(1, from + (to - from) * p));
-    await new Promise(r => setTimeout(r, stepMs));
-  }
-}
-
 const CONTACT = {
   name: "Alana Lemes",
   username: "AlanaLemes",
@@ -490,124 +479,6 @@ function getDefaultGridItems() {
 
 function getDefaultWaveBars() {
   return [18,30,42,37,28,24,32,48,26,20,14,12,16,18,26,34,46,41,29,18,14,20,28,39,22,18,13,16,21,30,26,22];
-}
-
-// ==================== PREMIUM INTRO ====================
-function mountPremiumIntro() {
-  const cacheBust = `?v=${Date.now()}`;
-  app.innerHTML = `
-    <div class="pIntro">
-      <div class="pIntroVideoWrap">
-        <video id="pIntroVid" playsinline muted preload="auto" src="${ASSETS.privateIntro + cacheBust}"></video>
-        <div class="pIntroTop">
-          <div class="pIntroChip">acesso privado</div>
-          <div class="pIntroTimer"><span id="pT">0:10</span></div>
-        </div>
-        <div class="pIntroOverlay" id="pOverlay">
-          <div class="pIntroTitle">conexão exclusiva</div>
-          <div class="pIntroSub" id="pSub">toque para ativar o som</div>
-          <div class="pRow">
-            <button id="pEnableAudio" class="pBtnGhost">ativar som</button>
-          </div>
-        </div>
-        <div class="pProgress"><div class="pProgBar" id="pProg"></div></div>
-        <div class="pCtaWrap" id="pCtaWrap">
-          <button id="pEnterChat" class="pBtnPrimary">entrar na conversa</button>
-        </div>
-      </div>
-    </div>
-  `;
-
-  const vid      = document.getElementById("pIntroVid");
-  const btnAudio = document.getElementById("pEnableAudio");
-  const ctaWrap  = document.getElementById("pCtaWrap");
-  const btnEnter = document.getElementById("pEnterChat");
-  const sub      = document.getElementById("pSub");
-  const prog     = document.getElementById("pProg");
-  const tEl      = document.getElementById("pT");
-
-  state.introVidEl = vid;
-  ctaWrap.classList.remove("show");
-  ctaWrap.style.pointerEvents = "none";
-
-  const tryPlayVideo = async () => { try { await vid.play(); return true; } catch { return false; } };
-
-  const tryEnableAudio = async () => {
-    if (state.flags.audioEnabled) return true;
-    try {
-      if (!state.music) state.music = new Audio(ASSETS.privateMusic + `?v=${Date.now()}`);
-      state.music.loop = false; state.music.currentTime = 0; state.music.volume = 0;
-      await state.music.play();
-      state.flags.audioEnabled = true; saveState();
-      await fadeVolume(state.music, 0, 0.9, 750);
-      if (btnAudio) { btnAudio.textContent = "som ativado ✓"; btnAudio.disabled = true; }
-      if (sub) sub.textContent = "pronto… só mais alguns segundos.";
-      return true;
-    } catch {
-      if (sub) sub.textContent = "toque novamente para ativar";
-      return false;
-    }
-  };
-
-  btnAudio.onclick = async () => { await tryPlayVideo(); await tryEnableAudio(); };
-  vid.addEventListener("click", async () => { await tryPlayVideo(); await tryEnableAudio(); });
-  vid.addEventListener("error", () => { if (sub) sub.textContent = "não consegui carregar o vídeo…"; showCta(); });
-
-  setTimeout(() => { tryPlayVideo(); }, 150);
-
-  const stopAt = 10.0;
-  let ended = false;
-
-  const showCta = () => { ctaWrap.classList.add("show"); ctaWrap.style.pointerEvents = "auto"; };
-
-  const endIntro = async () => {
-    if (ended) return;
-    ended = true;
-    try { vid.pause(); } catch {}
-    try {
-      if (state.music && state.flags.audioEnabled) {
-        await fadeVolume(state.music, state.music.volume ?? 0.9, 0, 650);
-        state.music.pause(); state.music.currentTime = 0;
-      }
-    } catch {}
-    const overlay = document.getElementById("pOverlay");
-    if (overlay) overlay.style.opacity = "0";
-    showCta(); vibrate(14);
-  };
-
-  const updateTimer = (secLeft) => {
-    const s = Math.max(0, Math.ceil(secLeft));
-    if (tEl) tEl.textContent = `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
-  };
-
-  const tick = setInterval(() => {
-    if (!vid) return;
-    const p = Math.max(0, Math.min(1, vid.currentTime / stopAt));
-    if (prog) prog.style.width = `${Math.floor(p*100)}%`;
-    updateTimer(stopAt - vid.currentTime);
-    if (vid.currentTime >= stopAt) { clearInterval(tick); endIntro(); }
-  }, 90);
-
-  vid.onended = () => { clearInterval(tick); endIntro(); };
-
-  btnEnter.onclick = async () => {
-    if (state.flags.entered) return;
-    state.flags.entered = true; saveState();
-    try { vid.pause(); } catch {}
-    try { if (state.music) { state.music.pause(); state.music.currentTime = 0; } } catch {}
-    await runConnectionLoadingScreen();
-    mountChat();
-    mountChatBgVideo();
-    await sleep(220);
-    startScript().catch(e => { if (!(e instanceof FlowCancelledError)) console.error(e); });
-  };
-
-  setTimeout(() => {
-    if (!ended && (!vid || vid.readyState < 2)) {
-      showCta();
-      if (sub) sub.textContent = "toque para continuar";
-    }
-  }, 2800);
 }
 
 // ==================== LOADING SCREEN (conexão premium) ====================
@@ -3713,7 +3584,13 @@ if (!FORCE_FRESH_START && localStorage.getItem("gisa_checkout_done") === "1") {
   state.flags.startedChat = false;
   state.flags.routing     = false;
   state.flags.entered     = false;
-  mountPremiumIntro();
+  (async () => {
+    await runConnectionLoadingScreen();
+    mountChat();
+    mountChatBgVideo();
+    await sleep(220);
+    startScript().catch(e => { if (!(e instanceof FlowCancelledError)) console.error(e); });
+  })();
 }
 
 function pauseAllMedia() {
