@@ -410,8 +410,18 @@ const worker = new Worker(
         const file = data?.file || "intro.mp4";
         const caption = data?.caption || "";
         const autoDeleteMs = data?.autoDeleteMs;
-        await sendVideoWithAction(chatId, file, { caption, autoDeleteMs });
-        await logEventSafe(chatId, "SEND_VIDEO", { file, autoDeleteMs, via: "url", base: ASSETS_BASE });
+
+        if (data?.instant) {
+          // cai na hora — sem delay artificial, sem depender da URL pública (usa arquivo local + cache de file_id)
+          const sent = await sendFunnelVideo(chatId, file, caption ? { caption } : {});
+          if (autoDeleteMs && sent?.message_id) {
+            setTimeout(() => bot.deleteMessage(chatId, String(sent.message_id)).catch(() => {}), autoDeleteMs);
+          }
+        } else {
+          await sendVideoWithAction(chatId, file, { caption, autoDeleteMs });
+        }
+
+        await logEventSafe(chatId, "SEND_VIDEO", { file, autoDeleteMs, instant: !!data?.instant });
         return;
       }
 
