@@ -390,30 +390,39 @@ function openProfilePhotoPreview(sourceImg) {
   overlay.className = "photoPreviewOverlay";
   overlay.addEventListener("touchmove", (e) => e.preventDefault(), { passive: false });
 
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const targetScale = Math.min(3.6, Math.max(3, (Math.min(vw, vh) * 0.8) / rect.width));
+  const targetSize = rect.width * targetScale;
+
+  // a caixa da imagem já nasce no tamanho final (alta resolução) — o estado
+  // "pequeno" do início é só um transform visual, nunca um raster pequeno
+  // esticado pra cima (que é o que causava o borrão).
+  const finalLeft = (vw - targetSize) / 2;
+  const finalTop  = (vh - targetSize) / 2;
+
   const clone = document.createElement("img");
   clone.className = "photoPreviewImg";
   clone.src = src;
-  clone.style.width  = rect.width + "px";
-  clone.style.height = rect.height + "px";
-  clone.style.left   = rect.left + "px";
-  clone.style.top    = rect.top + "px";
+  clone.style.width  = targetSize + "px";
+  clone.style.height = targetSize + "px";
+  clone.style.left   = finalLeft + "px";
+  clone.style.top    = finalTop + "px";
+
+  const shrinkRatio = rect.width / targetSize;
+  const dx = (rect.left + rect.width / 2) - (finalLeft + targetSize / 2);
+  const dy = (rect.top + rect.height / 2) - (finalTop + targetSize / 2);
+  const initialTransform = `translate(${dx}px, ${dy}px) scale(${shrinkRatio})`;
+  clone.style.transform = initialTransform;
 
   overlay.appendChild(clone);
   document.body.appendChild(overlay);
-  _photoPreview = { overlay, clone };
-
-  const vw = window.innerWidth, vh = window.innerHeight;
-  const targetScale = Math.min(3.6, Math.max(3, (Math.min(vw, vh) * 0.8) / rect.width));
-  const originX = rect.left + rect.width / 2;
-  const originY = rect.top + rect.height / 2;
-  const dx = vw / 2 - originX;
-  const dy = vh / 2 - originY;
+  _photoPreview = { overlay, clone, initialTransform };
 
   void clone.offsetWidth; // força o browser a pintar o estado inicial antes de animar (FLIP)
 
   requestAnimationFrame(() => {
     overlay.classList.add("photoPreviewOverlay-visible");
-    clone.style.transform = `translate(${dx}px, ${dy}px) scale(${targetScale})`;
+    clone.style.transform = "translate(0, 0) scale(1)";
   });
 }
 
@@ -422,9 +431,9 @@ function closeProfilePhotoPreview() {
   if (!active) return;
   _photoPreview = null;
 
-  const { overlay, clone } = active;
+  const { overlay, clone, initialTransform } = active;
   overlay.classList.remove("photoPreviewOverlay-visible");
-  clone.style.transform = "translate(0, 0) scale(1)";
+  clone.style.transform = initialTransform;
 
   overlay.addEventListener("transitionend", () => overlay.remove(), { once: true });
   setTimeout(() => overlay.remove(), 320); // rede de segurança caso transitionend não dispare
