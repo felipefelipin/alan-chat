@@ -2552,7 +2552,7 @@ async function startScript() {
     await sleep(rand(2000, 3000));
     await gisaSendVideo(ASSETS.teaseVideo, "Vídeo Privado");
     await sleep(rand(5000, 7000));
-    await gisaSay("mas fala a verdade… você aguenta me ver pelada de verdade ou vai só ficar olhando como os fracos?... 👀", { delay: rand(8000, 11000) });
+    await gisaSay("mas me fala a verdade… você aguenta me ver pelada de verdade ou vai só ficar olhando como os fracos?... 👀", { delay: rand(8000, 11000) });
   } finally {
     _flowRunning = false;
   }
