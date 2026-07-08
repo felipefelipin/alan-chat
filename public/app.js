@@ -148,7 +148,6 @@ const state = {
 };
 
 let isUserNearBottom = true;
-let isKeyboardOpen = false;
 
 function snapshotForSave() {
   return {
@@ -224,18 +223,80 @@ function vibrate(ms = 18) {
 // ── FIX #4: showHome aponta para mountChat ────────────────────────────────────
 function showHome() { mountChat(); mountChatBgVideo(); }
 
-// ==================== KEYBOARD UX ====================
-// Fecha SOMENTE ao tocar fora do input (nunca em scroll/drag) — igual WhatsApp.
-let _windowScrollGuardBound = false;
-function bindKeyboardUX() {
-  const input = document.getElementById("input");
-  const chat  = document.getElementById("chat");
-  if (!input || !chat) return;
+// ==================== KEYBOARD MANAGER ====================
+// Dono único de tudo que envolve o teclado: altura real (visualViewport),
+// abertura/fechamento, e sincronização do scroll — nada de lógica espalhada.
+// Sem timers de animação; só o resize/scroll nativos + requestAnimationFrame.
+const KeyboardManager = (() => {
+  const SCROLL_DISMISS_PX = 44; // gesto decisivo de scroll pra cima fecha o teclado, igual WhatsApp
 
-  // Kill any scroll o WKWebView tenta aplicar por cima do resize nativo do visualViewport.
-  // window/document persistem entre remounts — liga só uma vez por sessão.
-  if (!_windowScrollGuardBound) {
-    _windowScrollGuardBound = true;
+  let input = null;
+  let chat  = null;
+  let isOpen = false;
+  let gestureStartTop = 0;
+  let rafId = null;
+  let lastViewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  let globalGuardsBound = false;
+
+  function applyHeight() {
+    const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    document.documentElement.style.setProperty("--app-height", h + "px");
+  }
+
+  function onViewportChange() {
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      const vv = window.visualViewport;
+      const h = vv ? vv.height : window.innerHeight;
+      const opening = h < lastViewportHeight;
+      lastViewportHeight = h;
+      applyHeight();
+
+      if (document.getElementById("storyVideo")?.style.display === "block") return;
+      // teclado abrindo: se o usuário já estava no fim, mantém o fim visível.
+      // fechando: nada a fazer — o chat recupera altura sozinho via flex, sem salto.
+      if (opening && isOpen) scrollBottom(false);
+    });
+  }
+
+  function onFocus() {
+    isOpen = true;
+    requestAnimationFrame(() => scrollBottom(false));
+  }
+
+  function onBlur() {
+    isOpen = false;
+  }
+
+  function onChatTouchStart() {
+    if (chat) gestureStartTop = chat.scrollTop;
+  }
+
+  // scroll pra cima decisivo enquanto digita → dispensa o teclado (SO anima o fechamento)
+  function onChatScroll() {
+    if (!isOpen || !input || !chat) return;
+    const scrolledUp = gestureStartTop - chat.scrollTop;
+    if (scrolledUp > SCROLL_DISMISS_PX) input.blur();
+  }
+
+  function onOutsideTap(e) {
+    if (!isOpen) return;
+    if (e.target === input) return;
+    input.blur();
+  }
+
+  function bindGlobalGuards() {
+    if (globalGuardsBound) return;
+    globalGuardsBound = true;
+
+    applyHeight();
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", onViewportChange, { passive: true });
+      window.visualViewport.addEventListener("scroll", onViewportChange, { passive: true });
+    }
+
+    // impede o WKWebView de aplicar scroll por cima do resize nativo do visualViewport
     window.addEventListener("scroll", () => {
       if (window.scrollY !== 0) window.scrollTo(0, 0);
     }, { passive: true });
@@ -244,58 +305,24 @@ function bindKeyboardUX() {
     }, { passive: true });
   }
 
-  input.addEventListener("focus", () => {
-    isKeyboardOpen = true;
-    requestAnimationFrame(() => scrollBottom(false)); // respeita isUserNearBottom
-  });
+  // religa aos elementos do chat atual — chamado a cada mountChat() (remount destrói os listeners antigos)
+  function attach(inputEl, chatEl) {
+    input = inputEl;
+    chat  = chatEl;
+    if (!input || !chat) return;
 
-  input.addEventListener("blur", () => {
-    isKeyboardOpen = false;
-  });
+    bindGlobalGuards();
 
-  // toque fora do input (mas dentro do chat) fecha o teclado — sem envolver scroll/drag
-  chat.addEventListener("click", (e) => {
-    if (!isKeyboardOpen) return;
-    if (e.target === input) return;
-    input.blur();
-  });
-}
+    input.addEventListener("focus", onFocus);
+    input.addEventListener("blur", onBlur);
 
-// ==================== VISUAL VIEWPORT (altura real, teclado incluso) ====================
-// --app-height reflete o visualViewport de verdade (nunca 100vh). Sem timers,
-// só resize/scroll do visualViewport + requestAnimationFrame.
-function setupVisualViewport() {
-  const root = document.documentElement;
-  const vv = window.visualViewport;
-
-  function applyHeight() {
-    const h = vv ? vv.height : window.innerHeight;
-    root.style.setProperty("--app-height", h + "px");
+    chat.addEventListener("touchstart", onChatTouchStart, { passive: true });
+    chat.addEventListener("scroll", onChatScroll, { passive: true });
+    chat.addEventListener("click", onOutsideTap);
   }
 
-  applyHeight();
-  if (!vv) return;
-
-  let rafId = null;
-  let lastHeight = vv.height;
-
-  const onViewportChange = () => {
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(() => {
-      rafId = null;
-      const opening = vv.height < lastHeight;
-      lastHeight = vv.height;
-      applyHeight();
-
-      if (document.getElementById("storyVideo")?.style.display === "block") return;
-      if (!opening) return;
-      scrollBottom(false); // só rola se o usuário já estava perto do fim — igual WhatsApp
-    });
-  };
-
-  vv.addEventListener("resize", onViewportChange, { passive: true });
-  vv.addEventListener("scroll", onViewportChange, { passive: true });
-}
+  return { attach };
+})();
 
 // ==================== PROFILE PHOTO PREVIEW (long press) ====================
 // Componente reutilizável: press-and-hold num avatar amplia a foto no lugar
@@ -684,7 +711,7 @@ function mountChat() {
   restoreHistory();
   handleScrollDetection();
   bindComposer();
-  bindKeyboardUX();
+  KeyboardManager.attach(document.getElementById("input"), document.getElementById("chat"));
   attachProfilePhotoPreview(document.getElementById("topbarAvatar"), { onTap: showStories });
 
   // Force GPU compositor layer to activate before first touch
@@ -3479,5 +3506,3 @@ document.addEventListener("visibilitychange", () => {
 try {
   tg?.onEvent?.("deactivated", pauseAllMedia);
 } catch {}
-
-setupVisualViewport();
