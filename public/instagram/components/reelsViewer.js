@@ -262,8 +262,13 @@ export function openReelsViewer(reels, startIndex, sourceRect, { profile, onClos
   pager.addEventListener("touchend", () => {
     if (!dragging) return;
     dragging = false;
-    if (Math.abs(dy) > SWIPE_THRESHOLD) goTo(index + (dy < 0 ? 1 : -1));
-    else goTo(index);
+    if (Math.abs(dy) > SWIPE_THRESHOLD) {
+      goTo(index + (dy < 0 ? 1 : -1));
+    } else {
+      // toque ou arrasto curto — só reposiciona o pager, sem tocar no
+      // estado de play/pause (isso é responsabilidade só do handler de click)
+      setPagerPosition(true);
+    }
   });
 
   // toque alterna só play/pause — info do perfil e ações nunca somem sozinhas
