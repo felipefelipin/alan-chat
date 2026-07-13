@@ -462,7 +462,7 @@ const worker = new Worker(
 
         await deleteFunnelMsgs(chatId);
 
-        await sendFunnelVideo(chatId, "checkout-video.mp4");
+        await sendFunnelVideo(chatId, "IMG_6939.MP4");
         await sleep(rand(2000, 3000));
 
         await fm(chatId, "tá… agora escolhe como você quer entrar.");

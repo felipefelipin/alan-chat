@@ -210,13 +210,17 @@ bot.on("callback_query", async (q) => {
     if (data === "abrir_instagram") {
       await bot.answerCallbackQuery(q.id, { text: "😈" }).catch(() => {});
       await queue.add("jobs",
+        { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "IMG_7068.MP4", caption: "" } },
+        { delay: rand(300, 700), jobId: jid("instagram", chatId, 1), removeOnComplete: true, removeOnFail: true }
+      );
+      await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
           text: "vem ver meu perfil 👇",
           extra: { reply_markup: { inline_keyboard: [
             [{ text: "📸 Abrir Instagram", web_app: { url: process.env.WEBAPP_URL + "/instagram/?v=" + Date.now() } }],
           ]}},
         }},
-        { delay: rand(500, 1000), jobId: jid("instagram", chatId), removeOnComplete: true, removeOnFail: true }
+        { delay: rand(1800, 2600), jobId: jid("instagram", chatId, 2), removeOnComplete: true, removeOnFail: true }
       );
       return;
     }
@@ -233,13 +237,17 @@ bot.on("callback_query", async (q) => {
     if (data === "chamada_video") {
       await bot.answerCallbackQuery(q.id, { text: "😈" }).catch(() => {});
       await queue.add("jobs",
+        { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "photo_5067007776952880376_w.jpg", caption: "" } },
+        { delay: rand(300, 700), jobId: jid("chamada_video", chatId, 1), removeOnComplete: true, removeOnFail: true }
+      );
+      await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
           text: "entra aqui que eu já vou te chamar 👇",
           extra: { reply_markup: { inline_keyboard: [
             [{ text: "ENTRAR NO PRIVADO 🔒", web_app: { url: process.env.WEBAPP_URL + "?v=" + Date.now() } }],
           ]}},
         }},
-        { delay: rand(600, 1200), jobId: jid("chamada_video", chatId), removeOnComplete: true, removeOnFail: true }
+        { delay: rand(1800, 2600), jobId: jid("chamada_video", chatId, 2), removeOnComplete: true, removeOnFail: true }
       );
       await setEtapa(chatId, "webapp_pending");
       await schedulePreNudge(chatId);
