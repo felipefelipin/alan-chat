@@ -36,7 +36,7 @@ export const HIGHLIGHTS = [
   {
     id: "vip",
     label: "VIP 🔥",
-    cover: A + "photo_5071206571341188083_w.jpg",
+    cover: A + "baixados.png",
     items: [
       { type: "image", src: A + "photo_5071206571341188083_w.jpg" },
     ],
