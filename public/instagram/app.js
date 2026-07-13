@@ -1,8 +1,9 @@
 // app.js — bootstrap do mini app
 import { el } from "./utils/dom.js";
-import { PROFILE, PROFILE_STORY, HIGHLIGHTS, POSTS } from "./data/mockData.js";
+import { PROFILE, PROFILE_STORY, HIGHLIGHTS, POSTS, REELS } from "./data/mockData.js";
 import { createProfileHeader } from "./components/profileHeader.js";
-import { createFeedGrid } from "./components/feedGrid.js";
+import { createProfileTabs } from "./components/profileTabs.js";
+import { createFeedGrid, createReelGrid, createTaggedGrid } from "./components/feedGrid.js";
 import { createBottomNav } from "./components/bottomNav.js";
 import { openStoryViewer } from "./components/stories.js";
 import { openPostViewer } from "./components/postViewer.js";
@@ -41,12 +42,22 @@ function mountApp() {
     onHighlightTap: (h) => openStoryViewer({ name: h.label, avatar: h.cover, items: h.items }),
   });
 
-  const grid = createFeedGrid(POSTS, (index) => openPostViewer(PROFILE, POSTS, index));
+  // conteúdo do feed troca por dentro desse container — sem recarregar a página
+  const feedHost = el("div", { class: "ig-feed-host" });
+  const renderFeed = (key) => {
+    feedHost.innerHTML = "";
+    if (key === "reels") feedHost.appendChild(createReelGrid(REELS, (i) => openPostViewer(PROFILE, REELS, i)));
+    else if (key === "tagged") feedHost.appendChild(createTaggedGrid());
+    else feedHost.appendChild(createFeedGrid(POSTS, (i) => openPostViewer(PROFILE, POSTS, i)));
+  };
+
+  const tabs = createProfileTabs("posts", renderFeed);
+  renderFeed("posts");
 
   const nav = createBottomNav("profile");
 
   app.appendChild(el("div", { class: "ig-page" }, [
-    el("div", { class: "ig-scroll" }, [header, grid]),
+    el("div", { class: "ig-scroll" }, [header, tabs, feedHost]),
     nav,
   ]));
 }

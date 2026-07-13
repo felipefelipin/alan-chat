@@ -85,4 +85,11 @@ export const POSTS = [
   caption: CAPTIONS[i % CAPTIONS.length],
   likes: rand(1800, 9600),
   comments: MOCK_COMMENTS,
+  pinned: i === 0,
 }));
+
+// aba "Reels" — todo post em vídeo funciona como reel nesse mock
+export const REELS = POSTS.filter((p) => p.type === "video");
+
+// aba "Marcados" — nada marcado ainda (estado vazio, igual Instagram real)
+export const TAGGED = [];

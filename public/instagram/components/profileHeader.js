@@ -63,7 +63,7 @@ export function createProfileHeader(profile, highlights, { onAvatarTap, onHighli
       class: "ig-topnav-back", type: "button", html: BACK_SVG,
       onClick: () => { try { window.Telegram?.WebApp?.close(); } catch {} },
     }),
-    el("span", { class: "ig-topnav-username" }, "@" + profile.username),
+    el("span", { class: "ig-topnav-username" }, profile.username),
     profile.verified ? el("span", { class: "ig-topnav-verified", html: CHECK_SVG }) : null,
     el("div", { class: "ig-topnav-spacer" }),
     el("button", { class: "ig-topnav-more", type: "button", html: MORE_SVG }),
