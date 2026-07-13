@@ -201,49 +201,78 @@ const KeyboardManager = (() => {
   let globalGuardsBound = false;
 
   // ── ancoragem no fim da conversa enquanto o teclado abre ──────────────────
-  // Só ativo entre focus e blur do input (intenção real de digitar). A cada
-  // evento nativo de visualViewport (resize/scroll) disparado pela animação
-  // de abertura do teclado, reancora .chat no fim via rAF — sem setTimeout,
-  // sem polling. Some no blur, então nunca reage ao fechamento do teclado
-  // nem a scroll manual do usuário lendo mensagens antigas (esse scroll é
-  // dentro de #chat, não do visualViewport, então não aciona isto).
-  let anchorRafId = null;
-  let anchorBound = false;
+  // Só ativo entre focus e blur do input (intenção real de digitar).
+  //
+  // Por quê rAF e não eventos de visualViewport: o engine coalesce
+  // resize/scroll do visualViewport e só entrega 1 evento, DEPOIS que a
+  // animação do teclado já terminou — reagir a esse evento produz exatamente
+  // o bug relatado (scroll cedo demais, com o chat ainda no tamanho antigo,
+  // seguido de um segundo salto tardio quando o evento finalmente chega).
+  // .chat, porém, é redimensionado nativamente pelo compositor a cada frame
+  // da animação (graças a interactive-widget=resizes-content + 100dvh) —
+  // então basta ler chat.clientHeight dentro de um loop de rAF: o valor já
+  // vem atualizado frame a frame pelo próprio motor de layout, sem esperar
+  // nenhum evento. O loop para sozinho quando a altura fica estável por
+  // alguns frames seguidos (animação terminou) — não é um timer, é detecção
+  // de fim de animação por comparação de frames.
+  let followRafId = null;
+  let followLastHeight = 0;
+  let followSawChange = false;
+  let followStableFrames = 0;
+  const FOLLOW_STABLE_FRAMES = 3;   // frames idênticos seguidos = animação estabilizou
+  const FOLLOW_SAFETY_FRAMES = 120; // ~2s a 60fps — teto de segurança, nunca deveria ser atingido
 
-  function forceScrollToBottom() {
+  function currentViewportHeight() {
+    const vv = window.visualViewport;
+    return vv ? Math.round(vv.height) : window.innerHeight;
+  }
+
+  function followKeyboardFrame(frameCount) {
+    if (!chat) { followRafId = null; return; }
+
+    // recalcula a posição a partir da altura ÚTIL atual de .chat — sempre em
+    // dia porque o próprio layout nativo já resolveu o tamanho deste frame.
+    chat.scrollTop = chat.scrollHeight - chat.clientHeight;
+    isUserNearBottom = true;
+
+    const h = currentViewportHeight();
+    if (h !== followLastHeight) {
+      followSawChange = true;
+      followLastHeight = h;
+      followStableFrames = 0;
+    } else {
+      followStableFrames++;
+    }
+
+    const settled = followSawChange && followStableFrames >= FOLLOW_STABLE_FRAMES;
+    if (settled || frameCount >= FOLLOW_SAFETY_FRAMES) {
+      followRafId = null;
+      return;
+    }
+    followRafId = requestAnimationFrame(() => followKeyboardFrame(frameCount + 1));
+  }
+
+  function startFollowing() {
     if (!chat) return;
-    if (anchorRafId) cancelAnimationFrame(anchorRafId);
-    anchorRafId = requestAnimationFrame(() => {
-      anchorRafId = null;
-      chat.scrollTop = chat.scrollHeight;
-      isUserNearBottom = true;
-    });
+    followLastHeight = currentViewportHeight();
+    followSawChange = false;
+    followStableFrames = 0;
+    if (followRafId) cancelAnimationFrame(followRafId);
+    followRafId = requestAnimationFrame(() => followKeyboardFrame(0));
   }
 
-  function startAnchoring() {
-    forceScrollToBottom(); // ancora já no toque, antes do teclado começar a animar
-    if (!window.visualViewport || anchorBound) return;
-    anchorBound = true;
-    window.visualViewport.addEventListener("resize", forceScrollToBottom, { passive: true });
-    window.visualViewport.addEventListener("scroll", forceScrollToBottom, { passive: true });
-  }
-
-  function stopAnchoring() {
-    if (anchorRafId) { cancelAnimationFrame(anchorRafId); anchorRafId = null; }
-    if (!anchorBound) return;
-    anchorBound = false;
-    window.visualViewport.removeEventListener("resize", forceScrollToBottom);
-    window.visualViewport.removeEventListener("scroll", forceScrollToBottom);
+  function stopFollowing() {
+    if (followRafId) { cancelAnimationFrame(followRafId); followRafId = null; }
   }
 
   function onFocus() {
     isOpen = true;
-    startAnchoring();
+    startFollowing();
   }
 
   function onBlur() {
     isOpen = false;
-    stopAnchoring();
+    stopFollowing();
   }
 
   function onChatTouchStart() {
