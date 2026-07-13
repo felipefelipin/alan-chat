@@ -202,27 +202,34 @@ function showHome() { mountChat(); }
 // 2) SCROLL (chat.scrollTop): calculado NA MESMA leitura de frame que a
 //    altura, nunca em separado — altura e scroll derivam sempre da mesma
 //    amostra, então jamais ficam dessincronizados (isso é o que elimina o
-//    "primeiro scroll, depois um segundo ajuste"). Só é forçado durante a
-//    ABERTURA (foco no input); nunca durante o fechamento.
+//    "primeiro scroll, depois um segundo ajuste"). Só existe loop de scroll
+//    durante a ABERTURA — não há loop nenhum rodando durante o fechamento
+//    (ver item 4).
 //
 // 3) FIM DO LOOP: o rAF para sozinho quando a altura fica estável por
 //    alguns frames seguidos — detecção de fim de animação por comparação de
 //    frames, não um timer/delay. Ao parar, devolve o controle pro dvh
 //    nativo (removeProperty), nunca fica travado num valor JS obsoleto.
 //
-// 4) BUG DO "SEGUNDO TOQUE" (causa raiz, corrigida aqui): chamar
-//    input.blur() de dentro de um listener de 'scroll' significa chamá-lo
-//    DURANTE o gesto — o dedo ainda está tocando a tela quando o
-//    touchmove/scroll dispara. WebKit/Chrome mobile tratam blur()
-//    disparado no meio de um toque ativo como um caso especial: o teclado
-//    fecha, mas a associação interna input↔IME fica num estado
-//    intermediário, e o próximo focus() (mesmo de um toque real) não
-//    reabre o teclado — precisa de um segundo toque pra resetar esse
-//    estado. A correção é nunca chamar blur() em pleno gesto: o scroll
-//    decisivo só MARCA a intenção de fechar; o blur() de fato só é
-//    disparado no touchend (gesto realmente concluído) ou, se o fechamento
-//    for decidido durante o scroll por inércia (dedo já solto), imediato —
-//    porque nesse caso não há mais toque ativo pra confundir o engine.
+// 4) BUG DO "SEGUNDO TOQUE" (causa raiz real): o rAF de sincronização de
+//    viewport SÓ roda durante a ABERTURA (onFocus). Ele NUNCA roda durante
+//    o fechamento (onBlur) — essa é a correção que importa. Uma versão
+//    anterior também rodava esse loop no blur, pra deixar o fechamento
+//    "sem espaço vazio": escrever --kb-height/--kb-offset a cada frame
+//    enquanto o SO ainda está processando sua própria animação de
+//    fechamento do teclado colide com a máquina de estados interna do
+//    WebView (associação input↔IME) — o DOM aceita o focus() do toque
+//    seguinte normalmente (por isso um pequeno "ajuste" de scroll era
+//    visível), mas o teclado físico não era levantado, só no segundo
+//    toque, depois que tudo estabilizava sozinho. O fechamento agora é
+//    inteiramente do CSS/SO (100dvh nativo): onBlur só cancela um loop de
+//    ABERTURA que porventura ainda estivesse rodando e limpa qualquer
+//    override residual — nunca reage ao fechamento em si.
+//    Complementar: input.blur() do gesto de scroll-pra-fechar nunca é
+//    chamado em pleno touchmove (dedo ainda na tela) — só no touchend
+//    (gesto concluído) ou durante scroll por inércia com o dedo já solto —
+//    evita chamar blur() no meio de um toque ativo, boa prática mas não a
+//    causa raiz deste bug.
 const KeyboardController = (() => {
   const SCROLL_DISMISS_PX = 44; // gesto decisivo de scroll pra cima fecha o teclado, igual WhatsApp
   const FOLLOW_STABLE_FRAMES = 3;   // frames idênticos seguidos = animação estabilizou
@@ -238,12 +245,11 @@ const KeyboardController = (() => {
   let touching = false;
   let pendingDismiss = false;
 
-  // loop de sincronização de viewport
+  // loop de sincronização de viewport — ativo SÓ na abertura (ver onBlur).
   let followRafId = null;
   let followLastHeight = 0;
   let followSawChange = false;
   let followStableFrames = 0;
-  let followTrackScroll = false;
 
   function readViewport() {
     const vv = window.visualViewport;
@@ -255,10 +261,15 @@ const KeyboardController = (() => {
   function applyFrame(h, top) {
     document.documentElement.style.setProperty("--kb-height", h + "px");
     document.documentElement.style.setProperty("--kb-offset", top + "px");
-    if (followTrackScroll && chat) {
+    if (chat) {
       chat.scrollTop = chat.scrollHeight - chat.clientHeight;
       isUserNearBottom = true;
     }
+  }
+
+  function clearViewportOverride() {
+    document.documentElement.style.removeProperty("--kb-height");
+    document.documentElement.style.removeProperty("--kb-offset");
   }
 
   function followKeyboardFrame(frameCount) {
@@ -278,16 +289,14 @@ const KeyboardController = (() => {
     const settled = followSawChange && followStableFrames >= FOLLOW_STABLE_FRAMES;
     if (settled || frameCount >= FOLLOW_SAFETY_FRAMES) {
       followRafId = null;
-      document.documentElement.style.removeProperty("--kb-height");
-      document.documentElement.style.removeProperty("--kb-offset");
+      clearViewportOverride();
       return;
     }
     followRafId = requestAnimationFrame(() => followKeyboardFrame(frameCount + 1));
   }
 
-  function startFollowing(trackScroll) {
+  function startFollowing() {
     if (!chat) return;
-    followTrackScroll = trackScroll;
     followLastHeight = readViewport().h;
     followSawChange = false;
     followStableFrames = 0;
@@ -297,13 +306,15 @@ const KeyboardController = (() => {
 
   function onFocus() {
     isOpen = true;
-    startFollowing(true);
+    startFollowing();
   }
 
+  // Fechamento nunca é tocado por JS (ver item 4 da arquitetura acima) —
+  // só cancela um loop de ABERTURA que porventura ainda estivesse rodando.
   function onBlur() {
     isOpen = false;
-    // segue altura/offset até o fechamento estabilizar, sem tocar no scroll
-    startFollowing(false);
+    if (followRafId) { cancelAnimationFrame(followRafId); followRafId = null; }
+    clearViewportOverride();
   }
 
   function onChatTouchStart() {
@@ -356,7 +367,7 @@ const KeyboardController = (() => {
     // geometria (ex.: rotação) fora da janela focus→blur já tratada acima.
     if (window.visualViewport && "ongeometrychange" in window.visualViewport) {
       window.visualViewport.addEventListener("geometrychange", () => {
-        if (isOpen) startFollowing(true);
+        if (isOpen) startFollowing();
       });
     }
   }
