@@ -19,6 +19,12 @@ function createCell(post, index, onTap) {
         "webkit-playsinline": "",
         preload: "metadata",
       });
+      // preload="metadata" não desenha nenhum frame sozinho — força um seek
+      // minúsculo assim que a duração é conhecida pra usar esse frame como capa,
+      // sem baixar o vídeo inteiro.
+      video.addEventListener("loadedmetadata", () => {
+        try { video.currentTime = Math.min(0.15, (video.duration || 1) / 2); } catch {}
+      }, { once: true });
       cell.appendChild(video);
       cell.appendChild(el("span", { class: "ig-grid-play", html: PLAY_SVG }));
     } else {

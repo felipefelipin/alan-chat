@@ -9,7 +9,7 @@ export const PROFILE = {
   name: "Alana Lemes 💖",
   username: "alanalemes",
   verified: true,
-  postsCount: 10,
+  postsCount: 7,
   followers: "122 mil",
   following: 405,
   bioLines: [
@@ -74,18 +74,7 @@ const videoPosts = [
   A + "Dasp1yqxPnH.mp4",
 ];
 
-const imagePosts = [
-  A + "photo_5067007776952880376_w.jpg",
-  A + "photo_5071206571341188083_w.jpg",
-  A + "photo_5062262078608968721_w.jpg",
-];
-
 export const POSTS = [
-  ...imagePosts.map((src, i) => ({
-    id: `img-${i}`,
-    type: "image",
-    src,
-  })),
   ...videoPosts.map((src, i) => ({
     id: `vid-${i}`,
     type: "video",
