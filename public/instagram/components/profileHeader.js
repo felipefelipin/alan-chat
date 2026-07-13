@@ -6,6 +6,7 @@ const LINK_SVG = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" st
 const MUSIC_SVG = `<svg width="13" height="13" viewBox="0 0 24 24" fill="#8e93a3"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`;
 const BACK_SVG = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>`;
 const MORE_SVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>`;
+const ADD_PERSON_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.6 3.6-5.5 6.5-5.5s5.5 1.9 6.5 5.5"/><line x1="18" y1="8" x2="18" y2="14"/><line x1="15" y1="11" x2="21" y2="11"/></svg>`;
 
 function statBlock(value, label) {
   return el("div", { class: "ig-stat" }, [
@@ -45,6 +46,7 @@ export function createProfileHeader(profile, highlights, { onAvatarTap, onHighli
   const actions = el("div", { class: "ig-actions" }, [
     el("button", { class: "ig-btn ig-btn-follow", type: "button" }, "Seguir"),
     el("button", { class: "ig-btn ig-btn-message", type: "button" }, "Mensagem"),
+    el("button", { class: "ig-btn ig-btn-add", type: "button", html: ADD_PERSON_SVG }),
   ]);
 
   const highlightsRow = el("div", { class: "ig-highlights" },
@@ -69,12 +71,14 @@ export function createProfileHeader(profile, highlights, { onAvatarTap, onHighli
     el("button", { class: "ig-topnav-more", type: "button", html: MORE_SVG }),
   ]);
 
-  const topRow = el("div", { class: "ig-top-row" }, [avatarRing, stats]);
+  // nome fica empilhado acima das estatísticas, os dois ao lado do avatar
+  // (não numa linha própria abaixo) — layout da referência.
+  const headCol = el("div", { class: "ig-headcol" }, [nameRow, stats]);
+  const topRow = el("div", { class: "ig-top-row" }, [avatarRing, headCol]);
 
   return el("section", { class: "ig-profile-header" }, [
     topNav,
     topRow,
-    nameRow,
     bio,
     linkRow,
     musicRow,

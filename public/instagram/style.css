@@ -8,6 +8,7 @@
   --text-dim: #a8a8a8;
   --text-faint: #737373;
   --accent: #3797ef;
+  --accent-follow: #4c5fe8;
   --heart: #ff3040;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -96,7 +97,16 @@ img, video { display: block; max-width: 100%; }
 .ig-top-row {
   display: flex;
   align-items: center;
-  gap: 22px;
+  gap: 20px;
+}
+
+/* nome + estatísticas, empilhados ao lado do avatar */
+.ig-headcol {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .ig-avatar-ring {
@@ -119,14 +129,13 @@ img, video { display: block; max-width: 100%; }
 }
 
 .ig-stats {
-  flex: 1;
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
 }
 .ig-stat {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 2px;
 }
 .ig-stat-value {
@@ -144,7 +153,7 @@ img, video { display: block; max-width: 100%; }
   align-items: center;
   gap: 5px;
 }
-.ig-name { font-size: 14.5px; font-weight: 600; }
+.ig-name { font-size: 16px; font-weight: 700; }
 .ig-verified { display: flex; align-items: center; }
 
 .ig-bio {
@@ -181,8 +190,18 @@ img, video { display: block; max-width: 100%; }
   transition: transform .12s ease, opacity .12s ease;
 }
 .ig-btn:active { transform: scale(.97); opacity: .85; }
-.ig-btn-follow { background: var(--accent); color: #fff; }
+.ig-btn-follow { background: var(--accent-follow); color: #fff; }
 .ig-btn-message { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+.ig-btn-add {
+  flex: 0 0 auto;
+  width: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
 
 .ig-highlights {
   display: flex;
