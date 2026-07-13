@@ -174,70 +174,76 @@ function vibrate(ms = 18) {
 // ── FIX #4: showHome aponta para mountChat ────────────────────────────────────
 function showHome() { mountChat(); }
 
-// ==================== KEYBOARD MANAGER ====================
-// Dono único de tudo que envolve o teclado. A ALTURA em si não é mais
-// responsabilidade daqui: #app/.full usam `height:100dvh` puro no CSS, e o
-// meta viewport declara `interactive-widget=resizes-content` — então é o
-// próprio engine (Chrome/WebKit) quem redimensiona o content viewport em
-// sincronia nativa (composited, frame a frame) com a animação do teclado do
-// SO. Um `--app-height` calculado via JS a partir de eventos de
-// visualViewport SEMPRE fica atrás dessa animação nativa (os eventos de
-// resize/scroll do visualViewport chegam coalescidos, só depois que a
-// animação do teclado já terminou) — foi essa defasagem entre "engine já
-// redimensionou" e "JS ainda não recebeu o evento" que causava o delay, a
-// área preta (fundo do body aparecendo atrás do #app, que ainda estava no
-// tamanho antigo) e o scroll "travado" (o .chat ainda tinha o clientHeight
-// antigo). Deixando o dvh nativo cuidar disso, o composer (irmão flex do
-// chatShell dentro de .full) acompanha o teclado automaticamente, sem JS.
-// Esse manager cuida só do gesto de "scroll pra cima fecha o teclado" e de
-// manter o fim da conversa visível quando o teclado abre.
-const KeyboardManager = (() => {
+// ==================== KEYBOARD CONTROLLER ====================
+// Dono único de: focus/blur do input, estado do teclado, sincronização de
+// viewport (altura + offset), scroll de ancoragem no fim da conversa, e o
+// gesto de "scroll pra cima fecha o teclado". Nenhum outro trecho do app
+// deve tocar em chat.scrollTop / --kb-height / --kb-offset / input.blur()
+// fora daqui.
+//
+// ── ARQUITETURA (por quê cada peça existe) ──────────────────────────────────
+//
+// 1) ALTURA/OFFSET (--kb-height / --kb-offset, aplicadas via CSS em #app e
+//    .full — ver styles.css): escritas por um loop de requestAnimationFrame
+//    que lê window.visualViewport.height/offsetTop a cada frame, nunca por
+//    listener de evento. Motivo: o evento 'resize'/'scroll' do
+//    visualViewport é coalescido pelo engine — só chega DEPOIS que a
+//    animação do teclado já terminou, o que produz exatamente os sintomas
+//    relatados (espaço vazio seguido de um salto tardio; área preta
+//    enquanto o app espera o evento atrasado). Já a PROPRIEDADE
+//    visualViewport.height é atualizada pelo compositor a cada frame
+//    renderizado — lendo-a de dentro do rAF (em vez de esperar o evento)
+//    conseguimos o valor real do frame atual, sem depender de coalescing.
+//    100dvh continua como base no CSS (cobre o caso ideal em que o engine
+//    honra interactive-widget=resizes-content); --kb-height é o reforço
+//    ativo pros casos (comuns em WebViews embarcadas) em que o engine só
+//    faz "pan" do visual viewport e dvh nunca muda sozinho.
+//
+// 2) SCROLL (chat.scrollTop): calculado NA MESMA leitura de frame que a
+//    altura, nunca em separado — altura e scroll derivam sempre da mesma
+//    amostra, então jamais ficam dessincronizados (isso é o que elimina o
+//    "primeiro scroll, depois um segundo ajuste"). Só é forçado durante a
+//    ABERTURA (foco no input); nunca durante o fechamento.
+//
+// 3) FIM DO LOOP: o rAF para sozinho quando a altura fica estável por
+//    alguns frames seguidos — detecção de fim de animação por comparação de
+//    frames, não um timer/delay. Ao parar, devolve o controle pro dvh
+//    nativo (removeProperty), nunca fica travado num valor JS obsoleto.
+//
+// 4) BUG DO "SEGUNDO TOQUE" (causa raiz, corrigida aqui): chamar
+//    input.blur() de dentro de um listener de 'scroll' significa chamá-lo
+//    DURANTE o gesto — o dedo ainda está tocando a tela quando o
+//    touchmove/scroll dispara. WebKit/Chrome mobile tratam blur()
+//    disparado no meio de um toque ativo como um caso especial: o teclado
+//    fecha, mas a associação interna input↔IME fica num estado
+//    intermediário, e o próximo focus() (mesmo de um toque real) não
+//    reabre o teclado — precisa de um segundo toque pra resetar esse
+//    estado. A correção é nunca chamar blur() em pleno gesto: o scroll
+//    decisivo só MARCA a intenção de fechar; o blur() de fato só é
+//    disparado no touchend (gesto realmente concluído) ou, se o fechamento
+//    for decidido durante o scroll por inércia (dedo já solto), imediato —
+//    porque nesse caso não há mais toque ativo pra confundir o engine.
+const KeyboardController = (() => {
   const SCROLL_DISMISS_PX = 44; // gesto decisivo de scroll pra cima fecha o teclado, igual WhatsApp
+  const FOLLOW_STABLE_FRAMES = 3;   // frames idênticos seguidos = animação estabilizou
+  const FOLLOW_SAFETY_FRAMES = 180; // ~3s a 60fps — teto de segurança, nunca deveria ser atingido
 
   let input = null;
   let chat  = null;
   let isOpen = false;
-  let gestureStartTop = 0;
   let globalGuardsBound = false;
 
-  // ── ancoragem no fim da conversa enquanto o teclado abre ──────────────────
-  // Só ativo entre focus e blur do input (intenção real de digitar).
-  //
-  // Por quê visualViewport.height/offsetTop lidos via rAF, e não CSS dvh
-  // puro nem eventos de resize/scroll:
-  //  1) eventos de visualViewport são coalescidos pelo engine — só chegam
-  //     DEPOIS que a animação do teclado já terminou. Reagir a eles causa
-  //     exatamente o bug relatado: 1 scroll cedo (chat ainda no tamanho
-  //     antigo → espaço vazio) + 1 scroll tardio quando o evento finalmente
-  //     chega (o "segundo movimento").
-  //  2) 100dvh sozinho pressupõe que o engine redimensiona o LAYOUT viewport
-  //     em sincronia com o teclado (via interactive-widget=resizes-content).
-  //     WebViews embarcadas (caso da do Telegram) nem sempre honram isso —
-  //     muitas só fazem "pan" do VISUAL viewport, deixando dvh parado o
-  //     tempo todo, o que faz qualquer solução baseada só em dvh/clientHeight
-  //     não ter efeito nenhum (o bug persiste do mesmo jeito).
-  // A propriedade visualViewport.height/offsetTop, ao contrário do EVENTO
-  // que a reporta, é atualizada pelo compositor a cada frame renderizado —
-  // então lendo-a de dentro de um loop de requestAnimationFrame (em vez de
-  // esperar o evento 'resize'/'scroll'), conseguimos o valor real do frame
-  // atual, sem depender de coalescing. O loop escreve esse valor em
-  // --kb-height/--kb-offset (aplicado no #app/.full via CSS) e ajusta
-  // chat.scrollTop na MESMA leitura de frame — altura e scroll sempre
-  // derivados da mesma amostra, nunca dessincronizados. Para sozinho quando
-  // a altura fica estável por alguns frames seguidos (fim da animação,
-  // detectado por comparação de frames — não é um timer) e devolve o
-  // controle pro dvh nativo (removeProperty).
-  // trackScroll=true no focus (âncora no fim, comportamento pedido nesta
-  // tarefa) — trackScroll=false no blur (só altura/offset, pra manter o
-  // fechamento gapless da correção anterior, SEM forçar scroll: "não
-  // executar automaticamente quando o teclado fechar").
+  // gesto de scroll-para-fechar
+  let gestureStartTop = 0;
+  let touching = false;
+  let pendingDismiss = false;
+
+  // loop de sincronização de viewport
   let followRafId = null;
   let followLastHeight = 0;
   let followSawChange = false;
   let followStableFrames = 0;
   let followTrackScroll = false;
-  const FOLLOW_STABLE_FRAMES = 3;   // frames idênticos seguidos = animação estabilizou
-  const FOLLOW_SAFETY_FRAMES = 180; // ~3s a 60fps — teto de segurança, nunca deveria ser atingido
 
   function readViewport() {
     const vv = window.visualViewport;
@@ -272,7 +278,6 @@ const KeyboardManager = (() => {
     const settled = followSawChange && followStableFrames >= FOLLOW_STABLE_FRAMES;
     if (settled || frameCount >= FOLLOW_SAFETY_FRAMES) {
       followRafId = null;
-      // devolve o controle pro dvh nativo — nunca fica travado num valor JS obsoleto
       document.documentElement.style.removeProperty("--kb-height");
       document.documentElement.style.removeProperty("--kb-offset");
       return;
@@ -297,22 +302,36 @@ const KeyboardManager = (() => {
 
   function onBlur() {
     isOpen = false;
-    // segue a altura/offset até o fechamento estabilizar (mesmo mecanismo do
-    // open), só que sem tocar no scroll — cobre o fechamento gapless mesmo
-    // quando o engine não redimensiona dvh de verdade (só "pan"), sem violar
-    // "nunca forçar scroll ao fechar".
+    // segue altura/offset até o fechamento estabilizar, sem tocar no scroll
     startFollowing(false);
   }
 
   function onChatTouchStart() {
     if (chat) gestureStartTop = chat.scrollTop;
+    touching = true;
+    pendingDismiss = false;
   }
 
-  // scroll pra cima decisivo enquanto digita → dispensa o teclado (SO anima o fechamento nativamente)
+  function dismissKeyboard() {
+    pendingDismiss = false;
+    input?.blur();
+  }
+
+  // scroll pra cima decisivo enquanto digita → dispensa o teclado.
+  // Nunca chama blur() com o dedo ainda na tela (ver nota da arquitetura);
+  // com o dedo solto (scroll por inércia) não há gesto ativo pra confundir,
+  // então é seguro disparar na hora.
   function onChatScroll() {
     if (!isOpen || !input || !chat) return;
     const scrolledUp = gestureStartTop - chat.scrollTop;
-    if (scrolledUp > SCROLL_DISMISS_PX) input.blur();
+    if (scrolledUp <= SCROLL_DISMISS_PX) return;
+    if (touching) { pendingDismiss = true; return; }
+    dismissKeyboard();
+  }
+
+  function onChatTouchEnd() {
+    touching = false;
+    if (pendingDismiss) dismissKeyboard();
   }
 
   function onOutsideTap(e) {
@@ -332,6 +351,14 @@ const KeyboardManager = (() => {
     document.addEventListener("scroll", () => {
       if (document.documentElement.scrollTop !== 0) document.documentElement.scrollTop = 0;
     }, { passive: true });
+
+    // API experimental (Chrome) — quando disponível, cobre mudanças de
+    // geometria (ex.: rotação) fora da janela focus→blur já tratada acima.
+    if (window.visualViewport && "ongeometrychange" in window.visualViewport) {
+      window.visualViewport.addEventListener("geometrychange", () => {
+        if (isOpen) startFollowing(true);
+      });
+    }
   }
 
   // religa aos elementos do chat atual — chamado a cada mountChat() (remount destrói os listeners antigos)
@@ -346,6 +373,8 @@ const KeyboardManager = (() => {
     input.addEventListener("blur", onBlur);
 
     chat.addEventListener("touchstart", onChatTouchStart, { passive: true });
+    chat.addEventListener("touchend", onChatTouchEnd, { passive: true });
+    chat.addEventListener("touchcancel", onChatTouchEnd, { passive: true });
     chat.addEventListener("scroll", onChatScroll, { passive: true });
     chat.addEventListener("click", onOutsideTap);
   }
@@ -864,7 +893,7 @@ function mountChat() {
   restoreHistory();
   handleScrollDetection();
   bindComposer();
-  KeyboardManager.attach(document.getElementById("input"), document.getElementById("chat"));
+  KeyboardController.attach(document.getElementById("input"), document.getElementById("chat"));
   attachProfilePhotoPreview(document.getElementById("topbarAvatar"), { onTap: showStories });
 
   // Force GPU compositor layer to activate before first touch

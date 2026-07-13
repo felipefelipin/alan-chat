@@ -39,7 +39,7 @@ body{
   right:0;
   /* 100dvh é a base (cobre o resize nativo quando o engine honra
      interactive-widget=resizes-content). --kb-height é escrita pelo
-     KeyboardManager via rAF, lendo visualViewport.height a cada frame
+     KeyboardController via rAF, lendo visualViewport.height a cada frame
      durante a abertura do teclado — cobre o caso (comum em WebViews
      embarcadas, como a do Telegram) em que o engine NÃO redimensiona o
      layout viewport de verdade e só faz "pan" do visual viewport, deixando
