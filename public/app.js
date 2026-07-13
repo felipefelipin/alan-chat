@@ -203,40 +203,65 @@ const KeyboardManager = (() => {
   // ── ancoragem no fim da conversa enquanto o teclado abre ──────────────────
   // Só ativo entre focus e blur do input (intenção real de digitar).
   //
-  // Por quê rAF e não eventos de visualViewport: o engine coalesce
-  // resize/scroll do visualViewport e só entrega 1 evento, DEPOIS que a
-  // animação do teclado já terminou — reagir a esse evento produz exatamente
-  // o bug relatado (scroll cedo demais, com o chat ainda no tamanho antigo,
-  // seguido de um segundo salto tardio quando o evento finalmente chega).
-  // .chat, porém, é redimensionado nativamente pelo compositor a cada frame
-  // da animação (graças a interactive-widget=resizes-content + 100dvh) —
-  // então basta ler chat.clientHeight dentro de um loop de rAF: o valor já
-  // vem atualizado frame a frame pelo próprio motor de layout, sem esperar
-  // nenhum evento. O loop para sozinho quando a altura fica estável por
-  // alguns frames seguidos (animação terminou) — não é um timer, é detecção
-  // de fim de animação por comparação de frames.
+  // Por quê visualViewport.height/offsetTop lidos via rAF, e não CSS dvh
+  // puro nem eventos de resize/scroll:
+  //  1) eventos de visualViewport são coalescidos pelo engine — só chegam
+  //     DEPOIS que a animação do teclado já terminou. Reagir a eles causa
+  //     exatamente o bug relatado: 1 scroll cedo (chat ainda no tamanho
+  //     antigo → espaço vazio) + 1 scroll tardio quando o evento finalmente
+  //     chega (o "segundo movimento").
+  //  2) 100dvh sozinho pressupõe que o engine redimensiona o LAYOUT viewport
+  //     em sincronia com o teclado (via interactive-widget=resizes-content).
+  //     WebViews embarcadas (caso da do Telegram) nem sempre honram isso —
+  //     muitas só fazem "pan" do VISUAL viewport, deixando dvh parado o
+  //     tempo todo, o que faz qualquer solução baseada só em dvh/clientHeight
+  //     não ter efeito nenhum (o bug persiste do mesmo jeito).
+  // A propriedade visualViewport.height/offsetTop, ao contrário do EVENTO
+  // que a reporta, é atualizada pelo compositor a cada frame renderizado —
+  // então lendo-a de dentro de um loop de requestAnimationFrame (em vez de
+  // esperar o evento 'resize'/'scroll'), conseguimos o valor real do frame
+  // atual, sem depender de coalescing. O loop escreve esse valor em
+  // --kb-height/--kb-offset (aplicado no #app/.full via CSS) e ajusta
+  // chat.scrollTop na MESMA leitura de frame — altura e scroll sempre
+  // derivados da mesma amostra, nunca dessincronizados. Para sozinho quando
+  // a altura fica estável por alguns frames seguidos (fim da animação,
+  // detectado por comparação de frames — não é um timer) e devolve o
+  // controle pro dvh nativo (removeProperty).
+  // trackScroll=true no focus (âncora no fim, comportamento pedido nesta
+  // tarefa) — trackScroll=false no blur (só altura/offset, pra manter o
+  // fechamento gapless da correção anterior, SEM forçar scroll: "não
+  // executar automaticamente quando o teclado fechar").
   let followRafId = null;
   let followLastHeight = 0;
   let followSawChange = false;
   let followStableFrames = 0;
+  let followTrackScroll = false;
   const FOLLOW_STABLE_FRAMES = 3;   // frames idênticos seguidos = animação estabilizou
-  const FOLLOW_SAFETY_FRAMES = 120; // ~2s a 60fps — teto de segurança, nunca deveria ser atingido
+  const FOLLOW_SAFETY_FRAMES = 180; // ~3s a 60fps — teto de segurança, nunca deveria ser atingido
 
-  function currentViewportHeight() {
+  function readViewport() {
     const vv = window.visualViewport;
-    return vv ? Math.round(vv.height) : window.innerHeight;
+    return vv
+      ? { h: vv.height, top: vv.offsetTop }
+      : { h: window.innerHeight, top: 0 };
+  }
+
+  function applyFrame(h, top) {
+    document.documentElement.style.setProperty("--kb-height", h + "px");
+    document.documentElement.style.setProperty("--kb-offset", top + "px");
+    if (followTrackScroll && chat) {
+      chat.scrollTop = chat.scrollHeight - chat.clientHeight;
+      isUserNearBottom = true;
+    }
   }
 
   function followKeyboardFrame(frameCount) {
     if (!chat) { followRafId = null; return; }
 
-    // recalcula a posição a partir da altura ÚTIL atual de .chat — sempre em
-    // dia porque o próprio layout nativo já resolveu o tamanho deste frame.
-    chat.scrollTop = chat.scrollHeight - chat.clientHeight;
-    isUserNearBottom = true;
+    const { h, top } = readViewport();
+    applyFrame(h, top);
 
-    const h = currentViewportHeight();
-    if (h !== followLastHeight) {
+    if (Math.abs(h - followLastHeight) > 0.5) {
       followSawChange = true;
       followLastHeight = h;
       followStableFrames = 0;
@@ -247,32 +272,36 @@ const KeyboardManager = (() => {
     const settled = followSawChange && followStableFrames >= FOLLOW_STABLE_FRAMES;
     if (settled || frameCount >= FOLLOW_SAFETY_FRAMES) {
       followRafId = null;
+      // devolve o controle pro dvh nativo — nunca fica travado num valor JS obsoleto
+      document.documentElement.style.removeProperty("--kb-height");
+      document.documentElement.style.removeProperty("--kb-offset");
       return;
     }
     followRafId = requestAnimationFrame(() => followKeyboardFrame(frameCount + 1));
   }
 
-  function startFollowing() {
+  function startFollowing(trackScroll) {
     if (!chat) return;
-    followLastHeight = currentViewportHeight();
+    followTrackScroll = trackScroll;
+    followLastHeight = readViewport().h;
     followSawChange = false;
     followStableFrames = 0;
     if (followRafId) cancelAnimationFrame(followRafId);
     followRafId = requestAnimationFrame(() => followKeyboardFrame(0));
   }
 
-  function stopFollowing() {
-    if (followRafId) { cancelAnimationFrame(followRafId); followRafId = null; }
-  }
-
   function onFocus() {
     isOpen = true;
-    startFollowing();
+    startFollowing(true);
   }
 
   function onBlur() {
     isOpen = false;
-    stopFollowing();
+    // segue a altura/offset até o fechamento estabilizar (mesmo mecanismo do
+    // open), só que sem tocar no scroll — cobre o fechamento gapless mesmo
+    // quando o engine não redimensiona dvh de verdade (só "pan"), sem violar
+    // "nunca forçar scroll ao fechar".
+    startFollowing(false);
   }
 
   function onChatTouchStart() {

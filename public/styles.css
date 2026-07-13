@@ -37,12 +37,18 @@ body{
   top:0;
   left:0;
   right:0;
-  /* altura nativa do content viewport — o meta viewport declara
-     interactive-widget=resizes-content, então o próprio engine anima essa
-     altura em sincronia com o teclado (composited, sem JS, sem lag).
-     100vh primeiro só como fallback pra engines sem suporte a dvh. */
+  /* 100dvh é a base (cobre o resize nativo quando o engine honra
+     interactive-widget=resizes-content). --kb-height é escrita pelo
+     KeyboardManager via rAF, lendo visualViewport.height a cada frame
+     durante a abertura do teclado — cobre o caso (comum em WebViews
+     embarcadas, como a do Telegram) em que o engine NÃO redimensiona o
+     layout viewport de verdade e só faz "pan" do visual viewport, deixando
+     dvh parado. Some (removeProperty) assim que a animação estabiliza,
+     devolvendo o controle pro dvh nativo. */
   height:100vh;
   height:100dvh;
+  height:var(--kb-height, 100dvh);
+  transform:translateY(var(--kb-offset, 0px));
   overflow:hidden;
   box-sizing:border-box;
 }
@@ -1274,9 +1280,11 @@ object-fit:cover;
   left: 0;
   right: 0;
   /* mesma altura nativa do #app — .full é position:fixed própria, não herda
-     a altura do pai. Ver comentário em #app sobre dvh + interactive-widget. */
+     a altura do pai. Ver comentário em #app sobre dvh + --kb-height. */
   height: 100vh;
   height: 100dvh;
+  height: var(--kb-height, 100dvh);
+  transform: translateY(var(--kb-offset, 0px));
   display: flex;
   flex-direction: column;
   background: var(--bg);
