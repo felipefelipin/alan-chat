@@ -194,7 +194,7 @@ bot.on("callback_query", async (q) => {
       );
       await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
-          text: "👇 escolhe aí, gostoso",
+          text: "Tudo isso é seu, é só escolher por onde quer começar 🔥👇",
           extra: { reply_markup: { inline_keyboard: [
             [{ text: "📸 Vem me ver no Insta 👀",         callback_data: "abrir_instagram" }],
             [{ text: "😈 Chamada de vídeo AO VIVO 💦",    callback_data: "chamada_video"   }],
