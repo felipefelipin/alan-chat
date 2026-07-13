@@ -200,13 +200,50 @@ const KeyboardManager = (() => {
   let gestureStartTop = 0;
   let globalGuardsBound = false;
 
+  // ── ancoragem no fim da conversa enquanto o teclado abre ──────────────────
+  // Só ativo entre focus e blur do input (intenção real de digitar). A cada
+  // evento nativo de visualViewport (resize/scroll) disparado pela animação
+  // de abertura do teclado, reancora .chat no fim via rAF — sem setTimeout,
+  // sem polling. Some no blur, então nunca reage ao fechamento do teclado
+  // nem a scroll manual do usuário lendo mensagens antigas (esse scroll é
+  // dentro de #chat, não do visualViewport, então não aciona isto).
+  let anchorRafId = null;
+  let anchorBound = false;
+
+  function forceScrollToBottom() {
+    if (!chat) return;
+    if (anchorRafId) cancelAnimationFrame(anchorRafId);
+    anchorRafId = requestAnimationFrame(() => {
+      anchorRafId = null;
+      chat.scrollTop = chat.scrollHeight;
+      isUserNearBottom = true;
+    });
+  }
+
+  function startAnchoring() {
+    forceScrollToBottom(); // ancora já no toque, antes do teclado começar a animar
+    if (!window.visualViewport || anchorBound) return;
+    anchorBound = true;
+    window.visualViewport.addEventListener("resize", forceScrollToBottom, { passive: true });
+    window.visualViewport.addEventListener("scroll", forceScrollToBottom, { passive: true });
+  }
+
+  function stopAnchoring() {
+    if (anchorRafId) { cancelAnimationFrame(anchorRafId); anchorRafId = null; }
+    if (!anchorBound) return;
+    anchorBound = false;
+    window.visualViewport.removeEventListener("resize", forceScrollToBottom);
+    window.visualViewport.removeEventListener("scroll", forceScrollToBottom);
+  }
+
   function onFocus() {
     isOpen = true;
-    requestAnimationFrame(() => scrollBottom(false));
+    startAnchoring();
   }
 
   function onBlur() {
     isOpen = false;
+    stopAnchoring();
   }
 
   function onChatTouchStart() {
