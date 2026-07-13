@@ -5,11 +5,11 @@
 const A = "../assets/";
 
 export const PROFILE = {
-  avatar: A + "photo_5062262078608968721_w.jpg",
+  avatar: A + "405488468_867245554865727_7074750915997033131_n.jpg",
   name: "Alana Lemes 💖",
   username: "alanalemes",
   verified: true,
-  postsCount: 9,
+  postsCount: 10,
   followers: "122 mil",
   following: 405,
   bioLines: [
@@ -65,12 +65,13 @@ const MOCK_COMMENTS = [
 function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
 const videoPosts = [
-  A + "IMG_6904.MP4",
-  A + "IMG_6939.MP4",
-  A + "IMG_7066.MP4",
-  A + "IMG_7067.MP4",
-  A + "IMG_7068.MP4",
-  A + "IMG_7069.MP4",
+  A + "DU0kh07Dbx6.mp4",
+  A + "DWJmaAbjRAx.mp4",
+  A + "DXHZFcQDUNO_1.mp4",
+  A + "DXM-m3ric7o.mp4",
+  A + "DXMiCuVDe1P.mp4",
+  A + "DYA0vrApG1V.mp4",
+  A + "Dasp1yqxPnH.mp4",
 ];
 
 const imagePosts = [
