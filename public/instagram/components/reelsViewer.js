@@ -29,7 +29,6 @@ const PLAY_CENTER_SVG = `<svg width="34" height="34" viewBox="0 0 24 24" fill="r
 const MUSIC_SVG = `<svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`;
 const VERIFIED_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#3897f0"/><path d="M7 12.5l3 3 7-7" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-const AUTO_HIDE_MS = 3200;
 const SWIPE_THRESHOLD = 70;
 
 // ── ReelPlayer ───────────────────────────────────────────────────────────────
@@ -117,6 +116,7 @@ function mountReelDescription(reel, profile) {
       el("img", { class: "reel-info-avatar", src: profile.avatar, alt: "" }),
       el("span", { class: "reel-info-name" }, profile.username),
       profile.verified ? el("span", { class: "reel-info-verified", html: VERIFIED_SVG }) : null,
+      el("button", { class: "reel-followBtn", type: "button", onClick: (e) => e.stopPropagation() }, "Seguir"),
     ]),
     el("div", { class: "reel-info-caption" }, reel.caption ?? ""),
     el("div", { class: "reel-info-audio" }, [
@@ -134,7 +134,8 @@ function createReelSlide(reel, profile) {
   const info = mountReelDescription(reel, profile);
   const centerPlay = el("div", { class: "reel-centerPlay", html: PLAY_CENTER_SVG });
 
-  const chrome = el("div", { class: "reel-chrome" }, [actions, info]);
+  // info à esquerda, ações à direita — nessa ordem no DOM (flex row)
+  const chrome = el("div", { class: "reel-chrome" }, [info, actions]);
 
   const slide = el("div", { class: "reel-slide" }, [
     player.wrap,
@@ -152,7 +153,6 @@ export function openReelsViewer(reels, startIndex, sourceRect, { profile, onClos
   let destroyed = false;
   let muted = true;
   let rafId = null;
-  let controlsHideTimer = null;
 
   const backdrop = el("div", { class: "reel-backdrop" });
   const overlay = el("div", { class: "reel-overlay" });
@@ -208,11 +208,6 @@ export function openReelsViewer(reels, startIndex, sourceRect, { profile, onClos
     });
   }
 
-  function scheduleHideControls() {
-    clearTimeout(controlsHideTimer);
-    controlsHideTimer = setTimeout(() => overlay.classList.add("reel-controls-hidden"), AUTO_HIDE_MS);
-  }
-
   function toggleMute() {
     muted = !muted;
     slides.forEach((s) => { s.video.muted = muted; });
@@ -246,8 +241,6 @@ export function openReelsViewer(reels, startIndex, sourceRect, { profile, onClos
     setPagerPosition(true);
     updatePreload();
     playActive();
-    overlay.classList.remove("reel-controls-hidden");
-    scheduleHideControls();
   }
 
   // ── ReelGestureController — swipe vertical (snap) + tap (play/pause + controles) ──
@@ -273,8 +266,9 @@ export function openReelsViewer(reels, startIndex, sourceRect, { profile, onClos
     else goTo(index);
   });
 
+  // toque alterna só play/pause — info do perfil e ações nunca somem sozinhas
   pager.addEventListener("click", (e) => {
-    if (e.target.closest(".reel-actionBtn") || e.target.closest(".reel-topbar")) return;
+    if (e.target.closest(".reel-actionBtn") || e.target.closest(".reel-topbar") || e.target.closest(".reel-followBtn")) return;
     const active = slides[index];
     if (active.video.paused) {
       active.video.play().catch(() => {});
@@ -283,19 +277,15 @@ export function openReelsViewer(reels, startIndex, sourceRect, { profile, onClos
       active.video.pause();
       active.centerPlay.classList.add("reel-centerPlay-show");
     }
-    overlay.classList.toggle("reel-controls-hidden");
-    if (!overlay.classList.contains("reel-controls-hidden")) scheduleHideControls();
   });
 
   updatePreload();
   playActive();
-  scheduleHideControls();
 
   function close() {
     if (destroyed) return;
     destroyed = true;
     if (rafId) cancelAnimationFrame(rafId);
-    clearTimeout(controlsHideTimer);
     slides.forEach((s) => s.video.pause());
 
     backdrop.classList.remove("reel-backdrop-in");
