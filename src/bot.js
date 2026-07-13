@@ -215,8 +215,8 @@ bot.on("callback_query", async (q) => {
       );
       await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
-          text: "vem ver meu perfil 👇",
-          extra: { reply_markup: { inline_keyboard: [
+          text: "<b>VEM VER MEU INSTAGRAM SEUS SAFADOS 😈👇🏽</b>",
+          extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
             [{ text: "📸 Abrir Instagram", web_app: { url: process.env.WEBAPP_URL + "/instagram/?v=" + Date.now() } }],
           ]}},
         }},
