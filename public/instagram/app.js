@@ -7,6 +7,7 @@ import { createFeedGrid, createReelGrid, createTaggedGrid } from "./components/f
 import { createBottomNav } from "./components/bottomNav.js";
 import { openStoryViewer } from "./components/stories.js";
 import { openPostViewer } from "./components/postViewer.js";
+import { openReelsViewer } from "./components/reelsViewer.js";
 
 function initTelegram() {
   const tg = window.Telegram?.WebApp;
@@ -46,9 +47,13 @@ function mountApp() {
   const feedHost = el("div", { class: "ig-feed-host" });
   const renderFeed = (key) => {
     feedHost.innerHTML = "";
-    if (key === "reels") feedHost.appendChild(createReelGrid(REELS, (i) => openPostViewer(PROFILE, REELS, i)));
-    else if (key === "tagged") feedHost.appendChild(createTaggedGrid());
-    else feedHost.appendChild(createFeedGrid(POSTS, (i) => openPostViewer(PROFILE, POSTS, i)));
+    if (key === "reels") {
+      feedHost.appendChild(createReelGrid(REELS, (i, rect) => openReelsViewer(REELS, i, rect, { profile: PROFILE })));
+    } else if (key === "tagged") {
+      feedHost.appendChild(createTaggedGrid());
+    } else {
+      feedHost.appendChild(createFeedGrid(POSTS, (i) => openPostViewer(PROFILE, POSTS, i)));
+    }
   };
 
   const tabs = createProfileTabs("posts", renderFeed);

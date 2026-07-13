@@ -16,7 +16,7 @@ const SAVE_FILLED = `<svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"
 const BIG_HEART = `<svg width="90" height="90" viewBox="0 0 24 24" fill="#fff"><path d="M12 21s-7.5-4.6-10-9.3C.5 8.2 2.3 4.5 6 4.5c2.1 0 3.6 1.2 6 3.7 2.4-2.5 3.9-3.7 6-3.7 3.7 0 5.5 3.7 4 7.2C19.5 16.4 12 21 12 21z"/></svg>`;
 const SEND_SVG = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg>`;
 
-function openCommentsSheet(profileName, comments, onAdd) {
+export function openCommentsSheet(profileName, comments, onAdd) {
   const list = el("div", { class: "cm-list" }, comments.map(commentRow));
 
   function commentRow(c) {

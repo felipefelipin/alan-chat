@@ -48,7 +48,10 @@ function mountLazyMedia(cell, post) {
 
 // ── FeedItem ─────────────────────────────────────────────────────────────────
 function createFeedItem(post, index, onTap) {
-  const cell = el("button", { class: "ig-grid-cell", type: "button", onClick: () => onTap(index) });
+  const cell = el("button", {
+    class: "ig-grid-cell", type: "button",
+    onClick: () => onTap(index, cell.getBoundingClientRect()),
+  });
   cell.appendChild(el("span", { class: "ig-grid-skeleton" }));
   if (post.pinned) cell.appendChild(createPinnedIndicator());
 
