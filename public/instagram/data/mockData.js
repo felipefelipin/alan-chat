@@ -6,8 +6,8 @@ const A = "../assets/";
 
 export const PROFILE = {
   avatar: A + "405488468_867245554865727_7074750915997033131_n.jpg",
-  name: "Alana Lemes 💖",
-  username: "alanalemes",
+  name: "Susana Barbosa 💖",
+  username: "susana_barbosa",
   verified: true,
   postsCount: 7,
   followers: "122 mil",

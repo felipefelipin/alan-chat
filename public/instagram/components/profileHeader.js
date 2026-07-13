@@ -4,6 +4,8 @@ import { el } from "../utils/dom.js";
 const CHECK_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#3897f0"/><path d="M7 12.5l3 3 7-7" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const LINK_SVG = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8e93a3" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1.2 1.2"/><path d="M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1.1-1.1"/></svg>`;
 const MUSIC_SVG = `<svg width="13" height="13" viewBox="0 0 24 24" fill="#8e93a3"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`;
+const BACK_SVG = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>`;
+const MORE_SVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>`;
 
 function statBlock(value, label) {
   return el("div", { class: "ig-stat" }, [
@@ -56,9 +58,21 @@ export function createProfileHeader(profile, highlights, { onAvatarTap, onHighli
     )
   );
 
+  const topNav = el("div", { class: "ig-topnav" }, [
+    el("button", {
+      class: "ig-topnav-back", type: "button", html: BACK_SVG,
+      onClick: () => { try { window.Telegram?.WebApp?.close(); } catch {} },
+    }),
+    el("span", { class: "ig-topnav-username" }, "@" + profile.username),
+    profile.verified ? el("span", { class: "ig-topnav-verified", html: CHECK_SVG }) : null,
+    el("div", { class: "ig-topnav-spacer" }),
+    el("button", { class: "ig-topnav-more", type: "button", html: MORE_SVG }),
+  ]);
+
   const topRow = el("div", { class: "ig-top-row" }, [avatarRing, stats]);
 
   return el("section", { class: "ig-profile-header" }, [
+    topNav,
     topRow,
     nameRow,
     bio,
