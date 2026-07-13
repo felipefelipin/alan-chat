@@ -401,8 +401,15 @@ const worker = new Worker(
       if (type === "SEND_PHOTO") {
         const file = data?.file || "intro.jpg";
         const caption = data?.caption || "";
-        await sendPhotoWithAction(chatId, file, caption);
-        await logEventSafe(chatId, "SEND_PHOTO", { file, via: "url", base: ASSETS_BASE });
+
+        if (data?.instant) {
+          // cai na hora — sem "enviando foto...", arquivo local + cache de file_id
+          await sendFunnelPhoto(chatId, file);
+        } else {
+          await sendPhotoWithAction(chatId, file, caption);
+        }
+
+        await logEventSafe(chatId, "SEND_PHOTO", { file, instant: !!data?.instant });
         return;
       }
 
