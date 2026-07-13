@@ -196,9 +196,9 @@ bot.on("callback_query", async (q) => {
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
           text: "Tudo isso é seu, é só escolher por onde quer começar 🔥👇",
           extra: { reply_markup: { inline_keyboard: [
-            [{ text: "📸 Vem me ver no Insta 👀",         callback_data: "abrir_instagram", style: "primary" }],
-            [{ text: "😈 Chamada de vídeo AO VIVO 💦",    callback_data: "chamada_video",   style: "danger"  }],
-            [{ text: "💰 Quero ver os PLANOS 🔥",          callback_data: "ver_planos" }],
+            [{ text: "💰 QUERO VER OS PLANOS 🔥",          callback_data: "ver_planos" }],
+            [{ text: "😈 CHAMADA DE VÍDEO AO VIVO 💦",    callback_data: "chamada_video",   style: "danger"  }],
+            [{ text: "📸 VEM ME VER NO INSTA 👀",         callback_data: "abrir_instagram", style: "primary" }],
           ]}},
         }},
         { delay: rand(1800, 2600), jobId: jid("conteudinhos", chatId, 2), removeOnComplete: true, removeOnFail: true }
