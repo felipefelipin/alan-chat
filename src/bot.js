@@ -193,10 +193,6 @@ bot.on("callback_query", async (q) => {
         { delay: rand(300, 700), jobId: jid("conteudinhos", chatId, 1), removeOnComplete: true, removeOnFail: true }
       );
       await queue.add("jobs",
-        { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "step2.mp4", caption: "" } },
-        { delay: rand(1400, 2000), jobId: jid("conteudinhos", chatId, 2), removeOnComplete: true, removeOnFail: true }
-      );
-      await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
           text: "👇 escolhe aí, gostoso",
           extra: { reply_markup: { inline_keyboard: [
@@ -205,7 +201,7 @@ bot.on("callback_query", async (q) => {
             [{ text: "💰 VER PLANOS",      callback_data: "ver_planos"      }],
           ]}},
         }},
-        { delay: rand(2800, 3600), jobId: jid("conteudinhos", chatId, 3), removeOnComplete: true, removeOnFail: true }
+        { delay: rand(1800, 2600), jobId: jid("conteudinhos", chatId, 2), removeOnComplete: true, removeOnFail: true }
       );
       return;
     }
