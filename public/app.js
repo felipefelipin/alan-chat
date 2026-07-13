@@ -175,9 +175,22 @@ function vibrate(ms = 18) {
 function showHome() { mountChat(); }
 
 // ==================== KEYBOARD MANAGER ====================
-// Dono único de tudo que envolve o teclado: altura real (visualViewport),
-// abertura/fechamento, e sincronização do scroll — nada de lógica espalhada.
-// Sem timers de animação; só o resize/scroll nativos + requestAnimationFrame.
+// Dono único de tudo que envolve o teclado. A ALTURA em si não é mais
+// responsabilidade daqui: #app/.full usam `height:100dvh` puro no CSS, e o
+// meta viewport declara `interactive-widget=resizes-content` — então é o
+// próprio engine (Chrome/WebKit) quem redimensiona o content viewport em
+// sincronia nativa (composited, frame a frame) com a animação do teclado do
+// SO. Um `--app-height` calculado via JS a partir de eventos de
+// visualViewport SEMPRE fica atrás dessa animação nativa (os eventos de
+// resize/scroll do visualViewport chegam coalescidos, só depois que a
+// animação do teclado já terminou) — foi essa defasagem entre "engine já
+// redimensionou" e "JS ainda não recebeu o evento" que causava o delay, a
+// área preta (fundo do body aparecendo atrás do #app, que ainda estava no
+// tamanho antigo) e o scroll "travado" (o .chat ainda tinha o clientHeight
+// antigo). Deixando o dvh nativo cuidar disso, o composer (irmão flex do
+// chatShell dentro de .full) acompanha o teclado automaticamente, sem JS.
+// Esse manager cuida só do gesto de "scroll pra cima fecha o teclado" e de
+// manter o fim da conversa visível quando o teclado abre.
 const KeyboardManager = (() => {
   const SCROLL_DISMISS_PX = 44; // gesto decisivo de scroll pra cima fecha o teclado, igual WhatsApp
 
@@ -185,31 +198,7 @@ const KeyboardManager = (() => {
   let chat  = null;
   let isOpen = false;
   let gestureStartTop = 0;
-  let rafId = null;
-  let lastViewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
   let globalGuardsBound = false;
-
-  function applyHeight() {
-    const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    document.documentElement.style.setProperty("--app-height", h + "px");
-  }
-
-  function onViewportChange() {
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(() => {
-      rafId = null;
-      const vv = window.visualViewport;
-      const h = vv ? vv.height : window.innerHeight;
-      const opening = h < lastViewportHeight;
-      lastViewportHeight = h;
-      applyHeight();
-
-      if (document.getElementById("storyVideo")?.style.display === "block") return;
-      // teclado abrindo: se o usuário já estava no fim, mantém o fim visível.
-      // fechando: nada a fazer — o chat recupera altura sozinho via flex, sem salto.
-      if (opening && isOpen) scrollBottom(false);
-    });
-  }
 
   function onFocus() {
     isOpen = true;
@@ -224,7 +213,7 @@ const KeyboardManager = (() => {
     if (chat) gestureStartTop = chat.scrollTop;
   }
 
-  // scroll pra cima decisivo enquanto digita → dispensa o teclado (SO anima o fechamento)
+  // scroll pra cima decisivo enquanto digita → dispensa o teclado (SO anima o fechamento nativamente)
   function onChatScroll() {
     if (!isOpen || !input || !chat) return;
     const scrolledUp = gestureStartTop - chat.scrollTop;
@@ -241,13 +230,7 @@ const KeyboardManager = (() => {
     if (globalGuardsBound) return;
     globalGuardsBound = true;
 
-    applyHeight();
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener("resize", onViewportChange, { passive: true });
-      window.visualViewport.addEventListener("scroll", onViewportChange, { passive: true });
-    }
-
-    // impede o WKWebView de aplicar scroll por cima do resize nativo do visualViewport
+    // impede o WKWebView de aplicar scroll por cima do resize nativo do content viewport
     window.addEventListener("scroll", () => {
       if (window.scrollY !== 0) window.scrollTo(0, 0);
     }, { passive: true });
