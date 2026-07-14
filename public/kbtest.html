@@ -4,54 +4,156 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover,interactive-widget=resizes-content">
 <title>kbtest — experimento isolado</title>
+<style>
+  html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:monospace; background:#000; color:#eee; }
+  #app { position:fixed; inset:0; height:100dvh; display:flex; flex-direction:column; }
+  #scrollArea { flex:1; overflow-y:scroll; padding:8px; }
+  #scrollArea div { padding:10px 4px; border-bottom:1px solid #333; }
+  #composer { display:flex; gap:8px; padding:8px; flex:0 0 auto; background:#111; }
+  #input { flex:1; font-size:16px; padding:8px; }
+  #scenarios { display:flex; gap:6px; padding:6px 8px; flex-wrap:wrap; background:#111; flex:0 0 auto; }
+  #scenarios button { flex:1 1 auto; padding:8px 4px; font-size:11px; min-width:70px; }
+  #log { white-space:pre-wrap; font-size:11px; line-height:1.4; background:#111; color:#0f0; padding:8px; height:32vh; overflow-y:auto; flex:0 0 auto; }
+</style>
 </head>
-<body style="font-family:monospace;margin:0;padding:10px;">
+<body>
 
 <!--
-  Experimento de isolamento — SEM KeyboardController, SEM chat, SEM Telegram
-  SDK, SEM overlays, SEM CSS além do mínimo pra layout não quebrar. Só um
-  input, dois botões, e log completo de cada evento relevante. Objetivo:
-  descobrir se "precisa tocar duas vezes pra reabrir o teclado depois de
-  blur()" acontece mesmo fora do nosso projeto inteiro.
+  Experimento de isolamento, v2 — agora reproduzindo o MESMO gesto de
+  scroll-para-fechar do KeyboardController real (app.js), não um blur()
+  solto. Lógica de touching/pendingDismiss/SCROLL_DISMISS_PX portada
+  literalmente do projeto. 4 cenários de fechamento pra comparar.
 -->
 
-<div style="display:flex;gap:8px;margin-bottom:10px;">
-  <input id="input" type="text" placeholder="toque aqui" style="flex:1;font-size:16px;padding:8px;">
+<div id="app">
+  <div id="scrollArea"></div>
+  <div id="scenarios">
+    <button id="s1">Cenário 1: Blur direto</button>
+    <button id="s3">Cenário 3: Toque fora</button>
+    <button id="focusBtn">focus()</button>
+    <button id="clearBtn">limpar</button>
+  </div>
+  <div id="composer">
+    <input id="input" type="text" placeholder="toque aqui pra abrir o teclado">
+  </div>
+  <div id="log"></div>
 </div>
-<div style="display:flex;gap:8px;margin-bottom:10px;">
-  <button id="focusBtn" style="flex:1;padding:10px;">focus()</button>
-  <button id="blurBtn" style="flex:1;padding:10px;">blur()</button>
-  <button id="clearBtn" style="flex:1;padding:10px;">limpar log</button>
-</div>
-
-<div id="log" style="white-space:pre-wrap;font-size:12px;line-height:1.4;background:#111;color:#0f0;padding:8px;height:60vh;overflow-y:auto;"></div>
 
 <script>
   const input = document.getElementById("input");
+  const scrollArea = document.getElementById("scrollArea");
   const logEl = document.getElementById("log");
   const t0 = performance.now();
   const entries = [];
 
-  function log(event) {
+  // conteúdo longo scrollável, só pra existir espaço pra rolar
+  for (let i = 1; i <= 80; i++) {
+    const d = document.createElement("div");
+    d.textContent = `linha ${i} — conteúdo scrollável`;
+    scrollArea.appendChild(d);
+  }
+
+  function tag(el) {
+    if (el === input) return "#input";
+    if (el === document.body) return "body";
+    if (!el) return String(el);
+    return el.id ? `#${el.id}` : `<${el.tagName?.toLowerCase()}>`;
+  }
+
+  function log(event, extra) {
     const vv = window.visualViewport;
     const entry = {
       t: Math.round((performance.now() - t0) * 10) / 10,
       event,
-      activeElement: document.activeElement === input ? "#input" : (document.activeElement === document.body ? "body" : String(document.activeElement)),
+      activeElement: tag(document.activeElement),
       vvHeight: vv ? Math.round(vv.height * 10) / 10 : null,
       vvOffsetTop: vv ? Math.round(vv.offsetTop * 10) / 10 : null,
       inputMatchesFocus: input.matches(":focus"),
       documentHasFocus: document.hasFocus(),
+      scrollTop: scrollArea.scrollTop,
+      isOpen, touching, pendingDismiss,
+      ...extra,
     };
     entries.push(entry);
-    const line = `[t+${entry.t}ms] ${event.padEnd(12)} activeElement=${entry.activeElement.padEnd(8)} vvHeight=${entry.vvHeight} vvOffsetTop=${entry.vvOffsetTop} inputMatchesFocus=${entry.inputMatchesFocus}`;
+    const extraStr = extra ? " " + JSON.stringify(extra) : "";
+    const line = `[t+${entry.t}ms] ${event.padEnd(28)} active=${entry.activeElement.padEnd(8)} vvH=${entry.vvHeight} scrollTop=${entry.scrollTop}${extraStr}`;
     console.log(line, entry);
     logEl.textContent += line + "\n";
     logEl.scrollTop = logEl.scrollHeight;
   }
 
-  ["pointerdown", "pointerup", "touchstart", "touchend", "click", "focus", "blur"].forEach((evt) => {
-    input.addEventListener(evt, () => log(`input:${evt}`), { passive: true });
+  // ── PORTADO LITERALMENTE de KeyboardController (public/app.js) ───────────
+  const SCROLL_DISMISS_PX = 44;
+  let isOpen = false;
+  let touching = false;
+  let pendingDismiss = false;
+  let gestureStartTop = 0;
+  let lastDismissAt = null;
+
+  function dismissKeyboard() {
+    log("dismissKeyboard() chamado, ANTES do blur()");
+    pendingDismiss = false;
+    input.blur();
+    log("dismissKeyboard() DEPOIS do blur()");
+    lastDismissAt = performance.now();
+  }
+
+  function onChatTouchStart() {
+    gestureStartTop = scrollArea.scrollTop;
+    touching = true;
+    pendingDismiss = false;
+    log("scrollArea:touchstart");
+  }
+
+  function onChatScroll() {
+    if (!isOpen) return;
+    const scrolledUp = gestureStartTop - scrollArea.scrollTop;
+    if (scrolledUp <= SCROLL_DISMISS_PX) return;
+    if (touching) {
+      if (!pendingDismiss) log("scroll cruzou limiar, dedo na tela -> pendingDismiss=true", { deltaScroll: scrolledUp });
+      pendingDismiss = true;
+      return;
+    }
+    log("scroll cruzou limiar, dedo solto (inércia) -> dismiss imediato", { deltaScroll: scrolledUp });
+    dismissKeyboard();
+  }
+
+  function onChatTouchEnd() {
+    log("scrollArea:touchend", { pendingDismiss });
+    touching = false;
+    if (pendingDismiss) dismissKeyboard();
+  }
+
+  // onOutsideTap — igual ao KeyboardController: clique fora do input, só se isOpen
+  function onOutsideTap(e) {
+    if (!isOpen) return;
+    if (e.target === input) return;
+    log("click fora do input -> input.blur() direto (onOutsideTap)");
+    input.blur();
+  }
+
+  scrollArea.addEventListener("touchstart", onChatTouchStart, { passive: true });
+  scrollArea.addEventListener("touchend", onChatTouchEnd, { passive: true });
+  scrollArea.addEventListener("touchcancel", onChatTouchEnd, { passive: true });
+  scrollArea.addEventListener("scroll", onChatScroll, { passive: true });
+  scrollArea.addEventListener("click", onOutsideTap);
+  // ── fim do trecho portado ──────────────────────────────────────────────
+
+  ["pointerdown", "pointerup", "touchstart", "touchend", "click"].forEach((evt) => {
+    input.addEventListener(evt, () => {
+      const extra = lastDismissAt !== null ? { msSinceDismiss: Math.round(performance.now() - lastDismissAt) } : undefined;
+      log(`input:${evt}`, extra);
+    }, { passive: true });
+  });
+
+  input.addEventListener("focus", () => {
+    isOpen = true;
+    const extra = lastDismissAt !== null ? { msSinceDismiss: Math.round(performance.now() - lastDismissAt) } : undefined;
+    log("input:focus", extra);
+  });
+  input.addEventListener("blur", () => {
+    isOpen = false;
+    log("input:blur");
   });
 
   if (window.visualViewport) {
@@ -59,12 +161,24 @@
     window.visualViewport.addEventListener("scroll", () => log("visualViewport:scroll"));
   }
 
+  // Cenário 1 — blur direto, sem gesto (equivalente ao dismissKeyboard() chamado fora do fluxo de scroll)
+  document.getElementById("s1").addEventListener("click", () => {
+    log("=== CENÁRIO 1: botão blur direto ===");
+    dismissKeyboard();
+  });
+
+  // Cenário 3 — toque fora do input (fora da scrollArea também conta, mas o
+  // botão simula clicar num espaço qualquer da UI que não é o input)
+  document.getElementById("s3").addEventListener("click", () => {
+    log("=== CENÁRIO 3: toque fora (via botão, mesmo efeito do onOutsideTap) ===");
+    if (isOpen) input.blur();
+  });
+
   document.getElementById("focusBtn").addEventListener("click", () => { log("button:focus() chamado"); input.focus(); });
-  document.getElementById("blurBtn").addEventListener("click", () => { log("button:blur() chamado"); input.blur(); });
   document.getElementById("clearBtn").addEventListener("click", () => { entries.length = 0; logEl.textContent = ""; });
 
   window.kbTestDump = () => { console.table(entries); return entries; };
-  log("página carregada — window.kbTestDump() pra tabela completa");
+  log("página carregada. Cenário 2 (scroll) = focar o input e arrastar a lista pra cima até fechar sozinho. Cenário 4 (sistema) = focar o input e usar o gesto/botão voltar do Android, sem tocar em nada da página.");
 </script>
 </body>
 </html>
