@@ -237,27 +237,114 @@ const KeyboardController = (() => {
 
   // ── INSTRUMENTAÇÃO TEMPORÁRIA (investigação do bug "precisa tocar duas
   // vezes") ────────────────────────────────────────────────────────────────
-  // Não altera nenhum comportamento — só adiciona logs. Remover depois que
-  // a causa raiz for confirmada. Um único flag liga/desliga tudo.
+  // Timeline completa, só leitura — nenhuma linha aqui escreve em layout,
+  // scroll ou foco; tudo que existe fora desta seção continua exatamente
+  // como era. Um único flag liga/desliga tudo. Remover a seção inteira
+  // depois que a causa raiz for confirmada.
   const KB_DEBUG = true;
-  const kbT0 = Date.now();
+  const kbTimeline = [];
+  const KB_TIMELINE_MAX = 800;
+  let kbState = "Idle"; // rótulo derivado, só para log — nunca controla comportamento real
+
   function kbTag(el) {
     if (!el) return String(el);
     if (el === document.body) return "body";
     if (el === document.documentElement) return "html";
     return el.id ? `#${el.id}` : `<${el.tagName?.toLowerCase()}>`;
   }
+
+  function setKbState(next) {
+    if (!KB_DEBUG || next === kbState) return;
+    const prev = kbState;
+    kbState = next;
+    kbLog("STATE_TRANSITION", { from: prev, to: next });
+  }
+
+  // snapshot completo de tudo que foi pedido: timestamps de alta resolução
+  // (performance.now()), visualViewport (height/offsetTop/scale/pageTop/
+  // pageLeft), innerHeight, matches(':focus')/hasFocus(), bounding rects do
+  // input/composer, métricas de scroll do chat, e navigator.virtualKeyboard
+  // quando existir (só Chromium — ver Capítulo 3 da doc de arquitetura).
   function kbLog(event, extra) {
-    if (!KB_DEBUG) return;
-    console.log(
-      `[KB t+${Date.now() - kbT0}ms] ${event}`,
-      {
-        activeElement: kbTag(document.activeElement),
-        isOpen, touching, pendingDismiss,
-        followRafActive: followRafId !== null,
-        ...extra,
-      }
-    );
+    if (!KB_DEBUG) return null;
+    const vv = window.visualViewport;
+    const vk = navigator.virtualKeyboard;
+    const inputRect = input?.getBoundingClientRect?.();
+    const composerEl = document.querySelector(".composer");
+    const composerRect = composerEl?.getBoundingClientRect?.();
+
+    const entry = {
+      t: Math.round(performance.now() * 10) / 10,
+      event,
+      state: kbState,
+      activeElement: kbTag(document.activeElement),
+      inputMatchesFocus: input ? input.matches(":focus") : null,
+      documentHasFocus: document.hasFocus(),
+      vvHeight: vv ? Math.round(vv.height * 10) / 10 : null,
+      vvOffsetTop: vv ? Math.round(vv.offsetTop * 10) / 10 : null,
+      vvScale: vv ? vv.scale : null,
+      vvPageTop: vv ? Math.round(vv.pageTop * 10) / 10 : null,
+      vvPageLeft: vv ? Math.round(vv.pageLeft * 10) / 10 : null,
+      innerHeight: window.innerHeight,
+      inputBottom: inputRect ? Math.round(inputRect.bottom * 10) / 10 : null,
+      composerBottom: composerRect ? Math.round(composerRect.bottom * 10) / 10 : null,
+      chatScrollTop: chat ? chat.scrollTop : null,
+      chatScrollHeight: chat ? chat.scrollHeight : null,
+      chatClientHeight: chat ? chat.clientHeight : null,
+      vkOverlaysContent: vk ? vk.overlaysContent : null,
+      vkBoundingHeight: vk?.boundingRect ? vk.boundingRect.height : null,
+      isOpen, touching, pendingDismiss,
+      followRafActive: followRafId !== null,
+      ...extra,
+    };
+    kbTimeline.push(entry);
+    if (kbTimeline.length > KB_TIMELINE_MAX) kbTimeline.shift();
+    console.log(`[KB t+${entry.t}ms] ${event}`, entry);
+    return entry;
+  }
+
+  // ── loop de OBSERVAÇÃO durante o fechamento — só leitura, nunca escreve
+  // --kb-height/--kb-offset/scrollTop (isso continua proibido durante o
+  // fechamento, ver item 4 da arquitetura). Existe só pra logar
+  // visualViewport/chat/composer a cada frame enquanto o teclado fecha, do
+  // jeito que foi pedido na investigação.
+  let closeObsRafId = null;
+  let closeObsLastHeight = 0;
+  let closeObsStableFrames = 0;
+  const CLOSE_OBS_STABLE_FRAMES = 3;
+  const CLOSE_OBS_SAFETY_FRAMES = 180;
+
+  function closeObservationFrame(frameCount) {
+    const vv = window.visualViewport;
+    const h = vv ? vv.height : window.innerHeight;
+    kbLog("closeObs:frame", { frameCount });
+
+    if (Math.abs(h - closeObsLastHeight) > 0.5) {
+      closeObsLastHeight = h;
+      closeObsStableFrames = 0;
+    } else {
+      closeObsStableFrames++;
+    }
+
+    if (closeObsStableFrames >= CLOSE_OBS_STABLE_FRAMES || frameCount >= CLOSE_OBS_SAFETY_FRAMES) {
+      closeObsRafId = null;
+      setKbState("KeyboardClosed");
+      return;
+    }
+    closeObsRafId = requestAnimationFrame(() => closeObservationFrame(frameCount + 1));
+  }
+
+  function startCloseObservation() {
+    if (closeObsRafId) cancelAnimationFrame(closeObsRafId);
+    closeObsLastHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    closeObsStableFrames = 0;
+    closeObsRafId = requestAnimationFrame(() => closeObservationFrame(0));
+  }
+
+  if (KB_DEBUG) {
+    window.kbDumpTimeline = () => { console.table(kbTimeline); return kbTimeline; };
+    window.kbClearTimeline = () => { kbTimeline.length = 0; console.log("[KB] timeline limpa"); };
+    console.log("[KB] instrumentação ativa — window.kbDumpTimeline() pra ver a tabela completa a qualquer momento");
   }
 
   let input = null;
@@ -299,9 +386,11 @@ const KeyboardController = (() => {
 
   function followKeyboardFrame(frameCount) {
     if (!chat) { followRafId = null; return; }
+    if (frameCount === 0) setKbState("ViewportUpdating");
 
     const { h, top } = readViewport();
     applyFrame(h, top);
+    kbLog("follow:frame", { frameCount, h, top });
 
     if (Math.abs(h - followLastHeight) > 0.5) {
       followSawChange = true;
@@ -316,6 +405,7 @@ const KeyboardController = (() => {
       followRafId = null;
       clearViewportOverride();
       kbLog("follow:settled", { frameCount, h, top });
+      setKbState("KeyboardOpened");
       return;
     }
     followRafId = requestAnimationFrame(() => followKeyboardFrame(frameCount + 1));
@@ -332,6 +422,7 @@ const KeyboardController = (() => {
   }
 
   function onFocus() {
+    setKbState("KeyboardOpening");
     kbLog("event:focus (native, no #input)");
     isOpen = true;
     startFollowing();
@@ -339,11 +430,15 @@ const KeyboardController = (() => {
 
   // Fechamento nunca é tocado por JS (ver item 4 da arquitetura acima) —
   // só cancela um loop de ABERTURA que porventura ainda estivesse rodando.
+  // O loop de OBSERVAÇÃO (startCloseObservation) é só leitura/log, não
+  // escreve nada — ver definição acima.
   function onBlur() {
+    setKbState("KeyboardClosing");
     kbLog("event:blur (native, no #input)");
     isOpen = false;
     if (followRafId) { cancelAnimationFrame(followRafId); followRafId = null; }
     clearViewportOverride();
+    if (KB_DEBUG) startCloseObservation();
   }
 
   function onChatTouchStart() {
@@ -456,6 +551,7 @@ const KeyboardController = (() => {
   // idêntico, porque é o KeyboardController quem decide o que acontece em
   // volta (loop de sincronização, estado isOpen).
   function requestFocus() {
+    setKbState("FocusRequested");
     kbLog("requestFocus() chamado");
     input?.focus();
   }
