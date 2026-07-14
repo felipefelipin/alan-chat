@@ -187,7 +187,11 @@ function showHome() { mountChat(); }
 // Um único dono por responsabilidade:
 //   KeyboardMachine   — estado atual, geração atual, transições
 //   ViewportTracker   — visualViewport -> --kb-height/--kb-offset (só em Opening)
-//   ScrollController  — scrollTop de ancoragem + gesto de scroll-pra-fechar
+//   ScrollController  — só a ancoragem de scroll no fim da conversa; NÃO
+//                        existe mais gesto de "scroll fecha o teclado" —
+//                        o teclado só fecha com toque fora do campo
+//                        (FocusGateway.onOutsideTap) ou o próprio usuário
+//                        dispensando pelo SO
 //   FocusGateway      — única autoridade de focus()/blur() no textarea real
 //                        (a referência do elemento é privada ao módulo —
 //                        nenhum outro trecho do arquivo pode chamar
@@ -228,12 +232,11 @@ const KeyboardMachine = (() => {
   };
 })();
 
+// Só ancora o scroll no fim durante a abertura do teclado — não existe mais
+// gesto de "scroll fecha o teclado" (removido a pedido: o teclado só fecha
+// com toque fora do campo, via FocusGateway.onOutsideTap).
 const ScrollController = (() => {
-  const SCROLL_DISMISS_PX = 44; // gesto decisivo de scroll pra cima fecha o teclado, igual WhatsApp
   let chat = null;
-  let touching = false;
-  let gestureStartTop = 0;
-  let pendingDismiss = false;
 
   function attach(chatEl) { chat = chatEl; }
 
@@ -245,38 +248,7 @@ const ScrollController = (() => {
     isUserNearBottom = true; // mantém consistência com o sistema de auto-scroll de novas mensagens
   }
 
-  function onTouchStart() {
-    if (chat) gestureStartTop = chat.scrollTop;
-    touching = true;
-    pendingDismiss = false;
-  }
-
-  // Nunca chama FocusGateway.requestDismiss() com o dedo ainda na tela — só
-  // marca a intenção; a ação de fato só dispara no touchend (gesto
-  // concluído) ou durante scroll por inércia com o dedo já solto.
-  function onScroll() {
-    const s = KeyboardMachine.state;
-    if (s !== "Opening" && s !== "Opened") return;
-    if (!chat) return;
-    const scrolledUp = gestureStartTop - chat.scrollTop;
-    if (scrolledUp <= SCROLL_DISMISS_PX) return;
-    if (touching) { pendingDismiss = true; return; }
-    FocusGateway.requestDismiss();
-  }
-
-  function onTouchEnd() {
-    touching = false;
-    if (pendingDismiss) { pendingDismiss = false; FocusGateway.requestDismiss(); }
-  }
-
-  function bindGestureListeners(chatEl) {
-    chatEl.addEventListener("touchstart", onTouchStart, { passive: true });
-    chatEl.addEventListener("touchend", onTouchEnd, { passive: true });
-    chatEl.addEventListener("touchcancel", onTouchEnd, { passive: true });
-    chatEl.addEventListener("scroll", onScroll, { passive: true });
-  }
-
-  return { attach, anchorToBottom, bindGestureListeners };
+  return { attach, anchorToBottom };
 })();
 
 const ViewportTracker = (() => {
@@ -374,7 +346,6 @@ const FocusGateway = (() => {
 
     bindGlobalGuards();
     ScrollController.attach(chatEl);
-    ScrollController.bindGestureListeners(chatEl);
 
     textarea.addEventListener("focus", () => KeyboardMachine.transition("Opening", "FOCUS_RECEIVED"));
     textarea.addEventListener("blur", () => {
@@ -876,9 +847,6 @@ function mountChat() {
       <div class="composer" id="composer">
         <button class="composerAttach" type="button" onclick="return false;">+</button>
         <div class="composerField">
-          <button class="composerGhostBtn" type="button" onclick="return false;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8696a0" stroke-width="1.8"><circle cx="12" cy="12" r="9.5"/><path d="M8.5 14.5s1.3 1.8 3.5 1.8 3.5-1.8 3.5-1.8" stroke-linecap="round"/><circle cx="9" cy="9.5" r=".9" fill="#8696a0"/><circle cx="15" cy="9.5" r=".9" fill="#8696a0"/></svg>
-          </button>
           <textarea id="input" rows="1" placeholder="Mensagem" autocomplete="off" autocorrect="off"></textarea>
           <button class="composerCamera" type="button" onclick="return false;">
             <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5a2 2 0 0 1 2-2h1.2l1-1.6h7.6l1 1.6H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-9z"/><circle cx="12" cy="13" r="3.4"/></svg>
@@ -888,7 +856,7 @@ function mountChat() {
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><line x1="12" y1="18" x2="12" y2="21.5"/></svg>
         </button>
         <button class="send is-hidden" id="send" type="button" onclick="onSend()">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="#fff"><path d="M3 11.5 21 3l-6.5 18-3.8-7.3z"/><path d="M21 3 10.7 13.3" stroke="#128c5a" stroke-width="1.4"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="20" y2="12"/><polyline points="13 5 20 12 13 19"/></svg>
         </button>
       </div>
 
