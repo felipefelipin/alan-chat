@@ -39,7 +39,7 @@ body{
   right:0;
   /* 100dvh é a base (cobre o resize nativo quando o engine honra
      interactive-widget=resizes-content). --kb-height é escrita pelo
-     KeyboardController via rAF, lendo visualViewport.height a cada frame
+     ViewportTracker via rAF, lendo visualViewport.height a cada frame
      durante a abertura do teclado — cobre o caso (comum em WebViews
      embarcadas, como a do Telegram) em que o engine NÃO redimensiona o
      layout viewport de verdade e só faz "pan" do visual viewport, deixando
@@ -207,7 +207,7 @@ body{
   flex-shrink:0;
   z-index:10;
   display:flex;
-  align-items:center;
+  align-items:flex-end; /* botões ficam ancorados embaixo enquanto o campo cresce */
   gap:4px;
   padding:8px 6px calc(8px + env(safe-area-inset-bottom));
   background:var(--footer);
@@ -234,31 +234,37 @@ body{
   padding-bottom:1px;
 }
 
-/* Campo input — 42px altura, pill, #2A3942 */
+/* Campo input — 42px altura mínima, pill, cresce com o texto até um teto */
 .composerField{
   flex:1;
-  height:42px;
-  border-radius:9999px;
+  min-height:42px;
+  height:auto;
+  border-radius:21px;
   background:var(--whatsapp-input-bg);
   border:none;
   display:flex;
-  align-items:center;
+  align-items:flex-end;
   padding:0 12px;
   position:relative;
 }
 
-.composer input{
+.composer textarea{
   flex:1;
   background:transparent;
   border:0;
   outline:none;
+  resize:none;
   color:var(--text);
   font-size:15px;
+  font-family:inherit;
   line-height:1.3;
-  padding:0;
+  padding:9px 0;
+  max-height:120px;
+  overflow-y:auto;
+  field-sizing:content; /* nativo quando suportado — autoGrowComposer() no JS cobre o resto */
 }
 
-.composer input::placeholder{ color:#8696a0 }
+.composer textarea::placeholder{ color:#8696a0 }
 
 /* Emoji button dentro da área de input */
 .composerGhostBtn{

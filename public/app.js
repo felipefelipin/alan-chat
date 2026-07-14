@@ -174,321 +174,178 @@ function vibrate(ms = 18) {
 // ── FIX #4: showHome aponta para mountChat ────────────────────────────────────
 function showHome() { mountChat(); }
 
-// ==================== KEYBOARD CONTROLLER ====================
-// Dono único de: focus/blur do input, estado do teclado, sincronização de
-// viewport (altura + offset), scroll de ancoragem no fim da conversa, e o
-// gesto de "scroll pra cima fecha o teclado". Nenhum outro trecho do app
-// deve tocar em chat.scrollTop / --kb-height / --kb-offset / input.blur()
-// fora daqui.
+// ==================== SISTEMA DE TECLADO v2 ====================
+// Reconstrução completa — substitui o antigo KeyboardController.
 //
-// ── ARQUITETURA (por quê cada peça existe) ──────────────────────────────────
+// Máquina de estados determinística, quatro estados exclusivos:
 //
-// 1) ALTURA/OFFSET (--kb-height / --kb-offset, aplicadas via CSS em #app e
-//    .full — ver styles.css): escritas por um loop de requestAnimationFrame
-//    que lê window.visualViewport.height/offsetTop a cada frame, nunca por
-//    listener de evento. Motivo: o evento 'resize'/'scroll' do
-//    visualViewport é coalescido pelo engine — só chega DEPOIS que a
-//    animação do teclado já terminou, o que produz exatamente os sintomas
-//    relatados (espaço vazio seguido de um salto tardio; área preta
-//    enquanto o app espera o evento atrasado). Já a PROPRIEDADE
-//    visualViewport.height é atualizada pelo compositor a cada frame
-//    renderizado — lendo-a de dentro do rAF (em vez de esperar o evento)
-//    conseguimos o valor real do frame atual, sem depender de coalescing.
-//    100dvh continua como base no CSS (cobre o caso ideal em que o engine
-//    honra interactive-widget=resizes-content); --kb-height é o reforço
-//    ativo pros casos (comuns em WebViews embarcadas) em que o engine só
-//    faz "pan" do visual viewport e dvh nunca muda sozinho.
+//   Idle ──FOCUS_RECEIVED──▶ Opening ──VIEWPORT_STABLE──▶ Opened
+//    ▲                                                        │
+//    └──────────────── Closing ◀──BLUR_RECEIVED───────────────┘
+//         (transição imediata e síncrona de volta a Idle)
 //
-// 2) SCROLL (chat.scrollTop): calculado NA MESMA leitura de frame que a
-//    altura, nunca em separado — altura e scroll derivam sempre da mesma
-//    amostra, então jamais ficam dessincronizados (isso é o que elimina o
-//    "primeiro scroll, depois um segundo ajuste"). Só existe loop de scroll
-//    durante a ABERTURA — não há loop nenhum rodando durante o fechamento
-//    (ver item 4).
+// Um único dono por responsabilidade:
+//   KeyboardMachine   — estado atual, geração atual, transições
+//   ViewportTracker   — visualViewport -> --kb-height/--kb-offset (só em Opening)
+//   ScrollController  — scrollTop de ancoragem + gesto de scroll-pra-fechar
+//   FocusGateway      — única autoridade de focus()/blur() no textarea real
+//                        (a referência do elemento é privada ao módulo —
+//                        nenhum outro trecho do arquivo pode chamar
+//                        .focus()/.blur() nele diretamente; tem que passar
+//                        por FocusGateway.requestFocus()/requestDismiss())
 //
-// 3) FIM DO LOOP: o rAF para sozinho quando a altura fica estável por
-//    alguns frames seguidos — detecção de fim de animação por comparação de
-//    frames, não um timer/delay. Ao parar, devolve o controle pro dvh
-//    nativo (removeProperty), nunca fica travado num valor JS obsoleto.
+// Proteção contra callback de ciclo antigo: toda transição pra "Opening" ou
+// "Closing" incrementa `generation`. O loop de requestAnimationFrame do
+// ViewportTracker captura a geração no instante em que é criado e se
+// autoverifica a cada frame (`if (myGeneration !== generation) return`) —
+// não depende de lembrar de cancelar em nenhum ponto de entrada, é
+// estruturalmente impossível um frame de um ciclo antigo alterar layout de
+// um ciclo novo.
 //
-// 4) BUG DO "SEGUNDO TOQUE" (causa raiz real): o rAF de sincronização de
-//    viewport SÓ roda durante a ABERTURA (onFocus). Ele NUNCA roda durante
-//    o fechamento (onBlur) — essa é a correção que importa. Uma versão
-//    anterior também rodava esse loop no blur, pra deixar o fechamento
-//    "sem espaço vazio": escrever --kb-height/--kb-offset a cada frame
-//    enquanto o SO ainda está processando sua própria animação de
-//    fechamento do teclado colide com a máquina de estados interna do
-//    WebView (associação input↔IME) — o DOM aceita o focus() do toque
-//    seguinte normalmente (por isso um pequeno "ajuste" de scroll era
-//    visível), mas o teclado físico não era levantado, só no segundo
-//    toque, depois que tudo estabilizava sozinho. O fechamento agora é
-//    inteiramente do CSS/SO (100dvh nativo): onBlur só cancela um loop de
-//    ABERTURA que porventura ainda estivesse rodando e limpa qualquer
-//    override residual — nunca reage ao fechamento em si.
-//    Complementar: input.blur() do gesto de scroll-pra-fechar nunca é
-//    chamado em pleno touchmove (dedo ainda na tela) — só no touchend
-//    (gesto concluído) ou durante scroll por inércia com o dedo já solto —
-//    evita chamar blur() no meio de um toque ativo, boa prática mas não a
-//    causa raiz deste bug.
-const KeyboardController = (() => {
+// Fechamento nunca escreve layout via JS (lição já provada em correções
+// anteriores): "Closing" só limpa --kb-height/--kb-offset e devolve o
+// controle ao CSS/dvh nativo — nenhum rAF roda durante o fechamento.
+
+const KeyboardMachine = (() => {
+  const VALID = new Set(["Idle", "Opening", "Opened", "Closing"]);
+  let state = "Idle";
+  let generation = 0;
+  const listeners = new Set();
+
+  function transition(next, event) {
+    if (!VALID.has(next)) throw new Error(`KeyboardMachine: estado inválido "${next}"`);
+    const prev = state;
+    state = next;
+    if (next === "Opening" || next === "Closing") generation++;
+    listeners.forEach((fn) => fn(state, prev, event));
+  }
+
+  return {
+    get state() { return state; },
+    get generation() { return generation; },
+    transition,
+    onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); },
+  };
+})();
+
+const ScrollController = (() => {
   const SCROLL_DISMISS_PX = 44; // gesto decisivo de scroll pra cima fecha o teclado, igual WhatsApp
-  const FOLLOW_STABLE_FRAMES = 3;   // frames idênticos seguidos = animação estabilizou
-  const FOLLOW_SAFETY_FRAMES = 180; // ~3s a 60fps — teto de segurança, nunca deveria ser atingido
-
-  // ── INSTRUMENTAÇÃO TEMPORÁRIA (investigação do bug "precisa tocar duas
-  // vezes") ────────────────────────────────────────────────────────────────
-  // Timeline completa, só leitura — nenhuma linha aqui escreve em layout,
-  // scroll ou foco; tudo que existe fora desta seção continua exatamente
-  // como era. Um único flag liga/desliga tudo. Remover a seção inteira
-  // depois que a causa raiz for confirmada.
-  const KB_DEBUG = true;
-  const kbTimeline = [];
-  const KB_TIMELINE_MAX = 800;
-  let kbState = "Idle"; // rótulo derivado, só para log — nunca controla comportamento real
-
-  function kbTag(el) {
-    if (!el) return String(el);
-    if (el === document.body) return "body";
-    if (el === document.documentElement) return "html";
-    return el.id ? `#${el.id}` : `<${el.tagName?.toLowerCase()}>`;
-  }
-
-  function setKbState(next) {
-    if (!KB_DEBUG || next === kbState) return;
-    const prev = kbState;
-    kbState = next;
-    kbLog("STATE_TRANSITION", { from: prev, to: next });
-  }
-
-  // snapshot completo de tudo que foi pedido: timestamps de alta resolução
-  // (performance.now()), visualViewport (height/offsetTop/scale/pageTop/
-  // pageLeft), innerHeight, matches(':focus')/hasFocus(), bounding rects do
-  // input/composer, métricas de scroll do chat, e navigator.virtualKeyboard
-  // quando existir (só Chromium — ver Capítulo 3 da doc de arquitetura).
-  function kbLog(event, extra) {
-    if (!KB_DEBUG) return null;
-    const vv = window.visualViewport;
-    const vk = navigator.virtualKeyboard;
-    const inputRect = input?.getBoundingClientRect?.();
-    const composerEl = document.querySelector(".composer");
-    const composerRect = composerEl?.getBoundingClientRect?.();
-
-    const entry = {
-      t: Math.round(performance.now() * 10) / 10,
-      event,
-      state: kbState,
-      activeElement: kbTag(document.activeElement),
-      inputMatchesFocus: input ? input.matches(":focus") : null,
-      documentHasFocus: document.hasFocus(),
-      vvHeight: vv ? Math.round(vv.height * 10) / 10 : null,
-      vvOffsetTop: vv ? Math.round(vv.offsetTop * 10) / 10 : null,
-      vvScale: vv ? vv.scale : null,
-      vvPageTop: vv ? Math.round(vv.pageTop * 10) / 10 : null,
-      vvPageLeft: vv ? Math.round(vv.pageLeft * 10) / 10 : null,
-      innerHeight: window.innerHeight,
-      inputBottom: inputRect ? Math.round(inputRect.bottom * 10) / 10 : null,
-      composerBottom: composerRect ? Math.round(composerRect.bottom * 10) / 10 : null,
-      chatScrollTop: chat ? chat.scrollTop : null,
-      chatScrollHeight: chat ? chat.scrollHeight : null,
-      chatClientHeight: chat ? chat.clientHeight : null,
-      vkOverlaysContent: vk ? vk.overlaysContent : null,
-      vkBoundingHeight: vk?.boundingRect ? vk.boundingRect.height : null,
-      isOpen, touching, pendingDismiss,
-      followRafActive: followRafId !== null,
-      ...extra,
-    };
-    kbTimeline.push(entry);
-    if (kbTimeline.length > KB_TIMELINE_MAX) kbTimeline.shift();
-    console.log(`[KB t+${entry.t}ms] ${event}`, entry);
-    return entry;
-  }
-
-  // ── loop de OBSERVAÇÃO durante o fechamento — só leitura, nunca escreve
-  // --kb-height/--kb-offset/scrollTop (isso continua proibido durante o
-  // fechamento, ver item 4 da arquitetura). Existe só pra logar
-  // visualViewport/chat/composer a cada frame enquanto o teclado fecha, do
-  // jeito que foi pedido na investigação.
-  let closeObsRafId = null;
-  let closeObsLastHeight = 0;
-  let closeObsStableFrames = 0;
-  const CLOSE_OBS_STABLE_FRAMES = 3;
-  const CLOSE_OBS_SAFETY_FRAMES = 180;
-
-  function closeObservationFrame(frameCount) {
-    const vv = window.visualViewport;
-    const h = vv ? vv.height : window.innerHeight;
-    kbLog("closeObs:frame", { frameCount });
-
-    if (Math.abs(h - closeObsLastHeight) > 0.5) {
-      closeObsLastHeight = h;
-      closeObsStableFrames = 0;
-    } else {
-      closeObsStableFrames++;
-    }
-
-    if (closeObsStableFrames >= CLOSE_OBS_STABLE_FRAMES || frameCount >= CLOSE_OBS_SAFETY_FRAMES) {
-      closeObsRafId = null;
-      setKbState("KeyboardClosed");
-      return;
-    }
-    closeObsRafId = requestAnimationFrame(() => closeObservationFrame(frameCount + 1));
-  }
-
-  function startCloseObservation() {
-    if (closeObsRafId) cancelAnimationFrame(closeObsRafId);
-    closeObsLastHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    closeObsStableFrames = 0;
-    closeObsRafId = requestAnimationFrame(() => closeObservationFrame(0));
-  }
-
-  if (KB_DEBUG) {
-    window.kbDumpTimeline = () => { console.table(kbTimeline); return kbTimeline; };
-    window.kbClearTimeline = () => { kbTimeline.length = 0; console.log("[KB] timeline limpa"); };
-    console.log("[KB] instrumentação ativa — window.kbDumpTimeline() pra ver a tabela completa a qualquer momento");
-  }
-
-  let input = null;
-  let chat  = null;
-  let isOpen = false;
-  let globalGuardsBound = false;
-
-  // gesto de scroll-para-fechar
-  let gestureStartTop = 0;
+  let chat = null;
   let touching = false;
+  let gestureStartTop = 0;
   let pendingDismiss = false;
 
-  // loop de sincronização de viewport — ativo SÓ na abertura (ver onBlur).
-  let followRafId = null;
-  let followLastHeight = 0;
-  let followSawChange = false;
-  let followStableFrames = 0;
+  function attach(chatEl) { chat = chatEl; }
+
+  // chamado pelo ViewportTracker, na mesma leitura de frame que a altura —
+  // altura e scroll sempre derivados da mesma amostra, nunca dessincronizados.
+  function anchorToBottom() {
+    if (!chat) return;
+    chat.scrollTop = chat.scrollHeight - chat.clientHeight;
+    isUserNearBottom = true; // mantém consistência com o sistema de auto-scroll de novas mensagens
+  }
+
+  function onTouchStart() {
+    if (chat) gestureStartTop = chat.scrollTop;
+    touching = true;
+    pendingDismiss = false;
+  }
+
+  // Nunca chama FocusGateway.requestDismiss() com o dedo ainda na tela — só
+  // marca a intenção; a ação de fato só dispara no touchend (gesto
+  // concluído) ou durante scroll por inércia com o dedo já solto.
+  function onScroll() {
+    const s = KeyboardMachine.state;
+    if (s !== "Opening" && s !== "Opened") return;
+    if (!chat) return;
+    const scrolledUp = gestureStartTop - chat.scrollTop;
+    if (scrolledUp <= SCROLL_DISMISS_PX) return;
+    if (touching) { pendingDismiss = true; return; }
+    FocusGateway.requestDismiss();
+  }
+
+  function onTouchEnd() {
+    touching = false;
+    if (pendingDismiss) { pendingDismiss = false; FocusGateway.requestDismiss(); }
+  }
+
+  function bindGestureListeners(chatEl) {
+    chatEl.addEventListener("touchstart", onTouchStart, { passive: true });
+    chatEl.addEventListener("touchend", onTouchEnd, { passive: true });
+    chatEl.addEventListener("touchcancel", onTouchEnd, { passive: true });
+    chatEl.addEventListener("scroll", onScroll, { passive: true });
+  }
+
+  return { attach, anchorToBottom, bindGestureListeners };
+})();
+
+const ViewportTracker = (() => {
+  const STABLE_FRAMES = 3;   // frames idênticos seguidos = animação estabilizou
+  const SAFETY_FRAMES = 180; // ~3s a 60fps — teto de segurança, nunca deveria ser atingido
 
   function readViewport() {
     const vv = window.visualViewport;
-    return vv
-      ? { h: vv.height, top: vv.offsetTop }
-      : { h: window.innerHeight, top: 0 };
+    return vv ? { h: vv.height, top: vv.offsetTop } : { h: window.innerHeight, top: 0 };
   }
 
-  function applyFrame(h, top) {
+  function applyHeight(h, top) {
     document.documentElement.style.setProperty("--kb-height", h + "px");
     document.documentElement.style.setProperty("--kb-offset", top + "px");
-    if (chat) {
-      chat.scrollTop = chat.scrollHeight - chat.clientHeight;
-      isUserNearBottom = true;
-    }
   }
 
-  function clearViewportOverride() {
+  function clearOverride() {
     document.documentElement.style.removeProperty("--kb-height");
     document.documentElement.style.removeProperty("--kb-offset");
   }
 
-  function followKeyboardFrame(frameCount) {
-    if (!chat) { followRafId = null; return; }
-    if (frameCount === 0) setKbState("ViewportUpdating");
+  function runFollowLoop(myGeneration) {
+    let lastHeight = readViewport().h;
+    let sawChange = false;
+    let stableFrames = 0;
 
-    const { h, top } = readViewport();
-    applyFrame(h, top);
-    kbLog("follow:frame", { frameCount, h, top });
+    function frame(frameCount) {
+      if (myGeneration !== KeyboardMachine.generation) return; // ciclo antigo — autoencerrado
 
-    if (Math.abs(h - followLastHeight) > 0.5) {
-      followSawChange = true;
-      followLastHeight = h;
-      followStableFrames = 0;
-    } else {
-      followStableFrames++;
+      const { h, top } = readViewport();
+      applyHeight(h, top);
+      ScrollController.anchorToBottom();
+
+      if (Math.abs(h - lastHeight) > 0.5) { sawChange = true; lastHeight = h; stableFrames = 0; }
+      else stableFrames++;
+
+      const settled = sawChange && stableFrames >= STABLE_FRAMES;
+      if (settled || frameCount >= SAFETY_FRAMES) {
+        KeyboardMachine.transition("Opened", "VIEWPORT_STABLE");
+        return;
+      }
+      requestAnimationFrame(() => frame(frameCount + 1));
     }
-
-    const settled = followSawChange && followStableFrames >= FOLLOW_STABLE_FRAMES;
-    if (settled || frameCount >= FOLLOW_SAFETY_FRAMES) {
-      followRafId = null;
-      clearViewportOverride();
-      kbLog("follow:settled", { frameCount, h, top });
-      setKbState("KeyboardOpened");
-      return;
-    }
-    followRafId = requestAnimationFrame(() => followKeyboardFrame(frameCount + 1));
+    requestAnimationFrame(() => frame(0));
   }
 
-  function startFollowing() {
-    if (!chat) return;
-    followLastHeight = readViewport().h;
-    followSawChange = false;
-    followStableFrames = 0;
-    if (followRafId) cancelAnimationFrame(followRafId);
-    kbLog("follow:start", { startHeight: followLastHeight });
-    followRafId = requestAnimationFrame(() => followKeyboardFrame(0));
+  KeyboardMachine.onChange((state) => {
+    if (state === "Opening") runFollowLoop(KeyboardMachine.generation);
+    else if (state === "Idle") clearOverride();
+  });
+
+  // API experimental (Chrome) — quando disponível, recaptura a geometria em
+  // mudanças fora do ciclo focus/blur (ex.: rotação com o teclado já aberto).
+  if (window.visualViewport && "ongeometrychange" in window.visualViewport) {
+    window.visualViewport.addEventListener("geometrychange", () => {
+      if (KeyboardMachine.state === "Opened") KeyboardMachine.transition("Opening", "GEOMETRY_CHANGE");
+    });
   }
 
-  function onFocus() {
-    setKbState("KeyboardOpening");
-    kbLog("event:focus (native, no #input)");
-    isOpen = true;
-    startFollowing();
-  }
+  return {};
+})();
 
-  // Fechamento nunca é tocado por JS (ver item 4 da arquitetura acima) —
-  // só cancela um loop de ABERTURA que porventura ainda estivesse rodando.
-  // O loop de OBSERVAÇÃO (startCloseObservation) é só leitura/log, não
-  // escreve nada — ver definição acima.
-  function onBlur() {
-    setKbState("KeyboardClosing");
-    kbLog("event:blur (native, no #input)");
-    isOpen = false;
-    if (followRafId) { cancelAnimationFrame(followRafId); followRafId = null; }
-    clearViewportOverride();
-    if (KB_DEBUG) startCloseObservation();
-  }
-
-  function onChatTouchStart() {
-    if (chat) gestureStartTop = chat.scrollTop;
-    touching = true;
-    pendingDismiss = false;
-    kbLog("chat:touchstart");
-  }
-
-  function dismissKeyboard() {
-    kbLog("dismissKeyboard() -> input.blur()");
-    pendingDismiss = false;
-    input?.blur();
-    kbLog("dismissKeyboard() depois do blur()");
-  }
-
-  // scroll pra cima decisivo enquanto digita → dispensa o teclado.
-  // Nunca chama blur() com o dedo ainda na tela (ver nota da arquitetura);
-  // com o dedo solto (scroll por inércia) não há gesto ativo pra confundir,
-  // então é seguro disparar na hora.
-  function onChatScroll() {
-    if (!isOpen || !input || !chat) return;
-    const scrolledUp = gestureStartTop - chat.scrollTop;
-    if (scrolledUp <= SCROLL_DISMISS_PX) return;
-    if (touching) {
-      if (!pendingDismiss) kbLog("chat:scroll cruzou o limiar, dedo ainda na tela -> pendingDismiss=true");
-      pendingDismiss = true;
-      return;
-    }
-    kbLog("chat:scroll cruzou o limiar, dedo já solto (inércia) -> dismiss imediato");
-    dismissKeyboard();
-  }
-
-  function onChatTouchEnd() {
-    kbLog("chat:touchend", { pendingDismiss });
-    touching = false;
-    if (pendingDismiss) dismissKeyboard();
-  }
-
-  function onOutsideTap(e) {
-    if (!isOpen) return;
-    if (e.target === input) return;
-    kbLog("chat:click (outside tap) -> input.blur()");
-    input.blur();
-  }
+const FocusGateway = (() => {
+  let textarea = null; // privado — nenhum outro trecho do arquivo deve guardar essa referência
+  let globalGuardsBound = false;
 
   function bindGlobalGuards() {
     if (globalGuardsBound) return;
     globalGuardsBound = true;
-
     // impede o WKWebView de aplicar scroll por cima do resize nativo do content viewport
     window.addEventListener("scroll", () => {
       if (window.scrollY !== 0) window.scrollTo(0, 0);
@@ -496,72 +353,39 @@ const KeyboardController = (() => {
     document.addEventListener("scroll", () => {
       if (document.documentElement.scrollTop !== 0) document.documentElement.scrollTop = 0;
     }, { passive: true });
+  }
 
-    if (KB_DEBUG && window.visualViewport) {
-      window.visualViewport.addEventListener("resize", () => {
-        kbLog("visualViewport:resize", { height: window.visualViewport.height, offsetTop: window.visualViewport.offsetTop });
-      });
-      window.visualViewport.addEventListener("scroll", () => {
-        kbLog("visualViewport:scroll", { height: window.visualViewport.height, offsetTop: window.visualViewport.offsetTop });
-      });
-    }
-    if (KB_DEBUG) {
-      window.addEventListener("resize", () => kbLog("window:resize", { innerHeight: window.innerHeight }));
-    }
+  function onOutsideTap(e) {
+    if (KeyboardMachine.state === "Idle") return;
+    if (e.target === textarea) return;
+    requestDismiss();
+  }
 
-    // API experimental (Chrome) — quando disponível, cobre mudanças de
-    // geometria (ex.: rotação) fora da janela focus→blur já tratada acima.
-    if (window.visualViewport && "ongeometrychange" in window.visualViewport) {
-      window.visualViewport.addEventListener("geometrychange", () => {
-        if (KB_DEBUG) kbLog("visualViewport:geometrychange");
-        if (isOpen) startFollowing();
-      });
-    }
+  function requestFocus() { textarea?.focus(); }
+
+  function requestDismiss() {
+    if (textarea && document.activeElement === textarea) textarea.blur();
   }
 
   // religa aos elementos do chat atual — chamado a cada mountChat() (remount destrói os listeners antigos)
-  function attach(inputEl, chatEl) {
-    input = inputEl;
-    chat  = chatEl;
-    if (!input || !chat) return;
+  function attach(textareaEl, chatEl) {
+    textarea = textareaEl;
+    if (!textarea || !chatEl) return;
 
     bindGlobalGuards();
+    ScrollController.attach(chatEl);
+    ScrollController.bindGestureListeners(chatEl);
 
-    input.addEventListener("focus", onFocus);
-    input.addEventListener("blur", onBlur);
+    textarea.addEventListener("focus", () => KeyboardMachine.transition("Opening", "FOCUS_RECEIVED"));
+    textarea.addEventListener("blur", () => {
+      KeyboardMachine.transition("Closing", "BLUR_RECEIVED");
+      KeyboardMachine.transition("Idle", "CLOSED"); // fechamento é sempre síncrono, nunca assíncrono
+    });
 
-    chat.addEventListener("touchstart", onChatTouchStart, { passive: true });
-    chat.addEventListener("touchend", onChatTouchEnd, { passive: true });
-    chat.addEventListener("touchcancel", onChatTouchEnd, { passive: true });
-    chat.addEventListener("scroll", onChatScroll, { passive: true });
-    chat.addEventListener("click", onOutsideTap);
-
-    // ── instrumentação temporária: raw sequence de eventos no #input,
-    // sem interferir em nada (só leitura/log). Ver KB_DEBUG no topo do arquivo.
-    if (KB_DEBUG) {
-      ["pointerdown", "pointerup", "touchstart", "touchend", "click"].forEach((evt) => {
-        input.addEventListener(evt, () => kbLog(`input:${evt}`), { passive: true });
-      });
-    }
+    chatEl.addEventListener("click", onOutsideTap);
   }
 
-  // ── API pública: único ponto autorizado a pedir foco/blur do input do
-  // chat. Nenhum outro trecho do app deve chamar input.focus()/blur()
-  // diretamente — sempre passar por aqui, mesmo que o efeito imediato seja
-  // idêntico, porque é o KeyboardController quem decide o que acontece em
-  // volta (loop de sincronização, estado isOpen).
-  function requestFocus() {
-    setKbState("FocusRequested");
-    kbLog("requestFocus() chamado");
-    input?.focus();
-  }
-
-  function dismiss() {
-    kbLog("dismiss() chamado", { willBlur: !!(input && document.activeElement === input) });
-    if (input && document.activeElement === input) input.blur();
-  }
-
-  return { attach, requestFocus, dismiss };
+  return { attach, requestFocus, requestDismiss };
 })();
 
 // ==================== PROFILE PHOTO PREVIEW (long press) ====================
@@ -1055,7 +879,7 @@ function mountChat() {
           <button class="composerGhostBtn" type="button" onclick="return false;">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8696a0" stroke-width="1.8"><circle cx="12" cy="12" r="9.5"/><path d="M8.5 14.5s1.3 1.8 3.5 1.8 3.5-1.8 3.5-1.8" stroke-linecap="round"/><circle cx="9" cy="9.5" r=".9" fill="#8696a0"/><circle cx="15" cy="9.5" r=".9" fill="#8696a0"/></svg>
           </button>
-          <input id="input" type="text" placeholder="Mensagem" autocomplete="off" autocorrect="off" />
+          <textarea id="input" rows="1" placeholder="Mensagem" autocomplete="off" autocorrect="off"></textarea>
           <button class="composerCamera" type="button" onclick="return false;">
             <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5a2 2 0 0 1 2-2h1.2l1-1.6h7.6l1 1.6H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-9z"/><circle cx="12" cy="13" r="3.4"/></svg>
           </button>
@@ -1075,7 +899,7 @@ function mountChat() {
   restoreHistory();
   handleScrollDetection();
   bindComposer();
-  KeyboardController.attach(document.getElementById("input"), document.getElementById("chat"));
+  FocusGateway.attach(document.getElementById("input"), document.getElementById("chat"));
   attachProfilePhotoPreview(document.getElementById("topbarAvatar"), { onTap: showStories });
 
   // Force GPU compositor layer to activate before first touch
@@ -1088,6 +912,21 @@ function mountChat() {
   });
 }
 
+const COMPOSER_MAX_HEIGHT = 120; // ~6 linhas — mesmo teto visual do WhatsApp antes de rolar internamente
+
+// fallback JS pro auto-grow, só ativo quando o engine NÃO suporta CSS
+// field-sizing:content. Escrever uma altura inline sempre, mesmo com
+// suporte nativo, sobrescreveria o comportamento do CSS incondicionalmente
+// (inline sempre vence) — o feature-detect é o que garante que isto seja
+// progressive enhancement de verdade, não um JS que sempre vence o CSS.
+const SUPPORTS_FIELD_SIZING = typeof CSS !== "undefined" && CSS.supports?.("field-sizing", "content");
+
+function autoGrowComposer(el) {
+  if (SUPPORTS_FIELD_SIZING) return;
+  el.style.height = "auto";
+  el.style.height = Math.min(el.scrollHeight, COMPOSER_MAX_HEIGHT) + "px";
+}
+
 function bindComposer() {
   const input   = document.getElementById("input");
   const sendBtn = document.getElementById("send");
@@ -1098,6 +937,7 @@ function bindComposer() {
     const hasText = input.value.trim().length > 0;
     sendBtn.classList.toggle("is-hidden", !hasText);
     micBtn.classList.toggle("is-hidden", hasText);
+    autoGrowComposer(input);
   });
 
   input.addEventListener("keydown", (e) => {
@@ -2128,9 +1968,10 @@ function onSend() {
   const text = input.value.trim();
   if (!text) return;
   input.value = "";
+  autoGrowComposer(input);
   sendBtn.classList.add("is-hidden");
   micBtn.classList.remove("is-hidden");
-  KeyboardController.requestFocus(); // keep keyboard open after send, like WhatsApp
+  FocusGateway.requestFocus(); // keep keyboard open after send, like WhatsApp
   addMsg("right", escapeHtml(text));
   handleUserText(text);
 }
@@ -2257,7 +2098,7 @@ async function enterCallConnecting() {
 
 function showIncomingCall() {
   // Força fechar teclado antes de mostrar a tela de chamada
-  KeyboardController.dismiss();
+  FocusGateway.requestDismiss();
 
   let vibrateInterval = null;
   if (navigator.vibrate) {
@@ -2728,7 +2569,7 @@ function _mountCdBadge(shell, initial) {
 
 function showCountdown(seconds) {
   return new Promise(resolve => {
-    KeyboardController.dismiss();
+    FocusGateway.requestDismiss();
     const inp = document.getElementById("input");
     if (inp) { inp.readOnly = true; inp.tabIndex = -1; }
     const composer = document.querySelector(".composer");
@@ -3166,7 +3007,7 @@ function exitStories(fromSwipe = false, swipeScreen = null) {
 // ─── showStories ─────────────────────────────────────────────────────────────
 function showStories() {
   pauseCountdown();
-  KeyboardController.dismiss();
+  FocusGateway.requestDismiss();
 
   _storyExiting      = false;
   window.storyViewed = false;
