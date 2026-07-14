@@ -23,6 +23,13 @@
   #scenarios { display:flex; gap:6px; padding:6px 8px; flex-wrap:wrap; background:#111; flex:0 0 auto; }
   #scenarios button { flex:1 1 auto; padding:8px 4px; font-size:11px; min-width:70px; }
   #log { white-space:pre-wrap; font-size:11px; line-height:1.4; background:#111; color:#0f0; padding:8px; height:26vh; overflow-y:auto; flex:0 0 auto; }
+
+  #instructions { flex:0 0 auto; background:#1a1a00; color:#ffe680; font-size:12.5px; line-height:1.6; padding:12px; overflow-y:auto; max-height:70vh; }
+  #instructions h2 { font-size:14px; margin:0 0 8px; color:#fff; }
+  #instructions ol { margin:0 0 10px; padding-left:20px; }
+  #instructions li { margin-bottom:8px; }
+  #instructions .destaque { color:#ff9d5c; font-weight:bold; }
+  #instructions button { display:block; width:100%; padding:12px; font-size:14px; font-weight:bold; margin-top:6px; }
 </style>
 </head>
 <body>
@@ -35,9 +42,24 @@
 -->
 
 <div id="app">
+  <div id="instructions">
+    <h2>Como usar esta página — passo a passo</h2>
+    <ol>
+      <li>Toque no campo branco escrito <b>"toque aqui pra abrir o teclado"</b>, lá embaixo. O teclado do celular vai abrir.</li>
+      <li>Com o teclado aberto, coloque o dedo em cima da lista de "linha 1, linha 2..." (no meio da tela) e <b>arraste de baixo pra cima</b>, devagar, como se fosse rolar uma página — continue arrastando até o teclado <b>fechar sozinho</b>.</li>
+      <li class="destaque">Assim que o teclado fechar, toque no campo branco de novo — só UMA vez.</li>
+      <li>Veja o que acontece: o teclado abriu de novo, ou não abriu nada?</li>
+      <li>Repita os passos 1 a 4 mais umas 3 vezes seguidas, sem apertar "limpar" entre elas — quanto mais vezes, melhor.</li>
+      <li>Toque no botão verde <b>"Exportar diagnóstico"</b> (está na fileira de botões, embaixo da lista). Isso baixa um arquivo no seu celular.</li>
+      <li>Abra a pasta "Downloads" (ou onde seu celular salva downloads), ache o arquivo que começa com <b>kbtest-diagnostico</b>, e me manda esse arquivo aqui na nossa conversa, do mesmo jeito que manda uma foto.</li>
+    </ol>
+    <p>Se quiser também tirar prints: tire um <b>logo depois que o teclado fechar</b> (passo 3) e outro <b>logo depois de tocar de novo</b> (passo 4) — mas o arquivo exportado (passo 6/7) já tem tudo isso registrado com muito mais precisão, então não precisa se preocupar em acertar o momento exato do print.</p>
+    <button id="hideInstructions">Entendi, esconder instruções</button>
+  </div>
   <div id="panel"></div>
   <div id="scrollArea"></div>
   <div id="scenarios">
+    <button id="showInstructions" style="background:#665c00;color:#ffe680;">Ver instruções</button>
     <button id="s1">Cenário 1: Blur direto</button>
     <button id="s3">Cenário 3: Toque fora</button>
     <button id="focusBtn">focus()</button>
@@ -295,6 +317,15 @@
 
   window.kbTestDump = () => { console.table(entries); return entries; };
   log("página carregada. Cenário 2 (scroll) = focar o input e arrastar a lista pra cima até fechar sozinho. Cenário 4 (sistema) = focar o input e usar o gesto/botão voltar do Android, sem tocar em nada da página.");
+
+  // ── instruções: começam visíveis, com botão pra esconder/reexibir ────────
+  const instructionsEl = document.getElementById("instructions");
+  document.getElementById("hideInstructions").addEventListener("click", () => {
+    instructionsEl.style.display = "none";
+  });
+  document.getElementById("showInstructions").addEventListener("click", () => {
+    instructionsEl.style.display = "block";
+  });
 </script>
 </body>
 </html>
