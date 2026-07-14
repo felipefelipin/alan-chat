@@ -161,6 +161,19 @@ bot.onText(/^\/start/, async (msg) => {
 });
 
 // =============================================================================
+// /kbtest — TEMPORÁRIO: abre a página isolada de teste do bug de teclado
+// como Mini App de verdade (Experimento 3 da investigação). Remover depois.
+// =============================================================================
+bot.onText(/^\/kbtest/, async (msg) => {
+  const chatId = msg.chat.id;
+  await bot.sendMessage(chatId, "Teste isolado de teclado 👇", {
+    reply_markup: { inline_keyboard: [
+      [{ text: "Abrir teste", web_app: { url: process.env.WEBAPP_URL + "/kbtest.html?v=" + Date.now() } }],
+    ]},
+  });
+});
+
+// =============================================================================
 // web_app_data — mini app envia action=checkout
 // =============================================================================
 bot.on("web_app_data", async (msg) => {

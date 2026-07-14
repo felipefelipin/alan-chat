@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover,interactive-widget=resizes-content">
+<title>kbtest — experimento isolado</title>
+</head>
+<body style="font-family:monospace;margin:0;padding:10px;">
+
+<!--
+  Experimento de isolamento — SEM KeyboardController, SEM chat, SEM Telegram
+  SDK, SEM overlays, SEM CSS além do mínimo pra layout não quebrar. Só um
+  input, dois botões, e log completo de cada evento relevante. Objetivo:
+  descobrir se "precisa tocar duas vezes pra reabrir o teclado depois de
+  blur()" acontece mesmo fora do nosso projeto inteiro.
+-->
+
+<div style="display:flex;gap:8px;margin-bottom:10px;">
+  <input id="input" type="text" placeholder="toque aqui" style="flex:1;font-size:16px;padding:8px;">
+</div>
+<div style="display:flex;gap:8px;margin-bottom:10px;">
+  <button id="focusBtn" style="flex:1;padding:10px;">focus()</button>
+  <button id="blurBtn" style="flex:1;padding:10px;">blur()</button>
+  <button id="clearBtn" style="flex:1;padding:10px;">limpar log</button>
+</div>
+
+<div id="log" style="white-space:pre-wrap;font-size:12px;line-height:1.4;background:#111;color:#0f0;padding:8px;height:60vh;overflow-y:auto;"></div>
+
+<script>
+  const input = document.getElementById("input");
+  const logEl = document.getElementById("log");
+  const t0 = performance.now();
+  const entries = [];
+
+  function log(event) {
+    const vv = window.visualViewport;
+    const entry = {
+      t: Math.round((performance.now() - t0) * 10) / 10,
+      event,
+      activeElement: document.activeElement === input ? "#input" : (document.activeElement === document.body ? "body" : String(document.activeElement)),
+      vvHeight: vv ? Math.round(vv.height * 10) / 10 : null,
+      vvOffsetTop: vv ? Math.round(vv.offsetTop * 10) / 10 : null,
+      inputMatchesFocus: input.matches(":focus"),
+      documentHasFocus: document.hasFocus(),
+    };
+    entries.push(entry);
+    const line = `[t+${entry.t}ms] ${event.padEnd(12)} activeElement=${entry.activeElement.padEnd(8)} vvHeight=${entry.vvHeight} vvOffsetTop=${entry.vvOffsetTop} inputMatchesFocus=${entry.inputMatchesFocus}`;
+    console.log(line, entry);
+    logEl.textContent += line + "\n";
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  ["pointerdown", "pointerup", "touchstart", "touchend", "click", "focus", "blur"].forEach((evt) => {
+    input.addEventListener(evt, () => log(`input:${evt}`), { passive: true });
+  });
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", () => log("visualViewport:resize"));
+    window.visualViewport.addEventListener("scroll", () => log("visualViewport:scroll"));
+  }
+
+  document.getElementById("focusBtn").addEventListener("click", () => { log("button:focus() chamado"); input.focus(); });
+  document.getElementById("blurBtn").addEventListener("click", () => { log("button:blur() chamado"); input.blur(); });
+  document.getElementById("clearBtn").addEventListener("click", () => { entries.length = 0; logEl.textContent = ""; });
+
+  window.kbTestDump = () => { console.table(entries); return entries; };
+  log("página carregada — window.kbTestDump() pra tabela completa");
+</script>
+</body>
+</html>
