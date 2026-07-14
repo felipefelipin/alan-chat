@@ -3,34 +3,45 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover,interactive-widget=resizes-content">
-<title>kbtest — experimento isolado</title>
+<title>kbtest — laboratório de teclado</title>
+<!--
+  Carregado só pra ler versão/plataforma do host quando a página abre
+  dentro de um Mini App de verdade (via /kbtest do bot) — não usamos nada
+  do SDK além de ler campos de diagnóstico (version/platform/colorScheme).
+  Fora do Telegram, esse script fica inerte e window.Telegram nem existe.
+-->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:monospace; background:#000; color:#eee; }
   #app { position:fixed; inset:0; height:100dvh; display:flex; flex-direction:column; }
+  #panel { flex:0 0 auto; background:#0a1a0a; color:#7fff7f; font-size:10.5px; line-height:1.5; padding:6px 8px; display:grid; grid-template-columns:1fr 1fr; gap:0 10px; border-bottom:1px solid #2a4a2a; }
+  #panel .k { color:#4a9a4a; }
   #scrollArea { flex:1; overflow-y:scroll; padding:8px; }
   #scrollArea div { padding:10px 4px; border-bottom:1px solid #333; }
   #composer { display:flex; gap:8px; padding:8px; flex:0 0 auto; background:#111; }
   #input { flex:1; font-size:16px; padding:8px; }
   #scenarios { display:flex; gap:6px; padding:6px 8px; flex-wrap:wrap; background:#111; flex:0 0 auto; }
   #scenarios button { flex:1 1 auto; padding:8px 4px; font-size:11px; min-width:70px; }
-  #log { white-space:pre-wrap; font-size:11px; line-height:1.4; background:#111; color:#0f0; padding:8px; height:32vh; overflow-y:auto; flex:0 0 auto; }
+  #log { white-space:pre-wrap; font-size:11px; line-height:1.4; background:#111; color:#0f0; padding:8px; height:26vh; overflow-y:auto; flex:0 0 auto; }
 </style>
 </head>
 <body>
 
 <!--
-  Experimento de isolamento, v2 — agora reproduzindo o MESMO gesto de
-  scroll-para-fechar do KeyboardController real (app.js), não um blur()
-  solto. Lógica de touching/pendingDismiss/SCROLL_DISMISS_PX portada
-  literalmente do projeto. 4 cenários de fechamento pra comparar.
+  Laboratório de teclado, v3 — painel de diagnóstico ao vivo (atualizado a
+  cada requestAnimationFrame, não só em eventos) + exportação de JSON
+  completo pra reproduzir a investigação depois. Continua reproduzindo o
+  gesto real de scroll-para-fechar portado do KeyboardController (app.js).
 -->
 
 <div id="app">
+  <div id="panel"></div>
   <div id="scrollArea"></div>
   <div id="scenarios">
     <button id="s1">Cenário 1: Blur direto</button>
     <button id="s3">Cenário 3: Toque fora</button>
     <button id="focusBtn">focus()</button>
+    <button id="exportBtn">Exportar diagnóstico</button>
     <button id="clearBtn">limpar</button>
   </div>
   <div id="composer">
@@ -43,8 +54,12 @@
   const input = document.getElementById("input");
   const scrollArea = document.getElementById("scrollArea");
   const logEl = document.getElementById("log");
+  const panelEl = document.getElementById("panel");
   const t0 = performance.now();
   const entries = [];
+  let lastEventName = "(nenhum ainda)";
+  let lastBlurAt = null;
+  let lastFocusAt = null;
 
   // conteúdo longo scrollável, só pra existir espaço pra rolar
   for (let i = 1; i <= 80; i++) {
@@ -62,12 +77,14 @@
 
   function log(event, extra) {
     const vv = window.visualViewport;
+    lastEventName = event;
     const entry = {
       t: Math.round((performance.now() - t0) * 10) / 10,
       event,
       activeElement: tag(document.activeElement),
       vvHeight: vv ? Math.round(vv.height * 10) / 10 : null,
       vvOffsetTop: vv ? Math.round(vv.offsetTop * 10) / 10 : null,
+      innerHeight: window.innerHeight,
       inputMatchesFocus: input.matches(":focus"),
       documentHasFocus: document.hasFocus(),
       scrollTop: scrollArea.scrollTop,
@@ -146,13 +163,19 @@
     }, { passive: true });
   });
 
+  // rótulo cosmético de estado — mesmo vocabulário da investigação no app real
+  let kbState = "Idle";
   input.addEventListener("focus", () => {
     isOpen = true;
+    lastFocusAt = performance.now();
+    kbState = "Opening";
     const extra = lastDismissAt !== null ? { msSinceDismiss: Math.round(performance.now() - lastDismissAt) } : undefined;
     log("input:focus", extra);
   });
   input.addEventListener("blur", () => {
     isOpen = false;
+    lastBlurAt = performance.now();
+    kbState = "Closing";
     log("input:blur");
   });
 
@@ -176,6 +199,99 @@
 
   document.getElementById("focusBtn").addEventListener("click", () => { log("button:focus() chamado"); input.focus(); });
   document.getElementById("clearBtn").addEventListener("click", () => { entries.length = 0; logEl.textContent = ""; });
+
+  // ── painel de diagnóstico ao vivo — atualizado a cada rAF, nunca só em
+  // eventos, pra dar pra gravar a tela e ver o frame exato de cada mudança.
+  let panelLastHeight = null;
+  let panelStableFrames = 0;
+  function panelFrame() {
+    const vv = window.visualViewport;
+    const h = vv ? vv.height : window.innerHeight;
+
+    // estabilização por comparação de frames — só rótulo, não controla nada
+    if (panelLastHeight !== null && Math.abs(h - panelLastHeight) < 0.5) {
+      panelStableFrames++;
+      if (panelStableFrames === 3) {
+        if (kbState === "Opening") kbState = "Opened";
+        else if (kbState === "Closing") kbState = "Closed";
+      }
+    } else {
+      panelStableFrames = 0;
+    }
+    panelLastHeight = h;
+
+    const now = performance.now();
+    const msSinceBlur  = lastBlurAt  !== null ? Math.round(now - lastBlurAt)  : "—";
+    const msSinceFocus = lastFocusAt !== null ? Math.round(now - lastFocusAt) : "—";
+
+    const rows = [
+      ["Keyboard State", kbState],
+      ["Focus State", input.matches(":focus") ? "focused" : "blurred"],
+      ["activeElement", tag(document.activeElement)],
+      ["visualViewport.height", vv ? vv.height.toFixed(1) : "—"],
+      ["visualViewport.offsetTop", vv ? vv.offsetTop.toFixed(1) : "—"],
+      ["window.innerHeight", window.innerHeight],
+      ["scrollTop", scrollArea.scrollTop],
+      ["pendingDismiss", pendingDismiss],
+      ["touching", touching],
+      ["isOpen", isOpen],
+      ["ms desde último blur", msSinceBlur],
+      ["ms desde último focus", msSinceFocus],
+      ["último evento", lastEventName],
+    ];
+    panelEl.innerHTML = rows.map(([k, v]) => `<div><span class="k">${k}:</span> ${v}</div>`).join("");
+
+    requestAnimationFrame(panelFrame);
+  }
+  requestAnimationFrame(panelFrame);
+
+  // ── exportação completa de diagnóstico ──────────────────────────────────
+  document.getElementById("exportBtn").addEventListener("click", () => {
+    const tg = window.Telegram?.WebApp;
+    const diagnostic = {
+      exportedAt: new Date().toISOString(),
+      msSinceLoad: Math.round(performance.now() - t0),
+      browser: {
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        language: navigator.language,
+        vendor: navigator.vendor,
+        screen: { width: screen.width, height: screen.height, devicePixelRatio: window.devicePixelRatio },
+      },
+      visualViewport: window.visualViewport ? {
+        supported: true,
+        height: window.visualViewport.height,
+        width: window.visualViewport.width,
+        offsetTop: window.visualViewport.offsetTop,
+        offsetLeft: window.visualViewport.offsetLeft,
+        scale: window.visualViewport.scale,
+      } : { supported: false },
+      virtualKeyboardAPI: navigator.virtualKeyboard ? {
+        supported: true,
+        overlaysContent: navigator.virtualKeyboard.overlaysContent,
+      } : { supported: false },
+      telegramWebApp: tg ? {
+        version: tg.version,
+        platform: tg.platform,
+        colorScheme: tg.colorScheme,
+        viewportHeight: tg.viewportHeight,
+        viewportStableHeight: tg.viewportStableHeight,
+        isExpanded: tg.isExpanded,
+      } : null,
+      finalState: { kbState, isOpen, touching, pendingDismiss },
+      timeline: entries,
+    };
+    const blob = new Blob([JSON.stringify(diagnostic, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `kbtest-diagnostico-${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    log("=== diagnóstico exportado ===", { totalEntries: entries.length });
+  });
 
   window.kbTestDump = () => { console.table(entries); return entries; };
   log("página carregada. Cenário 2 (scroll) = focar o input e arrastar a lista pra cima até fechar sozinho. Cenário 4 (sistema) = focar o input e usar o gesto/botão voltar do Android, sem tocar em nada da página.");
