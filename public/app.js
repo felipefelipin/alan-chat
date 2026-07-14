@@ -390,7 +390,20 @@ const KeyboardController = (() => {
     chat.addEventListener("click", onOutsideTap);
   }
 
-  return { attach };
+  // ── API pública: único ponto autorizado a pedir foco/blur do input do
+  // chat. Nenhum outro trecho do app deve chamar input.focus()/blur()
+  // diretamente — sempre passar por aqui, mesmo que o efeito imediato seja
+  // idêntico, porque é o KeyboardController quem decide o que acontece em
+  // volta (loop de sincronização, estado isOpen).
+  function requestFocus() {
+    input?.focus();
+  }
+
+  function dismiss() {
+    if (input && document.activeElement === input) input.blur();
+  }
+
+  return { attach, requestFocus, dismiss };
 })();
 
 // ==================== PROFILE PHOTO PREVIEW (long press) ====================
@@ -1959,7 +1972,7 @@ function onSend() {
   input.value = "";
   sendBtn.classList.add("is-hidden");
   micBtn.classList.remove("is-hidden");
-  input.focus(); // keep keyboard open after send, like WhatsApp
+  KeyboardController.requestFocus(); // keep keyboard open after send, like WhatsApp
   addMsg("right", escapeHtml(text));
   handleUserText(text);
 }
@@ -2086,11 +2099,7 @@ async function enterCallConnecting() {
 
 function showIncomingCall() {
   // Força fechar teclado antes de mostrar a tela de chamada
-  try { document.activeElement?.blur(); } catch {}
-  try {
-    const inp = document.querySelector("input,textarea");
-    if (inp) { inp.readOnly = true; inp.blur(); setTimeout(() => { inp.readOnly = false; }, 300); }
-  } catch {}
+  KeyboardController.dismiss();
 
   let vibrateInterval = null;
   if (navigator.vibrate) {
@@ -2561,7 +2570,7 @@ function _mountCdBadge(shell, initial) {
 
 function showCountdown(seconds) {
   return new Promise(resolve => {
-    try { document.activeElement?.blur(); } catch {}
+    KeyboardController.dismiss();
     const inp = document.getElementById("input");
     if (inp) { inp.readOnly = true; inp.tabIndex = -1; }
     const composer = document.querySelector(".composer");
@@ -2999,8 +3008,7 @@ function exitStories(fromSwipe = false, swipeScreen = null) {
 // ─── showStories ─────────────────────────────────────────────────────────────
 function showStories() {
   pauseCountdown();
-  const activeEl = document.activeElement;
-  if (activeEl && typeof activeEl.blur === "function") activeEl.blur();
+  KeyboardController.dismiss();
 
   _storyExiting      = false;
   window.storyViewed = false;
