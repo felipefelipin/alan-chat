@@ -235,6 +235,31 @@ const KeyboardController = (() => {
   const FOLLOW_STABLE_FRAMES = 3;   // frames idênticos seguidos = animação estabilizou
   const FOLLOW_SAFETY_FRAMES = 180; // ~3s a 60fps — teto de segurança, nunca deveria ser atingido
 
+  // ── INSTRUMENTAÇÃO TEMPORÁRIA (investigação do bug "precisa tocar duas
+  // vezes") ────────────────────────────────────────────────────────────────
+  // Não altera nenhum comportamento — só adiciona logs. Remover depois que
+  // a causa raiz for confirmada. Um único flag liga/desliga tudo.
+  const KB_DEBUG = true;
+  const kbT0 = Date.now();
+  function kbTag(el) {
+    if (!el) return String(el);
+    if (el === document.body) return "body";
+    if (el === document.documentElement) return "html";
+    return el.id ? `#${el.id}` : `<${el.tagName?.toLowerCase()}>`;
+  }
+  function kbLog(event, extra) {
+    if (!KB_DEBUG) return;
+    console.log(
+      `[KB t+${Date.now() - kbT0}ms] ${event}`,
+      {
+        activeElement: kbTag(document.activeElement),
+        isOpen, touching, pendingDismiss,
+        followRafActive: followRafId !== null,
+        ...extra,
+      }
+    );
+  }
+
   let input = null;
   let chat  = null;
   let isOpen = false;
@@ -290,6 +315,7 @@ const KeyboardController = (() => {
     if (settled || frameCount >= FOLLOW_SAFETY_FRAMES) {
       followRafId = null;
       clearViewportOverride();
+      kbLog("follow:settled", { frameCount, h, top });
       return;
     }
     followRafId = requestAnimationFrame(() => followKeyboardFrame(frameCount + 1));
@@ -301,10 +327,12 @@ const KeyboardController = (() => {
     followSawChange = false;
     followStableFrames = 0;
     if (followRafId) cancelAnimationFrame(followRafId);
+    kbLog("follow:start", { startHeight: followLastHeight });
     followRafId = requestAnimationFrame(() => followKeyboardFrame(0));
   }
 
   function onFocus() {
+    kbLog("event:focus (native, no #input)");
     isOpen = true;
     startFollowing();
   }
@@ -312,6 +340,7 @@ const KeyboardController = (() => {
   // Fechamento nunca é tocado por JS (ver item 4 da arquitetura acima) —
   // só cancela um loop de ABERTURA que porventura ainda estivesse rodando.
   function onBlur() {
+    kbLog("event:blur (native, no #input)");
     isOpen = false;
     if (followRafId) { cancelAnimationFrame(followRafId); followRafId = null; }
     clearViewportOverride();
@@ -321,11 +350,14 @@ const KeyboardController = (() => {
     if (chat) gestureStartTop = chat.scrollTop;
     touching = true;
     pendingDismiss = false;
+    kbLog("chat:touchstart");
   }
 
   function dismissKeyboard() {
+    kbLog("dismissKeyboard() -> input.blur()");
     pendingDismiss = false;
     input?.blur();
+    kbLog("dismissKeyboard() depois do blur()");
   }
 
   // scroll pra cima decisivo enquanto digita → dispensa o teclado.
@@ -336,11 +368,17 @@ const KeyboardController = (() => {
     if (!isOpen || !input || !chat) return;
     const scrolledUp = gestureStartTop - chat.scrollTop;
     if (scrolledUp <= SCROLL_DISMISS_PX) return;
-    if (touching) { pendingDismiss = true; return; }
+    if (touching) {
+      if (!pendingDismiss) kbLog("chat:scroll cruzou o limiar, dedo ainda na tela -> pendingDismiss=true");
+      pendingDismiss = true;
+      return;
+    }
+    kbLog("chat:scroll cruzou o limiar, dedo já solto (inércia) -> dismiss imediato");
     dismissKeyboard();
   }
 
   function onChatTouchEnd() {
+    kbLog("chat:touchend", { pendingDismiss });
     touching = false;
     if (pendingDismiss) dismissKeyboard();
   }
@@ -348,6 +386,7 @@ const KeyboardController = (() => {
   function onOutsideTap(e) {
     if (!isOpen) return;
     if (e.target === input) return;
+    kbLog("chat:click (outside tap) -> input.blur()");
     input.blur();
   }
 
@@ -363,10 +402,23 @@ const KeyboardController = (() => {
       if (document.documentElement.scrollTop !== 0) document.documentElement.scrollTop = 0;
     }, { passive: true });
 
+    if (KB_DEBUG && window.visualViewport) {
+      window.visualViewport.addEventListener("resize", () => {
+        kbLog("visualViewport:resize", { height: window.visualViewport.height, offsetTop: window.visualViewport.offsetTop });
+      });
+      window.visualViewport.addEventListener("scroll", () => {
+        kbLog("visualViewport:scroll", { height: window.visualViewport.height, offsetTop: window.visualViewport.offsetTop });
+      });
+    }
+    if (KB_DEBUG) {
+      window.addEventListener("resize", () => kbLog("window:resize", { innerHeight: window.innerHeight }));
+    }
+
     // API experimental (Chrome) — quando disponível, cobre mudanças de
     // geometria (ex.: rotação) fora da janela focus→blur já tratada acima.
     if (window.visualViewport && "ongeometrychange" in window.visualViewport) {
       window.visualViewport.addEventListener("geometrychange", () => {
+        if (KB_DEBUG) kbLog("visualViewport:geometrychange");
         if (isOpen) startFollowing();
       });
     }
@@ -388,6 +440,14 @@ const KeyboardController = (() => {
     chat.addEventListener("touchcancel", onChatTouchEnd, { passive: true });
     chat.addEventListener("scroll", onChatScroll, { passive: true });
     chat.addEventListener("click", onOutsideTap);
+
+    // ── instrumentação temporária: raw sequence de eventos no #input,
+    // sem interferir em nada (só leitura/log). Ver KB_DEBUG no topo do arquivo.
+    if (KB_DEBUG) {
+      ["pointerdown", "pointerup", "touchstart", "touchend", "click"].forEach((evt) => {
+        input.addEventListener(evt, () => kbLog(`input:${evt}`), { passive: true });
+      });
+    }
   }
 
   // ── API pública: único ponto autorizado a pedir foco/blur do input do
@@ -396,10 +456,12 @@ const KeyboardController = (() => {
   // idêntico, porque é o KeyboardController quem decide o que acontece em
   // volta (loop de sincronização, estado isOpen).
   function requestFocus() {
+    kbLog("requestFocus() chamado");
     input?.focus();
   }
 
   function dismiss() {
+    kbLog("dismiss() chamado", { willBlur: !!(input && document.activeElement === input) });
     if (input && document.activeElement === input) input.blur();
   }
 
