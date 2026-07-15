@@ -1801,6 +1801,20 @@ function restoreHistory() {
   scrollBottom(true);
 }
 
+// aviso de sistema (estilo "conversa protegida" do WhatsApp) — só na
+// primeira entrada no chat, não faz parte do histórico persistido.
+function insertSystemNotice(text) {
+  const chat = document.getElementById("chat");
+  if (!chat) return;
+  const el = document.createElement("div");
+  el.className = "sysNotice";
+  el.innerHTML = `
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    <span>${text}</span>
+  `;
+  chat.appendChild(el);
+}
+
 function addMsg(side, html) {
   updatePreviousGroupForNewMessage(side);
   const item = { type:"msg", side, html, time:nowTime(), cluster:getNewCluster(side) };
@@ -3655,6 +3669,7 @@ if (!FORCE_FRESH_START && localStorage.getItem("gisa_checkout_done") === "1") {
   (async () => {
     await runConnectionLoadingScreen();
     mountChat();
+    insertSystemNotice(`As mensagens são protegidas com criptografia de ponta a ponta. Só você e ${CONTACT.name} podem lê-las.`);
     await sleep(220);
     startScript().catch(e => { if (!(e instanceof FlowCancelledError)) console.error(e); });
   })();

@@ -352,6 +352,24 @@ body{
   user-select:none;
 }
 
+/* ==================== AVISO DE SISTEMA (abertura da conversa) ==================== */
+.sysNotice{
+  align-self:center;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  max-width:82%;
+  margin:6px auto 16px;
+  padding:7px 14px;
+  border-radius:8px;
+  background:rgba(255,222,140,.12);
+  color:#f0d189;
+  font-size:12.5px;
+  line-height:1.4;
+  text-align:center;
+}
+.sysNotice svg{ flex-shrink:0; opacity:.9; }
+
 /* ==================== BOLHAS ==================== */
 .msgRow{
   display:flex;
