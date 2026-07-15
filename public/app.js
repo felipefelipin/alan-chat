@@ -2048,13 +2048,6 @@ async function enterTeaseBuildup() {
   state.step = 2; saveState();
   await sleep(rand(4000, 5000));
   await gisaSendAudio(ASSETS.audioMimimi);
-  await gisaSay("eu não abro as pernas pra qualquer um que aparece, mas como gostei de vc... 😏", { delay: rand(7000, 10000) });
-  await sleep(5000);
-  setStatus("enviando vídeo...");
-  await sleep(3000);
-  setStatus("");
-  addVideoBubble(ASSETS.teaseVideo2, "Vídeo Privado");
-  await sleep(5000);
   await gisaSay("tou com um brinquedinho aqui na minha mão, bem grande e grosso, quer ver eu enfiando ele todo dentro da minha bucetinha? 🔥🥵", { delay: rand(7000, 9000) });
   showAdvanceButton("Quero ver tudo 😈", () => {
     if (state.step !== 2) return;
