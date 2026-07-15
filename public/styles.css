@@ -907,8 +907,13 @@ body{
   pointer-events:none;
 }
 
+/* position:absolute + centralização própria (não flex) — o botão nunca
+   depende de o bloco de conteúdo antigo já ter saído do DOM ou não, então
+   nasce exatamente centralizado, sem "pulo" quando o conteúdo é removido. */
 .lsEnterBtn{
-  position:relative;
+  position:absolute;
+  top:50%;
+  left:50%;
   z-index:5;
   padding:16px 44px;
   border-radius:999px;
@@ -922,16 +927,16 @@ body{
   backdrop-filter:blur(14px);
   box-shadow:0 0 26px rgba(139,92,246,.4), 0 10px 30px rgba(0,0,0,.45);
   opacity:0;
-  transform:scale(.95);
+  transform:translate(-50%,-50%) scale(.95);
   transition:opacity .5s ease, transform .5s cubic-bezier(.22,.61,.36,1);
   will-change:opacity, transform;
 }
 .lsEnterBtn:active{
-  transform:scale(.97);
+  transform:translate(-50%,-50%) scale(.97);
 }
 .lsEnterBtn-visible{
   opacity:1;
-  transform:scale(1);
+  transform:translate(-50%,-50%) scale(1);
 }
 
 .lsRingWrap{
