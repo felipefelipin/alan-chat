@@ -542,6 +542,56 @@ function getDefaultWaveBars() {
 // status — nada de setTimeouts encadeados pra sincronizar animação. Timers só
 // na sequência final de saída (fade/blur), igual ao resto do app.
 
+// Sons sintetizados via Web Audio API — sem arquivo, sem licenciamento,
+// combina com a estética digital/neon da tela. Falha silenciosa se o
+// engine bloquear áudio antes de um gesto do usuário (comum antes do
+// toque em "Entrar no Chat"); nunca trava a experiência.
+let _lsAudioCtx = null;
+function lsGetAudioCtx() {
+  if (_lsAudioCtx) return _lsAudioCtx;
+  try { _lsAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+  catch { _lsAudioCtx = null; }
+  return _lsAudioCtx;
+}
+
+function lsPlayTick() {
+  const ctx = lsGetAudioCtx();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(920, now);
+  osc.frequency.exponentialRampToValueAtTime(1400, now + 0.07);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.16, now + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.11);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.12);
+}
+
+function lsPlaySuccessChime() {
+  const ctx = lsGetAudioCtx();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  const now = ctx.currentTime;
+  [660, 990].forEach((freq, i) => {
+    const t = now + i * 0.1;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.18, t + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.34);
+  });
+}
+
 const LS_STATUS_ITEMS = [
   { icon: "shield", label: "Conexão criptografada" },
   { icon: "server", label: "Servidor disponível" },
@@ -764,7 +814,7 @@ function runConnectionLoadingScreen() {
       hud.setProgress(p);
 
       const shouldReveal = Math.min(LS_STATUS_ITEMS.length, Math.floor(p * LS_STATUS_ITEMS.length) + 1);
-      if (shouldReveal > revealed) { revealed = shouldReveal; hud.revealUpTo(revealed); }
+      if (shouldReveal > revealed) { revealed = shouldReveal; hud.revealUpTo(revealed); lsPlayTick(); }
 
       if (p >= 1) { onVerified(); return; }
       rafId = requestAnimationFrame(frame);
@@ -782,17 +832,39 @@ function runConnectionLoadingScreen() {
       hud.revealUpTo(LS_STATUS_ITEMS.length);
       hud.setLabel("Conectado ✓");
       vibrate(14);
+      lsPlaySuccessChime();
 
       // HUD some, vídeo permanece parado no último frame — só o toque avança
       hud.hideContent();
       hud.mountEnterButton(onEnterTap);
     }
 
+    // Sequência de saída, coreografada (não é espera de animação nativa
+    // imprevisível — é uma transição autoral nossa, timing fixo por design,
+    // igual ao resto das transições do app): blackout com spinner de
+    // carregamento -> flash/efeito -> revela o chat.
     function onEnterTap() {
       particles.stop();
-      screen.classList.add("lsScreen-exit");
-      screen.addEventListener("transitionend", cleanup, { once: true });
-      setTimeout(cleanup, 420); // rede de segurança caso transitionend não dispare
+      screen.classList.add("lsScreen-blackout");
+
+      const spinner = document.createElement("div");
+      spinner.className = "lsLoaderSpinner";
+      screen.appendChild(spinner);
+
+      setTimeout(() => {
+        spinner.remove();
+        vibrate(10);
+        const flash = document.createElement("div");
+        flash.className = "lsFlash";
+        screen.appendChild(flash);
+        requestAnimationFrame(() => flash.classList.add("lsFlash-active"));
+
+        setTimeout(() => {
+          screen.classList.add("lsScreen-exit");
+          screen.addEventListener("transitionend", cleanup, { once: true });
+          setTimeout(cleanup, 420); // rede de segurança caso transitionend não dispare
+        }, 260);
+      }, 650);
     }
 
     let cleaned = false;

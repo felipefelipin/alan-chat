@@ -820,6 +820,40 @@ body{
   transform:translateZ(0) scale(1.04);
 }
 
+/* blackout pós-toque em "Entrar no Chat": vídeo/HUD/partículas somem,
+   fica só o fundo #050106 (quase preto) + spinner, antes do flash final */
+.lsScreen-blackout .lsVideo,
+.lsScreen-blackout .lsParticles,
+.lsScreen-blackout .lsHud,
+.lsScreen-blackout .lsOverlay{
+  transition:opacity .4s ease;
+  opacity:0;
+}
+
+.lsLoaderSpinner{
+  position:absolute;
+  top:50%; left:50%;
+  width:34px; height:34px;
+  margin:-17px 0 0 -17px;
+  border-radius:50%;
+  border:3px solid rgba(255,255,255,.15);
+  border-top-color:#ff2fb0;
+  animation:lsSpin .8s linear infinite;
+}
+@keyframes lsSpin{ to{ transform:rotate(360deg); } }
+
+.lsFlash{
+  position:absolute;
+  inset:0;
+  background:radial-gradient(circle, rgba(255,255,255,.95) 0%, rgba(139,92,246,.5) 35%, transparent 72%);
+  opacity:0;
+  pointer-events:none;
+}
+.lsFlash-active{
+  opacity:1;
+  transition:opacity .55s ease;
+}
+
 .lsVideo{
   position:absolute;
   inset:0;
