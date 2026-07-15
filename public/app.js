@@ -2056,84 +2056,17 @@ async function enterTeaseBuildup() {
   });
 }
 
+// Depois que a pessoa responde a última mensagem do enterTeaseBuildup,
+// manda direto as mensagens 3 e 4 do convite (sem vídeo, sem as mensagens
+// 1 e 2, sem botões de escolha) — a resposta seguinte já cai em
+// handleUserText/step 4, que decide sozinho (positivo ou negativo) e
+// sempre termina em enterCallConnecting().
 async function enterDesireEscalation() {
   clearReengage();
-  state.step = 3; saveState();
-  await sleep(rand(4000, 5000));
-  await gisaSay("tô me sentindo uma puta safada hoje... 👀", { delay: rand(5000, 7000) });
-  await gisaAutoPlayVideo(ASSETS.teaseVideo3);
-  await enterPrivateInvite(true);
-}
-
-async function enterPrivateInvite(directFirst = false) {
-  clearReengage();
   state.step = 4; saveState();
-  await gisaSay("chega de mensagem… eu quero te mostrar tudo ao vivo agora",           { delay: rand(4000, 6000) });
-  await gisaSay("quero que você me veja gozando olhando na sua cara 🤫👀",              { delay: rand(3800, 5500) });
+  await sleep(rand(4000, 5000));
   await gisaSay("entra na chamada comigo. Quero sentir você me comendo com os olhos",  { delay: rand(4500, 6500) });
   await gisaSay("vai entrar ou vai ficar só se masturbando por fora como os outros?",  { delay: rand(4200, 6000), noSleep: true });
-  showCallChoiceButtons();
-}
-
-function showCallChoiceButtons() {
-  const cardHtml = `
-    <style>
-      @keyframes glowG{0%,100%{box-shadow:0 0 18px rgba(0,230,118,.6),0 4px 16px rgba(0,200,83,.45)}50%{box-shadow:0 0 36px rgba(0,230,118,.95),0 6px 26px rgba(0,200,83,.75)}}
-    </style>
-    <div id="callChoiceCard" style="display:flex;flex-direction:row;gap:10px;padding:8px 0 2px;">
-      <button id="callChoiceYes" style="
-        flex:1;padding:16px 6px;border-radius:16px;border:none;
-        background:linear-gradient(135deg,#00e676 0%,#00c853 60%,#009624 100%);
-        color:#fff;font-size:14px;font-weight:900;letter-spacing:.2px;
-        cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;
-        box-shadow:0 0 22px rgba(0,230,118,.65),0 4px 18px rgba(0,200,83,.5);
-        animation:glowG 1.8s ease-in-out infinite;
-      ">EU QUERO ✅</button>
-      <button id="callChoiceNo" style="
-        flex:1;padding:16px 6px;border-radius:16px;border:none;
-        background:linear-gradient(135deg,#ff5252 0%,#e53935 60%,#b71c1c 100%);
-        color:#fff;font-size:14px;font-weight:700;letter-spacing:.2px;
-        cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;
-      ">NÃO QUERO ❌</button>
-    </div>
-  `;
-
-  // Injeta os botões dentro da última bolha (não cria nova linha)
-  const lastBubble = state.chatEl?.querySelector(".msgRow:last-child .bubble");
-  if (lastBubble) {
-    const tmp = document.createElement("div");
-    tmp.innerHTML = cardHtml.trim();
-    while (tmp.firstChild) lastBubble.appendChild(tmp.firstChild);
-    scrollBottom();
-  } else {
-    addCtaCard(cardHtml);
-  }
-
-  setTimeout(() => {
-    const yesBtn = document.getElementById("callChoiceYes");
-    const noBtn  = document.getElementById("callChoiceNo");
-    const removeCard = () => document.getElementById("callChoiceCard")?.remove();
-
-    if (yesBtn) yesBtn.onclick = async () => {
-      removeCard();
-      await sleep(3000);
-      await enterCallConnecting();
-    };
-
-    if (noBtn) noBtn.onclick = async () => {
-      removeCard();
-      if (_flowRunning) return;
-      _flowRunning = true;
-      try {
-        await gisaSay("tá com medo de não aguentar? 🥵", { delay: rand(2000, 3500) });
-        await sleep(rand(1200, 2000));
-        await gisaSay("vou te chamar agora. Entra logo, covarde gostoso.", { delay: rand(3000, 4500) });
-        await sleep(800);
-        await enterCallConnecting();
-      } catch(e) { if (!(e instanceof FlowCancelledError)) throw e; }
-      finally { _flowRunning = false; }
-    };
-  }, 0);
 }
 
 async function enterCallConnecting() {
@@ -2775,9 +2708,7 @@ async function handleUserText(text) {
       await enterDesireEscalation();
       return;
     }
-    if (state.step === 3) { await enterPrivateInvite(); return; }
     if (state.step === 4) {
-      document.getElementById("callChoiceCard")?.remove();
       if (isNegative(text)) {
         await gisaSay("para de frescura… é agora. Eu tô pelada e molhada te esperando.\nVocê pode sair quando quiser, mas eu sei que você não vai querer sair.");
         state._t1 = setTimeout(async () => {
