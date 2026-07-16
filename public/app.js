@@ -2072,7 +2072,9 @@ async function enterDesireEscalation() {
 async function enterCallConnecting() {
   clearReengage();
   state.step = 5; saveState();
-  await gisaSay("tô te esperando pelada… entra agora 🔥");
+  await sleep(2000); // 2s de silêncio antes de aparecer "digitando..."
+  await gisaSay("tô te esperando pelada… entra agora 🔥", { delay: 2000, noSleep: true }); // 2s de "digitando..." até a mensagem cair
+  await sleep(3000); // 3s depois que a mensagem cai, antes da chamada
   showIncomingCall();
 }
 
