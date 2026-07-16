@@ -2020,9 +2020,9 @@ function addAudioBubble(data = {}) {
   pushHistory(item); renderItem(item, true); scrollBottom();
 }
 
-async function gisaSendAudio(src, bars = null) {
+async function gisaSendAudio(src, bars = null, recordMs = null) {
   setStatus("gravando áudio…");
-  await sleep(rand(3000, 5000));
+  await sleep(recordMs ?? rand(3000, 5000));
   setStatus("");
   await sleep(rand(80, 160));
   addAudioBubble({ src, bars: bars || getDefaultWaveBars() });
@@ -2082,7 +2082,7 @@ async function enterTeaseBuildup() {
   clearReengage();
   state.step = 2; saveState();
   await sleep(rand(4000, 5000));
-  await gisaSay("tou com um brinquedinho aqui na minha mão, bem grande e grosso, quer ver eu enfiando ele todo dentro da minha bucetinha? 🔥🥵", { delay: rand(7000, 9000) });
+  await gisaSay("tou com um brinquedinho aqui na minha mão, bem grande e grosso, posso ligar pra te mostrar ele dentro da minha bucetinha? 🔥🥵", { delay: rand(7000, 9000) });
   showAdvanceButton("Quero ver tudo 😈", () => {
     if (state.step !== 2) return;
     _flowRunning = true;
@@ -2099,7 +2099,7 @@ async function enterDesireEscalation() {
   clearReengage();
   state.step = 4; saveState();
   await sleep(rand(4000, 5000));
-  await gisaSendAudio(ASSETS.audioCallInvite);
+  await gisaSay("entra na chamada comigo. Quero sentir você me comendo com os olhos",  { delay: rand(4500, 6500) });
   await gisaSay("vai entrar ou vai ficar só se masturbando por fora como os outros?",  { delay: rand(4200, 6000), noSleep: true });
 }
 
@@ -2716,6 +2716,8 @@ async function startScript() {
     state.flags.botOnline = true; saveState();
     await sleep(rand(2000, 3000));
     await gisaSendVideo(ASSETS.teaseVideo, "Vídeo Privado");
+    await sleep(rand(2000, 3000));
+    await gisaSendAudio(ASSETS.audioCallInvite, null, 8000);
     await sleep(rand(5000, 7000));
     await gisaSay("me fala a verdade… você aguenta me ver pelada de verdade ou vai só ficar olhando como os fracos?... 👀", { delay: rand(8000, 11000) });
   } finally {
