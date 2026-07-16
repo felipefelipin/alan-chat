@@ -162,7 +162,14 @@ function escapeHtml(s) {
     .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
 }
 
+// guarda o último status setado (ex.: "digitando…", "gravando áudio…",
+// "enviando vídeo…", "online") mesmo quando o elemento #status não existe
+// no momento (usuário navegou pro perfil/stories) — permite reaplicar
+// certinho quando o chat remonta, em vez de voltar sempre pro padrão.
+let _lastStatusText = null;
+
 function setStatus(text) {
+  _lastStatusText = text || null;
   const el = document.getElementById("status");
   if (el) el.textContent = text || "online";
   saveState();
@@ -988,6 +995,13 @@ function mountChat() {
   `;
 
   state.chatEl = document.getElementById("chat");
+  // reaplica o último status conhecido (digitando/gravando áudio/enviando
+  // vídeo/online) — sem isso, remontar o chat sempre resetava pro texto
+  // padrão calculado acima, mesmo com algo em andamento de verdade.
+  if (_lastStatusText) {
+    const statusEl = document.getElementById("status");
+    if (statusEl) statusEl.textContent = _lastStatusText;
+  }
   restoreHistory();
   // se um gisaSay() estava no meio da fase "digitando" quando o chat foi
   // remontado (ex.: pessoa foi no perfil/stories e voltou), reconstrói o
