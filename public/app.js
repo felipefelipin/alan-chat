@@ -293,6 +293,8 @@ const ScrollController = (() => {
 const ViewportTracker = (() => {
   const STABLE_FRAMES = 3;   // frames idênticos seguidos = animação estabilizou
   const SAFETY_FRAMES = 180; // ~3s a 60fps — teto de segurança, nunca deveria ser atingido
+  const CLOSE_STABLE_FRAMES = 3; // idem, mas pro fechamento (janela bem mais curta)
+  const CLOSE_SAFETY_FRAMES = 30; // ~0.5s a 60fps — a animação nativa de fechar é rápida
 
   function readViewport() {
     const vv = window.visualViewport;
@@ -334,15 +336,37 @@ const ViewportTracker = (() => {
     requestAnimationFrame(() => frame(0));
   }
 
+  // O fechamento nativo do teclado (dvh voltando ao tamanho cheio) continua
+  // animando por alguns frames depois da transição pra "Idle" — uma única
+  // chamada de anchorToBottom() no instante da transição fica desatualizada
+  // assim que o container termina de crescer, deixando o scroll "travado"
+  // até algo mais forçar um recálculo. Este loop reancora a cada frame até
+  // a altura do viewport estabilizar de novo — só escreve scrollTop, nunca
+  // --kb-height/--kb-offset (essa é a diferença que evita reintroduzir o
+  // bug do "segundo toque" já resolvido antes).
+  function runCloseSettleLoop(myGeneration) {
+    let lastHeight = readViewport().h;
+    let stableFrames = 0;
+
+    function frame(frameCount) {
+      if (myGeneration !== KeyboardMachine.generation) return; // teclado reabriu ou ciclo antigo — autoencerrado
+      ScrollController.anchorToBottom();
+
+      const h = readViewport().h;
+      if (Math.abs(h - lastHeight) > 0.5) { lastHeight = h; stableFrames = 0; }
+      else stableFrames++;
+
+      if (stableFrames >= CLOSE_STABLE_FRAMES || frameCount >= CLOSE_SAFETY_FRAMES) return;
+      requestAnimationFrame(() => frame(frameCount + 1));
+    }
+    requestAnimationFrame(() => frame(0));
+  }
+
   KeyboardMachine.onChange((state) => {
     if (state === "Opening") runFollowLoop(KeyboardMachine.generation);
     else if (state === "Idle") {
       clearOverride();
-      // correção pontual, única — não é um loop nem escreve altura/layout,
-      // só garante que o scroll não fique preso no valor de quando o
-      // teclado estava aberto (o navegador nem sempre re-ancora sozinho
-      // a tempo quando o container volta a crescer).
-      ScrollController.anchorToBottom();
+      runCloseSettleLoop(KeyboardMachine.generation);
     }
   });
 
