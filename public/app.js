@@ -657,40 +657,6 @@ function lsPlayLoadingPulse() {
   osc.stop(now + 0.6);
 }
 
-// whoosh de ruído filtrado (sweep de frequência) — sincronizado com a
-// abertura da íris/shockwave nas transições
-function lsPlayWhoosh() {
-  const ctx = lsGetAudioCtx();
-  if (!ctx) return;
-  if (ctx.state === "suspended") ctx.resume().catch(() => {});
-  const now = ctx.currentTime;
-  const duration = 0.6;
-
-  const bufferSize = Math.floor(ctx.sampleRate * duration);
-  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-
-  const noise = ctx.createBufferSource();
-  noise.buffer = buffer;
-
-  const filter = ctx.createBiquadFilter();
-  filter.type = "bandpass";
-  filter.Q.value = 0.8;
-  filter.frequency.setValueAtTime(400, now);
-  filter.frequency.exponentialRampToValueAtTime(2400, now + duration * 0.6);
-  filter.frequency.exponentialRampToValueAtTime(600, now + duration);
-
-  const gain = ctx.createGain();
-  gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(0.32, now + 0.08);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-  noise.connect(filter).connect(gain).connect(ctx.destination);
-  noise.start(now);
-  noise.stop(now + duration);
-}
-
 const LS_STATUS_ITEMS = [
   { icon: "shield", label: "Conexão criptografada" },
   { icon: "server", label: "Servidor disponível" },
@@ -1037,7 +1003,7 @@ function runConnectionLoadingScreen() {
         spinner.remove();
         vibrate(10);
         mountShockwave(screen);
-        lsPlayWhoosh();
+        lsPlaySuccessChime();
 
         setTimeout(() => {
           runIrisReveal(screen).then(cleanup);
