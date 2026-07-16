@@ -260,14 +260,21 @@ const ScrollController = (() => {
     pendingDismiss = false;
   }
 
-  // Nunca chama FocusGateway.requestDismiss() com o dedo ainda na tela — só
-  // marca a intenção; a ação de fato só dispara no touchend (gesto
-  // concluído) ou durante scroll por inércia com o dedo já solto. O
-  // fechamento em si é sempre via requestDismiss(), o mesmo caminho do
-  // toque fora do campo — nenhum bug novo, nenhuma escrita de layout aqui.
+  // Só arma a detecção quando o teclado já terminou de abrir ("Opened"),
+  // nunca durante "Opening" — enquanto o teclado está abrindo, o próprio
+  // loop de reancoragem (ViewportTracker.runFollowLoop) escreve scrollTop a
+  // cada frame pra acompanhar a altura encolhendo, e isso também dispara o
+  // evento "scroll". Sem essa exclusão, reabrir o teclado logo depois de
+  // fechá-lo por scroll podia disparar um fechamento fantasma no meio da
+  // própria animação de abertura (o teclado "não abria", só depois de
+  // vários toques). Nunca chama FocusGateway.requestDismiss() com o dedo
+  // ainda na tela — só marca a intenção; a ação de fato só dispara no
+  // touchend (gesto concluído) ou durante scroll por inércia com o dedo já
+  // solto. O fechamento em si é sempre via requestDismiss(), o mesmo
+  // caminho do toque fora do campo — nenhum bug novo, nenhuma escrita de
+  // layout aqui.
   function onScroll() {
-    const s = KeyboardMachine.state;
-    if (s !== "Opening" && s !== "Opened") return;
+    if (KeyboardMachine.state !== "Opened") return;
     if (!chat) return;
     const scrolledUp = gestureStartTop - chat.scrollTop;
     if (scrolledUp <= SCROLL_DISMISS_PX) return;
@@ -286,6 +293,15 @@ const ScrollController = (() => {
     chatEl.addEventListener("touchcancel", onTouchEnd, { passive: true });
     chatEl.addEventListener("scroll", onScroll, { passive: true });
   }
+
+  // Ressincroniza a base de comparação assim que o teclado termina de abrir
+  // — sem isso, uma base capturada antes da abertura (ex.: no touchstart de
+  // um toque que fecha e reabre o teclado em sequência rápida) ficaria
+  // desatualizada e junto com o próprio crescimento do scrollTop durante a
+  // abertura poderia mascarar um gesto de fechar genuíno logo em seguida.
+  KeyboardMachine.onChange((state) => {
+    if (state === "Opened" && chat) gestureStartTop = chat.scrollTop;
+  });
 
   return { attach, anchorToBottom, bindGestureListeners };
 })();
