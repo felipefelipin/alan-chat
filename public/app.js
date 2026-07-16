@@ -948,7 +948,7 @@ function runInitialLoadingScreen() {
     setTimeout(() => {
       spinner.remove();
       mountShockwave(screen);
-      lsPlayWhoosh();
+      lsPlaySuccessChime();
 
       setTimeout(() => {
         runIrisReveal(screen).then(() => { screen.remove(); resolve(); });
