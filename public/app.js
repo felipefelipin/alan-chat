@@ -989,6 +989,10 @@ function mountChat() {
 
   state.chatEl = document.getElementById("chat");
   restoreHistory();
+  // se um gisaSay() estava no meio da fase "digitando" quando o chat foi
+  // remontado (ex.: pessoa foi no perfil/stories e voltou), reconstrói o
+  // indicador aqui — sem isso ele ficava preso no #chat antigo, invisível.
+  if (_typingActive) addTyping();
   handleScrollDetection();
   bindComposer();
   FocusGateway.attach(document.getElementById("input"), document.getElementById("chat"));
@@ -1594,7 +1598,15 @@ function scrollBottom(force = false) {
   scrollToBottom();
 }
 
+// rastreia se um gisaSay() está no meio da fase "digitando", pra poder
+// reconstruir o indicador se o chat for remontado nesse meio-tempo (ex.:
+// pessoa foi no perfil/stories e voltou) — sem isso, addTyping() tinha
+// adicionado o balão no #chat antigo (destruído pelo mountChat()), e a
+// mensagem caía sem nenhum "digitando..." visível antes dela.
+let _typingActive = false;
+
 function removeTyping() {
+  _typingActive = false;
   const el = document.getElementById("typingRow");
   if (el) el.remove();
 }
@@ -1610,6 +1622,7 @@ function handleScrollDetection() {
 
 function addTyping() {
   removeTyping();
+  _typingActive = true;
   const row = document.createElement("div");
   row.className = "msgRow msg-left is-single";
   row.id = "typingRow";
