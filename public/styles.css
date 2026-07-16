@@ -341,7 +341,7 @@ body{
   position:fixed;
   border-radius:50%;
   object-fit:cover;
-  object-position:top;
+  object-position:center;
   transform:translate(0,0) scale(1);
   transform-origin:center center;
   will-change:transform;
