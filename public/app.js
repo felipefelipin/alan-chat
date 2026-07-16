@@ -2786,7 +2786,7 @@ function reopenPaywall() {
       sheet.style.transition = "transform 0.42s cubic-bezier(0.34,1.56,0.64,1)";
       sheet.style.transform  = "translateY(0)";
     }
-    document.getElementById("paywallBgVideo")?.play().catch(() => {});
+    document.getElementById("paywallHeroVideo")?.play().catch(() => {});
   }));
 }
 
@@ -2826,13 +2826,11 @@ function showCheckoutCta() {
     ">
 
       <div style="width:100%;overflow:hidden;flex-shrink:0;opacity:0;animation:pwImgIn 0.34s ease 0.08s forwards;">
-        <img src="/assets/cta-thumb.jpg"
-          style="width:100%;display:block;height:52vw;max-height:290px;min-height:190px;object-fit:cover;object-position:top;" />
+        <video id="paywallHeroVideo" src="/assets/IMG_5586.MP4" autoplay loop muted playsinline
+          style="width:100%;display:block;height:52vw;max-height:290px;min-height:190px;object-fit:cover;object-position:top;"></video>
       </div>
 
       <div style="flex:1;position:relative;overflow:hidden;">
-        <video id="paywallBgVideo" src="/assets/paywall-bg.mp4" autoplay loop muted playsinline
-          style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.32;pointer-events:none;transform:translateZ(0);"></video>
         <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,10,10,.40),rgba(10,10,10,.55));pointer-events:none;"></div>
 
         <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;
@@ -2879,7 +2877,7 @@ function showCheckoutCta() {
   document.body.appendChild(overlay);
   requestAnimationFrame(() => requestAnimationFrame(() => {
     overlay.style.background = "rgba(0,0,0,0.72)";
-    document.getElementById("paywallBgVideo")?.play().catch(() => {});
+    document.getElementById("paywallHeroVideo")?.play().catch(() => {});
   }));
 
   setTimeout(() => {
