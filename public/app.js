@@ -2291,18 +2291,19 @@ async function startFunnelCall() {
   // Câmera frontal do lead — vídeo principal só inicia após resposta de permissão
   let camStream = null;
   const startMainVideo = () => {
-    startTimer();
+    vid.pause();
     vid.currentTime = 0;
-    vid.play().catch(() => {}); // áudio do vídeo começa imediatamente (tela preta)
 
     setTimeout(() => {
-      // pausa, volta pro início e revela o vídeo visualmente no segundo 4
-      vid.pause();
-      vid.currentTime = 0;
-      vid.style.opacity = "1"; // fade-in de 1s (definido no CSS do elemento)
-      vid.play().catch(() => {});
-
-    }, 4000);
+      // 1s de tela preta; o vídeo então aparece com fade-in (1s, definido no
+      // CSS do elemento) e só começa a rodar de fato quando o fade termina —
+      // nunca toca escondido por baixo do fade.
+      vid.style.opacity = "1";
+      vid.addEventListener("transitionend", () => {
+        startTimer();
+        vid.play().catch(() => {});
+      }, { once: true });
+    }, 1000);
   };
   if (navigator.mediaDevices?.getUserMedia) {
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
