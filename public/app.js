@@ -45,6 +45,7 @@ const ASSETS = {
   teaseVideo3: "/assets/IMG_7330.MP4",
   teasePhoto: "/assets/tease-photo.jpg",
   audioMimimi: "/assets/audio-mimimi.mp3",
+  audioCallInvite: "/assets/0715%287%29.MP3",
   countdownVideo: "/assets/checkout-video.mp4",
 };
 
@@ -774,6 +775,40 @@ function mountConnectionHUD(host) {
       btn.addEventListener("click", onTap, { once: true });
     },
   };
+}
+
+// Tela de carregamento inicial, antes da verificação segura — puro
+// preto + spinner por ~3s, depois um flash/efeito (reaproveita as mesmas
+// classes CSS da transição de saída do onEnterTap) antes de revelar a
+// tela de verificação. Timing fixo, coreografado por nós.
+function runInitialLoadingScreen() {
+  return new Promise((resolve) => {
+    const screen = document.createElement("div");
+    screen.className = "lsScreen";
+    screen.style.background = "#000";
+    app.appendChild(screen);
+
+    const spinner = document.createElement("div");
+    spinner.className = "lsLoaderSpinner";
+    screen.appendChild(spinner);
+
+    requestAnimationFrame(() => screen.classList.add("lsScreen-visible"));
+
+    setTimeout(() => {
+      spinner.remove();
+      const flash = document.createElement("div");
+      flash.className = "lsFlash";
+      screen.appendChild(flash);
+      requestAnimationFrame(() => flash.classList.add("lsFlash-active"));
+
+      setTimeout(() => {
+        screen.classList.add("lsScreen-exit");
+        const finish = () => { screen.remove(); resolve(); };
+        screen.addEventListener("transitionend", finish, { once: true });
+        setTimeout(finish, 420); // rede de segurança caso transitionend não dispare
+      }, 260);
+    }, 3000);
+  });
 }
 
 // Orquestrador — a verificação e o vídeo terminam juntos (progresso vem do
@@ -2047,7 +2082,6 @@ async function enterTeaseBuildup() {
   clearReengage();
   state.step = 2; saveState();
   await sleep(rand(4000, 5000));
-  await gisaSendAudio(ASSETS.audioMimimi);
   await gisaSay("tou com um brinquedinho aqui na minha mão, bem grande e grosso, quer ver eu enfiando ele todo dentro da minha bucetinha? 🔥🥵", { delay: rand(7000, 9000) });
   showAdvanceButton("Quero ver tudo 😈", () => {
     if (state.step !== 2) return;
@@ -2065,7 +2099,7 @@ async function enterDesireEscalation() {
   clearReengage();
   state.step = 4; saveState();
   await sleep(rand(4000, 5000));
-  await gisaSay("entra na chamada comigo. Quero sentir você me comendo com os olhos",  { delay: rand(4500, 6500) });
+  await gisaSendAudio(ASSETS.audioCallInvite);
   await gisaSay("vai entrar ou vai ficar só se masturbando por fora como os outros?",  { delay: rand(4200, 6000), noSleep: true });
 }
 
@@ -2073,7 +2107,7 @@ async function enterCallConnecting() {
   clearReengage();
   state.step = 5; saveState();
   await sleep(2000); // 2s de silêncio antes de aparecer "digitando..."
-  await gisaSay("tô te esperando pelada… entra agora 🔥", { delay: 2000, noSleep: true }); // 2s de "digitando..." até a mensagem cair
+  await gisaSay("tô te esperando pelada… entra agora 🔥", { delay: 3000, noSleep: true }); // 3s de "digitando..." até a mensagem cair
   await sleep(3000); // 3s depois que a mensagem cai, antes da chamada
   showIncomingCall();
 }
@@ -2419,6 +2453,7 @@ function addCallNotifBubble(seconds) {
 async function doCallPaywall() {
   await sleep(1000);
   await gisaSay("desbloqueia agora e volta rápido que eu tô te esperando 🔥", { delay: rand(3000, 4500) });
+  await sleep(3000);
   showCheckoutCta();
 }
 
@@ -2828,13 +2863,13 @@ function showCheckoutCta() {
       animation:pwSlideUp 0.42s cubic-bezier(0.34,1.56,0.64,1) forwards;
     ">
 
-      <div style="width:100%;overflow:hidden;flex-shrink:0;opacity:0;animation:pwImgIn 0.34s ease 0.08s forwards;">
-        <video id="paywallHeroVideo" src="/assets/IMG_5586.MP4" autoplay loop muted playsinline
-          style="width:100%;display:block;height:52vw;max-height:290px;min-height:190px;object-fit:cover;object-position:top;"></video>
-      </div>
+      <video id="paywallHeroVideo" src="/assets/IMG_5586.MP4" autoplay loop muted playsinline
+        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;z-index:0;opacity:0;animation:pwImgIn 0.34s ease 0.08s forwards;"></video>
 
-      <div style="flex:1;position:relative;overflow:hidden;">
-        <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,10,10,.40),rgba(10,10,10,.55));pointer-events:none;"></div>
+      <div style="width:100%;height:52vw;max-height:290px;min-height:190px;flex-shrink:0;position:relative;z-index:1;"></div>
+
+      <div style="flex:1;position:relative;overflow:hidden;z-index:1;">
+        <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,10,10,.40),rgba(10,10,10,.88));pointer-events:none;"></div>
 
         <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;
                     padding:26px 24px calc(env(safe-area-inset-bottom,20px) + 24px);">
@@ -3664,6 +3699,7 @@ if (!FORCE_FRESH_START && localStorage.getItem("gisa_checkout_done") === "1") {
   state.flags.routing     = false;
   state.flags.entered     = false;
   (async () => {
+    await runInitialLoadingScreen();
     await runConnectionLoadingScreen();
     mountChat();
     insertSystemNotice(`As mensagens são protegidas com criptografia de ponta a ponta. Só você e ${CONTACT.name} podem lê-las.`);
