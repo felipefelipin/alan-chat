@@ -99,8 +99,6 @@ const state = {
   },
 };
 
-let isUserNearBottom = true;
-
 function snapshotForSave() {
   return {
     step: state.step,
@@ -195,11 +193,11 @@ function showHome() { mountChat(); }
 // Um único dono por responsabilidade:
 //   KeyboardMachine   — estado atual, geração atual, transições
 //   ViewportTracker   — visualViewport -> --kb-height/--kb-offset (só em Opening)
-//   ScrollController  — só a ancoragem de scroll no fim da conversa; NÃO
-//                        existe mais gesto de "scroll fecha o teclado" —
-//                        o teclado só fecha com toque fora do campo
-//                        (FocusGateway.onOutsideTap) ou o próprio usuário
-//                        dispensando pelo SO
+//   ScrollController  — ancoragem de scroll no fim da conversa + gesto de
+//                        scroll-pra-fechar; fecha chamando o mesmíssimo
+//                        FocusGateway.requestDismiss() usado pelo toque fora
+//                        do campo, então o teclado sempre fecha pelo mesmo
+//                        caminho, não importa o gatilho
 //   FocusGateway      — única autoridade de focus()/blur() no textarea real
 //                        (a referência do elemento é privada ao módulo —
 //                        nenhum outro trecho do arquivo pode chamar
@@ -240,11 +238,12 @@ const KeyboardMachine = (() => {
   };
 })();
 
-// Só ancora o scroll no fim durante a abertura do teclado — não existe mais
-// gesto de "scroll fecha o teclado" (removido a pedido: o teclado só fecha
-// com toque fora do campo, via FocusGateway.onOutsideTap).
 const ScrollController = (() => {
+  const SCROLL_DISMISS_PX = 44; // gesto decisivo de scroll pra cima fecha o teclado, igual WhatsApp
   let chat = null;
+  let touching = false;
+  let gestureStartTop = 0;
+  let pendingDismiss = false;
 
   function attach(chatEl) { chat = chatEl; }
 
@@ -253,10 +252,42 @@ const ScrollController = (() => {
   function anchorToBottom() {
     if (!chat) return;
     chat.scrollTop = chat.scrollHeight - chat.clientHeight;
-    isUserNearBottom = true; // mantém consistência com o sistema de auto-scroll de novas mensagens
   }
 
-  return { attach, anchorToBottom };
+  function onTouchStart() {
+    if (chat) gestureStartTop = chat.scrollTop;
+    touching = true;
+    pendingDismiss = false;
+  }
+
+  // Nunca chama FocusGateway.requestDismiss() com o dedo ainda na tela — só
+  // marca a intenção; a ação de fato só dispara no touchend (gesto
+  // concluído) ou durante scroll por inércia com o dedo já solto. O
+  // fechamento em si é sempre via requestDismiss(), o mesmo caminho do
+  // toque fora do campo — nenhum bug novo, nenhuma escrita de layout aqui.
+  function onScroll() {
+    const s = KeyboardMachine.state;
+    if (s !== "Opening" && s !== "Opened") return;
+    if (!chat) return;
+    const scrolledUp = gestureStartTop - chat.scrollTop;
+    if (scrolledUp <= SCROLL_DISMISS_PX) return;
+    if (touching) { pendingDismiss = true; return; }
+    FocusGateway.requestDismiss();
+  }
+
+  function onTouchEnd() {
+    touching = false;
+    if (pendingDismiss) { pendingDismiss = false; FocusGateway.requestDismiss(); }
+  }
+
+  function bindGestureListeners(chatEl) {
+    chatEl.addEventListener("touchstart", onTouchStart, { passive: true });
+    chatEl.addEventListener("touchend", onTouchEnd, { passive: true });
+    chatEl.addEventListener("touchcancel", onTouchEnd, { passive: true });
+    chatEl.addEventListener("scroll", onScroll, { passive: true });
+  }
+
+  return { attach, anchorToBottom, bindGestureListeners };
 })();
 
 const ViewportTracker = (() => {
@@ -361,6 +392,7 @@ const FocusGateway = (() => {
 
     bindGlobalGuards();
     ScrollController.attach(chatEl);
+    ScrollController.bindGestureListeners(chatEl);
 
     textarea.addEventListener("focus", () => KeyboardMachine.transition("Opening", "FOCUS_RECEIVED"));
     textarea.addEventListener("blur", () => {
@@ -1094,7 +1126,6 @@ function mountChat() {
   // remontado (ex.: pessoa foi no perfil/stories e voltou), reconstrói o
   // indicador aqui — sem isso ele ficava preso no #chat antigo, invisível.
   if (_typingActive) addTyping();
-  handleScrollDetection();
   bindComposer();
   FocusGateway.attach(document.getElementById("input"), document.getElementById("chat"));
   attachProfilePhotoPreview(document.getElementById("topbarAvatar"), { onTap: showStories });
@@ -1692,10 +1723,12 @@ function scrollToBottom() {
   setTimeout(() => { const el = state.chatEl; if (el) el.scrollTop = el.scrollHeight; }, 50);
 }
 
-function scrollBottom(force = false) {
-  const el = state.chatEl;
-  if (!el) return;
-  if (!force && !isUserNearBottom) return;
+// Funil roteirizado, não é um chat real de ida-e-volta livre — a conversa
+// sempre tem que estar ancorada na última mensagem, independente de onde o
+// lead deixou o scroll ou o que ele tocou (por isso não existe mais gate de
+// "só rola se já estava perto do fim").
+function scrollBottom() {
+  if (!state.chatEl) return;
   scrollToBottom();
 }
 
@@ -1710,15 +1743,6 @@ function removeTyping() {
   _typingActive = false;
   const el = document.getElementById("typingRow");
   if (el) el.remove();
-}
-
-function handleScrollDetection() {
-  const chat = state.chatEl;
-  if (!chat) return;
-  chat.addEventListener("scroll", () => {
-    const position = chat.scrollTop + chat.clientHeight;
-    isUserNearBottom = (chat.scrollHeight - position) <= 80;
-  }, { passive: true });
 }
 
 function addTyping() {
@@ -2036,7 +2060,7 @@ function restoreHistory() {
   if (!state.chatEl || !Array.isArray(state.history)) return;
   state.chatEl.innerHTML = "";
   for (const item of state.history) renderItem(item, false);
-  scrollBottom(true);
+  scrollBottom();
 }
 
 // aviso de sistema (estilo "conversa protegida" do WhatsApp) — só na
