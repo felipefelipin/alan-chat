@@ -34,7 +34,7 @@ const ASSETS = {
   intro: "/assets/intro.mp4",
   callVideo: "/assets/IMG_7063.MP4",
   ringtone: "/assets/ringtone.mp3",
-  avatar: "/assets/photo_5067007776952880376_w.jpg",
+  avatar: "/assets/photo_5062262078608968721_w.jpg",
   media1: "/assets/grid-1.jpg",
   media2: "/assets/grid-2.jpg",
   media3: "/assets/grid-3.jpg",
