@@ -814,12 +814,6 @@ body{
   opacity:1;
   transform:translateZ(0) scale(1);
 }
-.lsScreen-exit{
-  opacity:0;
-  filter:blur(18px);
-  transform:translateZ(0) scale(1.04);
-}
-
 /* blackout pós-toque em "Entrar no Chat": vídeo/HUD/partículas somem,
    fica só o fundo #050106 (quase preto) + spinner, antes do flash final */
 .lsScreen-blackout .lsVideo,

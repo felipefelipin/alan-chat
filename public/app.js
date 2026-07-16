@@ -600,6 +600,58 @@ function lsPlaySuccessChime() {
   });
 }
 
+// pulso suave tipo radar/sonar — tocado durante a espera da tela preta inicial
+function lsPlayLoadingPulse() {
+  const ctx = lsGetAudioCtx();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(220, now);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.09, now + 0.06);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.6);
+}
+
+// whoosh de ruído filtrado (sweep de frequência) — sincronizado com a
+// abertura da íris/shockwave nas transições
+function lsPlayWhoosh() {
+  const ctx = lsGetAudioCtx();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  const now = ctx.currentTime;
+  const duration = 0.6;
+
+  const bufferSize = Math.floor(ctx.sampleRate * duration);
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = "bandpass";
+  filter.Q.value = 0.8;
+  filter.frequency.setValueAtTime(400, now);
+  filter.frequency.exponentialRampToValueAtTime(2400, now + duration * 0.6);
+  filter.frequency.exponentialRampToValueAtTime(600, now + duration);
+
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.32, now + 0.08);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+  noise.connect(filter).connect(gain).connect(ctx.destination);
+  noise.start(now);
+  noise.stop(now + duration);
+}
+
 const LS_STATUS_ITEMS = [
   { icon: "shield", label: "Conexão criptografada" },
   { icon: "server", label: "Servidor disponível" },
@@ -811,6 +863,34 @@ function mountShockwave(host) {
   return el;
 }
 
+// Revela o que está atrás da tela através de uma abertura circular
+// (íris/diafragma de câmera), com uma borda colorida (mesmo gradiente do
+// anel) acompanhando a expansão — em vez de um fade genérico por cima.
+// Precisa ser JS/rAF porque gradientes de mask-image não interpolam via
+// transição CSS pura de forma confiável entre engines.
+function runIrisReveal(host, durationMs = 700) {
+  return new Promise((resolve) => {
+    const t0 = performance.now();
+    const maxRadius = 75; // % — cobre a diagonal inteira a partir do centro
+
+    function frame(now) {
+      const p = Math.min(1, (now - t0) / durationMs);
+      const eased = 1 - Math.pow(1 - p, 3); // ease-out cúbico
+      const r = eased * maxRadius;
+      const mask = `radial-gradient(circle at center, transparent ${r}%, rgba(139,92,246,.9) ${r + 2}%, rgba(0,0,0,1) ${r + 7}%)`;
+      host.style.maskImage = mask;
+      host.style.webkitMaskImage = mask;
+
+      if (p < 1) {
+        requestAnimationFrame(frame);
+      } else {
+        resolve();
+      }
+    }
+    requestAnimationFrame(frame);
+  });
+}
+
 function runInitialLoadingScreen() {
   return new Promise((resolve) => {
     const screen = document.createElement("div");
@@ -823,16 +903,16 @@ function runInitialLoadingScreen() {
     screen.appendChild(spinner);
 
     requestAnimationFrame(() => screen.classList.add("lsScreen-visible"));
+    lsPlayLoadingPulse();
+    setTimeout(lsPlayLoadingPulse, 1500);
 
     setTimeout(() => {
       spinner.remove();
       mountShockwave(screen);
+      lsPlayWhoosh();
 
       setTimeout(() => {
-        screen.classList.add("lsScreen-exit");
-        const finish = () => { screen.remove(); resolve(); };
-        screen.addEventListener("transitionend", finish, { once: true });
-        setTimeout(finish, 420); // rede de segurança caso transitionend não dispare
+        runIrisReveal(screen).then(() => { screen.remove(); resolve(); });
       }, 260);
     }, 3000);
   });
@@ -912,16 +992,16 @@ function runConnectionLoadingScreen() {
       const spinner = document.createElement("div");
       spinner.className = "lsLoaderSpinner";
       screen.appendChild(spinner);
+      lsPlayLoadingPulse();
 
       setTimeout(() => {
         spinner.remove();
         vibrate(10);
         mountShockwave(screen);
+        lsPlayWhoosh();
 
         setTimeout(() => {
-          screen.classList.add("lsScreen-exit");
-          screen.addEventListener("transitionend", cleanup, { once: true });
-          setTimeout(cleanup, 420); // rede de segurança caso transitionend não dispare
+          runIrisReveal(screen).then(cleanup);
         }, 260);
       }, 650);
     }
