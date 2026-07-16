@@ -942,7 +942,7 @@ function mountChat() {
         <button class="navBtn" onclick="return false;"><span class="navChevron"></span></button>
 
         <div data-story-avatar id="topbarAvatar" style="width:42px;height:42px;border-radius:50%;border:2px solid ${window.storyViewed ? "rgba(255,255,255,.2)" : "#25D366"};padding:2px;flex-shrink:0;box-sizing:border-box;">
-          <img src="${ASSETS.avatar}?v=1" style="width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:center;display:block;" />
+          <img src="${ASSETS.avatar}?v=1" style="width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:top;display:block;" />
         </div>
 
         <div onclick="openProfile()" style="flex:1;min-width:0;cursor:pointer;">
@@ -1680,7 +1680,7 @@ function renderAudioBubble(item) {
         </div>
         <div class="audioAvatarWrap">
           <div class="audioAvatarMini">
-            <img src="${ASSETS.avatar}?v=1" alt="" style="object-position:center;" onerror="this.style.display='none'" />
+            <img src="${ASSETS.avatar}?v=1" alt="" style="object-position:top;" onerror="this.style.display='none'" />
           </div>
           <span class="audioMicBadge">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
@@ -3107,7 +3107,7 @@ function showStories() {
         <div style="width:32px;height:32px;margin-right:10px;border-radius:50%;
                     overflow:hidden;flex-shrink:0;">
           <img src="${ASSETS.avatar}?v=1"
-               style="width:100%;height:100%;object-fit:cover;object-position:center;"/>
+               style="width:100%;height:100%;object-fit:cover;object-position:top;"/>
         </div>
         <div style="margin-top:1px;">
           <div style="color:#fff;font-weight:600;font-size:15px;">${CONTACT.title}</div>
@@ -3473,7 +3473,7 @@ function openProfile() {
           padding:3px;box-sizing:border-box;cursor:pointer;
           transition:border-color 0.4s ease;
         ">
-          <img src="${ASSETS.avatar}?v=1" style="width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:center;" loading="eager" decoding="sync">
+          <img src="${ASSETS.avatar}?v=1" style="width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:top;" loading="eager" decoding="sync">
         </div>
         <div style="margin-top:14px;font-size:26px;font-weight:700;color:#fff;letter-spacing:-.3px;">${contact.name||contact.title}</div>
         <div style="margin-top:4px;font-size:15px;color:rgba(255,255,255,0.55);">@${contact.username||contact.title}</div>
