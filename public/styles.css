@@ -842,16 +842,26 @@ body{
 }
 @keyframes lsSpin{ to{ transform:rotate(360deg); } }
 
-.lsFlash{
+/* shockwave — anel neon que expande e desaparece, mesmo gradiente do anel
+   de progresso do HUD (rosa->roxo->azul), usado nas transições da tela de
+   carregamento (em vez de um flash genérico) */
+.lsShockwave{
   position:absolute;
-  inset:0;
-  background:radial-gradient(circle, rgba(255,255,255,.95) 0%, rgba(139,92,246,.5) 35%, transparent 72%);
+  top:50%; left:50%;
+  width:200px; height:200px;
+  margin:-100px 0 0 -100px;
   opacity:0;
+  transform:scale(.3);
   pointer-events:none;
+  filter:drop-shadow(0 0 12px rgba(139,92,246,.8));
 }
-.lsFlash-active{
-  opacity:1;
-  transition:opacity .55s ease;
+.lsShockwave-active{
+  animation:lsShockExpand .6s cubic-bezier(.22,.61,.36,1) forwards;
+}
+@keyframes lsShockExpand{
+  0%{ transform:scale(.3); opacity:0; }
+  30%{ opacity:1; }
+  100%{ transform:scale(4.5); opacity:0; }
 }
 
 .lsVideo{

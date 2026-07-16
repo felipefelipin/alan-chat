@@ -781,6 +781,29 @@ function mountConnectionHUD(host) {
 // preto + spinner por ~3s, depois um flash/efeito (reaproveita as mesmas
 // classes CSS da transição de saída do onEnterTap) antes de revelar a
 // tela de verificação. Timing fixo, coreografado por nós.
+// Efeito de transição — anel neon que expande e desaparece, mesmo
+// gradiente do anel de progresso do HUD (rosa->roxo->azul), pra criar
+// continuidade visual em vez de um flash genérico solto.
+function mountShockwave(host) {
+  const el = document.createElement("div");
+  el.className = "lsShockwave";
+  el.innerHTML = `
+    <svg viewBox="0 0 200 200" width="200" height="200">
+      <defs>
+        <linearGradient id="lsShockGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ff2fb0"/>
+          <stop offset="55%" stop-color="#8b5cf6"/>
+          <stop offset="100%" stop-color="#3ec8ff"/>
+        </linearGradient>
+      </defs>
+      <circle cx="100" cy="100" r="90" fill="none" stroke="url(#lsShockGrad)" stroke-width="3"/>
+    </svg>
+  `;
+  host.appendChild(el);
+  requestAnimationFrame(() => el.classList.add("lsShockwave-active"));
+  return el;
+}
+
 function runInitialLoadingScreen() {
   return new Promise((resolve) => {
     const screen = document.createElement("div");
@@ -796,10 +819,7 @@ function runInitialLoadingScreen() {
 
     setTimeout(() => {
       spinner.remove();
-      const flash = document.createElement("div");
-      flash.className = "lsFlash";
-      screen.appendChild(flash);
-      requestAnimationFrame(() => flash.classList.add("lsFlash-active"));
+      mountShockwave(screen);
 
       setTimeout(() => {
         screen.classList.add("lsScreen-exit");
@@ -889,10 +909,7 @@ function runConnectionLoadingScreen() {
       setTimeout(() => {
         spinner.remove();
         vibrate(10);
-        const flash = document.createElement("div");
-        flash.className = "lsFlash";
-        screen.appendChild(flash);
-        requestAnimationFrame(() => flash.classList.add("lsFlash-active"));
+        mountShockwave(screen);
 
         setTimeout(() => {
           screen.classList.add("lsScreen-exit");
