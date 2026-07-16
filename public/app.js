@@ -305,7 +305,14 @@ const ViewportTracker = (() => {
 
   KeyboardMachine.onChange((state) => {
     if (state === "Opening") runFollowLoop(KeyboardMachine.generation);
-    else if (state === "Idle") clearOverride();
+    else if (state === "Idle") {
+      clearOverride();
+      // correção pontual, única — não é um loop nem escreve altura/layout,
+      // só garante que o scroll não fique preso no valor de quando o
+      // teclado estava aberto (o navegador nem sempre re-ancora sozinho
+      // a tempo quando o container volta a crescer).
+      ScrollController.anchorToBottom();
+    }
   });
 
   // API experimental (Chrome) — quando disponível, recaptura a geometria em
