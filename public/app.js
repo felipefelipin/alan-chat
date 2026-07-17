@@ -32,7 +32,7 @@ const ASSETS = {
   privateIntro: "/assets/IMG_4913.MP4",
   privateMusic: "/assets/private-music.mp3",
   intro: "/assets/intro.mp4",
-  callVideo: "/assets/IMG_7063.MP4",
+  callVideo: "/assets/0717.mp4",
   ringtone: "/assets/ringtone.mp3",
   avatar: "/assets/WhatsApp%20Image%202026-07-17%20at%2016.12.24.jpeg",
   media1: "/assets/grid-1.jpg",
@@ -2439,7 +2439,7 @@ async function enterCallConnecting(replyText = null) {
     noSleep: true,
     replyTo: replyText ? { side: "right", text: replyText } : null,
   });
-  await sleep(5000); // 5s depois que a mensagem cai, antes da chamada
+  await sleep(8000); // 8s depois que a mensagem cai, antes da chamada
   showIncomingCall();
 }
 
@@ -2533,7 +2533,7 @@ async function startFunnelCall() {
   vid.setAttribute("playsinline", "");
   vid.setAttribute("webkit-playsinline", "");
   vid.muted = false;
-  vid.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;opacity:0;transition:opacity 1s ease;";
+  vid.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;opacity:0;transition:opacity 2s ease;";
   callEl.appendChild(vid);
 
   // ── Overlay: topo com nome + timer ─────────────────────────────────────────
@@ -2660,7 +2660,7 @@ async function startFunnelCall() {
     vid.currentTime = 0;
 
     setTimeout(() => {
-      // 1s de tela preta; o vídeo então aparece com fade-in (1s, definido no
+      // 1s de tela preta; o vídeo então aparece com fade-in (2s, definido no
       // CSS do elemento) e só começa a rodar de fato quando o fade termina —
       // nunca toca escondido por baixo do fade.
       vid.style.opacity = "1";
