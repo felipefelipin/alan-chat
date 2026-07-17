@@ -489,6 +489,97 @@ body{
   word-break:break-word;
 }
 
+/* ==================== RESPONDER MENSAGEM (swipe, estilo WhatsApp) ==================== */
+/* Citação dentro da bolha enviada — fica acima do texto */
+.replyQuote{
+  display:flex;
+  flex-direction:column;
+  gap:1px;
+  padding:5px 8px;
+  margin:2px 2px 5px;
+  border-left:3px solid var(--whatsapp-send);
+  background:rgba(255,255,255,.06);
+  border-radius:5px;
+  max-width:100%;
+}
+.replyQuoteLabel{
+  font-size:12.5px;
+  font-weight:600;
+  color:var(--whatsapp-send);
+  line-height:1.3;
+}
+.replyQuoteText{
+  font-size:12.8px;
+  color:var(--muted);
+  line-height:1.3;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* Ícone que aparece enquanto arrasta a bolha da Susana pro lado */
+.swipeReplyIcon{
+  position:absolute;
+  left:6px;
+  top:50%;
+  transform:translateY(-50%);
+  width:30px;height:30px;
+  border-radius:50%;
+  background:rgba(255,255,255,.06);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;
+  pointer-events:none;
+  z-index:1;
+}
+
+/* Barra de preview acima do composer, enquanto uma resposta está armada */
+.replyPreviewBar{
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 10px;
+  background:var(--footer);
+  border-top:1px solid var(--line);
+}
+.replyPreviewBar.is-hidden{ display:none; }
+.replyPreviewAccent{
+  align-self:stretch;
+  width:3px;
+  border-radius:2px;
+  background:var(--whatsapp-send);
+  flex-shrink:0;
+}
+.replyPreviewBody{
+  flex:1;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:1px;
+}
+.replyPreviewLabel{
+  font-size:13px;
+  font-weight:600;
+  color:var(--whatsapp-send);
+  line-height:1.3;
+}
+.replyPreviewText{
+  font-size:13px;
+  color:var(--muted);
+  line-height:1.3;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.replyPreviewClose{
+  flex-shrink:0;
+  background:none;
+  border:none;
+  padding:4px;
+  display:flex;
+  cursor:pointer;
+}
+
 /* ── Meta (hora + ticks) — fixo no canto inferior direito ── */
 .meta{
   display:inline-flex;

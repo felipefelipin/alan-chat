@@ -1118,6 +1118,7 @@ function mountChat() {
         <div class="chat" id="chat"></div>
       </div>
 
+      <div id="replyPreviewBar" class="replyPreviewBar is-hidden"></div>
       <div class="composer" id="composer">
         <button class="composerAttach" type="button" onclick="return false;">+</button>
         <div class="composerField">
@@ -1150,6 +1151,7 @@ function mountChat() {
   // remontado (ex.: pessoa foi no perfil/stories e voltou), reconstrói o
   // indicador aqui — sem isso ele ficava preso no #chat antigo, invisível.
   if (_typingActive) addTyping();
+  renderReplyPreviewBar(); // restaura o preview de resposta se sobreviveu a um remount
   bindComposer();
   FocusGateway.attach(document.getElementById("input"), document.getElementById("chat"));
   attachProfilePhotoPreview(document.getElementById("topbarAvatar"), { onTap: showStories });
@@ -1767,6 +1769,144 @@ function scrollBottom() {
   scrollToBottom();
 }
 
+// ==================== RESPONDER MENSAGEM (swipe, estilo WhatsApp) ====================
+// O lead arrasta uma bolha da Susana pro lado pra marcar "respondendo a
+// ela" — só as mensagens dela são arrastáveis (ver attachSwipeToReply);
+// as próprias mensagens do lead não têm esse gesto. _replyTarget guarda
+// só o essencial pra desenhar a citação (lado + texto de preview), não uma
+// referência ao item original — não precisa navegar/rolar até ele.
+let _replyTarget = null;
+
+function htmlPreviewToText(html) {
+  const tmp = document.createElement("div");
+  tmp.innerHTML = String(html || "").replace(/<br\s*\/?>/gi, " ");
+  return (tmp.textContent || "").trim();
+}
+
+function getItemPreviewText(item) {
+  switch (item.type) {
+    case "msg":       return htmlPreviewToText(item.html);
+    case "video":     return `📹 ${item.title || "Vídeo"}`;
+    case "photo":     return `📷 ${item.title || "Foto Privada"}`;
+    case "img":       return "📷 Foto";
+    case "mediaGrid": return "📷 Fotos";
+    case "audio":     return "🎤 Mensagem de voz";
+    case "cta":       return "📄 Anúncio";
+    default:          return "";
+  }
+}
+
+function setReplyTarget(item) {
+  _replyTarget = { side: item.side, text: getItemPreviewText(item) };
+  renderReplyPreviewBar();
+}
+
+function clearReplyTarget() {
+  if (!_replyTarget) return;
+  _replyTarget = null;
+  renderReplyPreviewBar();
+}
+
+function renderReplyPreviewBar() {
+  const bar = document.getElementById("replyPreviewBar");
+  if (!bar) return;
+  if (!_replyTarget) { bar.classList.add("is-hidden"); bar.innerHTML = ""; return; }
+  const label = _replyTarget.side === "left" ? (CONTACT.name || "Susana") : "Você";
+  bar.classList.remove("is-hidden");
+  bar.innerHTML = `
+    <div class="replyPreviewAccent"></div>
+    <div class="replyPreviewBody">
+      <div class="replyPreviewLabel">${escapeHtml(label)}</div>
+      <div class="replyPreviewText">${escapeHtml(_replyTarget.text)}</div>
+    </div>
+    <button class="replyPreviewClose" type="button" aria-label="Cancelar resposta">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8696a0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>
+    </button>
+  `;
+  bar.querySelector(".replyPreviewClose").addEventListener("click", clearReplyTarget);
+}
+
+function renderReplyQuoteHTML(replyTo) {
+  if (!replyTo) return "";
+  const label = replyTo.side === "left" ? (CONTACT.name || "Susana") : "Você";
+  return `
+    <div class="replyQuote">
+      <div class="replyQuoteLabel">${escapeHtml(label)}</div>
+      <div class="replyQuoteText">${escapeHtml(replyTo.text)}</div>
+    </div>`;
+}
+
+const SWIPE_REPLY_THRESHOLD = 60; // px de arraste pra confirmar o gesto, estilo WhatsApp
+const SWIPE_REPLY_MAX = 76;       // teto de arraste visual (efeito "elástico")
+
+// Só chamado pra bolhas da Susana (side "left") — ver decisão de escopo.
+// Detecção de direção: só intercepta (preventDefault) quando o arraste é
+// claramente horizontal; se for vertical, solta o gesto pro scroll nativo
+// do chat continuar funcionando normalmente (inclusive o gesto de puxar o
+// scroll pra fechar o teclado, que roda no elemento pai).
+function attachSwipeToReply(row, item) {
+  const bubble = row.querySelector(".bubble");
+  if (!bubble) return;
+  let startX = 0, startY = 0, dragging = false, locked = null;
+  let icon = null;
+
+  function ensureIcon() {
+    if (icon) return icon;
+    icon = document.createElement("div");
+    icon.className = "swipeReplyIcon";
+    icon.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8696a0" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 10L4 15l5 5"/><path d="M4 15h11a5 5 0 0 0 0-10H12"/></svg>`;
+    row.insertBefore(icon, row.firstChild);
+    return icon;
+  }
+
+  function reset() {
+    dragging = false; locked = null;
+    bubble.style.transition = "transform .2s ease";
+    bubble.style.transform = "";
+    if (icon) icon.style.opacity = "0";
+    setTimeout(() => { bubble.style.transition = ""; }, 210);
+  }
+
+  row.addEventListener("touchstart", (e) => {
+    if (!e.touches || e.touches.length !== 1) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    dragging = true;
+    locked = null;
+  }, { passive: true });
+
+  row.addEventListener("touchmove", (e) => {
+    if (!dragging || !e.touches || e.touches.length !== 1) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+
+    if (locked === null) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      locked = Math.abs(dx) > Math.abs(dy) ? "h" : "v";
+      if (locked === "h") ensureIcon();
+    }
+    if (locked !== "h") return;
+
+    e.preventDefault();
+    const clamped = Math.max(0, Math.min(SWIPE_REPLY_MAX, dx));
+    bubble.style.transform = `translateX(${clamped}px)`;
+    if (icon) icon.style.opacity = String(Math.min(1, clamped / SWIPE_REPLY_THRESHOLD));
+  }, { passive: false });
+
+  row.addEventListener("touchend", (e) => {
+    if (!dragging) return;
+    const t = e.changedTouches && e.changedTouches[0];
+    const dx = t ? t.clientX - startX : 0;
+    if (locked === "h" && dx >= SWIPE_REPLY_THRESHOLD) {
+      vibrate(10);
+      setReplyTarget(item);
+    }
+    reset();
+  }, { passive: true });
+
+  row.addEventListener("touchcancel", reset, { passive: true });
+}
+
 // rastreia se um gisaSay() está no meio da fase "digitando", pra poder
 // reconstruir o indicador se o chat for remontado nesse meio-tempo (ex.:
 // pessoa foi no perfil/stories e voltou) — sem isso, addTyping() tinha
@@ -1881,6 +2021,7 @@ function renderRowHTML(item, animated = false) {
   if (item.type === "msg") return `
     <div class="msgRow ${sideClass} ${cluster}">
       <div class="bubble ${bubbleBase} ${anim}">
+        ${renderReplyQuoteHTML(item.replyTo)}
         <div class="bubbleRow"><div class="bubbleText">${item.html}</div>${renderMeta(item)}</div>
       </div>
     </div>`;
@@ -1984,6 +2125,10 @@ function renderItem(item, animated = false) {
     } else {
       state.chatEl.appendChild(row);
     }
+    // só as mensagens da Susana são arrastáveis pra responder — ver decisão
+    // de escopo do recurso (o lead não arrasta as próprias mensagens).
+    if (item.side === "left") attachSwipeToReply(row, item);
+
     const vid = row.querySelector("[data-vdur]");
     if (vid) {
       const durText = row.querySelector("[data-dur-text]");
@@ -2112,9 +2257,9 @@ function insertSystemNotice(text) {
   chat.appendChild(el);
 }
 
-function addMsg(side, html) {
+function addMsg(side, html, replyTo = null) {
   updatePreviousGroupForNewMessage(side);
-  const item = { type:"msg", side, html, time:nowTime(), cluster:getNewCluster(side) };
+  const item = { type:"msg", side, html, time:nowTime(), cluster:getNewCluster(side), replyTo };
   pushHistory(item); renderItem(item, true);
   scrollBottom();
 }
@@ -2236,7 +2381,7 @@ async function gisaSay(text, opts = {}) {
   await sleep(opts.delay ?? typingDelayFor(text));
   removeTyping(); await sleep(rand(90,220));
   setStatus(CONTACT.subtitle ?? "");
-  addMsg("left", escapeHtml(text).replace(/\n/g,"<br/>"));
+  addMsg("left", escapeHtml(text).replace(/\n/g,"<br/>"), opts.replyTo || null);
   if (!opts.noSleep) await sleep(rand(320,760));
 }
 
@@ -2251,7 +2396,9 @@ function onSend() {
   sendBtn.classList.add("is-hidden");
   micBtn.classList.remove("is-hidden");
   FocusGateway.requestFocus(); // keep keyboard open after send, like WhatsApp
-  addMsg("right", escapeHtml(text));
+  const replyTo = _replyTarget;
+  clearReplyTarget();
+  addMsg("right", escapeHtml(text), replyTo);
   handleUserText(text);
 }
 
@@ -2268,11 +2415,11 @@ function isNegative(text) {
   return /\b(n[ãa]o|depois|agora n[ãa]o|talvez|espera|nope|nop)\b/i.test(text);
 }
 
-async function enterTeaseBuildup() {
+async function enterTeaseBuildup(text = null) {
   clearReengage();
   state.step = 2; saveState();
   await sleep(rand(4000, 5000));
-  await gisaSay("tou com um brinquedinho aqui na minha mão, bem grande e grosso, posso ligar pra te mostrar ele dentro da minha bucetinha? 🔥🥵", { delay: rand(7000, 9000) });
+  await gisaSay("tou com um brinquedinho aqui na minha mão, bem grande e grosso, posso ligar pra te mostrar ele dentro da minha bucetinha? 🔥🥵", { delay: rand(7000, 9000), replyTo: text ? { side: "right", text } : null });
   showAdvanceButton("Quero ver tudo 😈", () => {
     if (state.step !== 2) return;
     _flowRunning = true;
@@ -2293,7 +2440,7 @@ async function enterDesireEscalation() {
   await gisaSay("vai entrar ou vai ficar só se masturbando por fora como os outros?",  { delay: rand(4200, 6000), noSleep: true });
 }
 
-async function enterCallConnecting() {
+async function enterCallConnecting(replyText = null) {
   clearReengage();
   state.step = 5; saveState();
   await sleep(3000); // 3s de silêncio antes de aparecer "digitando..."
@@ -2301,7 +2448,10 @@ async function enterCallConnecting() {
   // gisaSay), que dura proporcional ao tamanho da mensagem, pra ficar
   // humanizado em vez de um tempo fixo arbitrário. Quebra de linha manual
   // garante exatamente 2 linhas na bolha, não importa a largura da tela.
-  await gisaSay("então já vou colocar o brinquedinho\ndentro da minha bucetinha e já te ligo 😈", { noSleep: true });
+  await gisaSay("então já vou colocar o brinquedinho\ndentro da minha bucetinha e já te ligo 😈", {
+    noSleep: true,
+    replyTo: replyText ? { side: "right", text: replyText } : null,
+  });
   await sleep(4000); // 4s depois que a mensagem cai, antes da chamada
   showIncomingCall();
 }
@@ -2942,7 +3092,7 @@ async function handleUserText(text) {
   clearReengage();
   _flowRunning = true;
   try {
-    if (state.step === 1) { await enterTeaseBuildup(); return; }
+    if (state.step === 1) { await enterTeaseBuildup(text); return; }
     if (state.step === 2) {
       if (isNegative(text)) {
         await gisaSay("vou tirar mesmo assim… mas só porque você tá me deixando louca");
@@ -2966,7 +3116,7 @@ async function handleUserText(text) {
         }, 2 * 60 * 1000);
         return;
       }
-      await enterCallConnecting();
+      await enterCallConnecting(text);
       return;
     }
   } catch(e) { if (!(e instanceof FlowCancelledError)) throw e; }
