@@ -133,8 +133,13 @@ Aqui dentro eu solto tudo que no Instagram não deixam 🔥💦
 
 async function runDirectFunnel(chatId) {
   await queue.add("jobs",
-    { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "0708.mp4", caption: "", instant: true } },
+    { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "IMG_4755.MP4", caption: "", instant: true } },
     { delay: 0, jobId: jid("start", chatId, 1), removeOnComplete: true, removeOnFail: true }
+  );
+
+  await queue.add("jobs",
+    { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "0708.mp4", caption: "", instant: true } },
+    { delay: 1000, jobId: jid("start", chatId, 2), removeOnComplete: true, removeOnFail: true }
   );
 
   await queue.add("jobs",
@@ -146,7 +151,7 @@ async function runDirectFunnel(chatId) {
         [{ text: "ACESSAR MEUS CONTEÚDINHOS! 🔓", callback_data: "ver_conteudinhos", style: "success" }],
       ]}},
     }},
-    { delay: rand(300, 600), jobId: jid("start", chatId, 2), removeOnComplete: true, removeOnFail: true }
+    { delay: 1000 + rand(300, 600), jobId: jid("start", chatId, 3), removeOnComplete: true, removeOnFail: true }
   );
 }
 
