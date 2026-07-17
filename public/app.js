@@ -1848,22 +1848,11 @@ function attachSwipeToReply(row, item) {
   const bubble = row.querySelector(".bubble");
   if (!bubble) return;
   let startX = 0, startY = 0, dragging = false, locked = null;
-  let icon = null;
-
-  function ensureIcon() {
-    if (icon) return icon;
-    icon = document.createElement("div");
-    icon.className = "swipeReplyIcon";
-    icon.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8696a0" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 10L4 15l5 5"/><path d="M4 15h11a5 5 0 0 0 0-10H12"/></svg>`;
-    row.insertBefore(icon, row.firstChild);
-    return icon;
-  }
 
   function reset() {
     dragging = false; locked = null;
     bubble.style.transition = "transform .2s ease";
     bubble.style.transform = "";
-    if (icon) icon.style.opacity = "0";
     setTimeout(() => { bubble.style.transition = ""; }, 210);
   }
 
@@ -1883,14 +1872,12 @@ function attachSwipeToReply(row, item) {
     if (locked === null) {
       if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
       locked = Math.abs(dx) > Math.abs(dy) ? "h" : "v";
-      if (locked === "h") ensureIcon();
     }
     if (locked !== "h") return;
 
     e.preventDefault();
     const clamped = Math.max(0, Math.min(SWIPE_REPLY_MAX, dx));
     bubble.style.transform = `translateX(${clamped}px)`;
-    if (icon) icon.style.opacity = String(Math.min(1, clamped / SWIPE_REPLY_THRESHOLD));
   }, { passive: false });
 
   row.addEventListener("touchend", (e) => {
@@ -2452,7 +2439,7 @@ async function enterCallConnecting(replyText = null) {
     noSleep: true,
     replyTo: replyText ? { side: "right", text: replyText } : null,
   });
-  await sleep(4000); // 4s depois que a mensagem cai, antes da chamada
+  await sleep(5000); // 5s depois que a mensagem cai, antes da chamada
   showIncomingCall();
 }
 

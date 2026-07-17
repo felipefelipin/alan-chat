@@ -517,21 +517,6 @@ body{
   white-space:nowrap;
 }
 
-/* Ícone que aparece enquanto arrasta a bolha da Susana pro lado */
-.swipeReplyIcon{
-  position:absolute;
-  left:6px;
-  top:50%;
-  transform:translateY(-50%);
-  width:30px;height:30px;
-  border-radius:50%;
-  background:rgba(255,255,255,.06);
-  display:flex;align-items:center;justify-content:center;
-  opacity:0;
-  pointer-events:none;
-  z-index:1;
-}
-
 /* Barra de preview acima do composer, enquanto uma resposta está armada */
 .replyPreviewBar{
   flex-shrink:0;
