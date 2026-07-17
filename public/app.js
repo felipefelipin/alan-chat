@@ -245,7 +245,19 @@ const ScrollController = (() => {
   let gestureStartTop = 0;
   let pendingDismiss = false;
 
-  function attach(chatEl) { chat = chatEl; }
+  // Todo remount (mountChat(), ex.: voltar do perfil/stories) chama attach()
+  // de novo com um elemento novo — reseta o estado do gesto aqui, senão um
+  // gesto em andamento na tela anterior (touching/pendingDismiss) ou uma
+  // referência velha (gestureStartTop, medida contra o #chat antigo)
+  // sobrevivia pro elemento novo e podia causar um fechamento fantasma ou
+  // deixar de detectar um gesto genuíno na primeira interação depois de
+  // voltar.
+  function attach(chatEl) {
+    chat = chatEl;
+    touching = false;
+    pendingDismiss = false;
+    gestureStartTop = chat ? chat.scrollTop : 0;
+  }
 
   // chamado pelo ViewportTracker, na mesma leitura de frame que a altura —
   // altura e scroll sempre derivados da mesma amostra, nunca dessincronizados.
@@ -294,16 +306,22 @@ const ScrollController = (() => {
     chatEl.addEventListener("scroll", onScroll, { passive: true });
   }
 
-  // Ressincroniza a base de comparação assim que o teclado termina de abrir
-  // — sem isso, uma base capturada antes da abertura (ex.: no touchstart de
-  // um toque que fecha e reabre o teclado em sequência rápida) ficaria
-  // desatualizada e junto com o próprio crescimento do scrollTop durante a
-  // abertura poderia mascarar um gesto de fechar genuíno logo em seguida.
+  // Reancora a base de comparação do gesto pro scrollTop atual — chamada
+  // sempre que algo alheio ao próprio gesto força o scroll pro fim (teclado
+  // termina de abrir, ou uma mensagem nova cai e reancora o chat). Sem
+  // isso, uma mensagem chegando bem no meio do gesto de puxar o scroll pra
+  // fechar o teclado jogava o scrollTop de volta pro fim e apagava o
+  // progresso do usuário sem ele perceber — o teclado simplesmente não
+  // fechava, mesmo com o gesto certo.
+  function syncGestureBaseline() {
+    if (chat) gestureStartTop = chat.scrollTop;
+  }
+
   KeyboardMachine.onChange((state) => {
-    if (state === "Opened" && chat) gestureStartTop = chat.scrollTop;
+    if (state === "Opened") syncGestureBaseline();
   });
 
-  return { attach, anchorToBottom, bindGestureListeners };
+  return { attach, anchorToBottom, bindGestureListeners, syncGestureBaseline };
 })();
 
 const ViewportTracker = (() => {
@@ -1724,9 +1742,20 @@ function showPixAlert() {
 
 // ==================== SCROLL / TYPING ====================
 function scrollToBottom() {
-  // RAF prevents WebKit GPU black square; setTimeout(50) ensures iOS layout has settled
-  requestAnimationFrame(() => { const el = state.chatEl; if (el) el.scrollTop = el.scrollHeight; });
-  setTimeout(() => { const el = state.chatEl; if (el) el.scrollTop = el.scrollHeight; }, 50);
+  // RAF prevents WebKit GPU black square; setTimeout(50) ensures iOS layout has settled.
+  // Também resincroniza a base do gesto de scroll-pra-fechar-teclado — sem
+  // isso, uma mensagem chegando aqui move o scrollTop mas deixa a
+  // referência do gesto desatualizada (ver ScrollController.syncGestureBaseline).
+  requestAnimationFrame(() => {
+    const el = state.chatEl;
+    if (el) el.scrollTop = el.scrollHeight;
+    ScrollController.syncGestureBaseline();
+  });
+  setTimeout(() => {
+    const el = state.chatEl;
+    if (el) el.scrollTop = el.scrollHeight;
+    ScrollController.syncGestureBaseline();
+  }, 50);
 }
 
 // Funil roteirizado, não é um chat real de ida-e-volta livre — a conversa
@@ -2267,9 +2296,9 @@ async function enterDesireEscalation() {
 async function enterCallConnecting() {
   clearReengage();
   state.step = 5; saveState();
-  await sleep(2000); // 2s de silêncio antes de aparecer "digitando..."
-  await gisaSay("tô te esperando pelada… entra agora 🔥", { delay: 3000, noSleep: true }); // 3s de "digitando..." até a mensagem cair
-  await sleep(3000); // 3s depois que a mensagem cai, antes da chamada
+  await sleep(3000); // 3s de silêncio antes de aparecer "digitando..."
+  await gisaSay("então já vou colocar o brinquedinho dentro da minha bucetinha e já te ligo 😈", { delay: 3000, noSleep: true }); // 3s de "digitando..." até a mensagem cair
+  await sleep(4000); // 4s depois que a mensagem cai, antes da chamada
   showIncomingCall();
 }
 
