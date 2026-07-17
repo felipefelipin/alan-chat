@@ -2297,7 +2297,11 @@ async function enterCallConnecting() {
   clearReengage();
   state.step = 5; saveState();
   await sleep(3000); // 3s de silêncio antes de aparecer "digitando..."
-  await gisaSay("então já vou colocar o brinquedinho dentro da minha bucetinha e já te ligo 😈", { delay: 3000, noSleep: true }); // 3s de "digitando..." até a mensagem cair
+  // sem "delay" fixo aqui — usa o cálculo padrão de typingDelayFor(text) (ver
+  // gisaSay), que dura proporcional ao tamanho da mensagem, pra ficar
+  // humanizado em vez de um tempo fixo arbitrário. Quebra de linha manual
+  // garante exatamente 2 linhas na bolha, não importa a largura da tela.
+  await gisaSay("então já vou colocar o brinquedinho\ndentro da minha bucetinha e já te ligo 😈", { noSleep: true });
   await sleep(4000); // 4s depois que a mensagem cai, antes da chamada
   showIncomingCall();
 }
@@ -2548,6 +2552,15 @@ async function startFunnelCall() {
   const triggerPaywall = async () => {
     if (done) return; done = true;
     cleanup();
+
+    // Fade suave do vídeo (e do PIP da câmera do lead) pro preto antes de
+    // qualquer overlay — evita o corte seco de antes (vid.src="" na hora,
+    // trocando o vídeo por preto instantaneamente). Com o fade, parece que
+    // ela mesma está encerrando a chamada aos poucos, não um corte técnico.
+    vid.style.transition = "opacity .7s ease";
+    vid.style.opacity = "0";
+    if (pip.style.display !== "none") { pip.style.transition = "opacity .7s ease"; pip.style.opacity = "0"; }
+    await sleep(700);
     try { vid.pause(); vid.src = ""; } catch {}
 
     // ── "Chamada encerrada" overlay (estilo WhatsApp) ───────────────
