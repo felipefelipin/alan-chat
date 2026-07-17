@@ -2435,7 +2435,7 @@ async function enterCallConnecting(replyText = null) {
   // gisaSay), que dura proporcional ao tamanho da mensagem, pra ficar
   // humanizado em vez de um tempo fixo arbitrário. Quebra de linha manual
   // garante exatamente 2 linhas na bolha, não importa a largura da tela.
-  await gisaSay("então já vou colocar o brinquedinho\ndentro da minha bucetinha e já te ligo 😈", {
+  await gisaSay("então já vou colocar o brinquedinho\ndentro da minha bucetinha e já te ligo 😈", {
     noSleep: true,
     replyTo: replyText ? { side: "right", text: replyText } : null,
   });
