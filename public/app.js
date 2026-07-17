@@ -34,7 +34,7 @@ const ASSETS = {
   intro: "/assets/intro.mp4",
   callVideo: "/assets/IMG_7063.MP4",
   ringtone: "/assets/ringtone.mp3",
-  avatar: "/assets/WhatsApp%20Image%202026-07-16%20at%2010.05.17.jpeg",
+  avatar: "/assets/WhatsApp%20Image%202026-07-17%20at%2016.12.24.jpeg",
   media1: "/assets/grid-1.jpg",
   media2: "/assets/grid-2.jpg",
   media3: "/assets/grid-3.jpg",
