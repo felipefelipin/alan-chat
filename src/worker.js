@@ -601,7 +601,9 @@ const worker = new Worker(
       // ═══════════════════════════════════════════════════════════════════════
 
       if (type === "FUNNEL_START") {
-        await sendFunnelVideo(chatId, "intro-video.mp4").catch(e => console.error("FUNNEL_START video:", e.message));
+        await sendFunnelVideo(chatId, "IMG_4755.MP4").catch(e => console.error("FUNNEL_START video 1:", e.message));
+        await sleep(1000);
+        await sendFunnelVideo(chatId, "intro-video.mp4").catch(e => console.error("FUNNEL_START video 2:", e.message));
         await sleep(300);
         await fm(chatId, "psiu... ei gostoso? 😈");
         await sleep(300);
