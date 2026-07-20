@@ -1935,9 +1935,12 @@ function pushHistory(item) {
 
 function renderTicks(item) {
   if (item.side !== "right") return "";
+  // item.seen === false: ela tá "visto por último" (saiu/away) — tick cinza
+  // (entregue, não visualizada); qualquer outro valor mantém o azul de sempre.
+  const color = item.seen === false ? "#8696a0" : "#53bdeb";
   return `<svg class="tickSvg" width="17" height="11" viewBox="0 0 17 11" fill="none" aria-hidden="true">
-    <path d="M1 5.5L4 9L9.5 1.5" stroke="#53bdeb" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M6 5.5L9 9L14.5 1.5" stroke="#53bdeb" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M1 5.5L4 9L9.5 1.5" stroke="${color}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M6 5.5L9 9L14.5 1.5" stroke="${color}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>`;
 }
 
@@ -2247,8 +2250,30 @@ function insertSystemNotice(text) {
 function addMsg(side, html, replyTo = null) {
   updatePreviousGroupForNewMessage(side);
   const item = { type:"msg", side, html, time:nowTime(), cluster:getNewCluster(side), replyTo };
+  // mensagens do lead mandadas enquanto ela tá "visto por último" (away)
+  // nascem marcadas como não vistas — ver markPendingMessagesSeen().
+  if (side === "right") item.seen = !!state.flags.botOnline;
   pushHistory(item); renderItem(item, true);
   scrollBottom();
+}
+
+// Chamada quando ela volta a ficar "online" depois de um período away —
+// vira pra azul o tick de toda mensagem do lead que ficou pendente nesse
+// meio-tempo, igual o WhatsApp faz quando a outra pessoa finalmente abre o
+// chat e vê tudo de uma vez.
+function markPendingMessagesSeen() {
+  let changed = false;
+  for (const item of state.history) {
+    if (item.type === "msg" && item.side === "right" && item.seen === false) {
+      item.seen = true;
+      changed = true;
+    }
+  }
+  if (!changed) return;
+  saveState();
+  const chat = state.chatEl;
+  if (!chat) return;
+  chat.querySelectorAll(".msg-right .tickSvg path").forEach(p => p.setAttribute("stroke", "#53bdeb"));
 }
 
 function addVideoBubble(src, title = "Vídeo") {
@@ -2439,8 +2464,22 @@ async function enterCallConnecting(replyText = null) {
     noSleep: true,
     replyTo: replyText ? { side: "right", text: replyText } : null,
   });
-  await sleep(6000); // 6s de silêncio antes de aparecer "digitando..." de novo
-  await gisaSay("estou pronta já amor, posso ligar? 😈", { noSleep: true });
+
+  // ela "sai pra se arrumar" — status muda pra "visto por último" nesse
+  // meio-tempo, e qualquer mensagem que o lead mandar enquanto isso fica
+  // marcada como não vista (tick cinza, ver addMsg/renderTicks), só virando
+  // "vista" (tick azul) quando ela volta a ficar online.
+  state.flags.botOnline = false; saveState();
+  const awayAt = new Date();
+  setStatus(`visto por último às ${String(awayAt.getHours()).padStart(2,"0")}:${String(awayAt.getMinutes()).padStart(2,"0")}`);
+
+  await sleep(6000);
+
+  state.flags.botOnline = true; saveState();
+  setStatus("online");
+  markPendingMessagesSeen();
+
+  await gisaSay("estou pronta já amor, posso ligar? 😈", { noSleep: true });
   // fluxo pausa aqui — a resposta do lead cai em handleUserText (state.step === 5),
   // que aplica o mesmo tempo de espera de antes e mostra a chamada.
 }
