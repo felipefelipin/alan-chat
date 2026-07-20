@@ -32,7 +32,7 @@ const ASSETS = {
   privateIntro: "/assets/IMG_4913.MP4",
   privateMusic: "/assets/private-music.mp3",
   intro: "/assets/intro.mp4",
-  callVideo: "/assets/0717.mp4",
+  callVideo: "/assets/0717%281%29.mp4",
   ringtone: "/assets/ringtone.mp3",
   avatar: "/assets/WhatsApp%20Image%202026-07-17%20at%2016.12.24.jpeg",
   media1: "/assets/grid-1.jpg",
@@ -2439,8 +2439,10 @@ async function enterCallConnecting(replyText = null) {
     noSleep: true,
     replyTo: replyText ? { side: "right", text: replyText } : null,
   });
-  await sleep(8000); // 8s depois que a mensagem cai, antes da chamada
-  showIncomingCall();
+  await sleep(6000); // 6s de silêncio antes de aparecer "digitando..." de novo
+  await gisaSay("estou pronta já amor, posso ligar? 😈", { noSleep: true });
+  // fluxo pausa aqui — a resposta do lead cai em handleUserText (state.step === 5),
+  // que aplica o mesmo tempo de espera de antes e mostra a chamada.
 }
 
 function showIncomingCall() {
@@ -3106,6 +3108,13 @@ async function handleUserText(text) {
       await enterCallConnecting(text);
       return;
     }
+    if (state.step === 5) {
+      // resposta a "estou pronta já amor, posso ligar?" — mesmo tempo que já
+      // existia entre a mensagem anterior cair e a chamada aparecer.
+      await sleep(8000);
+      showIncomingCall();
+      return;
+    }
   } catch(e) { if (!(e instanceof FlowCancelledError)) throw e; }
   finally { _flowRunning = false; }
 }
@@ -3208,11 +3217,14 @@ function showCheckoutCta() {
       <video id="paywallHeroVideo" src="/assets/IMG_5586.MP4" autoplay loop muted playsinline
         style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;z-index:0;opacity:0;animation:pwImgIn 0.34s ease 0.08s forwards;"></video>
 
+      <!-- degradê cobrindo o vídeo inteiro (topo ao fundo), não só a parte de
+           baixo — sem isso o topo aparecia sem nenhum escurecimento (100%
+           opacidade) enquanto o resto tinha o degradê .40→.88 -->
+      <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(to bottom,rgba(10,10,10,.40),rgba(10,10,10,.88));pointer-events:none;"></div>
+
       <div style="width:100%;height:52vw;max-height:290px;min-height:190px;flex-shrink:0;position:relative;z-index:1;"></div>
 
       <div style="flex:1;position:relative;overflow:hidden;z-index:1;">
-        <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,10,10,.40),rgba(10,10,10,.88));pointer-events:none;"></div>
-
         <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;
                     padding:26px 24px calc(env(safe-area-inset-bottom,20px) + 24px);">
 
