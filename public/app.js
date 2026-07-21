@@ -1818,7 +1818,7 @@ function runEntranceScreen() {
         <p class="esSubtitle">Chat Exclusivo • ${escapeHtml(CONTACT.name)}</p>
         <button type="button" class="esCta">
           <span class="esCtaRing" aria-hidden="true"></span>
-          <span class="esCtaLabel">ENTRAR NA CHAMADA</span>
+          <span class="esCtaLabel">CLIQUE E ENTRE AO VIVO COMIGO AGORA 🔥</span>
         </button>
       </div>
     `);
