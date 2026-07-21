@@ -35,6 +35,7 @@ const ASSETS = {
   callVideo: "/assets/0717%281%29.mp4",
   ringtone: "/assets/ringtone.mp3",
   avatar: "/assets/WhatsApp%20Image%202026-07-17%20at%2016.12.24.jpeg",
+  entranceTeaser: "/assets/IMG_6939.MP4",
   media1: "/assets/grid-1.jpg",
   media2: "/assets/grid-2.jpg",
   media3: "/assets/grid-3.jpg",
@@ -1800,7 +1801,8 @@ function runEntranceScreen() {
 
       <div class="esSilhouetteWrap">
         <div class="esGlow"></div>
-        <img class="esSilhouette" src="${ASSETS.avatar}" alt="" aria-hidden="true">
+        <video class="esSilhouette" src="${ASSETS.entranceTeaser}" autoplay loop muted playsinline
+          webkit-playsinline aria-hidden="true"></video>
         <div class="esVignette"></div>
       </div>
 
@@ -1824,6 +1826,12 @@ function runEntranceScreen() {
     const particles = mountParticleSystem(screen, ES_EMBER_COLORS);
     const soundBtn = screen.querySelector(".esSoundToggle");
     const ctaBtn = screen.querySelector(".esCta");
+
+    // autoplay+muted+playsinline no HTML já cobre a maioria dos casos, mas
+    // alguns WebViews mobile só engatam de verdade com um .play() explícito
+    // (mesmo padrão já usado em mountBackgroundVideo). loop nativo cuida do
+    // resto — roda infinito até a tela ser removida no onEnterTap.
+    screen.querySelector(".esSilhouette")?.play().catch(() => {});
 
     // Som começa LIGADO por padrão (diferente do resto do app onde já vinha
     // ligado desde o início) — a essa altura o usuário já tocou em GIRAR/
