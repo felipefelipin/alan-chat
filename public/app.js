@@ -1108,29 +1108,16 @@ function runConnectionLoadingScreen() {
       hud.mountEnterButton(onEnterTap);
     }
 
-    // Sequência de saída, coreografada (não é espera de animação nativa
-    // imprevisível — é uma transição autoral nossa, timing fixo por design,
-    // igual ao resto das transições do app): blackout com spinner de
-    // carregamento -> flash/efeito -> revela o chat.
+    // Saída simples: só um fade (remove .lsScreen-visible, reaproveitando a
+    // mesma transição de opacidade já usada na entrada) — sem blackout/
+    // spinner/shockwave/iris, mas mantém o som de confirmação.
     function onEnterTap() {
+      hapticImpact("medium");
+      lsPlaySuccessChime();
       particles.stop();
-      screen.classList.add("lsScreen-blackout");
-
-      const spinner = document.createElement("div");
-      spinner.className = "lsLoaderSpinner";
-      screen.appendChild(spinner);
-      lsPlayLoadingPulse();
-
-      setTimeout(() => {
-        spinner.remove();
-        vibrate(10);
-        mountShockwave(screen);
-        lsPlaySuccessChime();
-
-        setTimeout(() => {
-          runIrisReveal(screen).then(cleanup);
-        }, 260);
-      }, 650);
+      screen.classList.remove("lsScreen-visible");
+      screen.addEventListener("transitionend", cleanup, { once: true });
+      setTimeout(cleanup, 500); // rede de segurança caso transitionend não dispare
     }
 
     let cleaned = false;
@@ -1446,9 +1433,8 @@ function mountConfettiBurst(host) {
 }
 
 // Orquestrador — mesmo formato de runConnectionLoadingScreen (Promise que
-// resolve quando a tela termina sua própria saída coreografada). Reaproveita
-// mountParticleSystem/mountShockwave/runIrisReveal verbatim pra manter a
-// mesma assinatura visual de transição do resto do app.
+// resolve quando a tela termina sua própria saída). Reaproveita
+// mountParticleSystem verbatim; a saída é só um fade + som de confirmação.
 function runRouletteScreen() {
   return new Promise((resolve) => {
     const screen = document.createElement("div");
@@ -1535,9 +1521,11 @@ function runRouletteScreen() {
 
     // Saída simples: só um fade (reaproveitando a mesma transição de opacidade
     // já usada na entrada da tela, via remoção de .lsScreen-visible) — sem
-    // blackout/spinner/shockwave/iris. mountChat() já faz seu próprio fadeIn.
+    // blackout/spinner/shockwave/iris, mas mantém o som de confirmação.
+    // mountChat() já faz seu próprio fadeIn.
     function onEnterTap() {
       hapticImpact("medium");
+      lsPlaySuccessChime();
       particles.stop();
       wheel.destroy();
       confetti?.stop();
