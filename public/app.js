@@ -964,60 +964,8 @@ function mountConnectionHUD(host) {
 }
 
 // Tela de carregamento inicial, antes da verificação segura — puro
-// preto + spinner por ~3s, depois um flash/efeito (reaproveita as mesmas
-// classes CSS da transição de saída do onEnterTap) antes de revelar a
-// tela de verificação. Timing fixo, coreografado por nós.
-// Efeito de transição — anel neon que expande e desaparece, mesmo
-// gradiente do anel de progresso do HUD (rosa->roxo->azul), pra criar
-// continuidade visual em vez de um flash genérico solto.
-function mountShockwave(host) {
-  const el = document.createElement("div");
-  el.className = "lsShockwave";
-  el.innerHTML = `
-    <svg viewBox="0 0 200 200" width="200" height="200">
-      <defs>
-        <linearGradient id="lsShockGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#ff2fb0"/>
-          <stop offset="55%" stop-color="#8b5cf6"/>
-          <stop offset="100%" stop-color="#3ec8ff"/>
-        </linearGradient>
-      </defs>
-      <circle cx="100" cy="100" r="90" fill="none" stroke="url(#lsShockGrad)" stroke-width="3"/>
-    </svg>
-  `;
-  host.appendChild(el);
-  requestAnimationFrame(() => el.classList.add("lsShockwave-active"));
-  return el;
-}
-
-// Revela o que está atrás da tela através de uma abertura circular
-// (íris/diafragma de câmera), com uma borda colorida (mesmo gradiente do
-// anel) acompanhando a expansão — em vez de um fade genérico por cima.
-// Precisa ser JS/rAF porque gradientes de mask-image não interpolam via
-// transição CSS pura de forma confiável entre engines.
-function runIrisReveal(host, durationMs = 700) {
-  return new Promise((resolve) => {
-    const t0 = performance.now();
-    const maxRadius = 75; // % — cobre a diagonal inteira a partir do centro
-
-    function frame(now) {
-      const p = Math.min(1, (now - t0) / durationMs);
-      const eased = 1 - Math.pow(1 - p, 3); // ease-out cúbico
-      const r = eased * maxRadius;
-      const mask = `radial-gradient(circle at center, transparent ${r}%, rgba(139,92,246,.9) ${r + 2}%, rgba(0,0,0,1) ${r + 7}%)`;
-      host.style.maskImage = mask;
-      host.style.webkitMaskImage = mask;
-
-      if (p < 1) {
-        requestAnimationFrame(frame);
-      } else {
-        resolve();
-      }
-    }
-    requestAnimationFrame(frame);
-  });
-}
-
+// preto + spinner por ~3s, depois um fade antes de revelar a tela de
+// verificação. Timing fixo, coreografado por nós.
 function runInitialLoadingScreen() {
   return new Promise((resolve) => {
     const screen = document.createElement("div");
@@ -1033,15 +981,22 @@ function runInitialLoadingScreen() {
     lsPlayLoadingPulse();
     setTimeout(lsPlayLoadingPulse, 1500);
 
+    // Saída simples: só um fade (mantém o som de confirmação, sem
+    // shockwave/iris).
     setTimeout(() => {
-      spinner.remove();
-      mountShockwave(screen);
       lsPlaySuccessChime();
-
-      setTimeout(() => {
-        runIrisReveal(screen).then(() => { screen.remove(); resolve(); });
-      }, 260);
+      screen.classList.remove("lsScreen-visible");
+      screen.addEventListener("transitionend", cleanup, { once: true });
+      setTimeout(cleanup, 500); // rede de segurança caso transitionend não dispare
     }, 3000);
+
+    let cleaned = false;
+    function cleanup() {
+      if (cleaned) return;
+      cleaned = true;
+      screen.remove();
+      resolve();
+    }
   });
 }
 
