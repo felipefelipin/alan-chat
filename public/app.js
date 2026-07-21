@@ -761,6 +761,54 @@ function lsPlayWinFanfare() {
   });
 }
 
+// "whoosh" grave e descendente — usado quando as cortinas abrem.
+function esPlayWhoosh() {
+  const ctx = lsGetAudioCtx();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sawtooth";
+  osc.frequency.setValueAtTime(320, now);
+  osc.frequency.exponentialRampToValueAtTime(70, now + 0.6);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.05, now + 0.08);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.65);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.7);
+}
+
+// drone ambiente grave e contínuo (2 osciladores levemente desafinados) —
+// tocado durante toda a tela de entrada. start()/stop() controlam o fade.
+function esStartAmbientDrone() {
+  const ctx = lsGetAudioCtx();
+  if (!ctx) return null;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.035, ctx.currentTime + 1.2);
+  gain.connect(ctx.destination);
+
+  const oscs = [55, 58].map((freq) => {
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    osc.connect(gain);
+    osc.start();
+    return osc;
+  });
+
+  return function stop() {
+    const t = ctx.currentTime;
+    gain.gain.cancelScheduledValues(t);
+    gain.gain.setValueAtTime(gain.gain.value, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+    setTimeout(() => oscs.forEach((o) => { try { o.stop(); } catch {} }), 600);
+  };
+}
+
 // pulso suave tipo radar/sonar — tocado durante a espera da tela preta inicial
 function lsPlayLoadingPulse() {
   const ctx = lsGetAudioCtx();
@@ -825,8 +873,11 @@ function mountBackgroundVideo(host, src) {
   return video;
 }
 
-// Layer 3 — partículas discretas subindo devagar (canvas, rAF próprio)
-function mountParticleSystem(host) {
+// Layer 3 — partículas discretas subindo devagar (canvas, rAF próprio).
+// `colors` é uma lista de [r,g,b] — cada partícula sorteia uma na hora de
+// nascer; default branco (comportamento original, usado pelas telas de
+// loading/roleta). A tela de entrada passa tons vermelho/dourado (brasa).
+function mountParticleSystem(host, colors = [[255, 255, 255]]) {
   const canvas = document.createElement("canvas");
   canvas.className = "lsParticles";
   host.appendChild(canvas);
@@ -849,6 +900,7 @@ function mountParticleSystem(host) {
       vy: -(0.08 + Math.random() * 0.16),
       vx: (Math.random() - 0.5) * 0.05,
       a: 0.12 + Math.random() * 0.3,
+      c: colors[(Math.random() * colors.length) | 0],
     }));
   }
 
@@ -865,7 +917,7 @@ function mountParticleSystem(host) {
       if (p.x < -4) p.x = w + 4;
       if (p.x > w + 4) p.x = -4;
       ctx.beginPath();
-      ctx.fillStyle = `rgba(255,255,255,${p.a})`;
+      ctx.fillStyle = `rgba(${p.c[0]},${p.c[1]},${p.c[2]},${p.a})`;
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
       ctx.fill();
     }
@@ -1537,6 +1589,137 @@ function runRouletteScreen() {
       resolve();
     }
   });
+}
+
+// ==================== ENTRADA CINEMATOGRÁFICA (pós-roleta) ====================
+// Tela "dark luxury" entre a vitória da roleta e o chat: cortinas de veludo
+// abrem, silhueta com rim-light vermelho revela, selo com glitch, headline,
+// subtítulo e CTA — timeline fixa e coreografada (setTimeout em cadeia,
+// mesmo estilo já usado nas sequências de saída deste arquivo), sem rAF
+// próprio (não há nada contínuo pra animar quadro a quadro aqui, ao
+// contrário da roleta). Parallax de mouse foi propositalmente omitido nessa
+// versão mobile-first (Telegram Mini App é touch, não teria efeito real).
+//
+// Timeline (ms desde o mount) — comprimida por ES_REDUCED_MOTION_SCALE
+// quando prefers-reduced-motion está ativo:
+const ES_PHASE_MS = { curtains: 800, silhouette: 1800, badge: 2500, headline: 3300, subtitle: 4200, cta: 5000 };
+const ES_REDUCED_MOTION_SCALE = 0.3;
+
+const ES_EMBER_COLORS = [[255, 45, 70], [214, 176, 122]]; // vermelho / dourado
+
+function esPrefersReducedMotion() {
+  try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; }
+  catch { return false; }
+}
+
+function runEntranceScreen() {
+  return new Promise((resolve) => {
+    const reduced = esPrefersReducedMotion();
+    const scale = reduced ? ES_REDUCED_MOTION_SCALE : 1;
+
+    const screen = document.createElement("div");
+    screen.className = reduced ? "lsScreen es-reduced" : "lsScreen";
+    app.appendChild(screen);
+
+    screen.insertAdjacentHTML("beforeend", `
+      <div class="esBg"></div>
+      <div class="esCurtainL"></div>
+      <div class="esCurtainR"></div>
+
+      <div class="esSilhouetteWrap">
+        <div class="esGlow"></div>
+        <img class="esSilhouette" src="${ASSETS.avatar}" alt="" aria-hidden="true">
+        <div class="esVignette"></div>
+      </div>
+
+      <button type="button" class="esSoundToggle" aria-pressed="false" aria-label="Ativar som">${esSoundIcon(false)}</button>
+
+      <div class="esStage">
+        <div class="esBadge">
+          <span class="esGlitchBase">ACESSO LIBERADO</span>
+          <span class="esGlitchR" aria-hidden="true">ACESSO LIBERADO</span>
+          <span class="esGlitchC" aria-hidden="true">ACESSO LIBERADO</span>
+        </div>
+        <h1 class="esHeadline">VOCÊ ESTÁ DENTRO</h1>
+        <p class="esSubtitle">Chat Exclusivo • ${escapeHtml(CONTACT.name)}</p>
+        <button type="button" class="esCta">
+          <span class="esCtaRing" aria-hidden="true"></span>
+          <span class="esCtaLabel">ENTRAR NA CHAMADA</span>
+        </button>
+      </div>
+    `);
+
+    const particles = mountParticleSystem(screen, ES_EMBER_COLORS);
+    const soundBtn = screen.querySelector(".esSoundToggle");
+    const ctaBtn = screen.querySelector(".esCta");
+
+    let soundOn = false;
+    let stopDrone = null;
+
+    function playIfSound(fn) { if (soundOn) fn(); }
+
+    soundBtn.addEventListener("click", () => {
+      soundOn = !soundOn;
+      soundBtn.setAttribute("aria-pressed", String(soundOn));
+      soundBtn.setAttribute("aria-label", soundOn ? "Desativar som" : "Ativar som");
+      soundBtn.innerHTML = esSoundIcon(soundOn);
+      if (soundOn) { stopDrone = esStartAmbientDrone(); }
+      else if (stopDrone) { stopDrone(); stopDrone = null; }
+    });
+
+    requestAnimationFrame(() => screen.classList.add("lsScreen-visible"));
+
+    const timers = [
+      setTimeout(() => {
+        screen.classList.add("es-curtains-open");
+        playIfSound(esPlayWhoosh);
+      }, ES_PHASE_MS.curtains * scale),
+
+      setTimeout(() => screen.querySelector(".esSilhouetteWrap")?.classList.add("es-visible"), ES_PHASE_MS.silhouette * scale),
+
+      setTimeout(() => {
+        screen.querySelector(".esBadge")?.classList.add("es-visible");
+        playIfSound(lsPlaySpinTick);
+      }, ES_PHASE_MS.badge * scale),
+
+      setTimeout(() => screen.querySelector(".esHeadline")?.classList.add("es-visible"), ES_PHASE_MS.headline * scale),
+
+      setTimeout(() => screen.querySelector(".esSubtitle")?.classList.add("es-visible"), ES_PHASE_MS.subtitle * scale),
+
+      setTimeout(() => {
+        ctaBtn.classList.add("es-visible");
+        playIfSound(lsPlaySuccessChime);
+      }, ES_PHASE_MS.cta * scale),
+    ];
+
+    ctaBtn.addEventListener("click", onEnterTap, { once: true });
+
+    // Saída: mesmo fade simples usado no resto do app (ver runRouletteScreen).
+    function onEnterTap() {
+      hapticImpact("medium");
+      playIfSound(lsPlaySuccessChime);
+      particles.stop();
+      if (stopDrone) stopDrone();
+      screen.classList.remove("lsScreen-visible");
+      screen.addEventListener("transitionend", cleanup, { once: true });
+      setTimeout(cleanup, 500); // rede de segurança caso transitionend não dispare
+    }
+
+    let cleaned = false;
+    function cleanup() {
+      if (cleaned) return;
+      cleaned = true;
+      timers.forEach(clearTimeout);
+      screen.remove();
+      resolve();
+    }
+  });
+}
+
+function esSoundIcon(on) {
+  return on
+    ? `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16.5 12a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/></svg>`
+    : `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16 9l5 6M21 9l-5 6" stroke-linecap="round"/></svg>`;
 }
 
 // ==================== MOUNT CHAT ====================
@@ -4555,6 +4738,7 @@ if (!FORCE_FRESH_START && localStorage.getItem("gisa_checkout_done") === "1") {
     await runInitialLoadingScreen();
     await runConnectionLoadingScreen();
     await runRouletteScreen();
+    await runEntranceScreen();
     mountChat();
     insertSystemNotice(`As mensagens são protegidas com criptografia de ponta a ponta. Só você e ${CONTACT.name} podem lê-las.`);
     await sleep(220);
