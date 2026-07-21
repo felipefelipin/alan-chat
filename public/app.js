@@ -96,6 +96,10 @@ const state = {
     audioEnabled: false,
     routing: false,
     startedChat: false,
+    // registro informativo (não usado para pular a tela — quem controla
+    // o retorno de usuários recorrentes é o localStorage "gisa_checkout_done",
+    // ver boot no fim do arquivo).
+    rouletteDone: false,
   },
 };
 
@@ -107,6 +111,7 @@ function snapshotForSave() {
       audioEnabled: !!state.flags.audioEnabled,
       routing: false,
       startedChat: !!state.flags.startedChat,
+      rouletteDone: !!state.flags.rouletteDone,
     },
     history: Array.isArray(state.history) ? state.history.slice(-220) : [],
     ui: { statusText: document.getElementById("status")?.textContent ?? "" },
@@ -127,6 +132,7 @@ function loadState() {
     state.flags.entered = !!data.flags.entered;
     state.flags.audioEnabled = !!data.flags.audioEnabled;
     state.flags.startedChat = !!data.flags.startedChat;
+    state.flags.rouletteDone = !!data.flags.rouletteDone;
     state.flags.routing = false;
   }
   if (Array.isArray(data.history)) state.history = data.history;
@@ -175,6 +181,22 @@ function setStatus(text) {
 
 function vibrate(ms = 18) {
   try { if (navigator.vibrate) navigator.vibrate(ms); } catch {}
+}
+
+// Haptics nativos do Telegram (mais sutis/precisos que a Vibration API do
+// browser) com fallback silencioso pra vibrate() em clientes sem suporte.
+function hapticImpact(style = "medium") {
+  try {
+    if (tg?.HapticFeedback?.impactOccurred) { tg.HapticFeedback.impactOccurred(style); return; }
+  } catch {}
+  vibrate(style === "light" ? 6 : style === "heavy" ? 16 : 10);
+}
+
+function hapticNotify(type = "success") {
+  try {
+    if (tg?.HapticFeedback?.notificationOccurred) { tg.HapticFeedback.notificationOccurred(type); return; }
+  } catch {}
+  vibrate(14);
 }
 
 // ── FIX #4: showHome aponta para mountChat ────────────────────────────────────
@@ -697,6 +719,48 @@ function lsPlaySuccessChime() {
   });
 }
 
+// clique mecânico da roleta — mais percussivo que lsPlayTick (que é um blip
+// suave pra revelar itens de checklist), pra soar como a divisória de uma
+// fatia passando pelo ponteiro.
+function lsPlaySpinTick() {
+  const ctx = lsGetAudioCtx();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "square";
+  osc.frequency.setValueAtTime(1200, now);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.10, now + 0.006);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.05);
+}
+
+// arpejo ascendente de 4 notas — o "grande momento" da roleta, mais festivo
+// que o chime de duas notas da tela de conexão.
+function lsPlayWinFanfare() {
+  const ctx = lsGetAudioCtx();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  const now = ctx.currentTime;
+  [523, 659, 784, 1046].forEach((freq, i) => {
+    const t = now + i * 0.09;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.2, t + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.38);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.4);
+  });
+}
+
 // pulso suave tipo radar/sonar — tocado durante a espera da tela preta inicial
 function lsPlayLoadingPulse() {
   const ctx = lsGetAudioCtx();
@@ -1050,6 +1114,416 @@ function runConnectionLoadingScreen() {
     // carregamento -> flash/efeito -> revela o chat.
     function onEnterTap() {
       particles.stop();
+      screen.classList.add("lsScreen-blackout");
+
+      const spinner = document.createElement("div");
+      spinner.className = "lsLoaderSpinner";
+      screen.appendChild(spinner);
+      lsPlayLoadingPulse();
+
+      setTimeout(() => {
+        spinner.remove();
+        vibrate(10);
+        mountShockwave(screen);
+        lsPlaySuccessChime();
+
+        setTimeout(() => {
+          runIrisReveal(screen).then(cleanup);
+        }, 260);
+      }, 650);
+    }
+
+    let cleaned = false;
+    function cleanup() {
+      if (cleaned) return;
+      cleaned = true;
+      screen.remove();
+      resolve();
+    }
+  });
+}
+
+// ==================== ROLETA PREMIUM (gateway pré-chat) ====================
+// Nova etapa entre a verificação de conexão e o chat. Sempre resulta em
+// vitória (é um gateway obrigatório, não uma aposta com risco real) — o
+// suspense vem só da física do giro (aceleração/desaceleração/overshoot),
+// nunca de um resultado que possa travar o funil numa tela de "perdeu".
+// Canvas 2D (não SVG/CSS transform) pra rotação, um único loop rAF dirigido
+// por tempo decorrido (mesma filosofia das telas de loading acima: nada de
+// setTimeouts encadeados dirigindo a animação em si).
+
+const RW_SEG_ANGLE_DEG = 45; // 360 / 8 segmentos
+const RW_IDLE_OFFSET_DEG = 90;  // segmento 0 nasce embaixo (oposto ao ponteiro) em repouso
+const RW_POINTER_ANGLE_DEG = 270; // ponteiro fixo no topo
+const RW_WIN_INDEX = 0; // sempre o mesmo segmento — o dourado
+
+const RW_SEGMENTS = [
+  { label: "ACESSO LIBERADO", gold: true },
+  { label: "Foto Extra 📸" },
+  { label: "Quase lá..." },
+  { label: "Áudio Gostoso 🎧" },
+  { label: "Vídeo Bônus 🎥" },
+  { label: "Mais Sorte 🍀" },
+  { label: "Selfie Secreta 🤳" },
+  { label: "Surpresa 🎁" },
+];
+
+// Ângulo final de rotação pra travar o ponteiro exatamente no segmento
+// vencedor. Isolado da renderização pra ser fácil de ajustar/testar.
+function computeRouletteTarget() {
+  const targetMod = ((RW_POINTER_ANGLE_DEG - RW_IDLE_OFFSET_DEG - RW_WIN_INDEX * RW_SEG_ANGLE_DEG) % 360 + 360) % 360;
+  const fullSpins = 6;
+  // jitter fica sempre a pelo menos 50% da meia-largura do segmento de
+  // qualquer borda — nunca fica visualmente ambíguo qual fatia "ganhou".
+  const jitter = (Math.random() * 2 - 1) * (RW_SEG_ANGLE_DEG * 0.25);
+  return fullSpins * 360 + targetMod + jitter;
+}
+
+// Duas fontes (dourada/decoy) pré-computadas por tamanho de tela — evita
+// montar a string de font e reatribuir ctx.font por segmento a cada frame.
+function buildRouletteFonts(r) {
+  return {
+    gold: `700 ${Math.max(10, r * 0.075)}px -apple-system, BlinkMacSystemFont, system-ui, sans-serif`,
+    decoy: `500 ${Math.max(9, r * 0.065)}px -apple-system, BlinkMacSystemFont, system-ui, sans-serif`,
+  };
+}
+
+// Desenho puro — chamado tanto no mount (estático) quanto a cada frame do
+// giro. fillStyles/fonts são pré-computados fora do loop (nada de gradientes
+// ou strings de font sendo recriadas por frame).
+function drawWheel(ctx, size, rotationDeg, fillStyles, fonts) {
+  if (!size) return;
+  const r = size / 2;
+  ctx.clearRect(0, 0, size, size);
+  ctx.save();
+  ctx.translate(r, r);
+  ctx.rotate(rotationDeg * Math.PI / 180);
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+
+  let lastFont = null;
+  RW_SEGMENTS.forEach((seg, i) => {
+    const startDeg = RW_IDLE_OFFSET_DEG + i * RW_SEG_ANGLE_DEG - RW_SEG_ANGLE_DEG / 2;
+    const startRad = startDeg * Math.PI / 180;
+    const endRad = startRad + (RW_SEG_ANGLE_DEG * Math.PI / 180);
+
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, r - 3, startRad, endRad);
+    ctx.closePath();
+    ctx.fillStyle = fillStyles[i] || "#171310";
+    ctx.fill();
+    ctx.strokeStyle = seg.gold ? "rgba(244,217,168,.6)" : "rgba(214,176,122,.22)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    const midRad = (startRad + endRad) / 2;
+    ctx.save();
+    ctx.rotate(midRad);
+    ctx.fillStyle = seg.gold ? "#2a1c08" : "rgba(245,230,200,.9)";
+    const font = seg.gold ? fonts.gold : fonts.decoy;
+    if (font !== lastFont) { ctx.font = font; lastFont = font; }
+    ctx.fillText(seg.label, r - 16, 0);
+    ctx.restore();
+  });
+
+  ctx.restore();
+}
+
+// Timeline única em rAF: aceleração (easeOutQuart) até um overshoot além do
+// alvo, depois um cosseno amortecido que converge exatamente no alvo — sem
+// snap manual no fim. Tempo decorrido via performance.now(), então uma aba
+// jogada pro background não gera drift (só "pula" pra frente ao voltar).
+function spinWheel(draw, finalRotationDeg, onTick) {
+  const T_SPIN = 4100;
+  const OVERSHOOT_DEG = 18;
+  const overshootRotation = finalRotationDeg + OVERSHOOT_DEG;
+
+  let rafId = null;
+  let cancelled = false;
+  let lastSeg = null;
+
+  const promise = new Promise((resolve) => {
+    const t0 = performance.now();
+
+    function frame(now) {
+      if (cancelled) return;
+      const p = Math.min(1, (now - t0) / T_SPIN);
+      let rotation;
+
+      if (p < 0.75) {
+        const q = p / 0.75;
+        const eased = 1 - Math.pow(1 - q, 4); // easeOutQuart
+        rotation = eased * overshootRotation;
+      } else {
+        const q = (p - 0.75) / 0.25;
+        const decay = Math.pow(1 - q, 2);
+        const osc = Math.cos(q * 2.2 * Math.PI) * (overshootRotation - finalRotationDeg) * decay;
+        rotation = finalRotationDeg + osc;
+      }
+
+      draw(rotation);
+
+      const segIndex = Math.floor(rotation / RW_SEG_ANGLE_DEG);
+      if (segIndex !== lastSeg) {
+        lastSeg = segIndex;
+        onTick?.();
+      }
+
+      if (p < 1) {
+        rafId = requestAnimationFrame(frame);
+      } else {
+        draw(finalRotationDeg); // garante o valor exato, sem erro de ponto flutuante
+        resolve();
+      }
+    }
+    rafId = requestAnimationFrame(frame);
+  });
+
+  return {
+    promise,
+    cancel() {
+      cancelled = true;
+      if (rafId) cancelAnimationFrame(rafId);
+    },
+  };
+}
+
+// Monta o wrap/glow/canvas/ponteiro/hub e devolve os controles do giro.
+// DPR-aware, resize só recalcula fora do loop de animação (mesmo padrão de
+// mountParticleSystem).
+function mountRouletteWheel(host) {
+  host.insertAdjacentHTML("beforeend", `
+    <div class="rwWheelWrap">
+      <div class="rwGlow"></div>
+      <canvas class="rwCanvas"></canvas>
+      <div class="rwPointer"></div>
+      <div class="rwHub"></div>
+    </div>
+  `);
+
+  const wrap = host.querySelector(".rwWheelWrap");
+  const canvas = wrap.querySelector(".rwCanvas");
+  const ctx = canvas.getContext("2d");
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+  let size = 0;
+  let fillStyles = [];
+  let fonts = null;
+  let currentRotation = 0;
+  let activeCancel = null;
+
+  function buildFillStyles() {
+    fillStyles = RW_SEGMENTS.map((seg, i) => {
+      if (seg.gold) {
+        const g = ctx.createRadialGradient(0, 0, 0, 0, 0, size / 2);
+        g.addColorStop(0, "#f4d9a8");
+        g.addColorStop(0.55, "#d6b07a");
+        g.addColorStop(1, "#b5893f");
+        return g;
+      }
+      return i % 2 === 0 ? "#171310" : "#211a12";
+    });
+  }
+
+  function draw(rotationDeg) {
+    currentRotation = rotationDeg;
+    drawWheel(ctx, size, rotationDeg, fillStyles, fonts);
+  }
+
+  function resize() {
+    size = wrap.clientWidth;
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    buildFillStyles();
+    fonts = buildRouletteFonts(size / 2);
+    draw(currentRotation);
+  }
+
+  resize();
+  window.addEventListener("resize", resize);
+
+  return {
+    spin(finalRotationDeg, onTick) {
+      const { promise, cancel } = spinWheel(draw, finalRotationDeg, onTick);
+      activeCancel = cancel;
+      return promise.finally(() => { activeCancel = null; });
+    },
+    destroy() {
+      if (activeCancel) activeCancel();
+      window.removeEventListener("resize", resize);
+    },
+  };
+}
+
+// Confete one-shot: canvas próprio, física simples de gravidade+rotação,
+// auto-remove depois de ~1.2s (não fica dependurado se o usuário tocar
+// direto em ENTRAR NO CHAT).
+function mountConfettiBurst(host) {
+  const canvas = document.createElement("canvas");
+  canvas.className = "rwConfetti";
+  host.appendChild(canvas);
+  const ctx = canvas.getContext("2d");
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const colors = ["#d6b07a", "#f4d9a8", "#b56a7c", "#ffffff"];
+  const pieces = Array.from({ length: 26 }, () => ({
+    x: W / 2 + (Math.random() - 0.5) * 60,
+    y: H * 0.38,
+    vx: (Math.random() - 0.5) * 7,
+    vy: -(4 + Math.random() * 5),
+    w: 5 + Math.random() * 4,
+    h: 8 + Math.random() * 6,
+    rot: Math.random() * Math.PI * 2,
+    vr: (Math.random() - 0.5) * 0.3,
+    color: colors[Math.floor(Math.random() * colors.length)],
+  }));
+
+  const GRAVITY = 0.22;
+  const DURATION = 1200;
+  const t0 = performance.now();
+  let rafId = null;
+  let stopped = false;
+
+  function frame(now) {
+    if (stopped) return;
+    const elapsed = now - t0;
+    ctx.clearRect(0, 0, W, H);
+    for (const p of pieces) {
+      p.vy += GRAVITY;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vr;
+      const fade = Math.max(0, 1 - elapsed / DURATION);
+      ctx.save();
+      ctx.globalAlpha = fade;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    }
+    if (elapsed < DURATION) {
+      rafId = requestAnimationFrame(frame);
+    } else {
+      canvas.remove();
+    }
+  }
+  rafId = requestAnimationFrame(frame);
+
+  return {
+    stop() {
+      if (stopped) return;
+      stopped = true;
+      if (rafId) cancelAnimationFrame(rafId);
+      canvas.remove();
+    },
+  };
+}
+
+// Orquestrador — mesmo formato de runConnectionLoadingScreen (Promise que
+// resolve quando a tela termina sua própria saída coreografada). Reaproveita
+// mountParticleSystem/mountShockwave/runIrisReveal verbatim pra manter a
+// mesma assinatura visual de transição do resto do app.
+function runRouletteScreen() {
+  return new Promise((resolve) => {
+    const screen = document.createElement("div");
+    screen.className = "lsScreen";
+    app.appendChild(screen);
+    screen.insertAdjacentHTML("beforeend", `<div class="rwBg"></div>`);
+
+    const particles = mountParticleSystem(screen);
+
+    screen.insertAdjacentHTML("beforeend", `
+      <div class="rwStage">
+        <div class="rwTitle">🎰 GIRE E DESBLOQUEIE SEU ACESSO</div>
+        <div class="rwSubtitle">Toque em GIRAR pra testar sua sorte</div>
+      </div>
+    `);
+    const stage = screen.querySelector(".rwStage");
+    const wheel = mountRouletteWheel(stage);
+
+    stage.insertAdjacentHTML("beforeend", `
+      <div class="rwActionArea">
+        <button type="button" class="rwSpinBtn">GIRAR 🎰</button>
+      </div>
+    `);
+    const actionArea = stage.querySelector(".rwActionArea");
+    const spinBtn = actionArea.querySelector(".rwSpinBtn");
+
+    requestAnimationFrame(() => {
+      screen.classList.add("lsScreen-visible");
+      spinBtn.classList.add("rwSpinBtn-visible");
+    });
+
+    let confetti = null;
+
+    function onSpinTap() {
+      spinBtn.disabled = true;
+      spinBtn.classList.add("rwSpinBtn-disabled");
+      stage.querySelector(".rwGlow")?.classList.add("rwGlow-spinning");
+      hapticImpact("medium");
+
+      const finalRotation = computeRouletteTarget();
+      let lastTickAt = 0;
+      wheel.spin(finalRotation, () => {
+        // no início do giro várias divisórias passam por frame (~3000°/s) —
+        // sem essa trava o tick soaria como um zumbido em vez de cliques
+        // distintos. O desenho em si não é afetado, só o som/haptic.
+        const t = performance.now();
+        if (t - lastTickAt < 40) return;
+        lastTickAt = t;
+        lsPlaySpinTick();
+        hapticImpact("light");
+      }).then(onSpinDone);
+    }
+    spinBtn.addEventListener("click", onSpinTap, { once: true });
+
+    function onSpinDone() {
+      lsPlayWinFanfare();
+      hapticNotify("success");
+      confetti = mountConfettiBurst(screen);
+
+      // esconde o botão GIRAR (fade) em vez de deixá-lo dimmed pra sempre —
+      // a área reservada (.rwActionArea) mantém a altura fixa, então a
+      // roleta acima não se move quando o resultado entra no lugar dele.
+      spinBtn.classList.add("rwSpinBtn-hidden");
+      setTimeout(() => spinBtn.remove(), 450);
+
+      actionArea.insertAdjacentHTML("beforeend", `
+        <div class="rwResult">
+          <div class="rwResultTitle">ACESSO LIBERADO 🔓</div>
+          <div class="rwResultSub">Você caiu no prêmio principal!</div>
+        </div>
+      `);
+      requestAnimationFrame(() => actionArea.querySelector(".rwResult")?.classList.add("rwResult-visible"));
+
+      setTimeout(() => {
+        actionArea.insertAdjacentHTML("beforeend", `<button type="button" class="rwEnterBtn">ENTRAR NO CHAT 😈</button>`);
+        const enterBtn = actionArea.querySelector(".rwEnterBtn");
+        requestAnimationFrame(() => enterBtn.classList.add("rwEnterBtn-visible"));
+        enterBtn.addEventListener("click", onEnterTap, { once: true });
+      }, 400);
+
+      state.flags.rouletteDone = true;
+      saveState();
+    }
+
+    // Sequência de saída idêntica à de onEnterTap em runConnectionLoadingScreen
+    // (blackout -> spinner -> shockwave/chime -> iris reveal) — mesma
+    // "assinatura" de transição do resto do app, não um efeito novo.
+    function onEnterTap() {
+      hapticImpact("medium");
+      particles.stop();
+      wheel.destroy();
+      confetti?.stop();
       screen.classList.add("lsScreen-blackout");
 
       const spinner = document.createElement("div");
@@ -4094,6 +4568,7 @@ if (!FORCE_FRESH_START && localStorage.getItem("gisa_checkout_done") === "1") {
   (async () => {
     await runInitialLoadingScreen();
     await runConnectionLoadingScreen();
+    await runRouletteScreen();
     mountChat();
     insertSystemNotice(`As mensagens são protegidas com criptografia de ponta a ponta. Só você e ${CONTACT.name} podem lê-las.`);
     await sleep(220);

@@ -895,7 +895,9 @@ body{
 .lsScreen-blackout .lsVideo,
 .lsScreen-blackout .lsParticles,
 .lsScreen-blackout .lsHud,
-.lsScreen-blackout .lsOverlay{
+.lsScreen-blackout .lsOverlay,
+.lsScreen-blackout .rwBg,
+.lsScreen-blackout .rwStage{
   transition:opacity .4s ease;
   opacity:0;
 }
@@ -1166,6 +1168,191 @@ body{
   font-size:12px;
   letter-spacing:.04em;
   color:rgba(245,246,255,.55);
+}
+
+/* ==================== ROLETA (gateway pré-chat) ==================== */
+.rwBg{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  background:
+    radial-gradient(circle at 50% 32%, rgba(214,176,122,.16), transparent 55%),
+    linear-gradient(180deg, #050505 0%, #0d0904 55%, #050505 100%);
+}
+
+.rwStage{
+  position:relative;
+  z-index:4;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:22px;
+  padding:calc(28px + env(safe-area-inset-top)) 26px calc(28px + env(safe-area-inset-bottom));
+  text-align:center;
+  color:#f5f0e6;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,Arial,sans-serif;
+  overflow-y:auto; /* rede de segurança em telas muito baixas — nunca corta o CTA sem permitir rolagem */
+}
+
+.rwTitle{
+  font-size:19px;
+  font-weight:800;
+  letter-spacing:-.01em;
+  text-shadow:0 2px 14px rgba(0,0,0,.65);
+}
+.rwSubtitle{
+  margin-top:-14px;
+  font-size:13.5px;
+  color:rgba(245,230,200,.7);
+  text-shadow:0 2px 12px rgba(0,0,0,.6);
+}
+
+.rwWheelWrap{
+  position:relative;
+  width:min(78vw, 340px);
+  aspect-ratio:1/1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+.rwGlow{
+  position:absolute;
+  inset:-20px;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(214,176,122,.55), transparent 70%);
+  filter:blur(22px);
+  animation:rwBreathe 2.4s ease-in-out infinite;
+  will-change:opacity, transform;
+}
+.rwGlow-spinning{
+  animation-play-state:paused;
+  opacity:1;
+  transform:scale(1.05);
+}
+@keyframes rwBreathe{
+  0%,100%{ opacity:.55; transform:scale(.9); }
+  50%{ opacity:.85; transform:scale(1.08); }
+}
+
+.rwCanvas{
+  display:block;
+  position:relative;
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  box-shadow:0 0 0 1px rgba(214,176,122,.35), 0 18px 46px rgba(0,0,0,.55);
+}
+
+.rwPointer{
+  position:absolute;
+  top:-6px;
+  left:50%;
+  transform:translateX(-50%);
+  width:0;
+  height:0;
+  border-left:11px solid transparent;
+  border-right:11px solid transparent;
+  border-top:18px solid #d6b07a;
+  filter:drop-shadow(0 0 6px rgba(214,176,122,.8));
+  z-index:3;
+}
+
+.rwHub{
+  position:absolute;
+  width:15%;
+  height:15%;
+  border-radius:50%;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(214,176,122,.4);
+  -webkit-backdrop-filter:blur(10px);
+  backdrop-filter:blur(10px);
+  box-shadow:0 0 18px rgba(214,176,122,.4);
+  z-index:3;
+}
+
+.rwSpinBtn,
+.rwEnterBtn{
+  padding:16px 44px;
+  border-radius:999px;
+  border:1px solid rgba(214,176,122,.5);
+  background:linear-gradient(135deg, rgba(214,176,122,.32), rgba(181,106,124,.28));
+  color:#fff8ec;
+  font-size:15px;
+  font-weight:700;
+  letter-spacing:.02em;
+  white-space:nowrap;
+  -webkit-backdrop-filter:blur(14px);
+  backdrop-filter:blur(14px);
+  box-shadow:0 0 26px rgba(214,176,122,.45), 0 10px 30px rgba(0,0,0,.45);
+  opacity:0;
+  transform:scale(.95);
+  transition:opacity .5s ease, transform .5s cubic-bezier(.22,.61,.36,1);
+  will-change:opacity, transform;
+}
+.rwSpinBtn:active,
+.rwEnterBtn:active{
+  transform:scale(.97);
+}
+.rwSpinBtn-visible,
+.rwEnterBtn-visible{
+  opacity:1;
+  transform:scale(1);
+}
+.rwSpinBtn-disabled{
+  pointer-events:none;
+  opacity:.45;
+}
+.rwSpinBtn-hidden{
+  opacity:0;
+  transform:scale(.92);
+  pointer-events:none;
+}
+
+/* altura reservada fixa — o conteúdo interno troca (botão girar -> resultado
+   + CTA), mas a área nunca muda de tamanho, então a roleta acima NUNCA se
+   desloca verticalmente durante toda a interação */
+.rwActionArea{
+  position:relative;
+  width:100%;
+  min-height:190px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:14px;
+}
+
+.rwResult{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  opacity:0;
+  transform:scale(.94);
+  transition:opacity .45s ease, transform .45s cubic-bezier(.22,.61,.36,1);
+  will-change:opacity, transform;
+}
+.rwResult-visible{
+  opacity:1;
+  transform:scale(1);
+}
+.rwResultTitle{
+  font-size:21px;
+  font-weight:800;
+  color:#f4d9a8;
+  text-shadow:0 0 18px rgba(214,176,122,.55), 0 2px 14px rgba(0,0,0,.6);
+}
+.rwResultSub{
+  font-size:13.5px;
+  color:rgba(245,230,200,.75);
+}
+
+.rwConfetti{
+  position:fixed;
+  inset:0;
+  z-index:6;
+  pointer-events:none;
 }
 
 /* call screen */
