@@ -3390,21 +3390,25 @@ async function enterCallConnecting(replyText = null) {
     replyTo: replyText ? { side: "right", text: replyText } : null,
   });
 
-  // ela "sai pra se arrumar" — status muda pra "visto por último" nesse
-  // meio-tempo, e qualquer mensagem que o lead mandar enquanto isso fica
-  // marcada como não vista (tick cinza, ver addMsg/renderTicks), só virando
-  // "vista" (tick azul) quando ela volta a ficar online.
+  // ela "sai pra se arrumar" — 2s depois da mensagem (não instantâneo) é
+  // que o status muda pra "visto por último"; fica fora por 8s. Qualquer
+  // mensagem que o lead mandar nesse meio-tempo fica marcada como não vista
+  // (tick cinza, ver addMsg/renderTicks), só virando "vista" (tick azul)
+  // quando ela volta a ficar online. 2s depois de voltar online, "digitando..."
+  // reaparece por 3s fixos antes da próxima mensagem.
+  await sleep(2000);
   state.flags.botOnline = false; saveState();
   const awayAt = new Date();
   setStatus(`visto por último às ${String(awayAt.getHours()).padStart(2,"0")}:${String(awayAt.getMinutes()).padStart(2,"0")}`);
 
-  await sleep(6000);
+  await sleep(8000);
 
   state.flags.botOnline = true; saveState();
   setStatus("online");
   markPendingMessagesSeen();
 
-  await gisaSay("estou pronta já amor, posso ligar? 😈", { noSleep: true });
+  await sleep(2000);
+  await gisaSay("estou pronta já amor, posso ligar? 😈", { delay: 3000, noSleep: true });
   // fluxo pausa aqui — a resposta do lead cai em handleUserText (state.step === 5),
   // que aplica o mesmo tempo de espera de antes e mostra a chamada.
 }
