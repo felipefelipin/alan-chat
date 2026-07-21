@@ -1154,6 +1154,14 @@ body{
     radial-gradient(circle at 50% 32%, rgba(214,176,122,.16), transparent 55%),
     linear-gradient(180deg, #050505 0%, #0d0904 55%, #050505 100%);
 }
+/* variante vermelha — só a roleta de desconto usa (pedido explícito de
+   "glow vermelho" pra essa tela); .rwBg em si fica intocado, então a roleta
+   original continua com o glow dourado de sempre */
+.rwBg-red{
+  background:
+    radial-gradient(circle at 50% 32%, rgba(255,45,70,.16), transparent 55%),
+    linear-gradient(180deg, #050505 0%, #0d0505 55%, #050505 100%);
+}
 
 .rwStage{
   position:relative;
@@ -1308,6 +1316,12 @@ body{
   align-items:center;
   gap:14px;
 }
+/* variante usada pela roleta de desconto — resultado + card do prêmio +
+   botão juntos precisam de mais altura reservada que o texto+botão simples
+   da roleta original */
+.rwActionArea-tall{
+  min-height:300px;
+}
 
 .rwResult{
   display:flex;
@@ -1331,6 +1345,46 @@ body{
 .rwResultSub{
   font-size:13.5px;
   color:rgba(245,230,200,.75);
+}
+
+/* card do prêmio — só a roleta de desconto usa; borda/glow dourados,
+   entrada com leve bounce (mesma curva já usada no pop-in do botão do
+   paywall em showCheckoutCta, cubic-bezier(.34,1.56,.64,1)) */
+.rwPrizeCard{
+  width:100%;
+  max-width:320px;
+  padding:18px 22px;
+  border-radius:20px;
+  border:1.5px solid rgba(214,176,122,.55);
+  background:linear-gradient(160deg, rgba(40,28,10,.55), rgba(10,7,3,.75));
+  box-shadow:0 0 30px rgba(214,176,122,.35), 0 14px 34px rgba(0,0,0,.5);
+  text-align:center;
+  opacity:0;
+  transform:scale(.9) translateY(10px);
+  transition:opacity .45s cubic-bezier(.34,1.56,.64,1), transform .45s cubic-bezier(.34,1.56,.64,1);
+}
+.rwPrizeCard-visible{
+  opacity:1;
+  transform:scale(1) translateY(0);
+}
+.rwPrizeCardTitle{
+  font-size:12.5px;
+  font-weight:800;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:#d6b07a;
+  margin-bottom:6px;
+}
+.rwPrizeCardValue{
+  font-size:26px;
+  font-weight:900;
+  color:#f6ddaa;
+  text-shadow:0 0 20px rgba(214,176,122,.6);
+  margin-bottom:6px;
+}
+.rwPrizeCardNote{
+  font-size:12px;
+  color:rgba(245,230,200,.65);
 }
 
 .rwConfetti{

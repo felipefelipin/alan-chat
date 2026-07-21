@@ -930,6 +930,53 @@ function callPlayEndTone() {
   });
 }
 
+// 2 notas suaves e sustentadas — toque de chamada estilo WhatsApp
+// ("brrring... brrring..."), sintetizado (sem arquivo de áudio). Uma
+// instância = um "ring" duplo; quem chama repete no mesmo ciclo da
+// vibração (ver showIncomingCall).
+function waPlayCallRingTone() {
+  const ctx = lsGetAudioCtx();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  const now = ctx.currentTime;
+  [480, 600].forEach((freq, i) => {
+    const t = now + i * 0.5;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.16, t + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.47);
+  });
+}
+
+// arpejo curto de 3 notas subindo — toca uma vez ao aceitar a chamada
+// (efeito de "você entrou"), distinto do toque de chamando e do pop de
+// mensagem.
+function waPlayCallConnected() {
+  const ctx = lsGetAudioCtx();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  const now = ctx.currentTime;
+  [523, 659, 880].forEach((freq, i) => {
+    const t = now + i * 0.06;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.2, t + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.2);
+  });
+}
+
 // drone ambiente grave e contínuo (2 osciladores levemente desafinados) —
 // tocado durante toda a tela de entrada. start()/stop() controlam o fade.
 function esStartAmbientDrone() {
@@ -1383,11 +1430,15 @@ function buildRouletteFonts(r) {
 // que é caro e derrubaria o rAF em Android fraco): 2 traços por baixo do
 // preenchimento — um grosso e colorido (halo) + um fino e escuro (contraste)
 // — mesmo custo de um strokeText a mais, sem o custo real de um blur.
+// `segments` é o array de fatias (dados, não hardcoded) — permite
+// reaproveitar essa mesma função de desenho pra qualquer roleta (ex.: a de
+// desconto, ver DISCOUNT_SEGMENTS/runDiscountRouletteScreen), sem duplicar
+// nenhuma linha de código de renderização.
 // `pulseAlpha` (0..1, opcional) só afeta segmentos com `pulse:true` (hoje,
 // só o "TENTE DE NOVO") — modula a intensidade do halo colorido dele entre
 // pulseGlow.aMin/aMax. Todos os outros segmentos ignoram esse parâmetro e
 // renderizam exatamente como antes.
-function drawWheel(ctx, size, rotationDeg, fillStyles, fonts, pulseAlpha) {
+function drawWheel(ctx, size, rotationDeg, fillStyles, fonts, pulseAlpha, segments) {
   if (!size) return;
   const r = size / 2;
   ctx.clearRect(0, 0, size, size);
@@ -1398,7 +1449,7 @@ function drawWheel(ctx, size, rotationDeg, fillStyles, fonts, pulseAlpha) {
   ctx.textBaseline = "middle";
   ctx.lineJoin = "round";
 
-  RW_SEGMENTS.forEach((seg, i) => {
+  segments.forEach((seg, i) => {
     const startDeg = RW_IDLE_OFFSET_DEG + i * RW_SEG_ANGLE_DEG - RW_SEG_ANGLE_DEG / 2;
     const startRad = startDeg * Math.PI / 180;
     const endRad = startRad + (RW_SEG_ANGLE_DEG * Math.PI / 180);
@@ -1526,8 +1577,9 @@ function spinWheel(draw, finalRotationDeg, onTick) {
 
 // Monta o wrap/glow/canvas/ponteiro/hub e devolve os controles do giro.
 // DPR-aware, resize só recalcula fora do loop de animação (mesmo padrão de
-// mountParticleSystem).
-function mountRouletteWheel(host) {
+// mountParticleSystem). `segments` é o array de fatias — mesmo componente
+// reaproveitado por qualquer roleta (ver drawWheel).
+function mountRouletteWheel(host, segments) {
   host.insertAdjacentHTML("beforeend", `
     <div class="rwWheelWrap">
       <div class="rwGlow"></div>
@@ -1541,6 +1593,7 @@ function mountRouletteWheel(host) {
   const canvas = wrap.querySelector(".rwCanvas");
   const ctx = canvas.getContext("2d");
   const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const hasPulseSegment = segments.some((s) => s.pulse); // só a roleta original tem (❌ TENTE DE NOVO)
 
   let size = 0;
   let fillStyles = [];
@@ -1551,7 +1604,7 @@ function mountRouletteWheel(host) {
   // Gradiente radial próprio por segmento (nunca cor chapada) — radial
   // centrado em (0,0) é rotation-invariant, então não "derrapa" durante o giro.
   function buildFillStyles() {
-    fillStyles = RW_SEGMENTS.map((seg) => {
+    fillStyles = segments.map((seg) => {
       const g = ctx.createRadialGradient(0, 0, 0, 0, 0, size / 2);
       seg.stops.forEach(([offset, color]) => g.addColorStop(offset, color));
       return g;
@@ -1560,7 +1613,7 @@ function mountRouletteWheel(host) {
 
   function draw(rotationDeg, pulseAlpha) {
     currentRotation = rotationDeg;
-    drawWheel(ctx, size, rotationDeg, fillStyles, fonts, pulseAlpha);
+    drawWheel(ctx, size, rotationDeg, fillStyles, fonts, pulseAlpha, segments);
   }
 
   function resize() {
@@ -1579,9 +1632,12 @@ function mountRouletteWheel(host) {
   // Pulso de brilho do segmento "TENTE DE NOVO" — contido (~6s, alguns
   // ciclos suaves) e não um loop pra sempre: some assim que o usuário toca
   // GIRAR, e mesmo se ele nunca tocar, se estabiliza sozinho no brilho máximo
-  // depois de alguns ciclos (não fica consumindo rAF indefinidamente).
+  // depois de alguns ciclos (não fica consumindo rAF indefinidamente). Só
+  // roda se algum segmento realmente tiver `pulse:true` — roletas sem
+  // nenhum segmento pulsante (ex.: a de desconto) nem iniciam o loop.
   let idlePulseRaf = null;
   function startIdlePulse() {
+    if (!hasPulseSegment) return;
     const t0 = performance.now();
     const DURATION = 6000;
     function frame(now) {
@@ -1703,7 +1759,7 @@ function runRouletteScreen() {
       </div>
     `);
     const stage = screen.querySelector(".rwStage");
-    const wheel = mountRouletteWheel(stage);
+    const wheel = mountRouletteWheel(stage, RW_SEGMENTS);
 
     stage.insertAdjacentHTML("beforeend", `
       <div class="rwActionArea">
@@ -1865,6 +1921,157 @@ function runRouletteScreen() {
       cleaned = true;
       screen.remove();
       resolve();
+    }
+  });
+}
+
+// ==================== ROLETA DE DESCONTO (pós "DESBLOQUEAR ACESSO") ====================
+// Reaproveita o MESMO engine da roleta original — mountRouletteWheel,
+// drawWheel, spinWheel, computeRouletteTarget, mountConfettiBurst,
+// mountParticleSystem, sons/haptics — tudo já parametrizado por
+// `segments`/índice-alvo, nenhuma linha de motor duplicada. Só os dados
+// (fatias, textos) e o fluxo de alto nível mudam: aqui é uma única
+// tentativa, sempre vitória, sem a etapa de "quase" da roleta original.
+
+const DISCOUNT_WIN_INDEX = 0; // 🔥 40% OFF PREMIUM
+
+const DISCOUNT_SEGMENTS = [
+  { emoji: "🔥", label: "40% OFF\nPREMIUM", gold: true,
+    stops: [[0, "#f6ddaa"], [0.55, "#d6b07a"], [1, "#a97c3a"]] },
+  { emoji: "🎁", label: "10% OFF",
+    stops: [[0, "#2c0d12"], [1, "#170609"]], glow: "rgba(230,57,80,.5)" },
+  { emoji: "🎁", label: "20% OFF",
+    stops: [[0, "#330a17"], [1, "#1c060c"]], glow: "rgba(255,64,110,.5)" },
+  { emoji: "🎁", label: "15% OFF",
+    stops: [[0, "#2a0810"], [1, "#160508"]], glow: "rgba(255,45,70,.5)" },
+  { emoji: "🎁", label: "30% OFF",
+    stops: [[0, "#350c14"], [1, "#1a060a"]], glow: "rgba(255,90,90,.5)" },
+  { emoji: "🎁", label: "5% OFF",
+    stops: [[0, "#26080d"], [1, "#130407"]], glow: "rgba(214,90,90,.5)" },
+  { emoji: "🎁", label: "25% OFF",
+    stops: [[0, "#300a12"], [1, "#18060a"]], glow: "rgba(255,70,100,.5)" },
+  { emoji: "🎁", label: "35% OFF",
+    stops: [[0, "#280810"], [1, "#150509"]], glow: "rgba(235,60,85,.5)" },
+];
+
+function runDiscountRouletteScreen() {
+  return new Promise((resolve) => {
+    const screen = document.createElement("div");
+    screen.className = "lsScreen";
+    // body, não #app — precisa ficar por cima do overlay do paywall
+    // (z-index 9800) que ainda pode estar se fechando por baixo.
+    document.body.appendChild(screen);
+    screen.insertAdjacentHTML("beforeend", `<div class="rwBg rwBg-red"></div>`);
+
+    const particles = mountParticleSystem(screen);
+
+    screen.insertAdjacentHTML("beforeend", `
+      <div class="rwStage">
+        <div class="rwTitle">🔓 BENEFÍCIO EXCLUSIVO LIBERADO</div>
+        <div class="rwSubtitle">Você concluiu todas as etapas e desbloqueou uma oferta exclusiva disponível somente nesta sessão.</div>
+      </div>
+    `);
+    const stage = screen.querySelector(".rwStage");
+    const wheel = mountRouletteWheel(stage, DISCOUNT_SEGMENTS);
+
+    stage.insertAdjacentHTML("beforeend", `
+      <div class="rwActionArea rwActionArea-tall">
+        <button type="button" class="rwSpinBtn">GIRAR 🎰</button>
+      </div>
+    `);
+    const actionArea = stage.querySelector(".rwActionArea");
+    const spinBtn = actionArea.querySelector(".rwSpinBtn");
+
+    requestAnimationFrame(() => {
+      screen.classList.add("lsScreen-visible");
+      spinBtn.classList.add("rwSpinBtn-visible");
+    });
+
+    let confetti = null;
+
+    function onSpinTap() {
+      spinBtn.disabled = true;
+      spinBtn.classList.add("rwSpinBtn-disabled");
+      stage.querySelector(".rwGlow")?.classList.add("rwGlow-spinning");
+      hapticImpact("medium");
+
+      const finalRotation = computeRouletteTarget(DISCOUNT_WIN_INDEX);
+      let lastTickAt = 0;
+      wheel.spin(finalRotation, () => {
+        const t = performance.now();
+        if (t - lastTickAt < 40) return;
+        lastTickAt = t;
+        lsPlaySpinTick();
+        hapticImpact("light");
+      }).then(onSpinDone);
+    }
+    spinBtn.addEventListener("click", onSpinTap, { once: true });
+
+    // Vitória — mesmos efeitos da roleta original (glow dourado, flash,
+    // escurecimento do fundo, confete, fanfarra, vibração de sucesso).
+    function onSpinDone() {
+      lsPlayWinFanfare();
+      hapticNotify("success");
+      confetti = mountConfettiBurst(screen);
+
+      screen.querySelector(".rwBg")?.classList.add("rwBg-dim");
+      stage.querySelector(".rwGlow")?.classList.add("rwGlow-winPulse");
+      const flash = document.createElement("div");
+      flash.className = "rwWinFlash";
+      screen.appendChild(flash);
+      setTimeout(() => flash.remove(), 650);
+
+      spinBtn.classList.add("rwSpinBtn-hidden");
+      setTimeout(() => spinBtn.remove(), 450);
+
+      actionArea.insertAdjacentHTML("beforeend", `
+        <div class="rwResult">
+          <div class="rwResultTitle">🎉 PARABÉNS!</div>
+          <div class="rwResultSub">Você desbloqueou seu desconto exclusivo. A oferta já está ativa para você.</div>
+        </div>
+      `);
+      requestAnimationFrame(() => actionArea.querySelector(".rwResult")?.classList.add("rwResult-visible"));
+
+      setTimeout(() => {
+        actionArea.insertAdjacentHTML("beforeend", `
+          <div class="rwPrizeCard">
+            <div class="rwPrizeCardTitle">🔥 DESCONTO LIBERADO</div>
+            <div class="rwPrizeCardValue">40% OFF PREMIUM</div>
+            <div class="rwPrizeCardNote">Oferta exclusiva desta sessão.</div>
+          </div>
+        `);
+        requestAnimationFrame(() => actionArea.querySelector(".rwPrizeCard")?.classList.add("rwPrizeCard-visible"));
+      }, 350);
+
+      setTimeout(() => {
+        actionArea.insertAdjacentHTML("beforeend", `<button type="button" class="rwEnterBtn">🔥 GARANTIR 40% DE DESCONTO</button>`);
+        const claimBtn = actionArea.querySelector(".rwEnterBtn");
+        requestAnimationFrame(() => claimBtn.classList.add("rwEnterBtn-visible"));
+        claimBtn.addEventListener("click", onClaimTap, { once: true });
+      }, 750);
+    }
+
+    // Saída: mesmo fade simples do resto do app, seguido do redirecionamento
+    // real pro checkout/Telegram (é aqui, e só aqui, que openCheckout roda —
+    // nunca mais direto no clique de "DESBLOQUEAR ACESSO" do paywall).
+    function onClaimTap() {
+      hapticImpact("medium");
+      lsPlaySuccessChime();
+      particles.stop();
+      wheel.destroy();
+      confetti?.stop();
+      screen.classList.remove("lsScreen-visible");
+      screen.addEventListener("transitionend", cleanup, { once: true });
+      setTimeout(cleanup, 500); // rede de segurança caso transitionend não dispare
+    }
+
+    let cleaned = false;
+    function cleanup() {
+      if (cleaned) return;
+      cleaned = true;
+      screen.remove();
+      resolve();
+      openCheckout();
     }
   });
 }
@@ -3471,14 +3678,14 @@ function showIncomingCall() {
     vibrateInterval = setInterval(() => navigator.vibrate([1000, 800, 1000, 800]), 3600);
   }
 
-  // toque de chamada — asset já existia no ASSETS, nunca tinha sido usado.
-  const ringAudio = new Audio(ASSETS.ringtone);
-  ringAudio.loop = true;
-  ringAudio.play().catch(() => {});
+  // toque de chamada sintetizado (Web Audio, sem arquivo) — mesmo ciclo de
+  // 3.6s da vibração, pra tocar e vibrar juntos como uma chamada de verdade.
+  waPlayCallRingTone();
+  const ringInterval = setInterval(waPlayCallRingTone, 3600);
 
   const stopRing = () => {
     try { if (vibrateInterval) clearInterval(vibrateInterval); navigator.vibrate(0); } catch {}
-    try { ringAudio.pause(); ringAudio.currentTime = 0; } catch {}
+    clearInterval(ringInterval);
   };
 
   const el = document.createElement("div");
@@ -3539,6 +3746,7 @@ function showIncomingCall() {
   document.getElementById("callAcceptBtn").onclick = () => {
     trackEvent("MINIAPP_CALL_ACCEPT");
     stopRing(); el.remove();
+    waPlayCallConnected();
     startFunnelCall();
   };
 }
@@ -4299,7 +4507,10 @@ function showCheckoutCta() {
 
   setTimeout(() => {
     const btn = document.getElementById("goCheckoutBtn");
-    if (btn) btn.onclick = openCheckout;
+    // "DESBLOQUEAR ACESSO" não redireciona mais direto pro checkout — abre a
+    // roleta de desconto primeiro; o clique final dela (dentro de
+    // runDiscountRouletteScreen) é quem chama openCheckout() de verdade.
+    if (btn) btn.onclick = () => { _dismissPaywall(overlay); runDiscountRouletteScreen(); };
     const dismiss = document.getElementById("paywallDismiss");
     if (dismiss) dismiss.onclick = () => _dismissPaywall(overlay);
   }, 0);
