@@ -885,6 +885,51 @@ function esPlayRevealShimmer() {
   osc.stop(now + 1.05);
 }
 
+// "pop" de 2 notas subindo — estilo notificação de mensagem do WhatsApp,
+// curto e discreto. Só toca pra mensagens que chegam (lado esquerdo, dela);
+// mensagens que o próprio lead manda não tocam esse som, igual o WhatsApp.
+function waPlayMessagePop() {
+  const ctx = lsGetAudioCtx();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  const now = ctx.currentTime;
+  [587, 784].forEach((freq, i) => {
+    const t = now + i * 0.055;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.22, t + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.11);
+  });
+}
+
+// 2 notas descendo — tom de "chamada encerrada", eco do padrão universal de
+// tom de desligar (oposto do waPlayMessagePop, que sobe).
+function callPlayEndTone() {
+  const ctx = lsGetAudioCtx();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  const now = ctx.currentTime;
+  [600, 400].forEach((freq, i) => {
+    const t = now + i * 0.16;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.18, t + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.34);
+  });
+}
+
 // drone ambiente grave e contínuo (2 osciladores levemente desafinados) —
 // tocado durante toda a tela de entrada. start()/stop() controlam o fade.
 function esStartAmbientDrone() {
@@ -3180,6 +3225,9 @@ function addMsg(side, html, replyTo = null) {
   if (side === "right") item.seen = !!state.flags.botOnline;
   pushHistory(item); renderItem(item, true);
   scrollBottom();
+  // som de notificação só pra mensagens que chegam (dela) — igual o
+  // WhatsApp não toca esse som pras suas próprias mensagens enviadas.
+  if (side === "left") waPlayMessagePop();
 }
 
 // Chamada quando ela volta a ficar "online" depois de um período away —
@@ -3423,8 +3471,14 @@ function showIncomingCall() {
     vibrateInterval = setInterval(() => navigator.vibrate([1000, 800, 1000, 800]), 3600);
   }
 
+  // toque de chamada — asset já existia no ASSETS, nunca tinha sido usado.
+  const ringAudio = new Audio(ASSETS.ringtone);
+  ringAudio.loop = true;
+  ringAudio.play().catch(() => {});
+
   const stopRing = () => {
     try { if (vibrateInterval) clearInterval(vibrateInterval); navigator.vibrate(0); } catch {}
+    try { ringAudio.pause(); ringAudio.currentTime = 0; } catch {}
   };
 
   const el = document.createElement("div");
@@ -3661,6 +3715,7 @@ async function startFunnelCall() {
   const triggerPaywall = async () => {
     if (done) return; done = true;
     cleanup();
+    callPlayEndTone();
 
     // Fade suave do vídeo (e do PIP da câmera do lead) pro preto antes de
     // qualquer overlay — evita o corte seco de antes (vid.src="" na hora,
