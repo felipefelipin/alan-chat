@@ -1158,13 +1158,13 @@ const RW_POINTER_ANGLE_DEG = 270; // ponteiro fixo no topo
 const RW_WIN_INDEX = 0; // sempre o mesmo segmento — o dourado
 
 const RW_SEGMENTS = [
-  { label: "ACESSO LIBERADO", gold: true },
-  { label: "Foto Extra 📸" },
+  { label: "LIBERADO 🔓", gold: true },
+  { label: "Foto 📸" },
   { label: "Quase lá..." },
-  { label: "Áudio Gostoso 🎧" },
-  { label: "Vídeo Bônus 🎥" },
-  { label: "Mais Sorte 🍀" },
-  { label: "Selfie Secreta 🤳" },
+  { label: "Áudio 🎧" },
+  { label: "Vídeo 🎥" },
+  { label: "Sorte 🍀" },
+  { label: "Selfie 🤳" },
   { label: "Surpresa 🎁" },
 ];
 
@@ -1181,16 +1181,26 @@ function computeRouletteTarget() {
 
 // Duas fontes (dourada/decoy) pré-computadas por tamanho de tela — evita
 // montar a string de font e reatribuir ctx.font por segmento a cada frame.
+// Fonte bem maior que a v1: labels curtos + texto tangencial (ver abaixo)
+// dão espaço de sobra pra ler sem apertar.
 function buildRouletteFonts(r) {
+  const goldPx = Math.max(14, r * 0.105);
+  const decoyPx = Math.max(12, r * 0.09);
   return {
-    gold: `700 ${Math.max(10, r * 0.075)}px -apple-system, BlinkMacSystemFont, system-ui, sans-serif`,
-    decoy: `500 ${Math.max(9, r * 0.065)}px -apple-system, BlinkMacSystemFont, system-ui, sans-serif`,
+    gold: { str: `800 ${goldPx}px -apple-system, BlinkMacSystemFont, system-ui, sans-serif`, px: goldPx },
+    decoy: { str: `700 ${decoyPx}px -apple-system, BlinkMacSystemFont, system-ui, sans-serif`, px: decoyPx },
   };
 }
 
 // Desenho puro — chamado tanto no mount (estático) quanto a cada frame do
 // giro. fillStyles/fonts são pré-computados fora do loop (nada de gradientes
 // ou strings de font sendo recriadas por frame).
+//
+// Texto TANGENCIAL (perpendicular ao raio, acompanhando a circunferência) em
+// vez de radial: com o ponteiro fixo no topo e o segmento vencedor sempre
+// parando ali, texto tangencial fica perfeitamente na horizontal exatamente
+// no momento em que o resultado é revelado — texto radial ficaria de lado
+// (girado 90°) nesse exato momento, que era o principal motivo de ilegibilidade.
 function drawWheel(ctx, size, rotationDeg, fillStyles, fonts) {
   if (!size) return;
   const r = size / 2;
@@ -1198,8 +1208,9 @@ function drawWheel(ctx, size, rotationDeg, fillStyles, fonts) {
   ctx.save();
   ctx.translate(r, r);
   ctx.rotate(rotationDeg * Math.PI / 180);
-  ctx.textAlign = "right";
+  ctx.textAlign = "center";
   ctx.textBaseline = "middle";
+  ctx.lineJoin = "round";
 
   let lastFont = null;
   RW_SEGMENTS.forEach((seg, i) => {
@@ -1219,11 +1230,17 @@ function drawWheel(ctx, size, rotationDeg, fillStyles, fonts) {
 
     const midRad = (startRad + endRad) / 2;
     ctx.save();
-    ctx.rotate(midRad);
-    ctx.fillStyle = seg.gold ? "#2a1c08" : "rgba(245,230,200,.9)";
+    ctx.rotate(midRad + Math.PI / 2); // +90° = tangencial em vez de radial
     const font = seg.gold ? fonts.gold : fonts.decoy;
-    if (font !== lastFont) { ctx.font = font; lastFont = font; }
-    ctx.fillText(seg.label, r - 16, 0);
+    if (font.str !== lastFont) { ctx.font = font.str; lastFont = font.str; }
+    const labelY = -(r - 30);
+    // contorno escuro antes do preenchimento — mantém o texto legível
+    // independente do gradiente/cor de fundo do segmento por baixo.
+    ctx.lineWidth = Math.max(2, font.px * 0.22);
+    ctx.strokeStyle = seg.gold ? "rgba(42,28,8,.55)" : "rgba(5,4,3,.65)";
+    ctx.strokeText(seg.label, 0, labelY);
+    ctx.fillStyle = seg.gold ? "#2a1c08" : "rgba(248,240,225,.96)";
+    ctx.fillText(seg.label, 0, labelY);
     ctx.restore();
   });
 
@@ -1516,31 +1533,17 @@ function runRouletteScreen() {
       saveState();
     }
 
-    // Sequência de saída idêntica à de onEnterTap em runConnectionLoadingScreen
-    // (blackout -> spinner -> shockwave/chime -> iris reveal) — mesma
-    // "assinatura" de transição do resto do app, não um efeito novo.
+    // Saída simples: só um fade (reaproveitando a mesma transição de opacidade
+    // já usada na entrada da tela, via remoção de .lsScreen-visible) — sem
+    // blackout/spinner/shockwave/iris. mountChat() já faz seu próprio fadeIn.
     function onEnterTap() {
       hapticImpact("medium");
       particles.stop();
       wheel.destroy();
       confetti?.stop();
-      screen.classList.add("lsScreen-blackout");
-
-      const spinner = document.createElement("div");
-      spinner.className = "lsLoaderSpinner";
-      screen.appendChild(spinner);
-      lsPlayLoadingPulse();
-
-      setTimeout(() => {
-        spinner.remove();
-        vibrate(10);
-        mountShockwave(screen);
-        lsPlaySuccessChime();
-
-        setTimeout(() => {
-          runIrisReveal(screen).then(cleanup);
-        }, 260);
-      }, 650);
+      screen.classList.remove("lsScreen-visible");
+      screen.addEventListener("transitionend", cleanup, { once: true });
+      setTimeout(cleanup, 500); // rede de segurança caso transitionend não dispare
     }
 
     let cleaned = false;

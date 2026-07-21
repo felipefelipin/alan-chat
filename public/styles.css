@@ -895,9 +895,7 @@ body{
 .lsScreen-blackout .lsVideo,
 .lsScreen-blackout .lsParticles,
 .lsScreen-blackout .lsHud,
-.lsScreen-blackout .lsOverlay,
-.lsScreen-blackout .rwBg,
-.lsScreen-blackout .rwStage{
+.lsScreen-blackout .lsOverlay{
   transition:opacity .4s ease;
   opacity:0;
 }
