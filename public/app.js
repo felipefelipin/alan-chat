@@ -1164,7 +1164,7 @@ const RW_FONT_STACK = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Seg
 // coerentes, sobre uma base bem escura em degradê (gradiente radial, nunca
 // chapada) — paleta de pedras preciosas, sofisticada, não saturada/gritante.
 const RW_SEGMENTS = [
-  { emoji: "👑", label: "LIBERADO", gold: true,
+  { emoji: "👑", label: "PREMIUM", gold: true,
     stops: [[0, "#f6ddaa"], [0.55, "#d6b07a"], [1, "#a97c3a"]] },
   { emoji: "💎", label: "VIP",
     stops: [[0, "#141a3a"], [1, "#070a1c"]], glow: "rgba(129,140,255,.5)" },
@@ -1172,8 +1172,11 @@ const RW_SEGMENTS = [
     stops: [[0, "#2c1206"], [1, "#160a04"]], glow: "rgba(255,138,46,.5)" },
   { emoji: "⭐", label: "SORTE",
     stops: [[0, "#2b1e06"], [1, "#160f02"]], glow: "rgba(255,210,63,.5)" },
-  { emoji: "💬", label: "CHAT",
-    stops: [[0, "#0b2438"], [1, "#04121c"]], glow: "rgba(42,171,238,.55)" },
+  // "sem prêmio" — vermelho vivo + brilho pulsante (ver pulseGlow/pulse
+  // abaixo) pra destacar visualmente que essa fatia não dá acesso.
+  { emoji: "❌", label: "TENTE DE\nNOVO",
+    stops: [[0, "#e53935"], [1, "#5c0f0f"]],
+    pulse: true, pulseGlow: { r: 255, g: 80, b: 70, aMin: 0.22, aMax: 0.65 } },
   { emoji: "📹", label: "VÍDEO",
     stops: [[0, "#2c0d12"], [1, "#170609"]], glow: "rgba(230,57,80,.5)" },
   { emoji: "❤️", label: "ESPECIAL",
@@ -1221,7 +1224,11 @@ function buildRouletteFonts(r) {
 // que é caro e derrubaria o rAF em Android fraco): 2 traços por baixo do
 // preenchimento — um grosso e colorido (halo) + um fino e escuro (contraste)
 // — mesmo custo de um strokeText a mais, sem o custo real de um blur.
-function drawWheel(ctx, size, rotationDeg, fillStyles, fonts) {
+// `pulseAlpha` (0..1, opcional) só afeta segmentos com `pulse:true` (hoje,
+// só o "TENTE DE NOVO") — modula a intensidade do halo colorido dele entre
+// pulseGlow.aMin/aMax. Todos os outros segmentos ignoram esse parâmetro e
+// renderizam exatamente como antes.
+function drawWheel(ctx, size, rotationDeg, fillStyles, fonts, pulseAlpha) {
   if (!size) return;
   const r = size / 2;
   ctx.clearRect(0, 0, size, size);
@@ -1254,7 +1261,9 @@ function drawWheel(ctx, size, rotationDeg, fillStyles, fonts) {
     const emojiFont = seg.gold ? fonts.goldEmoji : fonts.decoyEmoji;
     const labelFont = seg.gold ? fonts.goldLabel : fonts.decoyLabel;
     const emojiY = -(r - 24);
-    const labelY = emojiY + emojiFont.px * 0.95;
+    const labelLines = seg.label.split("\n");
+    const lineGap = labelFont.px * 1.08;
+    const labelY0 = emojiY + emojiFont.px * 0.95;
 
     // linha 1 — emoji (cor é intrínseca ao glifo; sem stroke/shadow/letter-
     // spacing — alguns emojis são 2 code points, ex. ❤️ = coração + variation
@@ -1263,21 +1272,34 @@ function drawWheel(ctx, size, rotationDeg, fillStyles, fonts) {
     ctx.fillStyle = "#fff";
     ctx.fillText(seg.emoji, 0, emojiY);
 
-    // linha 2 — rótulo, com halo colorido + contraste escuro (glow falso)
+    // linha(s) seguintes — rótulo (pode quebrar em 2 linhas via "\n" no
+    // texto, mesmo tamanho/peso de fonte, só empilhado), halo colorido +
+    // contraste escuro (glow falso).
     ctx.letterSpacing = "0.4px"; // ignorado silenciosamente onde não suportado
     ctx.font = labelFont.str;
-    if (!seg.gold) {
-      // halo bem sutil — grosso demais preenche o miolo das letras pequenas
-      // e "lava" o texto em vez de dar um glow leve.
-      ctx.lineWidth = labelFont.px * 0.26;
-      ctx.strokeStyle = seg.glow;
-      ctx.strokeText(seg.label, 0, labelY);
+
+    let glowColor = seg.glow;
+    if (seg.pulse && seg.pulseGlow) {
+      const t = pulseAlpha ?? 1;
+      const a = seg.pulseGlow.aMin + (seg.pulseGlow.aMax - seg.pulseGlow.aMin) * t;
+      glowColor = `rgba(${seg.pulseGlow.r},${seg.pulseGlow.g},${seg.pulseGlow.b},${a})`;
     }
-    ctx.lineWidth = Math.max(1.5, labelFont.px * 0.16);
-    ctx.strokeStyle = seg.gold ? "rgba(58,38,10,.5)" : "rgba(2,2,4,.7)";
-    ctx.strokeText(seg.label, 0, labelY);
-    ctx.fillStyle = seg.gold ? "#2a1c08" : "#fbf7ef";
-    ctx.fillText(seg.label, 0, labelY);
+
+    labelLines.forEach((line, li) => {
+      const labelY = labelY0 + li * lineGap;
+      if (!seg.gold) {
+        // halo bem sutil — grosso demais preenche o miolo das letras
+        // pequenas e "lava" o texto em vez de dar um glow leve.
+        ctx.lineWidth = labelFont.px * 0.26;
+        ctx.strokeStyle = glowColor;
+        ctx.strokeText(line, 0, labelY);
+      }
+      ctx.lineWidth = Math.max(1.5, labelFont.px * 0.16);
+      ctx.strokeStyle = seg.gold ? "rgba(58,38,10,.5)" : "rgba(2,2,4,.7)";
+      ctx.strokeText(line, 0, labelY);
+      ctx.fillStyle = seg.gold ? "#2a1c08" : "#fbf7ef";
+      ctx.fillText(line, 0, labelY);
+    });
     ctx.restore();
   });
 
@@ -1377,9 +1399,9 @@ function mountRouletteWheel(host) {
     });
   }
 
-  function draw(rotationDeg) {
+  function draw(rotationDeg, pulseAlpha) {
     currentRotation = rotationDeg;
-    drawWheel(ctx, size, rotationDeg, fillStyles, fonts);
+    drawWheel(ctx, size, rotationDeg, fillStyles, fonts, pulseAlpha);
   }
 
   function resize() {
@@ -1395,13 +1417,37 @@ function mountRouletteWheel(host) {
   resize();
   window.addEventListener("resize", resize);
 
+  // Pulso de brilho do segmento "TENTE DE NOVO" — contido (~6s, alguns
+  // ciclos suaves) e não um loop pra sempre: some assim que o usuário toca
+  // GIRAR, e mesmo se ele nunca tocar, se estabiliza sozinho no brilho máximo
+  // depois de alguns ciclos (não fica consumindo rAF indefinidamente).
+  let idlePulseRaf = null;
+  function startIdlePulse() {
+    const t0 = performance.now();
+    const DURATION = 6000;
+    function frame(now) {
+      const elapsed = now - t0;
+      if (elapsed >= DURATION) { draw(currentRotation, 1); idlePulseRaf = null; return; }
+      const phase = (Math.sin(elapsed / 900) + 1) / 2; // 0..1, ciclo lento (~5.7s)
+      draw(currentRotation, phase);
+      idlePulseRaf = requestAnimationFrame(frame);
+    }
+    idlePulseRaf = requestAnimationFrame(frame);
+  }
+  function stopIdlePulse() {
+    if (idlePulseRaf) { cancelAnimationFrame(idlePulseRaf); idlePulseRaf = null; }
+  }
+  startIdlePulse();
+
   return {
     spin(finalRotationDeg, onTick) {
+      stopIdlePulse();
       const { promise, cancel } = spinWheel(draw, finalRotationDeg, onTick);
       activeCancel = cancel;
       return promise.finally(() => { activeCancel = null; });
     },
     destroy() {
+      stopIdlePulse();
       if (activeCancel) activeCancel();
       window.removeEventListener("resize", resize);
     },
