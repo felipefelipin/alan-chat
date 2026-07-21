@@ -803,6 +803,27 @@ function esPlayWhoosh() {
   osc.stop(now + 0.7);
 }
 
+// shimmer ascendente e sutil — usado no momento em que a silhueta revela
+// (contraponto ao whoosh descendente das cortinas: aqui o som "sobe" junto
+// com o rim-light aparecendo).
+function esPlayRevealShimmer() {
+  const ctx = lsGetAudioCtx();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(220, now);
+  osc.frequency.exponentialRampToValueAtTime(880, now + 0.9);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.05, now + 0.5);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 1.05);
+}
+
 // drone ambiente grave e contínuo (2 osciladores levemente desafinados) —
 // tocado durante toda a tela de entrada. start()/stop() controlam o fade.
 function esStartAmbientDrone() {
@@ -1777,7 +1798,7 @@ function runEntranceScreen() {
         <div class="esVignette"></div>
       </div>
 
-      <button type="button" class="esSoundToggle" aria-pressed="false" aria-label="Ativar som">${esSoundIcon(false)}</button>
+      <button type="button" class="esSoundToggle" aria-pressed="true" aria-label="Desativar som">${esSoundIcon(true)}</button>
 
       <div class="esStage">
         <div class="esBadge">
@@ -1798,8 +1819,14 @@ function runEntranceScreen() {
     const soundBtn = screen.querySelector(".esSoundToggle");
     const ctaBtn = screen.querySelector(".esCta");
 
-    let soundOn = false;
-    let stopDrone = null;
+    // Som começa LIGADO por padrão (diferente do resto do app onde já vinha
+    // ligado desde o início) — a essa altura o usuário já tocou em GIRAR/
+    // TENTAR NOVAMENTE/ENTRAR AGORA na roleta, então o AudioContext
+    // compartilhado já está desbloqueado; não faz sentido pedir mais um
+    // toque só pra ouvir o áudio dessa seção. O botão continua ali pra quem
+    // preferir silenciar.
+    let soundOn = true;
+    let stopDrone = esStartAmbientDrone();
 
     function playIfSound(fn) { if (soundOn) fn(); }
 
@@ -1820,7 +1847,10 @@ function runEntranceScreen() {
         playIfSound(esPlayWhoosh);
       }, ES_PHASE_MS.curtains * scale),
 
-      setTimeout(() => screen.querySelector(".esSilhouetteWrap")?.classList.add("es-visible"), ES_PHASE_MS.silhouette * scale),
+      setTimeout(() => {
+        screen.querySelector(".esSilhouetteWrap")?.classList.add("es-visible");
+        playIfSound(esPlayRevealShimmer);
+      }, ES_PHASE_MS.silhouette * scale),
 
       setTimeout(() => {
         screen.querySelector(".esBadge")?.classList.add("es-visible");
@@ -1842,6 +1872,9 @@ function runEntranceScreen() {
     // Saída: mesmo fade simples usado no resto do app (ver runRouletteScreen).
     function onEnterTap() {
       hapticImpact("medium");
+      // whoosh (mesmo som das cortinas — reforça o tema) + chime junto,
+      // uma confirmação mais "cheia" pro momento de sair da tela.
+      playIfSound(esPlayWhoosh);
       playIfSound(lsPlaySuccessChime);
       particles.stop();
       if (stopDrone) stopDrone();
