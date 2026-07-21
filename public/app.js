@@ -3630,14 +3630,16 @@ async function startFunnelCall() {
     vid.currentTime = 0;
 
     setTimeout(() => {
-      // 1s de tela preta; o vídeo então aparece com fade-in (2s, definido no
-      // CSS do elemento) e só começa a rodar de fato quando o fade termina —
-      // nunca toca escondido por baixo do fade.
+      // 1s de tela preta; o vídeo já começa a tocar aqui, e o fade-in (2s,
+      // CSS do elemento) só cobre a revelação visual por cima. Antes o
+      // play() ficava preso num listener de "transitionend" — se esse
+      // evento não disparasse (acontece em vários browsers/WebViews:
+      // transição interrompida, aba em background no meio, etc.), o vídeo
+      // ficava travado no frame 0 pra sempre, com a opacidade em 1 mas
+      // nunca rodando. Tocar imediatamente remove essa dependência frágil.
+      vid.play().catch(() => {});
       vid.style.opacity = "1";
-      vid.addEventListener("transitionend", () => {
-        startTimer();
-        vid.play().catch(() => {});
-      }, { once: true });
+      startTimer();
     }, 1000);
   };
   if (navigator.mediaDevices?.getUserMedia) {
