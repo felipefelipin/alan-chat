@@ -1099,15 +1099,35 @@ const RW_IDLE_OFFSET_DEG = 90;  // segmento 0 nasce embaixo (oposto ao ponteiro)
 const RW_POINTER_ANGLE_DEG = 270; // ponteiro fixo no topo
 const RW_WIN_INDEX = 0; // sempre o mesmo segmento — o dourado
 
+// Pilha de fonte pesada (800/900) — SF Pro Display no iOS/macOS via
+// -apple-system (é literalmente o mesmo binário), Roboto/Segoe no
+// Android/Windows. Evitamos carregar uma web font (Inter/Manrope/Outfit)
+// de propósito: canvas não re-renderiza sozinho quando uma fonte remota
+// termina de carregar, então o 1º frame (desenho estático, síncrono, no
+// mount) sairia com a fonte de fallback — um risco real de "flash" que a
+// pilha nativa não tem, com resultado visual equivalente.
+const RW_FONT_STACK = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+
+// Cada prêmio com identidade própria: emoji + cor de destaque (glow/stroke)
+// coerentes, sobre uma base bem escura em degradê (gradiente radial, nunca
+// chapada) — paleta de pedras preciosas, sofisticada, não saturada/gritante.
 const RW_SEGMENTS = [
-  { label: "LIBERADO 🔓", gold: true },
-  { label: "Foto 📸" },
-  { label: "Quase lá..." },
-  { label: "Áudio 🎧" },
-  { label: "Vídeo 🎥" },
-  { label: "Sorte 🍀" },
-  { label: "Selfie 🤳" },
-  { label: "Surpresa 🎁" },
+  { emoji: "👑", label: "LIBERADO", gold: true,
+    stops: [[0, "#f6ddaa"], [0.55, "#d6b07a"], [1, "#a97c3a"]] },
+  { emoji: "💎", label: "VIP",
+    stops: [[0, "#141a3a"], [1, "#070a1c"]], glow: "rgba(129,140,255,.5)" },
+  { emoji: "🔥", label: "BÔNUS",
+    stops: [[0, "#2c1206"], [1, "#160a04"]], glow: "rgba(255,138,46,.5)" },
+  { emoji: "⭐", label: "SORTE",
+    stops: [[0, "#2b1e06"], [1, "#160f02"]], glow: "rgba(255,210,63,.5)" },
+  { emoji: "💬", label: "CHAT",
+    stops: [[0, "#0b2438"], [1, "#04121c"]], glow: "rgba(42,171,238,.55)" },
+  { emoji: "📹", label: "VÍDEO",
+    stops: [[0, "#2c0d12"], [1, "#170609"]], glow: "rgba(230,57,80,.5)" },
+  { emoji: "❤️", label: "ESPECIAL",
+    stops: [[0, "#330a17"], [1, "#1c060c"]], glow: "rgba(255,64,110,.55)" },
+  { emoji: "✨", label: "EXTRA",
+    stops: [[0, "#1d1236"], [1, "#0f0a1c"]], glow: "rgba(167,139,250,.5)" },
 ];
 
 // Ângulo final de rotação pra travar o ponteiro exatamente no segmento
@@ -1121,16 +1141,16 @@ function computeRouletteTarget() {
   return fullSpins * 360 + targetMod + jitter;
 }
 
-// Duas fontes (dourada/decoy) pré-computadas por tamanho de tela — evita
-// montar a string de font e reatribuir ctx.font por segmento a cada frame.
-// Fonte bem maior que a v1: labels curtos + texto tangencial (ver abaixo)
-// dão espaço de sobra pra ler sem apertar.
+// 4 fontes pré-computadas (emoji/label × dourado/decoy) por tamanho de tela —
+// evita montar a string de font e reatribuir ctx.font a cada frame. Pesos
+// 800/900 apenas — "nada abaixo disso".
 function buildRouletteFonts(r) {
-  const goldPx = Math.max(14, r * 0.105);
-  const decoyPx = Math.max(12, r * 0.09);
+  const mk = (px, weight) => ({ str: `${weight} ${px}px ${RW_FONT_STACK}`, px });
   return {
-    gold: { str: `800 ${goldPx}px -apple-system, BlinkMacSystemFont, system-ui, sans-serif`, px: goldPx },
-    decoy: { str: `700 ${decoyPx}px -apple-system, BlinkMacSystemFont, system-ui, sans-serif`, px: decoyPx },
+    goldEmoji: mk(Math.max(22, r * 0.19), 900),
+    goldLabel: mk(Math.max(14, r * 0.10), 900),
+    decoyEmoji: mk(Math.max(20, r * 0.17), 900),
+    decoyLabel: mk(Math.max(13, r * 0.092), 900),
   };
 }
 
@@ -1142,7 +1162,13 @@ function buildRouletteFonts(r) {
 // vez de radial: com o ponteiro fixo no topo e o segmento vencedor sempre
 // parando ali, texto tangencial fica perfeitamente na horizontal exatamente
 // no momento em que o resultado é revelado — texto radial ficaria de lado
-// (girado 90°) nesse exato momento, que era o principal motivo de ilegibilidade.
+// (girado 90°) nesse exato momento.
+//
+// Hierarquia em 2 linhas (emoji em cima, rótulo embaixo) — nunca "emoji +
+// texto" espremidos numa linha só. O "glow" é falso (nunca ctx.shadowBlur,
+// que é caro e derrubaria o rAF em Android fraco): 2 traços por baixo do
+// preenchimento — um grosso e colorido (halo) + um fino e escuro (contraste)
+// — mesmo custo de um strokeText a mais, sem o custo real de um blur.
 function drawWheel(ctx, size, rotationDeg, fillStyles, fonts) {
   if (!size) return;
   const r = size / 2;
@@ -1154,7 +1180,6 @@ function drawWheel(ctx, size, rotationDeg, fillStyles, fonts) {
   ctx.textBaseline = "middle";
   ctx.lineJoin = "round";
 
-  let lastFont = null;
   RW_SEGMENTS.forEach((seg, i) => {
     const startDeg = RW_IDLE_OFFSET_DEG + i * RW_SEG_ANGLE_DEG - RW_SEG_ANGLE_DEG / 2;
     const startRad = startDeg * Math.PI / 180;
@@ -1166,22 +1191,40 @@ function drawWheel(ctx, size, rotationDeg, fillStyles, fonts) {
     ctx.closePath();
     ctx.fillStyle = fillStyles[i] || "#171310";
     ctx.fill();
-    ctx.strokeStyle = seg.gold ? "rgba(244,217,168,.6)" : "rgba(214,176,122,.22)";
+    ctx.strokeStyle = seg.gold ? "rgba(246,221,170,.55)" : "rgba(214,176,122,.18)";
     ctx.lineWidth = 1;
     ctx.stroke();
 
     const midRad = (startRad + endRad) / 2;
     ctx.save();
     ctx.rotate(midRad + Math.PI / 2); // +90° = tangencial em vez de radial
-    const font = seg.gold ? fonts.gold : fonts.decoy;
-    if (font.str !== lastFont) { ctx.font = font.str; lastFont = font.str; }
-    const labelY = -(r - 30);
-    // contorno escuro antes do preenchimento — mantém o texto legível
-    // independente do gradiente/cor de fundo do segmento por baixo.
-    ctx.lineWidth = Math.max(2, font.px * 0.22);
-    ctx.strokeStyle = seg.gold ? "rgba(42,28,8,.55)" : "rgba(5,4,3,.65)";
+
+    const emojiFont = seg.gold ? fonts.goldEmoji : fonts.decoyEmoji;
+    const labelFont = seg.gold ? fonts.goldLabel : fonts.decoyLabel;
+    const emojiY = -(r - 24);
+    const labelY = emojiY + emojiFont.px * 0.95;
+
+    // linha 1 — emoji (cor é intrínseca ao glifo; sem stroke/shadow/letter-
+    // spacing — alguns emojis são 2 code points, ex. ❤️ = coração + variation
+    // selector, e letter-spacing entre eles quebraria a renderização colorida).
+    ctx.font = emojiFont.str;
+    ctx.fillStyle = "#fff";
+    ctx.fillText(seg.emoji, 0, emojiY);
+
+    // linha 2 — rótulo, com halo colorido + contraste escuro (glow falso)
+    ctx.letterSpacing = "0.4px"; // ignorado silenciosamente onde não suportado
+    ctx.font = labelFont.str;
+    if (!seg.gold) {
+      // halo bem sutil — grosso demais preenche o miolo das letras pequenas
+      // e "lava" o texto em vez de dar um glow leve.
+      ctx.lineWidth = labelFont.px * 0.26;
+      ctx.strokeStyle = seg.glow;
+      ctx.strokeText(seg.label, 0, labelY);
+    }
+    ctx.lineWidth = Math.max(1.5, labelFont.px * 0.16);
+    ctx.strokeStyle = seg.gold ? "rgba(58,38,10,.5)" : "rgba(2,2,4,.7)";
     ctx.strokeText(seg.label, 0, labelY);
-    ctx.fillStyle = seg.gold ? "#2a1c08" : "rgba(248,240,225,.96)";
+    ctx.fillStyle = seg.gold ? "#2a1c08" : "#fbf7ef";
     ctx.fillText(seg.label, 0, labelY);
     ctx.restore();
   });
@@ -1272,16 +1315,13 @@ function mountRouletteWheel(host) {
   let currentRotation = 0;
   let activeCancel = null;
 
+  // Gradiente radial próprio por segmento (nunca cor chapada) — radial
+  // centrado em (0,0) é rotation-invariant, então não "derrapa" durante o giro.
   function buildFillStyles() {
-    fillStyles = RW_SEGMENTS.map((seg, i) => {
-      if (seg.gold) {
-        const g = ctx.createRadialGradient(0, 0, 0, 0, 0, size / 2);
-        g.addColorStop(0, "#f4d9a8");
-        g.addColorStop(0.55, "#d6b07a");
-        g.addColorStop(1, "#b5893f");
-        return g;
-      }
-      return i % 2 === 0 ? "#171310" : "#211a12";
+    fillStyles = RW_SEGMENTS.map((seg) => {
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, size / 2);
+      seg.stops.forEach(([offset, color]) => g.addColorStop(offset, color));
+      return g;
     });
   }
 
