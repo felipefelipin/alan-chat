@@ -761,6 +761,29 @@ function lsPlayWinFanfare() {
   });
 }
 
+// duas notas curtas e descendentes — som de "quase..." (1ª tentativa,
+// sem prêmio), deliberadamente mais discreto/menos dramático que uma
+// derrota "de verdade", já que o usuário ainda tem a 2ª chance garantida.
+function rwPlayLossThud() {
+  const ctx = lsGetAudioCtx();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  const now = ctx.currentTime;
+  [392, 293].forEach((freq, i) => {
+    const t = now + i * 0.13;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.15, t + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.3);
+  });
+}
+
 // "whoosh" grave e descendente — usado quando as cortinas abrem.
 function esPlayWhoosh() {
   const ctx = lsGetAudioCtx();
@@ -1149,7 +1172,8 @@ function runConnectionLoadingScreen() {
 const RW_SEG_ANGLE_DEG = 45; // 360 / 8 segmentos
 const RW_IDLE_OFFSET_DEG = 90;  // segmento 0 nasce embaixo (oposto ao ponteiro) em repouso
 const RW_POINTER_ANGLE_DEG = 270; // ponteiro fixo no topo
-const RW_WIN_INDEX = 0; // sempre o mesmo segmento — o dourado
+const RW_WIN_INDEX = 0;  // segmento dourado — 👑 PREMIUM
+const RW_LOSE_INDEX = 4; // segmento vermelho — ❌ TENTE DE NOVO (1ª tentativa)
 
 // Pilha de fonte pesada (800/900) — SF Pro Display no iOS/macOS via
 // -apple-system (é literalmente o mesmo binário), Roboto/Segoe no
@@ -1186,9 +1210,11 @@ const RW_SEGMENTS = [
 ];
 
 // Ângulo final de rotação pra travar o ponteiro exatamente no segmento
-// vencedor. Isolado da renderização pra ser fácil de ajustar/testar.
-function computeRouletteTarget() {
-  const targetMod = ((RW_POINTER_ANGLE_DEG - RW_IDLE_OFFSET_DEG - RW_WIN_INDEX * RW_SEG_ANGLE_DEG) % 360 + 360) % 360;
+// `targetIndex` pedido. Isolado da renderização pra ser fácil de ajustar/
+// testar; genérico o bastante pra mirar tanto a derrota (1ª tentativa)
+// quanto a vitória (2ª tentativa).
+function computeRouletteTarget(targetIndex) {
+  const targetMod = ((RW_POINTER_ANGLE_DEG - RW_IDLE_OFFSET_DEG - targetIndex * RW_SEG_ANGLE_DEG) % 360 + 360) % 360;
   const fullSpins = 6;
   // jitter fica sempre a pelo menos 50% da meia-largura do segmento de
   // qualquer borda — nunca fica visualmente ambíguo qual fatia "ganhou".
@@ -1561,13 +1587,14 @@ function runRouletteScreen() {
 
     let confetti = null;
 
-    function onSpinTap() {
-      spinBtn.disabled = true;
-      spinBtn.classList.add("rwSpinBtn-disabled");
+    // Giro compartilhado pelas duas tentativas — só muda o índice-alvo e o
+    // callback de conclusão. Nada na física/tick/haptic do giro em si muda
+    // entre a 1ª e a 2ª tentativa.
+    function runSpin(targetIndex, onDone) {
       stage.querySelector(".rwGlow")?.classList.add("rwGlow-spinning");
       hapticImpact("medium");
 
-      const finalRotation = computeRouletteTarget();
+      const finalRotation = computeRouletteTarget(targetIndex);
       let lastTickAt = 0;
       wheel.spin(finalRotation, () => {
         // no início do giro várias divisórias passam por frame (~3000°/s) —
@@ -1578,31 +1605,103 @@ function runRouletteScreen() {
         lastTickAt = t;
         lsPlaySpinTick();
         hapticImpact("light");
-      }).then(onSpinDone);
+      }).then(onDone);
+    }
+
+    function onSpinTap() {
+      spinBtn.disabled = true;
+      spinBtn.classList.add("rwSpinBtn-disabled");
+      runSpin(RW_LOSE_INDEX, onFirstSpinDone);
     }
     spinBtn.addEventListener("click", onSpinTap, { once: true });
 
-    function onSpinDone() {
-      lsPlayWinFanfare();
-      hapticNotify("success");
-      confetti = mountConfettiBurst(screen);
+    // tremor curto na roleta — vende o "quase" sem tocar na física do giro.
+    function triggerNearMissShake() {
+      const wrap = screen.querySelector(".rwWheelWrap");
+      if (!wrap) return;
+      wrap.classList.add("rwWheelWrap-shake");
+      setTimeout(() => wrap.classList.remove("rwWheelWrap-shake"), 420);
+    }
 
-      // esconde o botão GIRAR (fade) em vez de deixá-lo dimmed pra sempre —
-      // a área reservada (.rwActionArea) mantém a altura fixa, então a
-      // roleta acima não se move quando o resultado entra no lugar dele.
+    // flash vermelho breve — mesma técnica do flash dourado da vitória,
+    // recolorido, um elemento descartável que se auto-remove.
+    function triggerNearMissFlash() {
+      const flash = document.createElement("div");
+      flash.className = "rwLossFlash";
+      screen.appendChild(flash);
+      setTimeout(() => flash.remove(), 600);
+    }
+
+    // 1ª tentativa — sempre cai em ❌ TENTE DE NOVO. Sem confete, feedback
+    // mais contido (vibração de erro, thud curto, tremor+flash vermelho).
+    function onFirstSpinDone() {
+      hapticNotify("error");
+      rwPlayLossThud();
+      triggerNearMissShake();
+      triggerNearMissFlash();
+
       spinBtn.classList.add("rwSpinBtn-hidden");
       setTimeout(() => spinBtn.remove(), 450);
 
       actionArea.insertAdjacentHTML("beforeend", `
         <div class="rwResult">
-          <div class="rwResultTitle">ACESSO LIBERADO 🔓</div>
-          <div class="rwResultSub">Você caiu no prêmio principal!</div>
+          <div class="rwResultTitle">❌ QUASE...</div>
+          <div class="rwResultSub">Você passou muito perto do prêmio máximo.<br>Mas você ainda possui <strong>UMA</strong> última tentativa exclusiva.</div>
+        </div>
+      `);
+      requestAnimationFrame(() => actionArea.querySelector(".rwResult")?.classList.add("rwResult-visible"));
+
+      // sem botão de fechar — só o próprio CTA avança o fluxo.
+      setTimeout(() => {
+        actionArea.insertAdjacentHTML("beforeend", `<button type="button" class="rwEnterBtn">🔄 TENTAR NOVAMENTE</button>`);
+        const retryBtn = actionArea.querySelector(".rwEnterBtn");
+        requestAnimationFrame(() => retryBtn.classList.add("rwEnterBtn-visible"));
+        retryBtn.addEventListener("click", onRetryTap, { once: true });
+      }, 400);
+    }
+
+    function onRetryTap() {
+      hapticImpact("medium");
+
+      // some com o resultado da 1ª tentativa antes de girar de novo.
+      const prevResult = actionArea.querySelector(".rwResult");
+      const prevBtn = actionArea.querySelector(".rwEnterBtn");
+      prevResult?.classList.remove("rwResult-visible");
+      prevBtn?.classList.remove("rwEnterBtn-visible");
+      setTimeout(() => { prevResult?.remove(); prevBtn?.remove(); }, 350);
+
+      runSpin(RW_WIN_INDEX, onFinalSpinDone);
+    }
+
+    // efeitos exclusivos da vitória: glow dourado intensificado + flash
+    // suave + escurecimento leve do fundo, além do confete/fanfarra já
+    // existentes.
+    function triggerWinFlash() {
+      screen.querySelector(".rwBg")?.classList.add("rwBg-dim");
+      stage.querySelector(".rwGlow")?.classList.add("rwGlow-winPulse");
+      const flash = document.createElement("div");
+      flash.className = "rwWinFlash";
+      screen.appendChild(flash);
+      setTimeout(() => flash.remove(), 650);
+    }
+
+    // 2ª tentativa — sempre cai em 👑 PREMIUM.
+    function onFinalSpinDone() {
+      lsPlayWinFanfare();
+      hapticNotify("success");
+      confetti = mountConfettiBurst(screen);
+      triggerWinFlash();
+
+      actionArea.insertAdjacentHTML("beforeend", `
+        <div class="rwResult">
+          <div class="rwResultTitle">👑 ACESSO PREMIUM LIBERADO</div>
+          <div class="rwResultSub">Parabéns! Seu acesso foi validado com sucesso. Todos os recursos Premium foram desbloqueados.</div>
         </div>
       `);
       requestAnimationFrame(() => actionArea.querySelector(".rwResult")?.classList.add("rwResult-visible"));
 
       setTimeout(() => {
-        actionArea.insertAdjacentHTML("beforeend", `<button type="button" class="rwEnterBtn">ENTRAR NO CHAT 😈</button>`);
+        actionArea.insertAdjacentHTML("beforeend", `<button type="button" class="rwEnterBtn">✨ ENTRAR AGORA</button>`);
         const enterBtn = actionArea.querySelector(".rwEnterBtn");
         requestAnimationFrame(() => enterBtn.classList.add("rwEnterBtn-visible"));
         enterBtn.addEventListener("click", onEnterTap, { once: true });

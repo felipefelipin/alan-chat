@@ -1199,6 +1199,16 @@ body{
   opacity:1;
   transform:scale(1.05);
 }
+/* depois de .rwGlow-spinning na cascata de propósito — quando as duas
+   classes coexistem (giro final terminando em vitória), esta vence. */
+.rwGlow-winPulse{
+  animation:rwGlowWinPulse .9s ease forwards;
+}
+@keyframes rwGlowWinPulse{
+  0%{ opacity:.65; transform:scale(1); }
+  40%{ opacity:1; transform:scale(1.25); }
+  100%{ opacity:.9; transform:scale(1.08); }
+}
 @keyframes rwBreathe{
   0%,100%{ opacity:.55; transform:scale(.9); }
   50%{ opacity:.85; transform:scale(1.08); }
@@ -1320,6 +1330,56 @@ body{
   inset:0;
   z-index:6;
   pointer-events:none;
+}
+
+/* tremor curto da roleta na 1ª tentativa (sem prêmio) — não mexe no
+   transform usado pelo giro em si (esse é todo feito no canvas interno) */
+@keyframes rwShake{
+  0%,100%{ transform:translateX(0); }
+  20%{ transform:translateX(-6px); }
+  40%{ transform:translateX(5px); }
+  60%{ transform:translateX(-4px); }
+  80%{ transform:translateX(3px); }
+}
+.rwWheelWrap-shake{ animation:rwShake .4s ease; }
+
+/* flash vermelho breve (quase ganhou) e dourado (vitória) — elementos
+   descartáveis, inseridos e removidos via JS, nunca ficam no DOM parado */
+@keyframes rwFlashPulseRed{
+  0%{ opacity:0; }
+  35%{ opacity:.8; }
+  100%{ opacity:0; }
+}
+.rwLossFlash{
+  position:absolute;
+  inset:0;
+  z-index:5;
+  background:radial-gradient(circle at 50% 40%, rgba(255,40,50,.45), transparent 65%);
+  opacity:0;
+  pointer-events:none;
+  animation:rwFlashPulseRed .55s ease;
+}
+
+@keyframes rwFlashPulseGold{
+  0%{ opacity:0; }
+  35%{ opacity:.9; }
+  100%{ opacity:0; }
+}
+.rwWinFlash{
+  position:absolute;
+  inset:0;
+  z-index:5;
+  background:radial-gradient(circle at 50% 38%, rgba(255,235,190,.6), transparent 65%);
+  opacity:0;
+  pointer-events:none;
+  animation:rwFlashPulseGold .6s ease;
+}
+
+/* escurecimento leve do fundo na vitória — só um filter no elemento .rwBg
+   já existente, sem overlay novo */
+.rwBg-dim{
+  filter:brightness(.72);
+  transition:filter .6s ease;
 }
 
 /* ==================== ENTRADA CINEMATOGRÁFICA (pós-roleta) ==================== */
