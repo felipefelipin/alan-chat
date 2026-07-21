@@ -1191,7 +1191,13 @@ function runConnectionLoadingScreen() {
 // setTimeouts encadeados dirigindo a animação em si).
 
 const RW_SEG_ANGLE_DEG = 45; // 360 / 8 segmentos
-const RW_IDLE_OFFSET_DEG = 90;  // segmento 0 nasce embaixo (oposto ao ponteiro) em repouso
+// 67.5° (em vez de 90°) — desloca o quadro estático em -22.5° (meia fatia)
+// pra que, em repouso (rotationDeg=0), o ponteiro fique exatamente na
+// divisória entre os segmentos 4 (❌ TENTE DE NOVO) e 5 (📹 VÍDEO), em vez
+// de apontar pro centro do 4. Como computeRouletteTarget() usa essa mesma
+// constante, o resultado final de qualquer giro não muda — só a pose de
+// repouso antes de girar.
+const RW_IDLE_OFFSET_DEG = 67.5;
 const RW_POINTER_ANGLE_DEG = 270; // ponteiro fixo no topo
 const RW_WIN_INDEX = 0;  // segmento dourado — 👑 PREMIUM
 const RW_LOSE_INDEX = 4; // segmento vermelho — ❌ TENTE DE NOVO (1ª tentativa)
