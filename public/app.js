@@ -262,11 +262,26 @@ const KeyboardMachine = (() => {
 })();
 
 const ScrollController = (() => {
-  const SCROLL_DISMISS_PX = 44; // gesto decisivo de scroll pra cima fecha o teclado, igual WhatsApp
+  const SCROLL_DISMISS_PX = 44; // piso mínimo de distância — nunca fecha por 1-2px de ruído, mesmo com velocidade alta calculada em cima de uma amostra minúscula
+  // Critério de fechamento é velocidade, não distância: abaixo desse limiar
+  // (px/ms, medido no dedo, não no scrollTop) o gesto é "arrastar devagar" e
+  // NUNCA fecha o teclado, não importa quão longe o scroll já foi — igual
+  // WhatsApp/Telegram, onde dá pra ler o histórico inteiro com o teclado
+  // aberto. 0.65px/ms ≈ 650px/s: bem acima do que um arrasto de leitura
+  // deliberado produz, mas dentro da faixa de um flick curto e decidido.
+  const FLICK_VELOCITY_PX_MS = 0.65;
+  // Só os pontos de toque dos últimos ~120ms entram na conta da velocidade —
+  // é a velocidade RECENTE do dedo que importa, não a média do gesto
+  // inteiro. Assim um usuário que rola devagar por um tempo e só flicka no
+  // final ainda é reconhecido corretamente como flick nesse instante.
+  const VELOCITY_WINDOW_MS = 120;
+
   let chat = null;
   let touching = false;
   let gestureStartTop = 0;
   let pendingDismiss = false;
+  let touchSamples = [];   // {y, t} — janela curta e recente do gesto em andamento
+  let releaseVelocity = 0; // velocidade (px/ms) medida no instante do touchend — usada pra qualificar o scroll por inércia que continua depois do dedo solto
 
   // Todo remount (mountChat(), ex.: voltar do perfil/stories) chama attach()
   // de novo com um elemento novo — reseta o estado do gesto aqui, senão um
@@ -280,6 +295,8 @@ const ScrollController = (() => {
     touching = false;
     pendingDismiss = false;
     gestureStartTop = chat ? chat.scrollTop : 0;
+    touchSamples = [];
+    releaseVelocity = 0;
   }
 
   // chamado pelo ViewportTracker, na mesma leitura de frame que a altura —
@@ -289,10 +306,39 @@ const ScrollController = (() => {
     chat.scrollTop = chat.scrollHeight - chat.clientHeight;
   }
 
-  function onTouchStart() {
+  function onTouchStart(e) {
     if (chat) gestureStartTop = chat.scrollTop;
     touching = true;
     pendingDismiss = false;
+    const t = e.touches[0];
+    touchSamples = t ? [{ y: t.clientY, t: performance.now() }] : [];
+    releaseVelocity = 0;
+  }
+
+  // amostra bruta do dedo (não do scrollTop) — o scrollTop pode ser
+  // suavizado/interpolado pelo engine durante o scroll nativo, então medir
+  // velocidade diretamente no toque é a mesma técnica usada pelos
+  // rastreadores de fling nativos (VelocityTracker no Android, o `velocity`
+  // de UIPanGestureRecognizer no iOS).
+  function onTouchMove(e) {
+    if (!touching) return;
+    const t = e.touches[0];
+    if (!t) return;
+    const now = performance.now();
+    touchSamples.push({ y: t.clientY, t: now });
+    const cutoff = now - VELOCITY_WINDOW_MS;
+    while (touchSamples.length > 2 && touchSamples[0].t < cutoff) touchSamples.shift();
+  }
+
+  // velocidade recente em px/ms — positivo = dedo subindo na tela (arrastando
+  // o conteúdo pra cima, mesma direção que fecha o teclado).
+  function currentVelocity() {
+    if (touchSamples.length < 2) return 0;
+    const first = touchSamples[0];
+    const last = touchSamples[touchSamples.length - 1];
+    const dt = last.t - first.t;
+    if (dt <= 0) return 0;
+    return (first.y - last.y) / dt;
   }
 
   // Só arma a detecção quando o teclado já terminou de abrir ("Opened"),
@@ -313,17 +359,31 @@ const ScrollController = (() => {
     if (!chat) return;
     const scrolledUp = gestureStartTop - chat.scrollTop;
     if (scrolledUp <= SCROLL_DISMISS_PX) return;
-    if (touching) { pendingDismiss = true; return; }
-    FocusGateway.requestDismiss();
+
+    if (touching) {
+      // Só marca intenção se a velocidade RECENTE do dedo já qualifica como
+      // flick — um arrasto lento e decidido (ex.: lendo mensagens antigas)
+      // nunca vira pendingDismiss, mesmo passando do piso de distância.
+      if (currentVelocity() >= FLICK_VELOCITY_PX_MS) pendingDismiss = true;
+      return;
+    }
+
+    // Dedo já solto — o scroll aqui é inércia/momentum nativo. Só fecha se
+    // o release em si foi um flick; inércia depois de um arrasto lento
+    // nunca dispensa o teclado, mesmo que a rolagem residual eventualmente
+    // passe do piso de distância.
+    if (releaseVelocity >= FLICK_VELOCITY_PX_MS) FocusGateway.requestDismiss();
   }
 
   function onTouchEnd() {
     touching = false;
+    releaseVelocity = currentVelocity();
     if (pendingDismiss) { pendingDismiss = false; FocusGateway.requestDismiss(); }
   }
 
   function bindGestureListeners(chatEl) {
     chatEl.addEventListener("touchstart", onTouchStart, { passive: true });
+    chatEl.addEventListener("touchmove", onTouchMove, { passive: true });
     chatEl.addEventListener("touchend", onTouchEnd, { passive: true });
     chatEl.addEventListener("touchcancel", onTouchEnd, { passive: true });
     chatEl.addEventListener("scroll", onScroll, { passive: true });
