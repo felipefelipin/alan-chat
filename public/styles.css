@@ -1585,7 +1585,7 @@ body{
   pointer-events:none; /* existe no DOM desde o início — só clicável quando visível */
 }
 .esCta.es-visible{ opacity:1; transform:translateY(0) scale(1); pointer-events:auto; }
-.esCta:active{ transform:scale(.96); }
+.esCta:active{ transform:scale(.97); }
 .es-reduced .esCta{ transition-duration:.25s; }
 
 .esCtaRing{
@@ -1600,6 +1600,64 @@ body{
   50%{ transform:scale(1.12); opacity:0; }
 }
 .es-reduced .esCtaRing{ animation:none; }
+
+/* ==================== ENTRADA RÁPIDA DO CHAT (só no "ENTRAR AGORA") ====================
+   Diferente do fade simples ~420ms usado nas outras transições do app (que
+   não se sobrepõe com a tela seguinte) — aqui a saída da entrada e a
+   entrada do chat acontecem ao mesmo tempo, crossfade, ~180-280ms total. */
+
+/* brilho rápido cruzando o botão CTA no toque */
+.esCta-shine{ overflow:hidden; }
+.esCta-shine::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(115deg, transparent 30%, rgba(255,255,255,.55) 50%, transparent 70%);
+  transform:translateX(-120%);
+  animation:esCtaShineSweep .5s ease;
+  pointer-events:none;
+}
+@keyframes esCtaShineSweep{
+  to{ transform:translateX(120%); }
+}
+
+/* saída rápida da tela de entrada (reparentada pro body no JS antes de
+   ganhar essa classe — ver onEnterTap em runEntranceScreen) */
+.esCtaExit{
+  transition:
+    opacity .18s cubic-bezier(.4,0,.2,1),
+    transform .18s cubic-bezier(.4,0,.2,1),
+    filter .18s cubic-bezier(.4,0,.2,1);
+  opacity:0;
+  transform:scale(.985);
+  filter:blur(8px);
+}
+
+/* entrada do chat — só usada nessa transição específica; trocada por JS
+   logo após mountChat() (que continua usando .fadeIn normalmente nos
+   outros pontos onde é chamado — showHome, checkout, etc.) */
+.chatEnterPremium{
+  animation:chatEnterPremiumAnim .28s cubic-bezier(.22,.61,.36,1) both;
+}
+@keyframes chatEnterPremiumAnim{
+  from{ opacity:0; transform:translateY(14px) scale(1.015); filter:blur(8px); }
+  to{ opacity:1; transform:translateY(0) scale(1); filter:blur(0px); }
+}
+
+/* brilho único passando no topo do chat, só junto com a entrada premium */
+.chatTopShine{
+  position:absolute;
+  top:0; left:0; right:0;
+  height:60px;
+  z-index:6;
+  pointer-events:none;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent);
+  transform:translateX(-100%);
+  animation:chatTopShineSweep .45s ease .05s both;
+}
+@keyframes chatTopShineSweep{
+  to{ transform:translateX(100%); }
+}
 
 /* call screen */
 .callScreen{

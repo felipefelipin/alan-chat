@@ -1875,18 +1875,48 @@ function runEntranceScreen() {
 
     ctaBtn.addEventListener("click", onEnterTap, { once: true });
 
-    // Saída: mesmo fade simples usado no resto do app (ver runRouletteScreen).
+    // Saída rápida (crossfade ~180-280ms) — diferente do fade simples ~420ms
+    // usado no resto do app: aqui a tela atual e o chat aparecem juntos,
+    // sobrepostos, em vez de um terminar antes do outro começar.
+    //
+    // mountChat() faz `app.innerHTML = ...` — se `screen` continuasse
+    // dentro de #app ela seria destruída instantaneamente nesse replace,
+    // sem chance de fazer o próprio fade de saída. Por isso reparentamos
+    // pro <body> antes: .lsScreen já é position:fixed;inset:0, e como essa
+    // tela não tem nenhum campo de texto (o teclado nunca abre aqui), mover
+    // pro body não muda nada visualmente — só deixa ela livre pra continuar
+    // visível por cima do chat recém-montado enquanto os dois se cruzam.
     function onEnterTap() {
-      hapticImpact("medium");
+      ctaBtn.disabled = true;
+      ctaBtn.classList.add("esCta-shine");
+      hapticImpact("light");
       // whoosh (mesmo som das cortinas — reforça o tema) + chime junto,
       // uma confirmação mais "cheia" pro momento de sair da tela.
       playIfSound(esPlayWhoosh);
       playIfSound(lsPlaySuccessChime);
       particles.stop();
       if (stopDrone) stopDrone();
-      screen.classList.remove("lsScreen-visible");
+
+      document.body.appendChild(screen);
+      requestAnimationFrame(() => screen.classList.add("esCtaExit"));
+
+      mountChat(); // chat já começa a aparecer por baixo, ao mesmo tempo
+      const chatFull = app.querySelector(".full");
+      if (chatFull) {
+        // .fadeIn é a entrada padrão do mountChat() (usada em todos os
+        // outros lugares que chamam essa função) — trocada só aqui, nesse
+        // ponto de entrada específico, pela animação premium pedida.
+        chatFull.classList.remove("fadeIn");
+        chatFull.classList.add("chatEnterPremium");
+
+        const shine = document.createElement("div");
+        shine.className = "chatTopShine";
+        chatFull.appendChild(shine);
+        setTimeout(() => shine.remove(), 500);
+      }
+
       screen.addEventListener("transitionend", cleanup, { once: true });
-      setTimeout(cleanup, 500); // rede de segurança caso transitionend não dispare
+      setTimeout(cleanup, 260); // rede de segurança caso transitionend não dispare
     }
 
     let cleaned = false;
@@ -4922,8 +4952,7 @@ if (!FORCE_FRESH_START && localStorage.getItem("gisa_checkout_done") === "1") {
     await runInitialLoadingScreen();
     await runConnectionLoadingScreen();
     await runRouletteScreen();
-    await runEntranceScreen();
-    mountChat();
+    await runEntranceScreen(); // já monta o chat internamente (crossfade), ver onEnterTap
     insertSystemNotice(`As mensagens são protegidas com criptografia de ponta a ponta. Só você e ${CONTACT.name} podem lê-las.`);
     await sleep(220);
     startScript().catch(e => { if (!(e instanceof FlowCancelledError)) console.error(e); });
