@@ -1051,7 +1051,7 @@ function mountConnectionHUD(host) {
       const btn = document.createElement("button");
       btn.className = "lsEnterBtn";
       btn.type = "button";
-      btn.textContent = "ENTRAR NO CHAT 😈";
+      btn.textContent = "VEM VER OQUE VOCÊ PODE GANHAR 😈";
       hudEl.appendChild(btn);
       requestAnimationFrame(() => btn.classList.add("lsEnterBtn-visible"));
       btn.addEventListener("click", onTap, { once: true });
