@@ -1592,7 +1592,7 @@ function runRouletteScreen() {
 
     screen.insertAdjacentHTML("beforeend", `
       <div class="rwStage">
-        <div class="rwTitle">🎰 GIRE E DESBLOQUEIE SEU ACESSO</div>
+        <div class="rwTitle">GIRE E DESBLOQUEI ALGO MEU EXCLUSIVO 😈</div>
         <div class="rwSubtitle">Toque em GIRAR pra testar sua sorte</div>
       </div>
     `);
