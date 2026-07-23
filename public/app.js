@@ -4637,7 +4637,7 @@ function reopenPaywall() {
   }));
 }
 
-function showCheckoutCta() {
+function showCheckoutCta(opts = {}) {
   trackEvent("MINIAPP_PAYWALL_SHOWN");
   lockChat();
 
@@ -4735,7 +4735,14 @@ function showCheckoutCta() {
     // "DESBLOQUEAR ACESSO" não redireciona mais direto pro checkout — abre a
     // roleta de desconto primeiro; o clique final dela (dentro de
     // runDiscountRouletteScreen) é quem chama openCheckout() de verdade.
-    if (btn) btn.onclick = () => { _dismissPaywall(overlay); runDiscountRouletteScreen(); };
+    // Exceção: quem já passou pela roleta antes (reabrindo o mini app,
+    // opts.skipRoulette) vai direto pro checkout — não faz sentido girar
+    // de novo pra quem já pegou o desconto.
+    if (btn) {
+      btn.onclick = opts.skipRoulette
+        ? () => { _dismissPaywall(overlay); openCheckout(); }
+        : () => { _dismissPaywall(overlay); runDiscountRouletteScreen(); };
+    }
     const dismiss = document.getElementById("paywallDismiss");
     if (dismiss) dismiss.onclick = () => _dismissPaywall(overlay);
   }, 0);
@@ -5500,13 +5507,11 @@ try {
 
 loadState();
 
-// TODO: reverter pra false quando voltar o comportamento normal
-// (retomar direto no checkout pra quem já passou pelo fluxo antes)
-const FORCE_FRESH_START = true;
+const FORCE_FRESH_START = false;
 
 if (!FORCE_FRESH_START && localStorage.getItem("gisa_checkout_done") === "1") {
   mountChat();
-  setTimeout(() => showCheckoutCta(), 300);
+  setTimeout(() => showCheckoutCta({ skipRoulette: true }), 300);
 } else {
   state.history        = [];
   state.step           = 0;
