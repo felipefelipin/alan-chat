@@ -26,6 +26,38 @@ window.addEventListener("popstate", () => {
   history.pushState(null, "", location.href);
 });
 
+// ==================== DIAGNÓSTICO TEMPORÁRIO (áudio da entrada) ====================
+// Instrumentação pura — nenhuma linha aqui muda comportamento/timing do
+// player, só observa e expõe o que está acontecendo. Painel visual porque
+// o teste é feito no WebView do Telegram no celular, sem DevTools à mão;
+// tudo também vai pro console para quem tiver acesso remoto.
+// REMOVER depois de encontrada a causa raiz.
+let _entranceDbgPanel = null;
+function entranceDbg(...args) {
+  const parts = args.map((a) => {
+    if (a instanceof Error) return `${a.name}: ${a.message}`;
+    if (a && typeof a === "object") { try { return JSON.stringify(a); } catch { return String(a); } }
+    return String(a);
+  });
+  const msg = parts.join(" ");
+  console.log("[entranceAudioDbg]", msg);
+  if (!_entranceDbgPanel) {
+    _entranceDbgPanel = document.createElement("div");
+    _entranceDbgPanel.id = "entranceDbgPanel";
+    _entranceDbgPanel.style.cssText =
+      "position:fixed;left:4px;top:4px;z-index:999999;max-width:92vw;max-height:38vh;" +
+      "overflow:auto;background:rgba(0,0,0,.85);color:#0f0;font:10px/1.4 monospace;" +
+      "padding:6px 8px;border-radius:6px;white-space:pre-wrap;pointer-events:none;";
+    (document.body || document.documentElement).appendChild(_entranceDbgPanel);
+  }
+  const line = document.createElement("div");
+  line.textContent = `${(performance.now() / 1000).toFixed(2)}s  ${msg}`;
+  _entranceDbgPanel.appendChild(line);
+  _entranceDbgPanel.scrollTop = _entranceDbgPanel.scrollHeight;
+}
+window.addEventListener("error", (e) => entranceDbg("window error:", e.message, "@", e.filename + ":" + e.lineno));
+window.addEventListener("unhandledrejection", (e) => entranceDbg("unhandledrejection:", e.reason?.name, e.reason?.message));
+
 // Música da tela de entrada é um <audio> real, não Web Audio sintetizado —
 // tem política de autoplay própria, mais rígida: diferente do AudioContext
 // (que fica liberado pro resto da sessão assim que resumido uma vez com
@@ -37,9 +69,50 @@ window.addEventListener("popstate", () => {
 let _entranceAudio = null;
 function getEntranceAudio() {
   if (!_entranceAudio) {
+    entranceDbg("getEntranceAudio(): criando elemento pela 1ª vez. src =", ASSETS.entranceMusic);
     _entranceAudio = new Audio(ASSETS.entranceMusic);
     _entranceAudio.preload = "auto";
     _entranceAudio.volume = 0.75;
+    entranceDbg("estado inicial:", {
+      src: _entranceAudio.src,
+      currentSrc: _entranceAudio.currentSrc,
+      readyState: _entranceAudio.readyState,
+      networkState: _entranceAudio.networkState,
+      muted: _entranceAudio.muted,
+      volume: _entranceAudio.volume,
+    });
+
+    [
+      "loadedmetadata", "canplay", "canplaythrough", "play", "playing",
+      "pause", "ended", "error", "stalled", "suspend", "abort", "emptied", "waiting",
+    ].forEach((evt) => {
+      _entranceAudio.addEventListener(evt, () => {
+        entranceDbg(`evento: ${evt}`, {
+          readyState: _entranceAudio.readyState,
+          networkState: _entranceAudio.networkState,
+          currentTime: _entranceAudio.currentTime.toFixed(2),
+          paused: _entranceAudio.paused,
+          muted: _entranceAudio.muted,
+          error: _entranceAudio.error
+            ? { code: _entranceAudio.error.code, message: _entranceAudio.error.message }
+            : null,
+        });
+      });
+    });
+
+    // Revela quem mais (além do nosso próprio código) chama pause() nesse
+    // elemento — ex.: pauseAllMedia() rodando em visibilitychange/deactivated.
+    const _origPause = _entranceAudio.pause.bind(_entranceAudio);
+    _entranceAudio.pause = function () {
+      entranceDbg("pause() chamado — stack:", new Error().stack?.split("\n").slice(1, 4).join(" | "));
+      return _origPause();
+    };
+
+    // Checagem de rede independente do <audio> em si — confirma que o MESMO
+    // runtime (domínio, cache, WebView) consegue buscar o arquivo.
+    fetch(ASSETS.entranceMusic, { method: "HEAD" })
+      .then((r) => entranceDbg("HEAD check:", r.status, r.headers.get("content-type"), r.headers.get("content-length")))
+      .catch((err) => entranceDbg("HEAD check FALHOU:", err.name, err.message));
   }
   return _entranceAudio;
 }
@@ -49,17 +122,24 @@ function getEntranceAudio() {
 // (play() só resolve quando o navegador aceitou tocar), em vez de desistir
 // depois de uma única tentativa que pode falhar por motivo transitório.
 let _entranceAudioUnlocked = false;
-function _tryUnlockEntranceAudio() {
+let _entranceUnlockAttempts = 0;
+function _tryUnlockEntranceAudio(evt) {
   if (_entranceAudioUnlocked) return;
+  _entranceUnlockAttempts++;
+  const attempt = _entranceUnlockAttempts;
   const a = getEntranceAudio();
+  entranceDbg(`unlock tentativa #${attempt} via "${evt?.type}"`, { readyState: a.readyState, paused: a.paused });
   a.play().then(() => {
+    entranceDbg(`unlock tentativa #${attempt}: PLAY OK`);
     _entranceAudioUnlocked = true;
     a.pause();
     a.currentTime = 0;
     ["pointerdown", "touchend", "click"].forEach((ev) =>
       document.removeEventListener(ev, _tryUnlockEntranceAudio, true)
     );
-  }).catch(() => {});
+  }).catch((err) => {
+    entranceDbg(`unlock tentativa #${attempt}: PLAY ERROR`, err.name, err.message);
+  });
 }
 ["pointerdown", "touchend", "click"].forEach((ev) =>
   document.addEventListener(ev, _tryUnlockEntranceAudio, { capture: true })
@@ -2286,12 +2366,28 @@ function runEntranceScreen() {
     const entranceAudio = getEntranceAudio();
     function startEntranceMusic() {
       entranceMusicStarted = true;
+      entranceDbg("startEntranceMusic() chamada", {
+        readyState: entranceAudio.readyState,
+        networkState: entranceAudio.networkState,
+        unlocked: _entranceAudioUnlocked,
+        paused: entranceAudio.paused,
+      });
       const seek = () => {
-        try { entranceAudio.currentTime = 46; } catch {}
-        entranceAudio.play().catch(() => {});
+        entranceDbg("seek(): setando currentTime=46, readyState =", entranceAudio.readyState);
+        try { entranceAudio.currentTime = 46; } catch (e) { entranceDbg("currentTime FALHOU:", e.name, e.message); }
+        entranceAudio.play().then(() => {
+          entranceDbg("startEntranceMusic PLAY OK — currentTime =", entranceAudio.currentTime.toFixed(2));
+        }).catch((err) => {
+          entranceDbg("startEntranceMusic PLAY ERROR:", err.name, err.message);
+        });
       };
-      if (entranceAudio.readyState >= 1) seek();
-      else entranceAudio.addEventListener("loadedmetadata", seek, { once: true });
+      if (entranceAudio.readyState >= 1) {
+        entranceDbg("readyState já >=1, seek imediato");
+        seek();
+      } else {
+        entranceDbg("readyState 0, aguardando loadedmetadata...");
+        entranceAudio.addEventListener("loadedmetadata", seek, { once: true });
+      }
     }
 
     function playIfSound(fn) { if (soundOn) fn(); }
@@ -2303,7 +2399,13 @@ function runEntranceScreen() {
       soundBtn.innerHTML = esSoundIcon(soundOn);
       if (soundOn) {
         stopDrone = esStartAmbientDrone();
-        if (entranceMusicStarted) entranceAudio.play().catch(() => {});
+        if (entranceMusicStarted) {
+          entranceAudio.play().then(() => {
+            entranceDbg("soundBtn resume PLAY OK");
+          }).catch((err) => {
+            entranceDbg("soundBtn resume PLAY ERROR:", err.name, err.message);
+          });
+        }
       } else {
         if (stopDrone) { stopDrone(); stopDrone = null; }
         entranceAudio.pause();
@@ -2314,6 +2416,7 @@ function runEntranceScreen() {
 
     const timers = [
       setTimeout(() => {
+        entranceDbg("timer curtains disparado — soundOn =", soundOn, "scale =", scale);
         screen.classList.add("es-curtains-open");
         playIfSound(esPlayWhoosh);
         playIfSound(startEntranceMusic);
