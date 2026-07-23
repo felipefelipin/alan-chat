@@ -34,13 +34,20 @@ window.addEventListener("popstate", () => {
 // (play+pause imediato) já no primeiro toque do usuário em QUALQUER lugar
 // do app — bem antes da tela de entrada existir — e só reaproveitada
 // (nunca recriada) lá na hora certa (ver runEntranceScreen).
-const ENTRANCE_MUSIC_VOLUME = 0.2; // bem baixa — som ambiente, não o foco
+const ENTRANCE_MUSIC_VOLUME = 0.15; // bem baixa — som ambiente, não o foco
 let _entranceAudio = null;
 function getEntranceAudio() {
   if (!_entranceAudio) {
     _entranceAudio = new Audio(ASSETS.entranceMusic);
     _entranceAudio.preload = "auto";
     _entranceAudio.volume = 0;
+    // Muda por padrão até o momento exato da cortina (ver startEntranceMusic
+    // em runEntranceScreen, onde é desmutada). Isso é uma trava permanente,
+    // não alternada a cada tentativa de destravar — assim é impossível a
+    // música vazar antes da hora, mesmo por uma fração de segundo, não
+    // importa quantas vezes o código de destravamento rode (loading
+    // screen, roleta, etc.) antes da tela de entrada existir.
+    _entranceAudio.muted = true;
   }
   return _entranceAudio;
 }
@@ -63,28 +70,19 @@ function esFadeInAudio(audio, targetVolume, ms) {
 // suportados — e insiste a cada toque até uma tentativa realmente resolver
 // (play() só resolve quando o navegador aceitou tocar), em vez de desistir
 // depois de uma única tentativa que pode falhar por motivo transitório.
-// Também chamada diretamente de dentro de cliques reais e específicos
-// (botão DESBLOQUEAR PRÊMIOS, botão GIRAR da roleta) — ver onEnterTap/
-// onSpinTap — além do listener delegado abaixo. Muted durante a tentativa:
-// isso é só destravar a permissão de tocar, não é o início real da música
-// (esse é lá na cortina, com fade-in) — sem isso, dava pra ouvir um
-// pedacinho da faixa (do segundo 0) tocando ainda na roleta.
+// Roda mudo (ver getEntranceAudio) — é só permissão, nunca produz som.
 let _entranceAudioUnlocked = false;
 function _tryUnlockEntranceAudio() {
   if (_entranceAudioUnlocked) return;
   const a = getEntranceAudio();
-  a.muted = true;
   a.play().then(() => {
     _entranceAudioUnlocked = true;
     a.pause();
     a.currentTime = 0;
-    a.muted = false;
     ["pointerdown", "touchend", "click"].forEach((ev) =>
       document.removeEventListener(ev, _tryUnlockEntranceAudio, true)
     );
-  }).catch(() => {
-    a.muted = false;
-  });
+  }).catch(() => {});
 }
 ["pointerdown", "touchend", "click"].forEach((ev) =>
   document.addEventListener(ev, _tryUnlockEntranceAudio, { capture: true })
@@ -1405,7 +1403,6 @@ function runConnectionLoadingScreen() {
     // mesma transição de opacidade já usada na entrada) — sem blackout/
     // spinner/shockwave/iris, mas mantém o som de confirmação.
     function onEnterTap() {
-      _tryUnlockEntranceAudio(); // clique real e direto — reforça o destravamento do áudio da entrada
       hapticImpact("medium");
       lsPlaySuccessChime();
       particles.stop();
@@ -1944,7 +1941,6 @@ function runRouletteScreen() {
     }
 
     function onSpinTap() {
-      _tryUnlockEntranceAudio(); // clique real e direto — reforça o destravamento do áudio da entrada
       spinBtn.disabled = true;
       spinBtn.classList.add("rwSpinBtn-disabled");
       runSpin(RW_LOSE_INDEX, onFirstSpinDone);
@@ -2316,6 +2312,7 @@ function runEntranceScreen() {
       const seek = () => {
         try { entranceAudio.currentTime = 46; } catch {}
         entranceAudio.play().then(() => {
+          entranceAudio.muted = false; // só aqui, no início real, sai do mudo permanente
           esFadeInAudio(entranceAudio, ENTRANCE_MUSIC_VOLUME, 1500);
         }).catch(() => {});
       };

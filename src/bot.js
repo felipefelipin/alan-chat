@@ -230,9 +230,9 @@ bot.on("callback_query", async (q) => {
           text: "Tudo isso é seu, é só escolher por onde quer começar 🔥👇",
           noTyping: true,
           extra: { reply_markup: { inline_keyboard: [
-            [{ text: "💰 QUERO VER OS PLANOS 🔥",          callback_data: "ver_planos",      style: "success" }],
             [{ text: "😈 CHAMADA DE VÍDEO AO VIVO 💦",    callback_data: "chamada_video",   style: "danger"  }],
             [{ text: "📸 VEM ME VER NO INSTA 👀",         callback_data: "abrir_instagram", style: "primary" }],
+            [{ text: "💰 QUERO VER OS PLANOS 🔥",          callback_data: "ver_planos",      style: "success" }],
           ]}},
         }},
         { delay: 1000, jobId: jid("conteudinhos", chatId, 2), removeOnComplete: true, removeOnFail: true }
