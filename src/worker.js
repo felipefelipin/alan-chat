@@ -120,7 +120,7 @@ async function maybeHumanError(chatId, text) {
 }
 
 async function sendHuman(chatId, text, extra = {}, opts = {}) {
-  const { delayMs, autoSplit = false, echoWord, allowHumanError = false } = opts;
+  const { delayMs, autoSplit = false, echoWord, allowHumanError = false, noTyping = false } = opts;
 
   let finalText = String(text || "").trim();
   if (!finalText && !extra?.reply_markup) return; // nada pra enviar
@@ -131,10 +131,12 @@ async function sendHuman(chatId, text, extra = {}, opts = {}) {
     if (ew) finalText = `${ew}… ${finalText}`;
   }
 
-  // se for mensagem “só com botão”, manda direto com um micro-typing
+  // se for mensagem “só com botão”, manda direto (sem digitando se noTyping)
   if (!finalText && extra?.reply_markup) {
-    await typingBursts(chatId, jitter(rand(650, 1200)));
-    await sleep(jitter(rand(80, 180)));
+    if (!noTyping) {
+      await typingBursts(chatId, jitter(rand(650, 1200)));
+      await sleep(jitter(rand(80, 180)));
+    }
     await bot.sendMessage(chatId, " ", extra || {});
     return;
   }
@@ -144,9 +146,11 @@ async function sendHuman(chatId, text, extra = {}, opts = {}) {
   for (let i = 0; i < parts.length; i++) {
     const part = parts[i];
 
-    const ms = typeof delayMs === "number" ? delayMs : calcDelayFromText(part);
-    await typingBursts(chatId, ms);
-    await sleep(jitter(rand(90, 220)));
+    if (!noTyping) {
+      const ms = typeof delayMs === "number" ? delayMs : calcDelayFromText(part);
+      await typingBursts(chatId, ms);
+      await sleep(jitter(rand(90, 220)));
+    }
 
     if (allowHumanError && part.length <= 64) {
       const did = await maybeHumanError(chatId, part);
@@ -391,6 +395,7 @@ const worker = new Worker(
           autoSplit: !!data?.autoSplit,
           echoWord: data?.echoWord,
           allowHumanError: !!data?.allowHumanError,
+          noTyping: !!data?.noTyping,
         };
 
         await sendHuman(chatId, text, extra, opts);
@@ -470,11 +475,11 @@ const worker = new Worker(
         await deleteFunnelMsgs(chatId);
 
         await sendFunnelVideo(chatId, "IMG_4830.MOV");
-        await sleep(rand(2000, 3000));
+        await sleep(1000);
 
-        await fm(chatId, "tá… agora escolhe como você quer entrar.");
+        await fm(chatId, "tá… agora escolhe como você quer entrar.", {}, { noTyping: true });
         await sleep(rand(300, 500));
-        await fm(chatId, "2 opções. sem enrolar.");
+        await fm(chatId, "2 opções. sem enrolar.", {}, { noTyping: true });
         await sleep(rand(300, 500));
 
         await bot.sendMessage(chatId, "👇", {

@@ -207,7 +207,7 @@ bot.on("callback_query", async (q) => {
     if (data === "ver_conteudinhos") {
       await bot.answerCallbackQuery(q.id, { text: "😈" }).catch(() => {});
       await queue.add("jobs",
-        { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "photo_5102783828031376457_w.jpg", caption: "" } },
+        { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "photo_5102783828031376457_w.jpg", caption: "", instant: true } },
         { delay: rand(300, 700), jobId: jid("conteudinhos", chatId, 1), removeOnComplete: true, removeOnFail: true }
       );
       await queue.add("jobs",
@@ -229,16 +229,17 @@ bot.on("callback_query", async (q) => {
       await bot.answerCallbackQuery(q.id, { text: "😈" }).catch(() => {});
       await queue.add("jobs",
         { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "IMG_7068.MP4", caption: "", instant: true } },
-        { delay: rand(300, 700), jobId: jid("instagram", chatId, 1), removeOnComplete: true, removeOnFail: true }
+        { delay: 0, jobId: jid("instagram", chatId, 1), removeOnComplete: true, removeOnFail: true }
       );
       await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
           text: "<b>VEM VER MEU INSTAGRAM SEUS SAFADOS 😈👇🏽</b>",
+          noTyping: true,
           extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
             [{ text: "📸 Abrir Instagram", web_app: { url: process.env.WEBAPP_URL + "/instagram/?v=" + Date.now() } }],
           ]}},
         }},
-        { delay: rand(1800, 2600), jobId: jid("instagram", chatId, 2), removeOnComplete: true, removeOnFail: true }
+        { delay: 1000, jobId: jid("instagram", chatId, 2), removeOnComplete: true, removeOnFail: true }
       );
       return;
     }
@@ -256,16 +257,17 @@ bot.on("callback_query", async (q) => {
       await bot.answerCallbackQuery(q.id, { text: "😈" }).catch(() => {});
       await queue.add("jobs",
         { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "IMG_7529.MP4", caption: "", instant: true } },
-        { delay: rand(300, 700), jobId: jid("chamada_video", chatId, 1), removeOnComplete: true, removeOnFail: true }
+        { delay: 0, jobId: jid("chamada_video", chatId, 1), removeOnComplete: true, removeOnFail: true }
       );
       await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
           text: "<b>VEM QUE EU TÔ SOZINHA E SAFADA TE ESPERANDO 😈📹</b>",
+          noTyping: true,
           extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
             [{ text: "ENTRAR NO PRIVADO 🔒", web_app: { url: process.env.WEBAPP_URL + "?v=" + Date.now() } }],
           ]}},
         }},
-        { delay: rand(1800, 2600), jobId: jid("chamada_video", chatId, 2), removeOnComplete: true, removeOnFail: true }
+        { delay: 1000, jobId: jid("chamada_video", chatId, 2), removeOnComplete: true, removeOnFail: true }
       );
       await setEtapa(chatId, "webapp_pending");
       await schedulePreNudge(chatId);
