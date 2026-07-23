@@ -8,6 +8,7 @@
     "bot": "node src/bot.js",
     "api": "node src/api.js",
     "worker": "node src/worker.js",
+    "watch": "node scripts/watch-leads.js",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "postinstall": "prisma generate",

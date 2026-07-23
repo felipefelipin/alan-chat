@@ -474,24 +474,30 @@ const worker = new Worker(
 
         await deleteFunnelMsgs(chatId);
 
-        await sendFunnelVideo(chatId, "IMG_4830.MOV");
-        await sleep(1000);
+        // Mesmo conteúdo exato da área de checkout (api/checkout.js) — foto,
+        // texto e os 3 botões de plano, upload local (não URL, evita
+        // "wrong type of the web page content" no fetch do Telegram).
+        await sendFunnelPhoto(chatId, "photo_5102783828031376538_y.jpg");
 
-        await fm(chatId, "tá… agora escolhe como você quer entrar.", {}, { noTyping: true });
-        await sleep(rand(300, 500));
-        await fm(chatId, "2 opções. sem enrolar.", {}, { noTyping: true });
-        await sleep(rand(300, 500));
-
-        await bot.sendMessage(chatId, "👇", {
-          reply_markup: {
-            inline_keyboard: [
-              [{ text: "🔥 MENSAL — R$ 24,90",    callback_data: "plan:mensal"                    }],
-              [{ text: "😈 VITALÍCIO — R$ 34,90", callback_data: "plan:vitalicio", style: "success" }],
-            ],
-          },
-        });
-        await sleep(rand(200, 400));
-        await bot.sendMessage(chatId, "✅ Pagamento confirmado = Liberação na hora!\nAssim que o pagamento for aprovado você recebe o link do grupo ou meu WhatsApp em menos de 30 minutos.");
+        await bot.sendMessage(chatId,
+          "Se você está aqui… é porque acabou de me ver peladinha e eu sei que você gostou bastante 😈💗\n\n" +
+          "Como recompensa por ter sido tão safadinho comigo, te dei um presentão:\n\n" +
+          "<b>Acesso vitalício ao meu Espaço VIP por apenas R$ 5,90</b>\n\n" +
+          "Lá dentro sou toda sua… sem limites e sem frescura. Videochamada pelada quando quiser, áudios gemendo no seu ouvido, fotos e vídeos bem íntimos, squirt ao vivo e todos os fetiches que te deixarem louquinho.\n\n" +
+          "Sou uma novinha carioca carinhosa, safada e sempre molhadinha… viciada em dar prazer e receber carinho de um homem que sabe o que quer.\n\n" +
+          "Vem pra cá, meu amor… quero continuar te mostrando meu lado mais quente e safado 💦\n\n" +
+          "<b>Clica agora e entra no meu mundinho particular</b> 😘",
+          {
+            parse_mode: "HTML",
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: "👑 VIP ETERNO - R$5,90 - 40% OFF", callback_data: "plan:vip590", style: "success" }],
+                [{ text: "📞 VIDEOCHAMADA PELADA - R$14,90 - 40% OFF", callback_data: "plan:videochamada", style: "danger" }],
+                [{ text: "💞 NAMORO 7 DIAS - R$25,99 - 40% OFF", callback_data: "plan:namoro7dias", style: "primary" }],
+              ],
+            },
+          }
+        );
 
         await logEventSafe(chatId, "SEND_PLANS", {});
         return;
