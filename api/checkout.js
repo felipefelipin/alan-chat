@@ -21,10 +21,10 @@ module.exports = async function handler(req, res) {
     await bot.sendMessage(id,
       "Se você está aqui… é porque acabou de me ver peladinha e eu sei que você gostou bastante 😈💗\n\n" +
       "Como recompensa por ter sido tão safadinho comigo, te dei um presentão:\n\n" +
-      "🎁 <b>Acesso vitalício ao meu Espaço VIP por apenas R$ 5,90</b>\n\n" +
-      "Lá dentro sou toda sua… sem limites e sem frescura. Podemos fazer videochamada pelada sempre que você quiser, áudios gemendo bem baixinho no seu ouvido, fotos e vídeos bem íntimos, squirt ao vivo, fetiches e tudo que te deixar louquinho.\n\n" +
+      "<b>Acesso vitalício ao meu Espaço VIP por apenas R$ 5,90</b>\n\n" +
+      "Lá dentro sou toda sua… sem limites e sem frescura. Videochamada pelada quando quiser, áudios gemendo no seu ouvido, fotos e vídeos bem íntimos, squirt ao vivo e todos os fetiches que te deixarem louquinho.\n\n" +
       "Sou uma novinha carioca carinhosa, safada e sempre molhadinha… viciada em dar prazer e receber carinho de um homem que sabe o que quer.\n\n" +
-      "Vem pra cá, meu amor… quero continuar te mostrando meu lado mais quente e safado. 💦\n\n" +
+      "Vem pra cá, meu amor… quero continuar te mostrando meu lado mais quente e safado 💦\n\n" +
       "<b>Clica agora e entra no meu mundinho particular</b> 😘",
       {
         parse_mode: "HTML",
