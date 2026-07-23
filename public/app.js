@@ -71,6 +71,30 @@ function preloadMedia() {
   try { new Image().src = "/assets/chat-bg.png?v=9"; } catch {}
 }
 
+// Preload do vídeo principal da chamada — chamado quando a tela de "chamada
+// tocando" aparece (showIncomingCall), não no boot do app: só entra aqui
+// quando uma chamada está realmente prestes a acontecer, então não
+// desperdiça banda de quem nunca chega nessa etapa. Dá ao vídeo os
+// segundos inteiros de "toque" como folga de buffer, de graça — startFunnelCall()
+// reaproveita esse mesmo elemento (mesma técnica de lsPreloadVideo/
+// mountBackgroundVideo), sem recriar nem re-baixar nada.
+function preloadCallVideo() {
+  if (document.getElementById("callVideoPreload")) return; // já rodando/feito
+  try {
+    const v = document.createElement("video");
+    v.id = "callVideoPreload";
+    v.src = ASSETS.callVideo;
+    v.muted = true;
+    v.playsInline = true;
+    v.setAttribute("playsinline", "");
+    v.setAttribute("webkit-playsinline", "");
+    v.preload = "auto";
+    v.style.cssText = "position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none;";
+    document.body.appendChild(v);
+    v.load();
+  } catch {}
+}
+
 const CONTACT = {
   name: "Susana Barbosa",
   username: "SusanaBarbosa",
@@ -3732,6 +3756,11 @@ function showIncomingCall() {
   // Força fechar teclado antes de mostrar a tela de chamada
   FocusGateway.requestDismiss();
 
+  // Começa a carregar o vídeo da chamada AGORA — os segundos que o usuário
+  // leva pra decidir aceitar são folga de buffer de graça (ver
+  // preloadCallVideo/startFunnelCall).
+  preloadCallVideo();
+
   let vibrateInterval = null;
   if (navigator.vibrate) {
     navigator.vibrate([1000, 800, 1000, 800]);
@@ -3819,12 +3848,25 @@ async function startFunnelCall() {
   callEl.style.cssText = "position:fixed;inset:0;z-index:9000;background:#000;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;";
 
   // ── Vídeo principal (dela) fullscreen ──────────────────────────────────────
-  const vid = document.createElement("video");
-  vid.src = ASSETS.callVideo + `?v=${Date.now()}`;
-  vid.playsInline = true;
-  vid.setAttribute("playsinline", "");
-  vid.setAttribute("webkit-playsinline", "");
-  vid.muted = false;
+  // Reaproveita o <video> pré-carregado desde showIncomingCall (mesma
+  // técnica de lsPreloadVideo/mountBackgroundVideo) — appendChild MOVE o
+  // elemento que já vem baixando/bufferizando há vários segundos, em vez
+  // de recriar do zero. Sem cache-bust (?v=Date.now()) — é sempre o mesmo
+  // arquivo, então deixamos o browser reaproveitar o que já buscou.
+  const preloadedVid = document.getElementById("callVideoPreload");
+  let vid;
+  if (preloadedVid) {
+    vid = preloadedVid;
+    vid.removeAttribute("id");
+  } else {
+    vid = document.createElement("video");
+    vid.src = ASSETS.callVideo;
+    vid.playsInline = true;
+    vid.setAttribute("playsinline", "");
+    vid.setAttribute("webkit-playsinline", "");
+    vid.preload = "auto";
+  }
+  vid.muted = false; // com som agora — já temos gesto do usuário (aceitou a chamada)
   vid.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;opacity:0;transition:opacity 2s ease;";
   callEl.appendChild(vid);
 
@@ -3945,33 +3987,50 @@ async function startFunnelCall() {
   }, { passive: true });
   _fcTimer = setTimeout(_fcHide, 4000);
 
-  // Câmera frontal do lead — vídeo principal só inicia após resposta de permissão
-  let camStream = null;
+  // readyState >= 3 (HAVE_FUTURE_DATA) = já tem o frame atual + pelo menos
+  // o próximo decodificados, o mesmo patamar que dispara o evento
+  // "canplay" — abaixo disso, play() ainda pode "engasgar" no primeiro
+  // frame. Graças ao preload desde showIncomingCall, isso normalmente já é
+  // verdade aqui, então essa promise resolve na hora (não é um delay novo,
+  // é uma checagem real que só espera de verdade se genuinamente precisar).
+  function videoReady(video) {
+    if (video.readyState >= 3) return Promise.resolve();
+    return new Promise((resolve) => {
+      video.addEventListener("canplay", resolve, { once: true });
+    });
+  }
+
   const startMainVideo = () => {
     vid.pause();
     vid.currentTime = 0;
 
-    setTimeout(() => {
-      // 1s de tela preta; o vídeo já começa a tocar aqui, e o fade-in (2s,
-      // CSS do elemento) só cobre a revelação visual por cima. Antes o
-      // play() ficava preso num listener de "transitionend" — se esse
-      // evento não disparasse (acontece em vários browsers/WebViews:
-      // transição interrompida, aba em background no meio, etc.), o vídeo
-      // ficava travado no frame 0 pra sempre, com a opacidade em 1 mas
-      // nunca rodando. Tocar imediatamente remove essa dependência frágil.
+    const minBlackScreen = new Promise((resolve) => setTimeout(resolve, 1000));
+    // 1s de tela preta (inalterado) — só que agora a revelação espera as
+    // DUAS coisas: o tempo mínimo E o vídeo genuinamente pronto pra
+    // reproduzir. Antes o play() era chamado sem essa garantia, então o
+    // vídeo aparecia mas ficava "congelado" nos primeiros instantes
+    // enquanto ainda bufferizava/decodificava.
+    Promise.all([minBlackScreen, videoReady(vid)]).then(() => {
       vid.play().catch(() => {});
       vid.style.opacity = "1";
       startTimer();
-    }, 1000);
+    });
   };
+
+  // Vídeo principal roda independente da câmera do lead (PiP secundário) —
+  // antes, startMainVideo só rodava DEPOIS da resposta de getUserMedia
+  // (que pode demorar segundos na primeira vez, com o diálogo nativo de
+  // permissão), atrasando o vídeo principal por um motivo que não tinha
+  // nada a ver com ele.
+  startMainVideo();
+
+  let camStream = null;
   if (navigator.mediaDevices?.getUserMedia) {
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
       .then(s => { camStream = s; pip.srcObject = s; pip.style.display = ""; pip.play().catch(() => {}); })
-      .catch(() => {})
-      .finally(startMainVideo);
+      .catch(() => {});
   } else {
     pip.style.display = "none";
-    startMainVideo();
   }
 
   const cleanup = () => {
