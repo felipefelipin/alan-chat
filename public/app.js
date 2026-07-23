@@ -26,6 +26,28 @@ window.addEventListener("popstate", () => {
   history.pushState(null, "", location.href);
 });
 
+// Música da tela de entrada é um <audio> real, não Web Audio sintetizado —
+// tem política de autoplay própria, mais rígida: diferente do AudioContext
+// (que fica liberado pro resto da sessão assim que resumido uma vez com
+// qualquer toque), um <audio>/<video> só recebe permissão de tocar com som
+// perto o bastante de um gesto real. Por isso ela é criada e "destravada"
+// (play+pause imediato) já no primeiro toque do usuário em QUALQUER lugar
+// do app — bem antes da tela de entrada existir — e só reaproveitada
+// (nunca recriada) lá na hora certa (ver runEntranceScreen).
+let _entranceAudio = null;
+function getEntranceAudio() {
+  if (!_entranceAudio) {
+    _entranceAudio = new Audio(ASSETS.entranceMusic);
+    _entranceAudio.preload = "auto";
+    _entranceAudio.volume = 0.75;
+  }
+  return _entranceAudio;
+}
+document.addEventListener("pointerdown", () => {
+  const a = getEntranceAudio();
+  a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
+}, { once: true, capture: true });
+
 const app = document.getElementById("app");
 
 const ASSETS = {
@@ -2244,9 +2266,7 @@ function runEntranceScreen() {
     // começa. entranceMusicStarted evita re-buscar/re-setar currentTime
     // toda vez que o usuário alterna o botão de som.
     let entranceMusicStarted = false;
-    const entranceAudio = new Audio(ASSETS.entranceMusic);
-    entranceAudio.preload = "auto";
-    entranceAudio.volume = 0.75;
+    const entranceAudio = getEntranceAudio();
     function startEntranceMusic() {
       entranceMusicStarted = true;
       const seek = () => {
