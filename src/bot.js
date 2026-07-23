@@ -1,6 +1,8 @@
 // src/bot.js
 require("dotenv").config();
 
+const fs = require("fs");
+const path = require("path");
 const TelegramBot = require("node-telegram-bot-api");
 const { PrismaClient } = require("@prisma/client");
 const { queue } = require("./queue");
@@ -8,6 +10,7 @@ const { mpCreatePix } = require("../payments/mp");
 
 const prisma = new PrismaClient();
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
+const ASSETS_DIR = path.join(__dirname, "..", "public", "assets");
 
 process.on("unhandledRejection", (err) => console.error("unhandledRejection:", err));
 process.on("uncaughtException", (err) => console.error("uncaughtException:", err));
@@ -103,8 +106,12 @@ async function createCheckoutAndSend(chatId, plano) {
 
   const pitch = PLAN_PITCH[plano];
   if (pitch) {
-    const webappUrl = process.env.WEBAPP_URL || "https://alana-chat.vercel.app";
-    try { await bot.sendPhoto(chatId, `${webappUrl}/assets/photo_5114032093976530239_w.jpg`); } catch {}
+    // Upload direto do arquivo local (multipart), não a URL — pedir pro
+    // Telegram buscar a URL pública dava "wrong type of the web page
+    // content" (o fetch dele não reconhecia o conteúdo como foto válida).
+    try {
+      await bot.sendPhoto(chatId, fs.createReadStream(path.join(ASSETS_DIR, "photo_5114032093976530239_w.jpg")));
+    } catch (e) { console.error("pitch photo send error:", e.message); }
     await sleep(1000);
     await bot.sendMessage(chatId, pitch, { parse_mode: "HTML" });
   }
