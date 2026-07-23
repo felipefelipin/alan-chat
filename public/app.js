@@ -3710,6 +3710,7 @@ function addVideoBubble(src, title = "Vídeo") {
   updatePreviousGroupForNewMessage("left");
   const item = { type:"video", side:"left", src:`${src}?v=${Date.now()}`, title, time:nowTime(), cluster:getNewCluster("left") };
   pushHistory(item); renderItem(item, true); scrollBottom();
+  waPlayMessagePop();
 }
 
 async function gisaSendVideo(src, title = "Vídeo") {
@@ -3733,6 +3734,7 @@ async function gisaAutoPlayVideo(src) {
     const item = { type:"video", side:"left", src:`${src}?v=${Date.now()}`, title:"Vídeo Privado", autoplay:true, duration:"3:00", time:nowTime(), cluster:"single" };
     row = renderItem(item, true);
     scrollToBottom();
+    waPlayMessagePop();
 
     // t=5s after video drop: replace video with deleted-message bubble (WhatsApp style)
     await sleep(5000);
@@ -3769,6 +3771,7 @@ function addPhotoCardBubble(src, title = "Foto Privada") {
   updatePreviousGroupForNewMessage("left");
   const item = { type:"photo", side:"left", src:`${src}?v=${Date.now()}`, title, time:nowTime(), cluster:getNewCluster("left") };
   pushHistory(item); renderItem(item, true); scrollBottom();
+  waPlayMessagePop();
 }
 
 async function gisaSendPhoto(src, title = "Foto Privada") {
@@ -3783,18 +3786,21 @@ function addImgBubble(src) {
   updatePreviousGroupForNewMessage("left");
   const item = { type:"img", side:"left", src:`${src}?v=${Date.now()}`, time:nowTime(), cluster:getNewCluster("left") };
   pushHistory(item); renderItem(item, true); scrollBottom();
+  waPlayMessagePop();
 }
 
 function addMediaGridBubble(items = null) {
   updatePreviousGroupForNewMessage("left");
   const item = { type:"mediaGrid", side:"left", items:items||getDefaultGridItems(), time:nowTime(), cluster:getNewCluster("left") };
   pushHistory(item); renderItem(item, true); scrollBottom();
+  waPlayMessagePop();
 }
 
 function addAudioBubble(data = {}) {
   updatePreviousGroupForNewMessage("left");
   const item = { type:"audio", side:"left", src:data.src||"", bars:data.bars||getDefaultWaveBars(), duration:data.duration||"0:00", time:nowTime(), cluster:getNewCluster("left") };
   pushHistory(item); renderItem(item, true); scrollBottom();
+  waPlayMessagePop();
 }
 
 async function gisaSendAudio(src, bars = null, recordMs = null) {
@@ -4210,14 +4216,6 @@ async function startFunnelCall() {
     cleanup();
     callPlayEndTone();
 
-    // Fade suave do vídeo (e do PIP da câmera do lead) pro preto antes de
-    // qualquer overlay — evita o corte seco de antes (vid.src="" na hora,
-    // trocando o vídeo por preto instantaneamente). Com o fade, parece que
-    // ela mesma está encerrando a chamada aos poucos, não um corte técnico.
-    vid.style.transition = "opacity .7s ease";
-    vid.style.opacity = "0";
-    if (pip.style.display !== "none") { pip.style.transition = "opacity .7s ease"; pip.style.opacity = "0"; }
-    await sleep(700);
     try { vid.pause(); vid.src = ""; } catch {}
 
     // ── "Chamada encerrada" overlay (estilo WhatsApp) ───────────────
