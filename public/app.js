@@ -2139,6 +2139,12 @@ function runDiscountRouletteScreen() {
       spinBtn.classList.add("rwSpinBtn-visible");
     });
 
+    // Efeito sonoro de entrada — mesmo whoosh+chime usados na revelação da
+    // tela de entrada, reforçando a sensação de "algo se abrindo".
+    esPlayWhoosh();
+    lsPlaySuccessChime();
+    hapticImpact("medium");
+
     let confetti = null;
 
     function onSpinTap() {

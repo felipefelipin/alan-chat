@@ -95,15 +95,9 @@ const PLAN_PITCH = {
 };
 
 async function createCheckoutAndSend(chatId, plano) {
-  const { paymentId, pixCode, pixQrBase64, amount } = await mpCreatePix({ chatId, plano });
-
-  // save to DB without blocking the flow
-  prisma.payment.create({
-    data: { userId: String(chatId), plano, status: "pending", preferenceId: paymentId, initPoint: pixCode },
-  }).catch(e => console.error("payment save error:", e));
-
-  await setEtapa(chatId, "pagamento");
-
+  // Foto + pitch caem IMEDIATAMENTE, antes de qualquer chamada de rede —
+  // gerar o Pix é uma chamada externa (Mercado Pago) que pode demorar
+  // alguns segundos, e isso não pode segurar a reação instantânea ao clique.
   const pitch = PLAN_PITCH[plano];
   if (pitch) {
     // Upload direto do arquivo local (multipart), não a URL — pedir pro
@@ -115,6 +109,15 @@ async function createCheckoutAndSend(chatId, plano) {
     await sleep(1000);
     await bot.sendMessage(chatId, pitch, { parse_mode: "HTML" });
   }
+
+  const { paymentId, pixCode, pixQrBase64, amount } = await mpCreatePix({ chatId, plano });
+
+  // save to DB without blocking the flow
+  prisma.payment.create({
+    data: { userId: String(chatId), plano, status: "pending", preferenceId: paymentId, initPoint: pixCode },
+  }).catch(e => console.error("payment save error:", e));
+
+  await setEtapa(chatId, "pagamento");
 
   // resto cai tudo junto, sem demora — só o pitch acima tem timing próprio
   await bot.sendMessage(chatId, "Perfeito! Seu pedido foi gerado com sucesso 🔥");
