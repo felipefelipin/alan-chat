@@ -98,7 +98,7 @@ const ASSETS = {
   ringtone: "/assets/ringtone.mp3",
   avatar: "/assets/WhatsApp%20Image%202026-07-17%20at%2016.12.24.jpeg",
   entranceTeaser: "/assets/IMG_6939.MP4",
-  entranceMusic: "/assets/entrance-music.m4a",
+  entranceMusic: "/assets/entrance-music-v2.m4a",
   media1: "/assets/grid-1.jpg",
   media2: "/assets/grid-2.jpg",
   media3: "/assets/grid-3.jpg",
