@@ -36,6 +36,7 @@ const ASSETS = {
   ringtone: "/assets/ringtone.mp3",
   avatar: "/assets/WhatsApp%20Image%202026-07-17%20at%2016.12.24.jpeg",
   entranceTeaser: "/assets/IMG_6939.MP4",
+  entranceMusic: "/assets/The%20Weeknd%20-%20Call%20Out%20My%20Name%20%28Official%20Video%29.mp3",
   media1: "/assets/grid-1.jpg",
   media2: "/assets/grid-2.jpg",
   media3: "/assets/grid-3.jpg",
@@ -2238,6 +2239,24 @@ function runEntranceScreen() {
     let soundOn = true;
     let stopDrone = esStartAmbientDrone();
 
+    // Música real (não sintetizada) que entra junto com a abertura da
+    // cortina — começa direto do segundo 46, que é onde o trecho pedido
+    // começa. entranceMusicStarted evita re-buscar/re-setar currentTime
+    // toda vez que o usuário alterna o botão de som.
+    let entranceMusicStarted = false;
+    const entranceAudio = new Audio(ASSETS.entranceMusic);
+    entranceAudio.preload = "auto";
+    entranceAudio.volume = 0.75;
+    function startEntranceMusic() {
+      entranceMusicStarted = true;
+      const seek = () => {
+        try { entranceAudio.currentTime = 46; } catch {}
+        entranceAudio.play().catch(() => {});
+      };
+      if (entranceAudio.readyState >= 1) seek();
+      else entranceAudio.addEventListener("loadedmetadata", seek, { once: true });
+    }
+
     function playIfSound(fn) { if (soundOn) fn(); }
 
     soundBtn.addEventListener("click", () => {
@@ -2245,8 +2264,13 @@ function runEntranceScreen() {
       soundBtn.setAttribute("aria-pressed", String(soundOn));
       soundBtn.setAttribute("aria-label", soundOn ? "Desativar som" : "Ativar som");
       soundBtn.innerHTML = esSoundIcon(soundOn);
-      if (soundOn) { stopDrone = esStartAmbientDrone(); }
-      else if (stopDrone) { stopDrone(); stopDrone = null; }
+      if (soundOn) {
+        stopDrone = esStartAmbientDrone();
+        if (entranceMusicStarted) entranceAudio.play().catch(() => {});
+      } else {
+        if (stopDrone) { stopDrone(); stopDrone = null; }
+        entranceAudio.pause();
+      }
     });
 
     requestAnimationFrame(() => screen.classList.add("lsScreen-visible"));
@@ -2255,6 +2279,7 @@ function runEntranceScreen() {
       setTimeout(() => {
         screen.classList.add("es-curtains-open");
         playIfSound(esPlayWhoosh);
+        playIfSound(startEntranceMusic);
       }, ES_PHASE_MS.curtains * scale),
 
       setTimeout(() => {
@@ -2300,6 +2325,7 @@ function runEntranceScreen() {
       playIfSound(lsPlaySuccessChime);
       particles.stop();
       if (stopDrone) stopDrone();
+      entranceAudio.pause();
 
       document.body.appendChild(screen);
       requestAnimationFrame(() => screen.classList.add("esCtaExit"));
