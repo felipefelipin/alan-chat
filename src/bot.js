@@ -223,18 +223,19 @@ bot.on("callback_query", async (q) => {
       await bot.answerCallbackQuery(q.id, { text: "😈" }).catch(() => {});
       await queue.add("jobs",
         { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "photo_5102783828031376457_w.jpg", caption: "", instant: true } },
-        { delay: rand(300, 700), jobId: jid("conteudinhos", chatId, 1), removeOnComplete: true, removeOnFail: true }
+        { delay: 0, jobId: jid("conteudinhos", chatId, 1), removeOnComplete: true, removeOnFail: true }
       );
       await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
           text: "Tudo isso é seu, é só escolher por onde quer começar 🔥👇",
+          noTyping: true,
           extra: { reply_markup: { inline_keyboard: [
             [{ text: "💰 QUERO VER OS PLANOS 🔥",          callback_data: "ver_planos",      style: "success" }],
             [{ text: "😈 CHAMADA DE VÍDEO AO VIVO 💦",    callback_data: "chamada_video",   style: "danger"  }],
             [{ text: "📸 VEM ME VER NO INSTA 👀",         callback_data: "abrir_instagram", style: "primary" }],
           ]}},
         }},
-        { delay: rand(1800, 2600), jobId: jid("conteudinhos", chatId, 2), removeOnComplete: true, removeOnFail: true }
+        { delay: 1000, jobId: jid("conteudinhos", chatId, 2), removeOnComplete: true, removeOnFail: true }
       );
       return;
     }
