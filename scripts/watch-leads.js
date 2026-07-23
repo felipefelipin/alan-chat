@@ -40,7 +40,9 @@ function colorForEvent(type) {
   return c.dim;
 }
 
-let lastEventCreatedAt = new Date(0);
+// Começa "agora", não do início dos tempos — o objetivo é acompanhar o que
+// acontece dali pra frente, não reproduzir milhares de eventos antigos.
+let lastEventCreatedAt = new Date();
 
 // Último evento visto por lead — pra mostrar "o que essa pessoa fez por
 // último" na tabela, não só a etapa (que muda com menos frequência).
