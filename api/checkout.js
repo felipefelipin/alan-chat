@@ -30,7 +30,9 @@ module.exports = async function handler(req, res) {
         parse_mode: "HTML",
         reply_markup: {
           inline_keyboard: [
-            [{ text: "😈 ENTRAR NO MEU VIP — R$ 5,90", callback_data: "plan:vip590", style: "success" }],
+            [{ text: "👑 VIP Eterno R$5,90 - 40% OFF", callback_data: "plan:vip590", style: "success" }],
+            [{ text: "📞 Videochamada Pelada R$14,90 - 40% OFF", callback_data: "plan:videochamada" }],
+            [{ text: "💞 Namoro 7 Dias R$25,99 - 40% OFF", callback_data: "plan:namoro7dias" }],
           ],
         },
       }
