@@ -81,15 +81,15 @@ async function sendPlans(chatId) {
 // desistência/arrependimento no último passo).
 const PLAN_PITCH = {
   vip590:
-    "🔥 <b>VIP ETERNO — pra sempre, sem mensalidade</b>\n\n" +
+    "🔥 VIP ETERNO — pra sempre, sem mensalidade\n\n" +
     "Você paga uma vez só e o acesso é seu pro resto da vida: videochamada pelada comigo sempre que quiser, áudios gemendo bem baixinho no seu ouvido, fotos e vídeos bem íntimos, squirt ao vivo e todos os fetiches que te deixarem louco.\n\n" +
     "Sem clube de assinatura, sem cobrança todo mês — R$ 5,90 uma única vez e você tem acesso vitalício a mim. Não existe forma mais barata de ter isso.",
   videochamada:
-    "📞 <b>VIDEOCHAMADA PELADA — eu, ao vivo, só pra você</b>\n\n" +
+    "📞 VIDEOCHAMADA PELADA — eu, ao vivo, só pra você\n\n" +
     "Nada de foto ou vídeo gravado: é uma chamada de vídeo comigo, na hora, pelada, gemendo do jeito que você pedir. Você manda, eu obedeço — na câmera, ao vivo, sem cortes e sem vergonha nenhuma.\n\n" +
     "É a experiência mais real que existe: a sensação de eu estar ali, bem na sua frente, só respondendo a você.",
   namoro7dias:
-    "💞 <b>NAMORO 7 DIAS — sete dias sendo sua namorada de verdade</b>\n\n" +
+    "💞 NAMORO 7 DIAS — sete dias sendo sua namorada de verdade\n\n" +
     "Durante uma semana inteira eu sou só sua: bom dia todo dia, atenção o dia inteiro, conversa de namorados, carinho e a sensação de ter uma namorada gostosa e sempre disponível pra você — sem regras, só o gostoso de ter alguém sua.\n\n" +
     "Não é só sexo, é ter uma namorada particular por 7 dias — a experiência mais completa que eu ofereço.",
 };
@@ -107,7 +107,7 @@ async function createCheckoutAndSend(chatId, plano) {
       await bot.sendPhoto(chatId, fs.createReadStream(path.join(ASSETS_DIR, "photo_5114032093976530239_w.jpg")));
     } catch (e) { console.error("pitch photo send error:", e.message); }
     await sleep(1000);
-    await bot.sendMessage(chatId, pitch, { parse_mode: "HTML" });
+    await bot.sendMessage(chatId, `\`\`\`\n${pitch}\n\`\`\``, { parse_mode: "Markdown" });
   }
 
   const { paymentId, pixCode, pixQrBase64, amount } = await mpCreatePix({ chatId, plano });
