@@ -72,6 +72,11 @@ function esFadeInAudio(audio, targetVolume, ms) {
 // depois de uma única tentativa que pode falhar por motivo transitório.
 // Roda mudo (ver getEntranceAudio) — é só permissão, nunca produz som.
 let _entranceAudioUnlocked = false;
+function _stopTryingToUnlockEntranceAudio() {
+  ["pointerdown", "touchend", "click"].forEach((ev) =>
+    document.removeEventListener(ev, _tryUnlockEntranceAudio, true)
+  );
+}
 function _tryUnlockEntranceAudio() {
   if (_entranceAudioUnlocked) return;
   const a = getEntranceAudio();
@@ -79,9 +84,7 @@ function _tryUnlockEntranceAudio() {
     _entranceAudioUnlocked = true;
     a.pause();
     a.currentTime = 0;
-    ["pointerdown", "touchend", "click"].forEach((ev) =>
-      document.removeEventListener(ev, _tryUnlockEntranceAudio, true)
-    );
+    _stopTryingToUnlockEntranceAudio();
   }).catch(() => {});
 }
 ["pointerdown", "touchend", "click"].forEach((ev) =>
@@ -1403,6 +1406,7 @@ function runConnectionLoadingScreen() {
     // mesma transição de opacidade já usada na entrada) — sem blackout/
     // spinner/shockwave/iris, mas mantém o som de confirmação.
     function onEnterTap() {
+      _tryUnlockEntranceAudio(); // clique real e direto — necessário pro destravamento funcionar de fato
       hapticImpact("medium");
       lsPlaySuccessChime();
       particles.stop();
@@ -1941,6 +1945,7 @@ function runRouletteScreen() {
     }
 
     function onSpinTap() {
+      _tryUnlockEntranceAudio(); // clique real e direto — necessário pro destravamento funcionar de fato
       spinBtn.disabled = true;
       spinBtn.classList.add("rwSpinBtn-disabled");
       runSpin(RW_LOSE_INDEX, onFirstSpinDone);
@@ -2309,6 +2314,11 @@ function runEntranceScreen() {
     const entranceAudio = getEntranceAudio();
     function startEntranceMusic() {
       entranceMusicStarted = true;
+      // Corta de vez as tentativas de destravar aqui, independente de ter
+      // conseguido ou não — depois da cortina não há mais benefício em
+      // insistir, só o risco de ficar chamando play() (mesmo mudo) em todo
+      // toque durante o chat/chamada mais tarde.
+      _stopTryingToUnlockEntranceAudio();
       const seek = () => {
         try { entranceAudio.currentTime = 46; } catch {}
         entranceAudio.play().then(() => {

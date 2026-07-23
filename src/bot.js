@@ -310,7 +310,7 @@ bot.on("callback_query", async (q) => {
 
     // ── Seleção de plano (original) ─────────────────────────────────────────
     if (data.startsWith("plan:")) {
-      await bot.answerCallbackQuery(q.id, { text: "ok." });
+      await bot.answerCallbackQuery(q.id).catch(() => {});
       await createCheckoutAndSend(chatId, data.split(":")[1]);
       return;
     }
