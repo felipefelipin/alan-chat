@@ -2320,7 +2320,7 @@ function runEntranceScreen() {
       // toque durante o chat/chamada mais tarde.
       _stopTryingToUnlockEntranceAudio();
       const seek = () => {
-        try { entranceAudio.currentTime = 46; } catch {}
+        try { entranceAudio.currentTime = 56.63; } catch {}
         entranceAudio.play().then(() => {
           entranceAudio.muted = false; // só aqui, no início real, sai do mudo permanente
           esFadeInAudio(entranceAudio, ENTRANCE_MUSIC_VOLUME, 1500);
