@@ -1405,11 +1405,14 @@ function computeRouletteTarget(targetIndex) {
 // 4 fontes pré-computadas (emoji/label × dourado/decoy) por tamanho de tela —
 // evita montar a string de font e reatribuir ctx.font a cada frame. Pesos
 // 800/900 apenas — "nada abaixo disso".
-function buildRouletteFonts(r) {
+// `goldScale` (default 1) reduz só o emoji+rótulo do segmento dourado,
+// mantendo peso/fonte/proporção entre os dois — usado pela roleta de
+// desconto (0.75, ~25% menor) sem afetar a roleta original (fica em 1).
+function buildRouletteFonts(r, goldScale = 1) {
   const mk = (px, weight) => ({ str: `${weight} ${px}px ${RW_FONT_STACK}`, px });
   return {
-    goldEmoji: mk(Math.max(22, r * 0.19), 900),
-    goldLabel: mk(Math.max(14, r * 0.10), 900),
+    goldEmoji: mk(Math.max(22, r * 0.19) * goldScale, 900),
+    goldLabel: mk(Math.max(14, r * 0.10) * goldScale, 900),
     decoyEmoji: mk(Math.max(20, r * 0.17), 900),
     decoyLabel: mk(Math.max(13, r * 0.092), 900),
   };
@@ -1520,10 +1523,33 @@ function drawWheel(ctx, size, rotationDeg, fillStyles, fonts, pulseAlpha, segmen
 // alvo, depois um cosseno amortecido que converge exatamente no alvo — sem
 // snap manual no fim. Tempo decorrido via performance.now(), então uma aba
 // jogada pro background não gera drift (só "pula" pra frente ao voltar).
-function spinWheel(draw, finalRotationDeg, onTick) {
+//
+// `suspense` (opcional, default false/undefined) liga um perfil alternativo
+// só pro trecho final — usado apenas pela roleta de desconto, pra dar a
+// sensação de "quase caiu no prêmio anterior". Quando omitido, o código
+// roda exatamente pelo branch de sempre (linha por linha idêntico ao antes),
+// então a roleta original não é afetada em nada por essa opção existir.
+function spinWheel(draw, finalRotationDeg, onTick, suspense) {
   const T_SPIN = 4100;
   const OVERSHOOT_DEG = 18;
   const overshootRotation = finalRotationDeg + OVERSHOOT_DEG;
+
+  // Fases do modo suspense (só calculadas se pedido): decelera quase até
+  // parar um pouco ANTES da divisória com o segmento anterior, atravessa
+  // essa divisória bem devagar (400-700ms — aqui 550+550ms de arrasto e
+  // acomodação), depois avança o resto até o centro do vencedor com um
+  // pequeno overshoot proporcional + acomodação amortecida (mesmo espírito
+  // do branch normal, só que numa janela de tempo/distância bem menor).
+  // Duração total do giro (T_SPIN) não muda em nenhum dos dois modos.
+  let preBoundary, postBoundary, phaseATime, phaseBTime, phaseCTime;
+  if (suspense) {
+    const boundaryR = finalRotationDeg - RW_SEG_ANGLE_DEG / 2;
+    preBoundary = boundaryR - RW_SEG_ANGLE_DEG * 0.05;  // ainda dentro do segmento anterior, quase na borda
+    postBoundary = boundaryR + RW_SEG_ANGLE_DEG * 0.15; // já um pouco dentro do segmento vencedor
+    phaseBTime = 550; // dentro do pedido de 400-700ms
+    phaseCTime = 550;
+    phaseATime = T_SPIN - phaseBTime - phaseCTime;
+  }
 
   let rafId = null;
   let cancelled = false;
@@ -1534,10 +1560,40 @@ function spinWheel(draw, finalRotationDeg, onTick) {
 
     function frame(now) {
       if (cancelled) return;
-      const p = Math.min(1, (now - t0) / T_SPIN);
+      const elapsed = now - t0;
+      const p = Math.min(1, elapsed / T_SPIN);
       let rotation;
 
-      if (p < 0.75) {
+      if (suspense) {
+        if (elapsed < phaseATime) {
+          // fase A — igual ao giro normal (easeOutQuart), só que o alvo
+          // aqui é "quase a borda" em vez do overshoot de sempre.
+          const q = elapsed / phaseATime;
+          const eased = 1 - Math.pow(1 - q, 4);
+          rotation = eased * preBoundary;
+        } else if (elapsed < phaseATime + phaseBTime) {
+          // fase B — o suspense em si: atravessa a divisória bem devagar,
+          // com velocidade zero nas duas pontas (sem "trancos").
+          const q = (elapsed - phaseATime) / phaseBTime;
+          const eased = q - Math.sin(2 * Math.PI * q) / (2 * Math.PI);
+          rotation = preBoundary + eased * (postBoundary - preBoundary);
+        } else {
+          // fase C — avança o resto até o vencedor: pequeno overshoot
+          // proporcional à distância restante + acomodação amortecida.
+          const q = Math.min(1, (elapsed - phaseATime - phaseBTime) / phaseCTime);
+          const localOvershoot = postBoundary + (finalRotationDeg - postBoundary) * 1.12;
+          if (q < 0.6) {
+            const qq = q / 0.6;
+            const eased = 1 - Math.pow(1 - qq, 3);
+            rotation = postBoundary + eased * (localOvershoot - postBoundary);
+          } else {
+            const qq = (q - 0.6) / 0.4;
+            const decay = Math.pow(1 - qq, 2);
+            const osc = Math.cos(qq * 1.6 * Math.PI) * (localOvershoot - finalRotationDeg) * decay;
+            rotation = finalRotationDeg + osc;
+          }
+        }
+      } else if (p < 0.75) {
         const q = p / 0.75;
         const eased = 1 - Math.pow(1 - q, 4); // easeOutQuart
         rotation = eased * overshootRotation;
@@ -1579,7 +1635,7 @@ function spinWheel(draw, finalRotationDeg, onTick) {
 // DPR-aware, resize só recalcula fora do loop de animação (mesmo padrão de
 // mountParticleSystem). `segments` é o array de fatias — mesmo componente
 // reaproveitado por qualquer roleta (ver drawWheel).
-function mountRouletteWheel(host, segments) {
+function mountRouletteWheel(host, segments, goldScale = 1) {
   host.insertAdjacentHTML("beforeend", `
     <div class="rwWheelWrap">
       <div class="rwGlow"></div>
@@ -1622,7 +1678,7 @@ function mountRouletteWheel(host, segments) {
     canvas.height = size * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     buildFillStyles();
-    fonts = buildRouletteFonts(size / 2);
+    fonts = buildRouletteFonts(size / 2, goldScale);
     draw(currentRotation);
   }
 
@@ -1655,9 +1711,9 @@ function mountRouletteWheel(host, segments) {
   startIdlePulse();
 
   return {
-    spin(finalRotationDeg, onTick) {
+    spin(finalRotationDeg, onTick, suspense) {
       stopIdlePulse();
-      const { promise, cancel } = spinWheel(draw, finalRotationDeg, onTick);
+      const { promise, cancel } = spinWheel(draw, finalRotationDeg, onTick, suspense);
       activeCancel = cancel;
       return promise.finally(() => { activeCancel = null; });
     },
@@ -1935,11 +1991,15 @@ function runRouletteScreen() {
 
 const DISCOUNT_WIN_INDEX = 0; // 🔥 40% OFF PREMIUM
 
+// Ordem importa aqui: no sentido em que o giro avança, o segmento no índice
+// 1 é sempre o último a passar pelo ponteiro ANTES do vencedor (índice 0)
+// pousar — por isso "35% OFF" foi colocado ali (era "10% OFF"), pra bater
+// com o suspense "quase caiu em 35%" (ver spinWheel/suspense).
 const DISCOUNT_SEGMENTS = [
   { emoji: "🔥", label: "40% OFF\nPREMIUM", gold: true,
     stops: [[0, "#f6ddaa"], [0.55, "#d6b07a"], [1, "#a97c3a"]] },
-  { emoji: "🎁", label: "10% OFF",
-    stops: [[0, "#2c0d12"], [1, "#170609"]], glow: "rgba(230,57,80,.5)" },
+  { emoji: "🎁", label: "35% OFF",
+    stops: [[0, "#280810"], [1, "#150509"]], glow: "rgba(235,60,85,.5)" },
   { emoji: "🎁", label: "20% OFF",
     stops: [[0, "#330a17"], [1, "#1c060c"]], glow: "rgba(255,64,110,.5)" },
   { emoji: "🎁", label: "15% OFF",
@@ -1950,8 +2010,8 @@ const DISCOUNT_SEGMENTS = [
     stops: [[0, "#26080d"], [1, "#130407"]], glow: "rgba(214,90,90,.5)" },
   { emoji: "🎁", label: "25% OFF",
     stops: [[0, "#300a12"], [1, "#18060a"]], glow: "rgba(255,70,100,.5)" },
-  { emoji: "🎁", label: "35% OFF",
-    stops: [[0, "#280810"], [1, "#150509"]], glow: "rgba(235,60,85,.5)" },
+  { emoji: "🎁", label: "10% OFF",
+    stops: [[0, "#2c0d12"], [1, "#170609"]], glow: "rgba(230,57,80,.5)" },
 ];
 
 function runDiscountRouletteScreen() {
@@ -1972,7 +2032,7 @@ function runDiscountRouletteScreen() {
       </div>
     `);
     const stage = screen.querySelector(".rwStage");
-    const wheel = mountRouletteWheel(stage, DISCOUNT_SEGMENTS);
+    const wheel = mountRouletteWheel(stage, DISCOUNT_SEGMENTS, 0.75); // ~25% menor, só o "40% OFF PREMIUM"
 
     stage.insertAdjacentHTML("beforeend", `
       <div class="rwActionArea rwActionArea-tall">
@@ -2003,7 +2063,7 @@ function runDiscountRouletteScreen() {
         lastTickAt = t;
         lsPlaySpinTick();
         hapticImpact("light");
-      }).then(onSpinDone);
+      }, true).then(onSpinDone); // true = suspense cinematográfico no trecho final (só aqui)
     }
     spinBtn.addEventListener("click", onSpinTap, { once: true });
 
