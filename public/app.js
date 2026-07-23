@@ -39,7 +39,7 @@ function getEntranceAudio() {
   if (!_entranceAudio) {
     _entranceAudio = new Audio(ASSETS.entranceMusic);
     _entranceAudio.preload = "auto";
-    _entranceAudio.volume = 0.75;
+    _entranceAudio.volume = 0.5;
   }
   return _entranceAudio;
 }

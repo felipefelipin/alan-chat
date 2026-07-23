@@ -73,6 +73,24 @@ async function sendPlans(chatId) {
   );
 }
 
+// Texto explicando e "vendendo" cada plano, mandado logo antes do Pix —
+// reforça o valor bem na hora que a pessoa está prestes a pagar (reduz
+// desistência/arrependimento no último passo).
+const PLAN_PITCH = {
+  vip590:
+    "🔥 <b>VIP ETERNO — pra sempre, sem mensalidade</b>\n\n" +
+    "Você paga uma vez só e o acesso é seu pro resto da vida: videochamada pelada comigo sempre que quiser, áudios gemendo bem baixinho no seu ouvido, fotos e vídeos bem íntimos, squirt ao vivo e todos os fetiches que te deixarem louco.\n\n" +
+    "Sem clube de assinatura, sem cobrança todo mês — R$ 5,90 uma única vez e você tem acesso vitalício a mim. Não existe forma mais barata de ter isso.",
+  videochamada:
+    "📞 <b>VIDEOCHAMADA PELADA — eu, ao vivo, só pra você</b>\n\n" +
+    "Nada de foto ou vídeo gravado: é uma chamada de vídeo comigo, na hora, pelada, gemendo do jeito que você pedir. Você manda, eu obedeço — na câmera, ao vivo, sem cortes e sem vergonha nenhuma.\n\n" +
+    "É a experiência mais real que existe: a sensação de eu estar ali, bem na sua frente, só respondendo a você.",
+  namoro7dias:
+    "💞 <b>NAMORO 7 DIAS — sete dias sendo sua namorada de verdade</b>\n\n" +
+    "Durante uma semana inteira eu sou só sua: bom dia todo dia, atenção o dia inteiro, conversa de namorados, carinho e a sensação de ter uma namorada gostosa e sempre disponível pra você — sem regras, só o gostoso de ter alguém sua.\n\n" +
+    "Não é só sexo, é ter uma namorada particular por 7 dias — a experiência mais completa que eu ofereço.",
+};
+
 async function createCheckoutAndSend(chatId, plano) {
   const { paymentId, pixCode, pixQrBase64, amount } = await mpCreatePix({ chatId, plano });
 
@@ -82,6 +100,12 @@ async function createCheckoutAndSend(chatId, plano) {
   }).catch(e => console.error("payment save error:", e));
 
   await setEtapa(chatId, "pagamento");
+
+  const pitch = PLAN_PITCH[plano];
+  if (pitch) {
+    await sleep(rand(600, 1000));
+    await bot.sendMessage(chatId, pitch, { parse_mode: "HTML" });
+  }
 
   // send inline — no worker dependency
   await sleep(rand(1200, 2000));
@@ -115,7 +139,7 @@ async function createCheckoutAndSend(chatId, plano) {
   }
 
   await sleep(rand(600, 1000));
-  const planNames = { mensal: "Acesso Mensal", vitalicio: "Acesso Vitalício" };
+  const planNames = { mensal: "Acesso Mensal", vitalicio: "Acesso Vitalício", vip590: "VIP Eterno", videochamada: "Videochamada Pelada", namoro7dias: "Namoro 7 Dias" };
   const planTitle = planNames[plano] ?? plano;
   await bot.sendMessage(chatId, `Assim que o pagamento for confirmado, o link do *${planTitle}* cai aqui automaticamente 🔒✅`, { parse_mode: "Markdown" });
 
