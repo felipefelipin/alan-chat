@@ -261,13 +261,20 @@ bot.on("callback_query", async (q) => {
       );
       await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
+          text: "Isso que você viu é só o começo, meu amor 😈💦\n\nLá dentro eu fico totalmente pelada e sem limites pra você: chat bem safado, videochamada gemendo ao vivo, fotos íntimas e uma surpresa bem quente que só quem entra vai descobrir… 🎁\n\nÉ exclusivo, bem safadinho e tá disponível só agora.\n\nVem logo, tô molhadinha te esperando… 😘",
+          noTyping: true,
+        }},
+        { delay: 1000, jobId: jid("chamada_video", chatId, 2), removeOnComplete: true, removeOnFail: true }
+      );
+      await queue.add("jobs",
+        { type: "SEND_MESSAGE", chatId: String(chatId), data: {
           text: "<b>VEM QUE EU TÔ SOZINHA E SAFADA TE ESPERANDO 😈📹</b>",
           noTyping: true,
           extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
             [{ text: "ENTRAR NO PRIVADO 🔒", web_app: { url: process.env.WEBAPP_URL + "?v=" + Date.now() } }],
           ]}},
         }},
-        { delay: 1000, jobId: jid("chamada_video", chatId, 2), removeOnComplete: true, removeOnFail: true }
+        { delay: 4500, jobId: jid("chamada_video", chatId, 3), removeOnComplete: true, removeOnFail: true }
       );
       await setEtapa(chatId, "webapp_pending");
       await schedulePreNudge(chatId);
