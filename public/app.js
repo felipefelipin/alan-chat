@@ -1460,6 +1460,14 @@ function runConnectionLoadingScreen() {
     // mesma transição de opacidade já usada na entrada) — sem blackout/
     // spinner/shockwave/iris, mas mantém o som de confirmação.
     function onEnterTap() {
+      // Tentativa de destravar o áudio da entrada aqui também: este é um
+      // listener de clique real, direto num botão específico — não
+      // delegado via document/capture como o genérico no topo do arquivo.
+      // Diagnóstico mostrou readyState/networkState nunca saindo do zero
+      // mesmo após a troca de formato do arquivo, o que sugere que o
+      // WebView pode não estar tratando o toque delegado como gesto
+      // suficientemente "direto" pra autorizar o carregamento da mídia.
+      _tryUnlockEntranceAudio();
       hapticImpact("medium");
       lsPlaySuccessChime();
       particles.stop();
@@ -1998,6 +2006,7 @@ function runRouletteScreen() {
     }
 
     function onSpinTap() {
+      _tryUnlockEntranceAudio(); // ver comentário em onEnterTap (loading screen)
       spinBtn.disabled = true;
       spinBtn.classList.add("rwSpinBtn-disabled");
       runSpin(RW_LOSE_INDEX, onFirstSpinDone);
