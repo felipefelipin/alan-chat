@@ -28,6 +28,11 @@ async function mpCreatePix({ chatId, plano }) {
     external_reference: String(chatId),
     metadata: { chatId: String(chatId), plano },
   };
+  // Sem isso, o Mercado Pago não tem como avisar automaticamente quando o
+  // Pix é pago — o webhook (src/api.js) fica sem nenhum jeito de saber.
+  if (process.env.MP_WEBHOOK_URL) {
+    body.notification_url = process.env.MP_WEBHOOK_URL;
+  }
 
   const res = await fetch("https://api.mercadopago.com/v1/payments", {
     method: "POST",
