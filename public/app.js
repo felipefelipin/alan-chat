@@ -34,14 +34,29 @@ window.addEventListener("popstate", () => {
 // (play+pause imediato) já no primeiro toque do usuário em QUALQUER lugar
 // do app — bem antes da tela de entrada existir — e só reaproveitada
 // (nunca recriada) lá na hora certa (ver runEntranceScreen).
+const ENTRANCE_MUSIC_VOLUME = 0.2; // bem baixa — som ambiente, não o foco
 let _entranceAudio = null;
 function getEntranceAudio() {
   if (!_entranceAudio) {
     _entranceAudio = new Audio(ASSETS.entranceMusic);
     _entranceAudio.preload = "auto";
-    _entranceAudio.volume = 0.5;
+    _entranceAudio.volume = 0;
   }
   return _entranceAudio;
+}
+// Sobe o volume de 0 até targetVolume aos poucos — usado só no instante em
+// que a cortina abre, pra a música "nascer" com fade-in em vez de entrar
+// já no volume final.
+function esFadeInAudio(audio, targetVolume, ms) {
+  const steps = 24;
+  const stepMs = ms / steps;
+  let i = 0;
+  audio.volume = 0;
+  const timer = setInterval(() => {
+    i++;
+    audio.volume = Math.min(targetVolume, (targetVolume * i) / steps);
+    if (i >= steps) clearInterval(timer);
+  }, stepMs);
 }
 // Tenta destravar em qualquer um dos tipos de gesto (pointerdown/touchend/
 // click) — WebViews variam em qual desses de fato disparam primeiro/são
@@ -50,19 +65,26 @@ function getEntranceAudio() {
 // depois de uma única tentativa que pode falhar por motivo transitório.
 // Também chamada diretamente de dentro de cliques reais e específicos
 // (botão DESBLOQUEAR PRÊMIOS, botão GIRAR da roleta) — ver onEnterTap/
-// onSpinTap — além do listener delegado abaixo.
+// onSpinTap — além do listener delegado abaixo. Muted durante a tentativa:
+// isso é só destravar a permissão de tocar, não é o início real da música
+// (esse é lá na cortina, com fade-in) — sem isso, dava pra ouvir um
+// pedacinho da faixa (do segundo 0) tocando ainda na roleta.
 let _entranceAudioUnlocked = false;
 function _tryUnlockEntranceAudio() {
   if (_entranceAudioUnlocked) return;
   const a = getEntranceAudio();
+  a.muted = true;
   a.play().then(() => {
     _entranceAudioUnlocked = true;
     a.pause();
     a.currentTime = 0;
+    a.muted = false;
     ["pointerdown", "touchend", "click"].forEach((ev) =>
       document.removeEventListener(ev, _tryUnlockEntranceAudio, true)
     );
-  }).catch(() => {});
+  }).catch(() => {
+    a.muted = false;
+  });
 }
 ["pointerdown", "touchend", "click"].forEach((ev) =>
   document.addEventListener(ev, _tryUnlockEntranceAudio, { capture: true })
@@ -2293,7 +2315,9 @@ function runEntranceScreen() {
       entranceMusicStarted = true;
       const seek = () => {
         try { entranceAudio.currentTime = 46; } catch {}
-        entranceAudio.play().catch(() => {});
+        entranceAudio.play().then(() => {
+          esFadeInAudio(entranceAudio, ENTRANCE_MUSIC_VOLUME, 1500);
+        }).catch(() => {});
       };
       if (entranceAudio.readyState >= 1) seek();
       else entranceAudio.addEventListener("loadedmetadata", seek, { once: true });
@@ -2308,7 +2332,10 @@ function runEntranceScreen() {
       soundBtn.innerHTML = esSoundIcon(soundOn);
       if (soundOn) {
         stopDrone = esStartAmbientDrone();
-        if (entranceMusicStarted) entranceAudio.play().catch(() => {});
+        if (entranceMusicStarted) {
+          entranceAudio.volume = ENTRANCE_MUSIC_VOLUME;
+          entranceAudio.play().catch(() => {});
+        }
       } else {
         if (stopDrone) { stopDrone(); stopDrone = null; }
         entranceAudio.pause();

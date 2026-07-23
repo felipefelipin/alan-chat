@@ -103,23 +103,18 @@ async function createCheckoutAndSend(chatId, plano) {
 
   const pitch = PLAN_PITCH[plano];
   if (pitch) {
-    await sleep(rand(600, 1000));
+    const webappUrl = process.env.WEBAPP_URL || "https://alana-chat.vercel.app";
+    try { await bot.sendPhoto(chatId, `${webappUrl}/assets/photo_5114032093976530239_w.jpg`); } catch {}
+    await sleep(1000);
     await bot.sendMessage(chatId, pitch, { parse_mode: "HTML" });
   }
 
-  // send inline — no worker dependency
-  await sleep(rand(1200, 2000));
+  // resto cai tudo junto, sem demora — só o pitch acima tem timing próprio
   await bot.sendMessage(chatId, "Perfeito! Seu pedido foi gerado com sucesso 🔥");
-
-  await sleep(rand(1800, 2600));
   await bot.sendMessage(chatId, "Aqui está seu Pix para pagamento:");
-
-  await sleep(rand(1000, 1600));
 
   if (pixQrBase64) {
     const buf = Buffer.from(pixQrBase64, "base64");
-    await bot.sendChatAction(chatId, "upload_photo").catch(() => {});
-    await sleep(rand(700, 1200));
     const amountFmt = `R$ ${Number(amount).toFixed(2).replace(".", ",")}`;
     await bot.sendPhoto(chatId, buf, {
       caption: `💸 *${amountFmt}* — Escaneie o QR Code pelo app do seu banco`,
@@ -127,18 +122,14 @@ async function createCheckoutAndSend(chatId, plano) {
     });
   }
 
-  await sleep(rand(800, 1400));
-
   if (pixCode) {
     await bot.sendMessage(chatId, "Ou copie o código Pix abaixo:");
-    await sleep(rand(400, 700));
     await bot.sendMessage(chatId,
       `\`\`\`\n${pixCode}\n\`\`\``,
       { parse_mode: "Markdown" }
     );
   }
 
-  await sleep(rand(600, 1000));
   const planNames = { mensal: "Acesso Mensal", vitalicio: "Acesso Vitalício", vip590: "VIP Eterno", videochamada: "Videochamada Pelada", namoro7dias: "Namoro 7 Dias" };
   const planTitle = planNames[plano] ?? plano;
   await bot.sendMessage(chatId, `Assim que o pagamento for confirmado, o link do *${planTitle}* cai aqui automaticamente 🔒✅`, { parse_mode: "Markdown" });
