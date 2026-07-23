@@ -15,21 +15,26 @@ module.exports = async function handler(req, res) {
   const WEBAPP_URL = process.env.WEBAPP_URL || "https://alana-chat.vercel.app";
 
   try {
-    // vídeo opcional — falha não bloqueia os botões
-    try { await bot.sendVideo(id, `${WEBAPP_URL}/assets/pagamento.mp4`); } catch {}
+    // foto opcional — falha não bloqueia a mensagem/botão
+    try { await bot.sendPhoto(id, `${WEBAPP_URL}/assets/photo_5102783828031376538_y.jpg`); } catch {}
 
-    await bot.sendMessage(id, "tá… agora escolhe como você quer entrar.");
-    await bot.sendMessage(id, "3 opções. sem enrolar.");
-    await bot.sendMessage(id, "👇", {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "🔥 GRUPO SEM CENSURA — R$ 14,90",        callback_data: "plan:basic",  style: "success" }],
-          [{ text: "💦 GRUPO + AO VIVO COMIGO — R$ 24,90",   callback_data: "plan:plus",  style: "success" }],
-          [{ text: "😈 PRIVADO — SÓ EU E VOCÊ — R$ 34,90",   callback_data: "plan:vip",   style: "success" }],
-        ],
-      },
-    });
-    await bot.sendMessage(id, "✅ Pagamento confirmado = acesso liberado na hora!\n\nAssim que o Pix cair você recebe o link em menos de 30 segundos 🔒");
+    await bot.sendMessage(id,
+      "Se você está aqui… é porque acabou de me ver peladinha e eu sei que você gostou bastante 😈💗\n\n" +
+      "Como recompensa por ter sido tão safadinho comigo, te dei um presentão:\n\n" +
+      "🎁 <b>Acesso vitalício ao meu Espaço VIP por apenas R$ 5,90</b>\n\n" +
+      "Lá dentro sou toda sua… sem limites e sem frescura. Podemos fazer videochamada pelada sempre que você quiser, áudios gemendo bem baixinho no seu ouvido, fotos e vídeos bem íntimos, squirt ao vivo, fetiches e tudo que te deixar louquinho.\n\n" +
+      "Sou uma novinha carioca carinhosa, safada e sempre molhadinha… viciada em dar prazer e receber carinho de um homem que sabe o que quer.\n\n" +
+      "Vem pra cá, meu amor… quero continuar te mostrando meu lado mais quente e safado. 💦\n\n" +
+      "<b>Clica agora e entra no meu mundinho particular</b> 😘",
+      {
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "😈 ENTRAR NO MEU VIP — R$ 5,90", callback_data: "plan:vip590", style: "success" }],
+          ],
+        },
+      }
+    );
 
     res.json({ ok: true });
   } catch (e) {

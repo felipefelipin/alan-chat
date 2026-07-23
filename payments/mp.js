@@ -6,6 +6,7 @@ const crypto = require("crypto");
 const PLANS = {
   mensal:    { title: "Acesso Mensal",    price: 24.90 },
   vitalicio: { title: "Acesso Vitalício", price: 34.90 },
+  vip590:    { title: "Acesso Vitalício VIP (oferta)", price: 5.90 },
 };
 
 async function mpCreatePix({ chatId, plano }) {
