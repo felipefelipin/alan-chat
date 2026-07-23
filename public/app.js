@@ -32,7 +32,7 @@ const ASSETS = {
   privateIntro: "/assets/IMG_4913.MP4",
   privateMusic: "/assets/private-music.mp3",
   intro: "/assets/intro.mp4",
-  callVideo: "/assets/0717%281%29.mp4",
+  callVideo: "/assets/0717_audiofix.mp4",
   ringtone: "/assets/ringtone.mp3",
   avatar: "/assets/WhatsApp%20Image%202026-07-17%20at%2016.12.24.jpeg",
   entranceTeaser: "/assets/IMG_6939.MP4",
