@@ -43,10 +43,27 @@ function getEntranceAudio() {
   }
   return _entranceAudio;
 }
-document.addEventListener("pointerdown", () => {
+// Tenta destravar em qualquer um dos tipos de gesto (pointerdown/touchend/
+// click) — WebViews variam em qual desses de fato disparam primeiro/são
+// suportados — e insiste a cada toque até uma tentativa realmente resolver
+// (play() só resolve quando o navegador aceitou tocar), em vez de desistir
+// depois de uma única tentativa que pode falhar por motivo transitório.
+let _entranceAudioUnlocked = false;
+function _tryUnlockEntranceAudio() {
+  if (_entranceAudioUnlocked) return;
   const a = getEntranceAudio();
-  a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
-}, { once: true, capture: true });
+  a.play().then(() => {
+    _entranceAudioUnlocked = true;
+    a.pause();
+    a.currentTime = 0;
+    ["pointerdown", "touchend", "click"].forEach((ev) =>
+      document.removeEventListener(ev, _tryUnlockEntranceAudio, true)
+    );
+  }).catch(() => {});
+}
+["pointerdown", "touchend", "click"].forEach((ev) =>
+  document.addEventListener(ev, _tryUnlockEntranceAudio, { capture: true })
+);
 
 const app = document.getElementById("app");
 
