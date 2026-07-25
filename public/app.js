@@ -99,7 +99,7 @@ const ASSETS = {
   intro: "/assets/intro.mp4",
   callVideo: "/assets/0717_audiofix.mp4",
   ringtone: "/assets/ringtone.mp3",
-  avatar: "/assets/WhatsApp%20Image%202026-07-17%20at%2016.12.24.jpeg",
+  avatar: "/assets/4294967542.jpeg",
   entranceTeaser: "/assets/IMG_0330.mp4",
   connectionDonePhoto: "/assets/cd0bd8e2-7b68-462c-84a3-5b9953ae591c%20%281%29.jpeg",
   entranceMusic: "/assets/entrance-music-v2.m4a",
@@ -136,6 +136,10 @@ function preloadMedia() {
     v.load();
   } catch {}
   try { new Image().src = "/assets/chat-bg.png?v=9"; } catch {}
+  // foto que substitui o vídeo parado quando o botão DESBLOQUEAR PRÊMIOS
+  // aparece — sem preload, o <img> só começava a buscar nesse instante,
+  // causando um delay visível antes de aparecer.
+  try { new Image().src = ASSETS.connectionDonePhoto; } catch {}
 }
 
 // Preload do vídeo principal da chamada — chamado quando a tela de "chamada
@@ -1404,7 +1408,12 @@ function runConnectionLoadingScreen() {
       const photo = document.createElement("img");
       photo.className = "lsVideo";
       photo.src = ASSETS.connectionDonePhoto;
-      video.replaceWith(photo);
+      // Só troca depois da foto estar de fato decodificada e pronta pra
+      // pintar — trocar antes disso deixa um instante sem vídeo nem foto
+      // (mostra o fundo por baixo, um "flash" preto).
+      const swapIn = () => { if (!photo.isConnected) video.replaceWith(photo); };
+      if (photo.decode) photo.decode().then(swapIn).catch(swapIn);
+      else { photo.addEventListener("load", swapIn, { once: true }); photo.addEventListener("error", swapIn, { once: true }); }
 
       // HUD some — só o toque avança
       hud.hideContent();
