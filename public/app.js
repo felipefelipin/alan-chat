@@ -97,7 +97,7 @@ const ASSETS = {
   privateIntro: "/assets/connection-video.mp4",
   privateMusic: "/assets/private-music.mp3",
   intro: "/assets/intro.mp4",
-  callVideo: "/assets/0717_audiofix.mp4",
+  callVideo: "/assets/call-video-combined.mp4",
   ringtone: "/assets/ringtone.mp3",
   avatar: "/assets/4294967542.jpeg",
   entranceTeaser: "/assets/IMG_0330.mp4",
@@ -110,6 +110,7 @@ const ASSETS = {
   lingerie: "/assets/lingerie.jpg",
   teaseVideo: "/assets/IMG_7330.MP4",
   teasePhotoPrivada: "/assets/4294967637.jpeg",
+  teaseCallPhoto: "/assets/1917bef0-5e63-4eb8-b52b-7e2a5abcedf0.png",
   teaseVideo2: "/assets/tease2.mp4",
   teaseVideo3: "/assets/IMG_7330.MP4",
   teasePhoto: "/assets/tease-photo.jpg",
@@ -3827,13 +3828,27 @@ function isNegative(text) {
 async function enterTeaseBuildup(text = null) {
   clearReengage();
   state.step = 2; saveState();
-  await sleep(rand(4000, 5000));
-  await gisaSay("tou com um brinquedinho aqui na minha mão, bem grande e grosso, posso ligar pra te mostrar ele dentro da minha bucetinha? 🔥🥵", { delay: rand(7000, 9000), replyTo: text ? { side: "right", text } : null });
+  await sleep(rand(2000, 3000));
+  await gisaSendPhoto(ASSETS.teaseCallPhoto, "Foto Privada");
+  await sleep(rand(1000, 1500));
+  await gisaSay("vou te ligar rapidinho pra vc poder olhar nos olhos dessa putinha sfd 😈", { delay: rand(4000, 6000), replyTo: text ? { side: "right", text } : null });
+  await gisaSay("posso ligar pra vc agora sfd? 🔥", { delay: rand(2500, 3500), noSleep: true });
   showAdvanceButton("Quero ver tudo 😈", () => {
     if (state.step !== 2) return;
     _flowRunning = true;
-    enterDesireEscalation().catch(() => {}).finally(() => { _flowRunning = false; });
+    enterCallReadyNow().catch(() => {}).finally(() => { _flowRunning = false; });
   });
+}
+
+// Resposta à pergunta "posso ligar pra vc agora sfd?" — confirma e a
+// chamada cai sozinha 6s depois (sem esperar mais nenhuma mensagem do lead).
+async function enterCallReadyNow(replyText = null) {
+  clearReengage();
+  state.step = 5; saveState();
+  await sleep(rand(1000, 1500));
+  await gisaSay("tá bom amor, já vou ligar.", { delay: rand(1500, 2500), replyTo: replyText ? { side: "right", text: replyText } : null });
+  await sleep(6000);
+  showIncomingCall();
 }
 
 // Depois que a pessoa responde a última mensagem do enterTeaseBuildup,
@@ -4271,8 +4286,10 @@ function addCallNotifBubble(seconds) {
 
 async function doCallPaywall() {
   await sleep(1000);
-  await gisaSay("desbloqueia agora e volta rápido que eu tô te esperando 🔥", { delay: rand(3000, 4500) });
-  await sleep(3000);
+  await gisaSay("tenho muita coisa pra eu te mostrar ainda... 😈", { delay: rand(3000, 4500) });
+  await gisaSay("mas pra isso preciso q vc desbloquie o acesso, pra me ver bem putinha só pra vc.", { delay: rand(3000, 4500), noSleep: true });
+  await gisaSay("vai cair agora ai pra vc desbloquear é só clicar e ir pro telegram que o resto só vai depender de vc 🥵🔥", { delay: rand(3500, 5000), noSleep: true });
+  await sleep(2000);
   showCheckoutCta();
 }
 
@@ -4564,7 +4581,7 @@ async function handleUserText(text) {
         await gisaSay("vou tirar mesmo assim… mas só porque você tá me deixando louca");
         await sleep(800);
       }
-      await enterDesireEscalation();
+      await enterCallReadyNow(text);
       return;
     }
     if (state.step === 4) {
