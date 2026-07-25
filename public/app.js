@@ -5507,7 +5507,7 @@ try {
 
 loadState();
 
-const FORCE_FRESH_START = false;
+const FORCE_FRESH_START = true;
 
 if (!FORCE_FRESH_START && localStorage.getItem("gisa_checkout_done") === "1") {
   mountChat();
