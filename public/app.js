@@ -3764,12 +3764,7 @@ function addPhotoCardBubble(src, title = "Foto Privada") {
 function openPhotoViewer(src) {
   const overlay = document.createElement("div");
   overlay.className = "photoViewerOverlay";
-  overlay.innerHTML = `
-    <button type="button" class="photoViewerClose" aria-label="Fechar">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
-    <img src="${src}" class="photoViewerImg" alt="" />
-  `;
+  overlay.innerHTML = `<img src="${src}" class="photoViewerImg" alt="" />`;
   document.body.appendChild(overlay);
   requestAnimationFrame(() => overlay.classList.add("photoViewerOverlay-visible"));
 
@@ -3782,29 +3777,77 @@ function openPhotoViewer(src) {
     overlay.addEventListener("transitionend", () => overlay.remove(), { once: true });
     setTimeout(() => overlay.remove(), 350); // rede de segurança
   }
+  // Só fecha tocando fora da foto (sem X) ou arrastando pra baixo (ver
+  // touchend). Dar zoom (pinça) não conta como "fora".
   overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
-  overlay.querySelector(".photoViewerClose").onclick = close;
 
-  let startY = null, dragY = 0, dragging = false;
+  // Estado de zoom/pan (pinça com 2 dedos) e arrastar-pra-fechar (1 dedo,
+  // só quando não tem zoom ativo — evita brigar com o pan de 1 dedo numa
+  // foto já ampliada).
+  let scale = 1, panX = 0, panY = 0;
+  let pinchStartDist = 0, pinchStartScale = 1;
+  let panStartX = 0, panStartY = 0, panOrigX = 0, panOrigY = 0;
+  let dragStartY = null, dragY = 0;
+  let mode = null; // "pinch" | "pan" | "drag" | null
+
+  function applyTransform() {
+    img.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+  }
+  function dist(t0, t1) {
+    return Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
+  }
+
   img.addEventListener("touchstart", (e) => {
-    if (e.touches.length !== 1) return;
-    startY = e.touches[0].clientY;
-    dragging = true;
     img.style.transition = "";
+    if (e.touches.length === 2) {
+      mode = "pinch";
+      pinchStartDist = dist(e.touches[0], e.touches[1]);
+      pinchStartScale = scale;
+    } else if (e.touches.length === 1) {
+      if (scale > 1.02) {
+        mode = "pan";
+        panStartX = e.touches[0].clientX; panStartY = e.touches[0].clientY;
+        panOrigX = panX; panOrigY = panY;
+      } else {
+        mode = "drag";
+        dragStartY = e.touches[0].clientY;
+        dragY = 0;
+      }
+    }
   }, { passive: true });
+
   img.addEventListener("touchmove", (e) => {
-    if (!dragging || startY === null) return;
-    dragY = Math.max(0, e.touches[0].clientY - startY);
-    img.style.transform = `translateY(${dragY}px) scale(${Math.max(0.7, 1 - dragY / 700)})`;
-    overlay.style.background = `rgba(0,0,0,${Math.max(0, 0.92 - dragY / 400)})`;
+    if (mode === "pinch" && e.touches.length === 2) {
+      const d = dist(e.touches[0], e.touches[1]);
+      scale = Math.min(4, Math.max(1, pinchStartScale * (d / pinchStartDist)));
+      applyTransform();
+    } else if (mode === "pan" && e.touches.length === 1) {
+      panX = panOrigX + (e.touches[0].clientX - panStartX);
+      panY = panOrigY + (e.touches[0].clientY - panStartY);
+      applyTransform();
+    } else if (mode === "drag" && e.touches.length === 1 && dragStartY !== null) {
+      dragY = Math.max(0, e.touches[0].clientY - dragStartY);
+      img.style.transform = `translateY(${dragY}px) scale(${Math.max(0.7, 1 - dragY / 700)})`;
+      overlay.style.background = `rgba(0,0,0,${Math.max(0, 0.92 - dragY / 400)})`;
+    }
   }, { passive: true });
-  img.addEventListener("touchend", () => {
-    dragging = false;
-    if (dragY > 120) { close(); return; }
-    img.style.transition = "transform .25s ease";
-    img.style.transform = "";
-    overlay.style.background = "";
-    dragY = 0;
+
+  img.addEventListener("touchend", (e) => {
+    if (mode === "drag") {
+      if (dragY > 120) { close(); return; }
+      img.style.transition = "transform .25s ease";
+      img.style.transform = "";
+      overlay.style.background = "";
+      dragY = 0;
+    } else if (mode === "pinch" || mode === "pan") {
+      // volta pro tamanho normal se soltou quase sem zoom
+      if (scale <= 1.02) {
+        scale = 1; panX = 0; panY = 0;
+        img.style.transition = "transform .2s ease";
+        applyTransform();
+      }
+    }
+    if (e.touches.length === 0) mode = null;
   });
 }
 
