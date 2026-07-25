@@ -4090,7 +4090,7 @@ async function startFunnelCall() {
   `;
   topBar.innerHTML = `
     <div style="color:#fff;font-size:17px;font-weight:600;letter-spacing:-.3px;">${CONTACT.name}</div>
-    <div id="callTimer" style="color:rgba(255,255,255,.8);font-size:14px;">0:00</div>
+    <div id="callTimer" style="color:rgba(255,255,255,.8);font-size:14px;">Conectando...</div>
   `;
   callEl.appendChild(topBar);
 
@@ -4222,6 +4222,7 @@ async function startFunnelCall() {
     Promise.all([minBlackScreen, videoReady(vid)]).then(() => {
       vid.play().catch(() => {});
       vid.style.opacity = "1";
+      const t = timerEl(); if (t) t.textContent = "0:00"; // sai de "Conectando..."
       startTimer();
     });
   };
