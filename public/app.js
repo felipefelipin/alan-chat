@@ -109,6 +109,7 @@ const ASSETS = {
   media4: "/assets/grid-4.jpg",
   lingerie: "/assets/lingerie.jpg",
   teaseVideo: "/assets/IMG_7330.MP4",
+  teasePhotoPrivada: "/assets/4294967637.jpeg",
   teaseVideo2: "/assets/tease2.mp4",
   teaseVideo3: "/assets/IMG_7330.MP4",
   teasePhoto: "/assets/tease-photo.jpg",
@@ -4533,7 +4534,7 @@ async function startScript() {
     setStatus("online");
     state.flags.botOnline = true; saveState();
     await sleep(rand(2000, 3000));
-    await gisaSendVideo(ASSETS.teaseVideo, "Vídeo Privado");
+    await gisaSendPhoto(ASSETS.teasePhotoPrivada, "Foto Privada");
     await sleep(rand(2000, 3000));
     await gisaSendAudio(ASSETS.audioCallInvite, null, 8000);
     await sleep(rand(5000, 7000));
