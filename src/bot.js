@@ -330,7 +330,17 @@ bot.on("callback_query", async (q) => {
     // ── Seleção de plano (original) ─────────────────────────────────────────
     if (data.startsWith("plan:")) {
       await bot.answerCallbackQuery(q.id).catch(() => {});
-      await createCheckoutAndSend(chatId, data.split(":")[1]);
+      const plano = data.split(":")[1];
+      try {
+        await createCheckoutAndSend(chatId, plano);
+      } catch (e) {
+        // Botão de uma versão antiga do bot (plano que não existe mais) —
+        // em vez de deixar a pessoa num beco sem saída, manda os planos
+        // atuais de novo.
+        console.error("createCheckoutAndSend error:", e.message);
+        await bot.sendMessage(chatId, "Esse link expirou 🙈 aqui estão as opções atuais:");
+        await sendPlans(chatId);
+      }
       return;
     }
 
