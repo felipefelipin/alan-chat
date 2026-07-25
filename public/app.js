@@ -2139,7 +2139,7 @@ function runDiscountRouletteScreen() {
 
     screen.insertAdjacentHTML("beforeend", `
       <div class="rwStage">
-        <div class="rwTitle">🔓 BENEFÍCIO EXCLUSIVO LIBERADO</div>
+        <div class="rwTitle">🔓 BENEFÍCIO PREMIUM LIBERADO</div>
         <div class="rwSubtitle">Você concluiu todas as etapas e desbloqueou uma oferta exclusiva disponível somente nesta sessão.</div>
       </div>
     `);
@@ -2528,6 +2528,13 @@ function mountChat() {
   `;
 
   state.chatEl = document.getElementById("chat");
+  // Abre foto em tela cheia ao tocar — delegado no container (os itens são
+  // re-renderizados), não interfere no swipe-pra-responder (esse é só um
+  // "click" normal, que não dispara depois de um gesto de arrastar).
+  state.chatEl.addEventListener("click", (e) => {
+    const thumb = e.target.closest("[data-photo-src]");
+    if (thumb) openPhotoViewer(thumb.getAttribute("data-photo-src"));
+  });
   // reaplica o último status conhecido (digitando/gravando áudio/enviando
   // vídeo/online) — sem isso, remontar o chat sempre resetava pro texto
   // padrão calculado acima, mesmo com algo em andamento de verdade.
@@ -3465,7 +3472,7 @@ function renderRowHTML(item, animated = false) {
               <path d="M6 9l6 6 6-6" stroke="rgba(255,255,255,.45)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
-          <div class="videoCardThumb">
+          <div class="videoCardThumb" data-photo-src="${item.src}">
             <img src="${item.src}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'" />
           </div>
           <div class="videoCardFooter" style="justify-content:flex-end;">
@@ -3736,6 +3743,56 @@ function addPhotoCardBubble(src, title = "Foto Privada") {
   waPlayMessagePop();
 }
 
+// Visualizador de foto em tela cheia, estilo WhatsApp — abre com fade,
+// fecha tocando fora/no X, ou arrastando a foto pra baixo (solta se
+// arrastar o suficiente, senão volta pro lugar).
+function openPhotoViewer(src) {
+  const overlay = document.createElement("div");
+  overlay.className = "photoViewerOverlay";
+  overlay.innerHTML = `
+    <button type="button" class="photoViewerClose" aria-label="Fechar">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <img src="${src}" class="photoViewerImg" alt="" />
+  `;
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add("photoViewerOverlay-visible"));
+
+  const img = overlay.querySelector(".photoViewerImg");
+  let cleaned = false;
+  function close() {
+    if (cleaned) return;
+    cleaned = true;
+    overlay.classList.remove("photoViewerOverlay-visible");
+    overlay.addEventListener("transitionend", () => overlay.remove(), { once: true });
+    setTimeout(() => overlay.remove(), 350); // rede de segurança
+  }
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+  overlay.querySelector(".photoViewerClose").onclick = close;
+
+  let startY = null, dragY = 0, dragging = false;
+  img.addEventListener("touchstart", (e) => {
+    if (e.touches.length !== 1) return;
+    startY = e.touches[0].clientY;
+    dragging = true;
+    img.style.transition = "";
+  }, { passive: true });
+  img.addEventListener("touchmove", (e) => {
+    if (!dragging || startY === null) return;
+    dragY = Math.max(0, e.touches[0].clientY - startY);
+    img.style.transform = `translateY(${dragY}px) scale(${Math.max(0.7, 1 - dragY / 700)})`;
+    overlay.style.background = `rgba(0,0,0,${Math.max(0, 0.92 - dragY / 400)})`;
+  }, { passive: true });
+  img.addEventListener("touchend", () => {
+    dragging = false;
+    if (dragY > 120) { close(); return; }
+    img.style.transition = "transform .25s ease";
+    img.style.transform = "";
+    overlay.style.background = "";
+    dragY = 0;
+  });
+}
+
 async function gisaSendPhoto(src, title = "Foto Privada") {
   setStatus("enviando uma foto…");
   await sleep(rand(2000, 4000));
@@ -3788,7 +3845,11 @@ function typingDelayFor(text) {
 async function gisaSay(text, opts = {}) {
   const status = "digitando…";
   setStatus(status); addTyping();
-  await sleep(opts.delay ?? typingDelayFor(text));
+  // O tempo de digitação nunca fica abaixo do que o tamanho do texto pede —
+  // um "delay" fixo passado em opts vira só um PISO (útil pra pausas
+  // dramáticas propositalmente mais longas que o texto), nunca um teto que
+  // deixa uma mensagem longa parecer digitada instantaneamente.
+  await sleep(Math.max(opts.delay ?? 0, typingDelayFor(text)));
   removeTyping(); await sleep(rand(90,220));
   setStatus(CONTACT.subtitle ?? "");
   addMsg("left", escapeHtml(text).replace(/\n/g,"<br/>"), opts.replyTo || null);
@@ -4574,6 +4635,11 @@ async function handleUserText(text) {
   if (_flowRunning) return; // flow already running — ignore extra messages
   clearReengage();
   _flowRunning = true;
+  // Pausa de "percebeu a mensagem" antes de qualquer "digitando..." aparecer
+  // — sem isso, a resposta reagia no exato instante do envio, o que não
+  // parece humano. Cada fluxo específico pode (e alguns já fazem) somar
+  // mais tempo depois disso; esse piso garante que NUNCA fica instantâneo.
+  await sleep(rand(700, 1600));
   try {
     if (state.step === 1) { await enterTeaseBuildup(text); return; }
     if (state.step === 2) {

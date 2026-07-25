@@ -2180,3 +2180,28 @@ object-fit:cover;
   0%,60%,100%{transform:translateY(0);opacity:.4}
   30%{transform:translateY(-3px);opacity:1}
 }
+
+/* Visualizador de foto em tela cheia (estilo WhatsApp) */
+.photoViewerOverlay{
+  position:fixed;inset:0;z-index:9900;
+  background:rgba(0,0,0,0);
+  display:flex;align-items:center;justify-content:center;
+  transition:background .28s ease;
+}
+.photoViewerOverlay-visible{ background:rgba(0,0,0,.92); }
+.photoViewerImg{
+  max-width:100%;max-height:100%;
+  object-fit:contain;
+  opacity:0;
+  transform:scale(.94);
+  transition:opacity .28s ease, transform .28s ease;
+  touch-action:none;
+}
+.photoViewerOverlay-visible .photoViewerImg{ opacity:1; transform:scale(1); }
+.photoViewerClose{
+  position:absolute;top:calc(env(safe-area-inset-top,20px) + 14px);left:16px;
+  width:40px;height:40px;border-radius:50%;
+  background:rgba(255,255,255,.12);border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  z-index:1;-webkit-tap-highlight-color:transparent;
+}

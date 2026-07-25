@@ -16,7 +16,7 @@ module.exports = async function handler(req, res) {
 
   try {
     // foto opcional — falha não bloqueia a mensagem/botão
-    try { await bot.sendPhoto(id, `${WEBAPP_URL}/assets/photo_5102783828031376538_y.jpg`); } catch {}
+    try { await bot.sendPhoto(id, `${WEBAPP_URL}/assets/4294967658%20%281%29.jpeg`); } catch {}
 
     await bot.sendMessage(id,
       "Se você está aqui… é porque acabou de me ver peladinha e eu sei que você gostou bastante 😈💗\n\n" +
