@@ -262,7 +262,7 @@ bot.on("callback_query", async (q) => {
     if (data === "abrir_instagram") {
       await bot.answerCallbackQuery(q.id, { text: "😈" }).catch(() => {});
       await queue.add("jobs",
-        { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "IMG_7068.MP4", caption: "", instant: true } },
+        { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "4294967613.jpeg", caption: "", instant: true } },
         { delay: 0, jobId: jid("instagram", chatId, 1), removeOnComplete: true, removeOnFail: true }
       );
       await queue.add("jobs",
