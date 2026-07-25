@@ -100,7 +100,8 @@ const ASSETS = {
   callVideo: "/assets/0717_audiofix.mp4",
   ringtone: "/assets/ringtone.mp3",
   avatar: "/assets/WhatsApp%20Image%202026-07-17%20at%2016.12.24.jpeg",
-  entranceTeaser: "/assets/IMG_6939.MP4",
+  entranceTeaser: "/assets/IMG_0330.mp4",
+  connectionDonePhoto: "/assets/cd0bd8e2-7b68-462c-84a3-5b9953ae591c%20%281%29.jpeg",
   entranceMusic: "/assets/entrance-music-v2.m4a",
   media1: "/assets/grid-1.jpg",
   media2: "/assets/grid-2.jpg",
@@ -1397,7 +1398,15 @@ function runConnectionLoadingScreen() {
       vibrate(14);
       lsPlaySuccessChime();
 
-      // HUD some, vídeo permanece parado no último frame — só o toque avança
+      // No lugar do vídeo parado no último frame, troca por uma foto fixa
+      // no exato momento em que o botão DESBLOQUEAR PRÊMIOS aparece.
+      video.pause();
+      const photo = document.createElement("img");
+      photo.className = "lsVideo";
+      photo.src = ASSETS.connectionDonePhoto;
+      video.replaceWith(photo);
+
+      // HUD some — só o toque avança
       hud.hideContent();
       hud.mountEnterButton(onEnterTap);
     }
