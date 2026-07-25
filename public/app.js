@@ -3165,6 +3165,19 @@ function scrollBottom() {
   scrollToBottom();
 }
 
+// Só rola sozinho se o lead já estiver perto do final — digitando/mensagem/
+// mídia chegando não pode puxar o scroll de quem subiu pra ler o histórico
+// (mesmo comportamento do WhatsApp/Telegram de verdade). Mensagem/ação do
+// próprio lead (ex.: enviar) continua usando scrollBottom() sem essa trava.
+function isNearBottom(thresholdPx = 120) {
+  const el = state.chatEl;
+  if (!el) return true;
+  return el.scrollHeight - el.scrollTop - el.clientHeight <= thresholdPx;
+}
+function scrollBottomIfNear() {
+  if (isNearBottom()) scrollBottom();
+}
+
 // ==================== RESPONDER MENSAGEM (swipe, estilo WhatsApp) ====================
 // O lead arrasta uma bolha da Susana pro lado pra marcar "respondendo a
 // ela" — só as mensagens dela são arrastáveis (ver attachSwipeToReply);
@@ -3319,7 +3332,7 @@ function addTyping() {
     </div>
   `;
   state.chatEl.appendChild(row);
-  scrollBottom();
+  scrollBottomIfNear();
 }
 
 // ==================== RENDER ====================
@@ -3650,7 +3663,9 @@ function addMsg(side, html, replyTo = null) {
   // nascem marcadas como não vistas — ver markPendingMessagesSeen().
   if (side === "right") item.seen = !!state.flags.botOnline;
   pushHistory(item); renderItem(item, true);
-  scrollBottom();
+  // Mensagem própria do lead sempre rola (ação dele); mensagem que chega
+  // (dela) só rola se ele já estava perto do final.
+  if (side === "right") scrollBottom(); else scrollBottomIfNear();
   // som de notificação só pra mensagens que chegam (dela) — igual o
   // WhatsApp não toca esse som pras suas próprias mensagens enviadas.
   if (side === "left") waPlayMessagePop();
@@ -3678,7 +3693,7 @@ function markPendingMessagesSeen() {
 function addVideoBubble(src, title = "Vídeo") {
   updatePreviousGroupForNewMessage("left");
   const item = { type:"video", side:"left", src:`${src}?v=${Date.now()}`, title, time:nowTime(), cluster:getNewCluster("left") };
-  pushHistory(item); renderItem(item, true); scrollBottom();
+  pushHistory(item); renderItem(item, true); scrollBottomIfNear();
   waPlayMessagePop();
 }
 
@@ -3702,7 +3717,7 @@ async function gisaAutoPlayVideo(src) {
 
     const item = { type:"video", side:"left", src:`${src}?v=${Date.now()}`, title:"Vídeo Privado", autoplay:true, duration:"3:00", time:nowTime(), cluster:"single" };
     row = renderItem(item, true);
-    scrollToBottom();
+    scrollBottomIfNear();
     waPlayMessagePop();
 
     // t=5s after video drop: replace video with deleted-message bubble (WhatsApp style)
@@ -3739,7 +3754,7 @@ async function gisaAutoPlayVideo(src) {
 function addPhotoCardBubble(src, title = "Foto Privada") {
   updatePreviousGroupForNewMessage("left");
   const item = { type:"photo", side:"left", src:`${src}?v=${Date.now()}`, title, time:nowTime(), cluster:getNewCluster("left") };
-  pushHistory(item); renderItem(item, true); scrollBottom();
+  pushHistory(item); renderItem(item, true); scrollBottomIfNear();
   waPlayMessagePop();
 }
 
@@ -3804,21 +3819,21 @@ async function gisaSendPhoto(src, title = "Foto Privada") {
 function addImgBubble(src) {
   updatePreviousGroupForNewMessage("left");
   const item = { type:"img", side:"left", src:`${src}?v=${Date.now()}`, time:nowTime(), cluster:getNewCluster("left") };
-  pushHistory(item); renderItem(item, true); scrollBottom();
+  pushHistory(item); renderItem(item, true); scrollBottomIfNear();
   waPlayMessagePop();
 }
 
 function addMediaGridBubble(items = null) {
   updatePreviousGroupForNewMessage("left");
   const item = { type:"mediaGrid", side:"left", items:items||getDefaultGridItems(), time:nowTime(), cluster:getNewCluster("left") };
-  pushHistory(item); renderItem(item, true); scrollBottom();
+  pushHistory(item); renderItem(item, true); scrollBottomIfNear();
   waPlayMessagePop();
 }
 
 function addAudioBubble(data = {}) {
   updatePreviousGroupForNewMessage("left");
   const item = { type:"audio", side:"left", src:data.src||"", bars:data.bars||getDefaultWaveBars(), duration:data.duration||"0:00", time:nowTime(), cluster:getNewCluster("left") };
-  pushHistory(item); renderItem(item, true); scrollBottom();
+  pushHistory(item); renderItem(item, true); scrollBottomIfNear();
   waPlayMessagePop();
 }
 
@@ -3834,7 +3849,7 @@ async function gisaSendAudio(src, bars = null, recordMs = null) {
 function addCtaCard(html) {
   updatePreviousGroupForNewMessage("left");
   const item = { type:"cta", side:"left", html, time:nowTime(), cluster:getNewCluster("left") };
-  pushHistory(item); renderItem(item, true); scrollBottom();
+  pushHistory(item); renderItem(item, true); scrollBottomIfNear();
 }
 
 function typingDelayFor(text) {
