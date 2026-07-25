@@ -182,7 +182,7 @@ async function runDirectFunnel(chatId) {
       autoSplit: false,
       noTyping: true,
       extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
-        [{ text: "ACESSAR MEUS CONTEÚDINHOS! 🔓", callback_data: "ver_conteudinhos", style: "success" }],
+        [{ text: "CLIQUE PRA VER ESSA PUTA 😈", callback_data: "ver_conteudinhos", style: "success" }],
       ]}},
     }},
     { delay: 2000, jobId: jid("start", chatId, 3), removeOnComplete: true, removeOnFail: true }
