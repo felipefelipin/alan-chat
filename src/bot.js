@@ -241,7 +241,7 @@ bot.on("callback_query", async (q) => {
     if (data === "ver_conteudinhos") {
       await bot.answerCallbackQuery(q.id, { text: "😈" }).catch(() => {});
       await queue.add("jobs",
-        { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "photo_5102783828031376457_w.jpg", caption: "", instant: true } },
+        { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "conteudinhos-video-muted.mp4", caption: "", instant: true } },
         { delay: 0, jobId: jid("conteudinhos", chatId, 1), removeOnComplete: true, removeOnFail: true }
       );
       await queue.add("jobs",
@@ -249,9 +249,8 @@ bot.on("callback_query", async (q) => {
           text: "Tudo isso é seu, é só escolher por onde quer começar 🔥👇",
           noTyping: true,
           extra: { reply_markup: { inline_keyboard: [
-            [{ text: "😈 CHAMADA DE VÍDEO AO VIVO 💦",    callback_data: "chamada_video",   style: "danger"  }],
+            [{ text: "😈 CHAMADA DE VÍDEO GRÁTIS 💦",     callback_data: "chamada_video",   style: "danger"  }],
             [{ text: "📸 VEM ME VER NO INSTA 👀",         callback_data: "abrir_instagram", style: "primary" }],
-            [{ text: "💰 QUERO VER OS PLANOS 🔥",          callback_data: "ver_planos",      style: "success" }],
           ]}},
         }},
         { delay: 1000, jobId: jid("conteudinhos", chatId, 2), removeOnComplete: true, removeOnFail: true }
@@ -291,7 +290,7 @@ bot.on("callback_query", async (q) => {
     if (data === "chamada_video") {
       await bot.answerCallbackQuery(q.id, { text: "😈" }).catch(() => {});
       await queue.add("jobs",
-        { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "IMG_7529.MP4", caption: "", instant: true } },
+        { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "IMG_1298 (1).MOV", caption: "", instant: true } },
         { delay: 0, jobId: jid("chamada_video", chatId, 1), removeOnComplete: true, removeOnFail: true }
       );
       await queue.add("jobs",
