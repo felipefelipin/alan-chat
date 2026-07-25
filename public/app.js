@@ -169,10 +169,10 @@ function preloadCallVideo() {
 }
 
 const CONTACT = {
-  name: "Susana Barbosa",
-  username: "SusanaBarbosa",
+  name: "Gabriely Castro",
+  username: "GabrielyCastro",
   bio: "Aqui você faz o que quiser comigo... 🔥",
-  title: "Susana Barbosa",
+  title: "Gabriely Castro",
 };
 
 const PERSIST_KEY = "gisa_webapp_state_v7";
@@ -1334,7 +1334,7 @@ function runInitialLoadingScreen() {
       screen.classList.remove("lsScreen-visible");
       screen.addEventListener("transitionend", cleanup, { once: true });
       setTimeout(cleanup, 500); // rede de segurança caso transitionend não dispare
-    }, 3000);
+    }, 2000);
 
     let cleaned = false;
     function cleanup() {
@@ -4494,10 +4494,10 @@ function showLiveCallCta() {
       ">
         <div style="display:flex;align-items:center;gap:8px;">
           <span style="width:9px;height:9px;border-radius:50%;background:#25d366;flex-shrink:0;display:inline-block;animation:onlineDot 1.4s ease-in-out infinite;"></span>
-          <span style="color:#25d366;font-size:13px;font-weight:700;letter-spacing:.02em;">Susana Barbosa está online agora</span>
+          <span style="color:#25d366;font-size:13px;font-weight:700;letter-spacing:.02em;">Gabriely Castro está online agora</span>
         </div>
         <p style="color:rgba(255,255,255,.88);font-size:15px;font-weight:600;text-align:center;line-height:1.5;margin:0;">
-          Clique no botão abaixo pra receber uma chamada de vídeo de Susana Barbosa 🔥🥵
+          Clique no botão abaixo pra receber uma chamada de vídeo de Gabriely Castro 🔥🥵
         </p>
         <button id="btnLiveCall" style="
           width:100%;padding:17px 14px;border-radius:16px;border:0;cursor:pointer;
