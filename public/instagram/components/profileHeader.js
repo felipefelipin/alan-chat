@@ -33,10 +33,12 @@ export function createProfileHeader(profile, highlights, { onAvatarTap, onHighli
 
   const bio = el("div", { class: "ig-bio" }, profile.bioLines.map((line) => el("div", {}, line)));
 
-  const linkRow = el("a", { class: "ig-link-row", href: profile.link.url, target: "_blank", rel: "noopener" }, [
-    el("span", { class: "ig-row-icon", html: LINK_SVG }),
-    el("span", { class: "ig-link-text" }, profile.link.label),
-  ]);
+  const linkRow = profile.link
+    ? el("a", { class: "ig-link-row", href: profile.link.url, target: "_blank", rel: "noopener" }, [
+        el("span", { class: "ig-row-icon", html: LINK_SVG }),
+        el("span", { class: "ig-link-text" }, profile.link.label),
+      ])
+    : null;
 
   const musicRow = el("div", { class: "ig-music-row" }, [
     el("span", { class: "ig-row-icon", html: MUSIC_SVG }),

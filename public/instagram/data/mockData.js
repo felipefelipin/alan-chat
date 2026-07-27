@@ -17,7 +17,6 @@ export const PROFILE = {
     "18 aninhos",
     "Conteúdos diários sem censura 🔥",
   ],
-  link: { label: "privacy.com.br/alana", url: "#" },
   music: "Vem Me Satisfazer · Sua Música",
 };
 
