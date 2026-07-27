@@ -1301,7 +1301,7 @@ function mountConnectionHUD(host) {
       const btn = document.createElement("button");
       btn.className = "lsEnterBtn";
       btn.type = "button";
-      btn.textContent = "BRINDE: PRÊMIO GRÁTIS 😈";
+      btn.textContent = "👉 CLIQUE AQUI: BRINDE PRÊMIO GRÁTIS 😈";
       hudEl.appendChild(btn);
       requestAnimationFrame(() => btn.classList.add("lsEnterBtn-visible"));
       btn.addEventListener("click", onTap, { once: true });
@@ -1436,13 +1436,10 @@ function runConnectionLoadingScreen() {
     }
 
     let cleaned = false;
-    async function cleanup() {
+    function cleanup() {
       if (cleaned) return;
       cleaned = true;
       screen.remove();
-      // Mesma tela de carregamento de 2s do início do app (com o mesmo
-      // som) antes de seguir pro próximo passo do funil.
-      await runInitialLoadingScreen();
       resolve();
     }
   });
@@ -2420,10 +2417,15 @@ function runEntranceScreen() {
     // tela não tem nenhum campo de texto (o teclado nunca abre aqui), mover
     // pro body não muda nada visualmente — só deixa ela livre pra continuar
     // visível por cima do chat recém-montado enquanto os dois se cruzam.
-    function onEnterTap() {
+    async function onEnterTap() {
       ctaBtn.disabled = true;
       ctaBtn.classList.add("esCta-shine");
       hapticImpact("light");
+
+      // Mesma tela de carregamento de 2s do início do app (com o mesmo
+      // som) antes do efeito que revela o chat.
+      await runInitialLoadingScreen();
+
       // whoosh (mesmo som das cortinas — reforça o tema) + chime junto,
       // uma confirmação mais "cheia" pro momento de sair da tela.
       playIfSound(esPlayWhoosh);
