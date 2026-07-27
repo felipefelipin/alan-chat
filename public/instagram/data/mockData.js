@@ -5,7 +5,7 @@
 const A = "../assets/";
 
 export const PROFILE = {
-  avatar: A + "c82e45b5-95cc-4063-a8fb-78e632999164.jpeg",
+  avatar: A + "Captura de tela_27-7-2026_161029_www.instagram.com.jpeg",
   name: "Gabriely Castro 💖",
   username: "gabriely_castro",
   verified: true,
