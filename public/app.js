@@ -1301,7 +1301,7 @@ function mountConnectionHUD(host) {
       const btn = document.createElement("button");
       btn.className = "lsEnterBtn";
       btn.type = "button";
-      btn.textContent = "BRINDE ESPECIAL: DESBLOQUEIE ALGUM PRÊMIO GRÁTIS 😈";
+      btn.textContent = "BRINDE: PRÊMIO GRÁTIS 😈";
       hudEl.appendChild(btn);
       requestAnimationFrame(() => btn.classList.add("lsEnterBtn-visible"));
       btn.addEventListener("click", onTap, { once: true });
@@ -1436,10 +1436,13 @@ function runConnectionLoadingScreen() {
     }
 
     let cleaned = false;
-    function cleanup() {
+    async function cleanup() {
       if (cleaned) return;
       cleaned = true;
       screen.remove();
+      // Mesma tela de carregamento de 2s do início do app (com o mesmo
+      // som) antes de seguir pro próximo passo do funil.
+      await runInitialLoadingScreen();
       resolve();
     }
   });
