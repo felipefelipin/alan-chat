@@ -110,8 +110,8 @@ async function createCheckoutAndSend(chatId, plano) {
     // Telegram buscar a URL pública dava "wrong type of the web page
     // content" (o fetch dele não reconhecia o conteúdo como foto válida).
     try {
-      await bot.sendPhoto(chatId, fs.createReadStream(path.join(ASSETS_DIR, "photo_5114032093976530239_w.jpg")));
-    } catch (e) { console.error("pitch photo send error:", e.message); }
+      await bot.sendVideo(chatId, fs.createReadStream(path.join(ASSETS_DIR, "checkout-pitch-video.mp4")));
+    } catch (e) { console.error("pitch video send error:", e.message); }
     await sleep(1000);
     // Título em negrito (fora do bloco) + corpo em bloco de código —
     // Telegram não permite negrito DENTRO de um bloco de código, por isso
