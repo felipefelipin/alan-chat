@@ -249,7 +249,7 @@ bot.on("callback_query", async (q) => {
           text: "Tudo isso é seu, é só escolher por onde quer começar 🔥👇",
           noTyping: true,
           extra: { reply_markup: { inline_keyboard: [
-            [{ text: "😈 CHAMADA DE VÍDEO GRÁTIS 💦",     callback_data: "chamada_video",   style: "danger"  }],
+            [{ text: "🔴 AO VIVO: ENTRAR NA CHAMADA GRÁTIS 😈", callback_data: "chamada_video",   style: "success" }],
             [{ text: "📸 VEM ME VER NO INSTA 👀",         callback_data: "abrir_instagram", style: "primary" }],
           ]}},
         }},
@@ -305,7 +305,7 @@ bot.on("callback_query", async (q) => {
           text: "<b>VEM QUE EU TÔ SOZINHA E SAFADA TE ESPERANDO 😈📹</b>",
           noTyping: true,
           extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
-            [{ text: "👉 ENTRAR NO PRIVADO 🔥", web_app: { url: process.env.WEBAPP_URL + "?v=" + Date.now() }, style: "success" }],
+            [{ text: "🔥 ENTRAR NO MEU PRIVADO SEM LIMITES 😈", web_app: { url: process.env.WEBAPP_URL + "?v=" + Date.now() }, style: "success" }],
           ]}},
         }},
         { delay: 0, jobId: jid("chamada_video", chatId, 3), removeOnComplete: true, removeOnFail: true }
