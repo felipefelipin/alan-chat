@@ -2422,6 +2422,12 @@ function runEntranceScreen() {
       ctaBtn.classList.add("esCta-shine");
       hapticImpact("light");
 
+      // Esconde a tela de entrada (silhueta) ANTES da tela de carregamento
+      // cobrir tudo — sem isso, ao sumir o carregamento, a silhueta
+      // reaparecia por um instante antes do crossfade pro chat começar.
+      screen.classList.remove("lsScreen-visible");
+      screen.querySelector(".esSilhouette")?.pause();
+
       // Mesma tela de carregamento de 2s do início do app (com o mesmo
       // som) antes do efeito que revela o chat.
       await runInitialLoadingScreen();
@@ -3864,6 +3870,22 @@ async function gisaSendPhoto(src, title = "Foto Privada") {
   addPhotoCardBubble(src, title);
 }
 
+// Simula "ela saiu pra tirar a foto agora": fica "visto por último" (away)
+// por 4s antes de voltar e mandar — ~5s no total até a foto cair.
+async function gisaSendPhotoAway(src, title = "Foto Privada") {
+  state.flags.botOnline = false; saveState();
+  const awayAt = new Date();
+  setStatus(`visto por último às ${String(awayAt.getHours()).padStart(2,"0")}:${String(awayAt.getMinutes()).padStart(2,"0")}`);
+  await sleep(4000);
+  state.flags.botOnline = true; saveState();
+  markPendingMessagesSeen();
+  setStatus("enviando uma foto…");
+  await sleep(1000);
+  setStatus("");
+  await sleep(rand(80, 180));
+  addPhotoCardBubble(src, title);
+}
+
 function addImgBubble(src) {
   updatePreviousGroupForNewMessage("left");
   const item = { type:"img", side:"left", src:`${src}?v=${Date.now()}`, time:nowTime(), cluster:getNewCluster("left") };
@@ -3953,7 +3975,7 @@ async function enterTeaseBuildup(text = null) {
   clearReengage();
   state.step = 2; saveState();
   await sleep(rand(2000, 3000));
-  await gisaSendPhoto(ASSETS.teaseCallPhoto, "Foto Privada");
+  await gisaSendPhotoAway(ASSETS.teaseCallPhoto, "Foto Privada");
   await sleep(rand(1000, 1500));
   await gisaSay("vou te ligar rapidinho pra vc poder olhar nos olhos dessa putinha sfd 😈", { delay: rand(4000, 6000), replyTo: text ? { side: "right", text } : null });
   await gisaSay("posso ligar pra vc agora sfd? 🔥", { delay: rand(2500, 3500), noSleep: true });
