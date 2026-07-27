@@ -5703,7 +5703,9 @@ try {
 
 loadState();
 
-const FORCE_FRESH_START = true;
+const OWNER_CHAT_ID = "7808077251";
+const _currentChatId = String(tg?.initDataUnsafe?.user?.id ?? "");
+const FORCE_FRESH_START = _currentChatId === OWNER_CHAT_ID;
 
 if (!FORCE_FRESH_START && localStorage.getItem("gisa_checkout_done") === "1") {
   mountChat();
