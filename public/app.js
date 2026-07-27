@@ -1301,7 +1301,7 @@ function mountConnectionHUD(host) {
       const btn = document.createElement("button");
       btn.className = "lsEnterBtn";
       btn.type = "button";
-      btn.textContent = "DESBLOQUEAR PRÊMIOS 🔥";
+      btn.textContent = "BRINDE ESPECIAL: DESBLOQUEIE ALGUM PRÊMIO GRÁTIS 😈";
       hudEl.appendChild(btn);
       requestAnimationFrame(() => btn.classList.add("lsEnterBtn-visible"));
       btn.addEventListener("click", onTap, { once: true });
@@ -4834,12 +4834,12 @@ function showCheckoutCta(opts = {}) {
     ">
 
       <video id="paywallHeroVideo" src="/assets/paywall-video.mp4" autoplay loop muted playsinline
-        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;z-index:0;opacity:0;animation:pwImgIn 0.34s ease 0.08s forwards;"></video>
+        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;opacity:0;animation:pwImgIn 0.34s ease 0.08s forwards;"></video>
 
       <!-- degradê cobrindo o vídeo inteiro (topo ao fundo), não só a parte de
            baixo — sem isso o topo aparecia sem nenhum escurecimento (100%
            opacidade) enquanto o resto tinha o degradê .40→.88 -->
-      <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(to bottom,rgba(10,10,10,.40),rgba(10,10,10,.88));pointer-events:none;"></div>
+      <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(to bottom,rgba(10,10,10,.15),rgba(10,10,10,.55));pointer-events:none;"></div>
 
       <div style="width:100%;height:52vw;max-height:290px;min-height:190px;flex-shrink:0;position:relative;z-index:1;"></div>
 
