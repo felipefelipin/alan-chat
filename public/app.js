@@ -398,8 +398,14 @@ const ScrollController = (() => {
 
   // chamado pelo ViewportTracker, na mesma leitura de frame que a altura —
   // altura e scroll sempre derivados da mesma amostra, nunca dessincronizados.
+  // Nunca escreve enquanto o dedo está na tela: no primeiro toque no campo
+  // de texto, o teclado nativo costuma demorar mais pra abrir (renderiza
+  // pela 1ª vez), então a fase "Opening" dura mais — sem essa checagem,
+  // esse loop brigava com o gesto de subir o scroll durante esse período
+  // mais longo, empurrando de volta pro final a cada frame.
   function anchorToBottom() {
     if (!chat) return;
+    if (touching) return;
     chat.scrollTop = chat.scrollHeight - chat.clientHeight;
   }
 
@@ -3993,7 +3999,7 @@ async function enterTeaseBuildup(text = null) {
 async function enterCallReadyNow(replyText = null) {
   clearReengage();
   state.step = 5; saveState();
-  await sleep(rand(1000, 1500));
+  await sleep(3000);
   await gisaSay("tá bom amor, já vou ligar.", { delay: rand(1500, 2500), replyTo: replyText ? { side: "right", text: replyText } : null });
   await sleep(6000);
   showIncomingCall();
@@ -4434,7 +4440,7 @@ function addCallNotifBubble(seconds) {
 }
 
 async function doCallPaywall() {
-  await sleep(1000);
+  await sleep(3000);
   await gisaSay("tenho muita coisa pra eu te mostrar ainda... 😈", { delay: rand(3000, 4500) });
   await gisaSay("mas pra isso preciso q vc desbloquie o acesso, pra me ver bem putinha só pra vc.", { delay: rand(3000, 4500), noSleep: true });
   await gisaSay("vai cair agora ai pra vc desbloquear é só clicar e ir pro telegram que o resto só vai depender de vc 🥵🔥", { delay: rand(3500, 5000), noSleep: true });
@@ -4863,7 +4869,7 @@ function showCheckoutCta(opts = {}) {
     ">
 
       <video id="paywallHeroVideo" src="/assets/paywall-video.mp4" autoplay loop muted playsinline
-        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;opacity:0;animation:pwImgIn 0.34s ease 0.08s forwards;"></video>
+        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%;z-index:0;opacity:0;animation:pwImgIn 0.34s ease 0.08s forwards;"></video>
 
       <!-- degradê cobrindo o vídeo inteiro (topo ao fundo), não só a parte de
            baixo — sem isso o topo aparecia sem nenhum escurecimento (100%
