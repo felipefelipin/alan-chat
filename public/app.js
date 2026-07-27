@@ -3876,9 +3876,11 @@ async function gisaSendPhotoAway(src, title = "Foto Privada") {
   state.flags.botOnline = false; saveState();
   const awayAt = new Date();
   setStatus(`visto por último às ${String(awayAt.getHours()).padStart(2,"0")}:${String(awayAt.getMinutes()).padStart(2,"0")}`);
-  await sleep(4000);
+  await sleep(7000);
   state.flags.botOnline = true; saveState();
   markPendingMessagesSeen();
+  setStatus("online");
+  await sleep(2000);
   setStatus("enviando uma foto…");
   await sleep(1000);
   setStatus("");
