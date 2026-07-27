@@ -125,6 +125,7 @@ img, video { display: block; max-width: 100%; }
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
+  object-position: 65% 12%;
   border: 2.5px solid #000;
 }
 
@@ -428,7 +429,7 @@ img, video { display: block; max-width: 100%; }
   gap: 9px;
 }
 .story-header-avatar {
-  width: 30px; height: 30px; border-radius: 50%; object-fit: cover;
+  width: 30px; height: 30px; border-radius: 50%; object-fit: cover; object-position: 65% 12%;
 }
 .story-header-name { font-size: 13.5px; font-weight: 600; color: #fff; }
 .story-header-time { font-size: 13px; color: rgba(255,255,255,.7); }
@@ -515,7 +516,7 @@ img, video { display: block; max-width: 100%; }
   gap: 10px;
   padding: calc(48px + var(--safe-top)) 12px 10px;
 }
-.pv-header-avatar { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+.pv-header-avatar { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; object-position: 65% 12%; }
 .pv-header-name { font-size: 13.5px; font-weight: 600; }
 .pv-header-spacer { flex: 1; }
 .pv-icon-btn { padding: 6px; }
@@ -779,6 +780,7 @@ img, video { display: block; max-width: 100%; }
   width: 30px; height: 30px;
   border-radius: 50%;
   object-fit: cover;
+  object-position: 65% 12%;
   border: 1.5px solid rgba(255,255,255,.7);
 }
 .reel-info-name {
