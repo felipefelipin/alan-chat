@@ -9,7 +9,7 @@ export const PROFILE = {
   name: "Gabriely Castro 💖",
   username: "gabriely_castro",
   verified: true,
-  postsCount: 7,
+  postsCount: 8,
   followers: "122 mil",
   following: 405,
   bioLines: [
@@ -26,8 +26,8 @@ export const PROFILE_STORY = {
   name: PROFILE.name,
   avatar: PROFILE.avatar,
   items: [
-    { type: "video", src: A + "IMG_1382.MOV" },
-    { type: "video", src: A + "IMG_7088.MOV" },
+    { type: "video", src: A + "ig-reel-1.mp4" },
+    { type: "video", src: A + "ig-reel-2.mp4" },
   ],
 };
 
@@ -38,7 +38,7 @@ export const HIGHLIGHTS = [
     label: "VIP 🔥",
     cover: A + "Telegram-Logo.png",
     items: [
-      { type: "image", src: A + "photo_5071206571341188083_w.jpg" },
+      { type: "image", src: A + "ig-highlight-1.jpeg" },
     ],
   },
 ];
@@ -65,13 +65,14 @@ const MOCK_COMMENTS = [
 function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
 const videoPosts = [
-  A + "DU0kh07Dbx6.mp4",
-  A + "DWJmaAbjRAx.mp4",
-  A + "DXHZFcQDUNO_1.mp4",
-  A + "DXM-m3ric7o.mp4",
-  A + "DXMiCuVDe1P.mp4",
-  A + "DYA0vrApG1V.mp4",
-  A + "Dasp1yqxPnH.mp4",
+  A + "ig-reel-1.mp4",
+  A + "ig-reel-2.mp4",
+  A + "ig-reel-3.mp4",
+  A + "ig-reel-4.mp4",
+  A + "ig-reel-5.mp4",
+  A + "ig-reel-6.mp4",
+  A + "ig-reel-7.mp4",
+  A + "ig-reel-8.mp4",
 ];
 
 export const POSTS = [
