@@ -173,7 +173,7 @@ async function runDirectFunnel(chatId) {
 
   await queue.add("jobs",
     { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "WhatsApp Image 2026-07-25 at 15.29.35.jpeg", caption: "", instant: true } },
-    { delay: 1000, jobId: jid("start", chatId, 2), removeOnComplete: true, removeOnFail: true }
+    { delay: 0, jobId: jid("start", chatId, 2), removeOnComplete: true, removeOnFail: true }
   );
 
   await queue.add("jobs",
@@ -185,7 +185,7 @@ async function runDirectFunnel(chatId) {
         [{ text: "👉 CLIQUE PRA VER ESSA PUTA 😈", callback_data: "ver_conteudinhos", style: "success" }],
       ]}},
     }},
-    { delay: 2000, jobId: jid("start", chatId, 3), removeOnComplete: true, removeOnFail: true }
+    { delay: 0, jobId: jid("start", chatId, 3), removeOnComplete: true, removeOnFail: true }
   );
 }
 
@@ -253,7 +253,7 @@ bot.on("callback_query", async (q) => {
             [{ text: "📸 VEM ME VER NO INSTA 👀",         callback_data: "abrir_instagram", style: "primary" }],
           ]}},
         }},
-        { delay: 1000, jobId: jid("conteudinhos", chatId, 2), removeOnComplete: true, removeOnFail: true }
+        { delay: 0, jobId: jid("conteudinhos", chatId, 2), removeOnComplete: true, removeOnFail: true }
       );
       return;
     }
@@ -273,7 +273,7 @@ bot.on("callback_query", async (q) => {
             [{ text: "😈 Espiar meu Insta", web_app: { url: process.env.WEBAPP_URL + "/instagram/?v=" + Date.now() }, style: "success" }],
           ]}},
         }},
-        { delay: 1000, jobId: jid("instagram", chatId, 2), removeOnComplete: true, removeOnFail: true }
+        { delay: 0, jobId: jid("instagram", chatId, 2), removeOnComplete: true, removeOnFail: true }
       );
       return;
     }
@@ -298,7 +298,7 @@ bot.on("callback_query", async (q) => {
           text: "Isso que você viu é só o começo, meu amor 😈💦\n\nLá dentro eu fico totalmente pelada e sem limites pra você: chat bem safado, videochamada gemendo ao vivo, fotos íntimas e uma surpresa bem quente que só quem entra vai descobrir… 🎁\n\nÉ exclusivo, bem safadinho e tá disponível só agora.\n\nVem logo, tô molhadinha te esperando… 😘",
           noTyping: true,
         }},
-        { delay: 1000, jobId: jid("chamada_video", chatId, 2), removeOnComplete: true, removeOnFail: true }
+        { delay: 0, jobId: jid("chamada_video", chatId, 2), removeOnComplete: true, removeOnFail: true }
       );
       await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
@@ -308,7 +308,7 @@ bot.on("callback_query", async (q) => {
             [{ text: "👉 ENTRAR NO PRIVADO 🔥", web_app: { url: process.env.WEBAPP_URL + "?v=" + Date.now() }, style: "success" }],
           ]}},
         }},
-        { delay: 4500, jobId: jid("chamada_video", chatId, 3), removeOnComplete: true, removeOnFail: true }
+        { delay: 0, jobId: jid("chamada_video", chatId, 3), removeOnComplete: true, removeOnFail: true }
       );
       await setEtapa(chatId, "webapp_pending");
       await schedulePreNudge(chatId);
@@ -321,7 +321,7 @@ bot.on("callback_query", async (q) => {
       await setEtapa(chatId, "engajado");
       await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: { text: "tá… quando quiser, volta aqui.", autoSplit: true } },
-        { delay: rand(900, 1600), jobId: jid("webapp_later", chatId), removeOnComplete: true, removeOnFail: true }
+        { delay: 0, jobId: jid("webapp_later", chatId), removeOnComplete: true, removeOnFail: true }
       );
       return;
     }
