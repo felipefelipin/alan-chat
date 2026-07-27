@@ -176,7 +176,7 @@ const CONTACT = {
 };
 
 const PERSIST_KEY = "gisa_webapp_state_v7";
-const CHECKOUT_URL = "https://t.me/alanalemesoficial_bot"; // fallback sem Telegram WebApp
+const CHECKOUT_URL = "https://t.me/gabrielycastroof_bot"; // fallback sem Telegram WebApp
 
 function safeJsonParse(s) {
   try { return JSON.parse(s); } catch { return null; }
