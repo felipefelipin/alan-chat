@@ -246,7 +246,7 @@ bot.on("callback_query", async (q) => {
       );
       await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
-          text: "Tudo isso é seu, é só escolher por onde quer começar 🔥👇",
+          text: "Gostou do que viu? 😈 Tem muito mais te esperando, só escolher por onde entrar 👇",
           noTyping: true,
           extra: { reply_markup: { inline_keyboard: [
             [{ text: "🔴 AO VIVO: ENTRAR NA CHAMADA GRÁTIS 😈", callback_data: "chamada_video",   style: "success" }],
