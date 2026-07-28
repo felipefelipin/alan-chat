@@ -4014,8 +4014,8 @@ async function enterCallReadyNow(replyText = null) {
   clearReengage();
   state.step = 5; saveState();
   trackEvent("MINIAPP_STEP_CALL_READY");
-  await sleep(3000);
-  await gisaSay("tá bom amor, já vou ligar.", { delay: rand(1500, 2500), replyTo: replyText ? { side: "right", text: replyText } : null });
+  await sleep(5000); // silêncio antes de "digitando..." aparecer
+  await gisaSay("tá bom amor, já vou ligar.", { delay: 4000, replyTo: replyText ? { side: "right", text: replyText } : null });
   await sleep(6000);
   showIncomingCall();
 }
@@ -4325,12 +4325,14 @@ async function startFunnelCall() {
     vid.pause();
     vid.currentTime = 0;
 
-    const minBlackScreen = new Promise((resolve) => setTimeout(resolve, 1000));
-    // 1s de tela preta (inalterado) — só que agora a revelação espera as
-    // DUAS coisas: o tempo mínimo E o vídeo genuinamente pronto pra
-    // reproduzir. Antes o play() era chamado sem essa garantia, então o
-    // vídeo aparecia mas ficava "congelado" nos primeiros instantes
-    // enquanto ainda bufferizava/decodificava.
+    const minBlackScreen = new Promise((resolve) => setTimeout(resolve, 3500));
+    // 3.5s de tela preta com "Conectando..." — dá tempo de parecer que a
+    // chamada está mesmo entrando antes da modelo aparecer, em vez de
+    // aparecer instantaneamente ao aceitar. A revelação espera as DUAS
+    // coisas: esse tempo mínimo E o vídeo genuinamente pronto pra
+    // reproduzir. Sem essa garantia, o vídeo aparecia mas ficava
+    // "congelado" nos primeiros instantes enquanto ainda bufferizava/
+    // decodificava.
     Promise.all([minBlackScreen, videoReady(vid)]).then(() => {
       vid.play().catch(() => {});
       vid.style.opacity = "1";
@@ -4892,7 +4894,7 @@ function showCheckoutCta(opts = {}) {
       animation:pwSlideUp 0.42s cubic-bezier(0.34,1.56,0.64,1) forwards;
     ">
 
-      <video id="paywallHeroVideo" src="/assets/paywall-video.mp4" autoplay loop muted playsinline
+      <video id="paywallHeroVideo" src="/assets/%23viral%20(7).mp4" autoplay loop muted playsinline
         style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%;z-index:0;opacity:0;animation:pwImgIn 0.34s ease 0.08s forwards;"></video>
 
       <!-- degradê cobrindo o vídeo inteiro (topo ao fundo), não só a parte de
