@@ -4858,6 +4858,7 @@ function reopenPaywall() {
 
 function showCheckoutCta(opts = {}) {
   trackEvent("MINIAPP_PAYWALL_SHOWN");
+  try { localStorage.setItem("gisa_paywall_reached", "1"); } catch {}
   lockChat();
 
   const overlay = document.createElement("div");
@@ -5731,8 +5732,17 @@ const _currentChatId = String(tg?.initDataUnsafe?.user?.id ?? "");
 const FORCE_FRESH_START = _currentChatId === OWNER_CHAT_ID;
 
 if (!FORCE_FRESH_START && localStorage.getItem("gisa_checkout_done") === "1") {
+  // já girou a roleta de desconto e chegou no checkout antes — reabrir vai
+  // direto pro botão de desbloquear, e ele já pula reto pro checkout, sem
+  // repetir a roleta de desconto.
   mountChat();
   setTimeout(() => showCheckoutCta({ skipRoulette: true }), 300);
+} else if (!FORCE_FRESH_START && localStorage.getItem("gisa_paywall_reached") === "1") {
+  // chegou a ver "desbloquear acesso" mas não completou a roleta de
+  // desconto — reabrir vai direto pro botão, mas clicar nele ainda leva
+  // pra roleta de desconto normalmente (não pula pro checkout direto).
+  mountChat();
+  setTimeout(() => showCheckoutCta({ skipRoulette: false }), 300);
 } else {
   state.history        = [];
   state.step           = 0;
