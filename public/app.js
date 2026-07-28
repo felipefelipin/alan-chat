@@ -1360,7 +1360,11 @@ function runInitialLoadingScreen() {
 function runConnectionLoadingScreen() {
   trackEvent("MINIAPP_CONNECTION_SCREEN");
   return new Promise((resolve) => {
-    const FALLBACK_DURATION = 3000; // só usado se o vídeo falhar/sem metadata
+    // Duração fixa da verificação, independente do vídeo usado como fundo —
+    // vídeos mais curtos que isso (ex.: 4s) simplesmente terminam e ficam
+    // parados no último frame, como se fosse uma foto, enquanto o HUD
+    // continua no mesmo ritmo de sempre até completar.
+    const VERIFY_DURATION = 15000;
 
     const screen = document.createElement("div");
     screen.className = "lsScreen";
@@ -1376,14 +1380,11 @@ function runConnectionLoadingScreen() {
     let revealed = 0;
     let rafId = null;
     let verified = false;
-    let fallbackStart = null;
+    let startedAt = null;
 
     function computeProgress(now) {
-      if (video.duration && isFinite(video.duration) && video.duration > 0) {
-        return Math.min(1, video.currentTime / video.duration);
-      }
-      if (fallbackStart === null) fallbackStart = now;
-      return Math.min(1, (now - fallbackStart) / FALLBACK_DURATION);
+      if (startedAt === null) startedAt = now;
+      return Math.min(1, (now - startedAt) / VERIFY_DURATION);
     }
 
     function frame(now) {
@@ -1399,7 +1400,10 @@ function runConnectionLoadingScreen() {
     }
     rafId = requestAnimationFrame(frame);
 
-    video.addEventListener("ended", onVerified);
+    // Sem listener de "ended" — o vídeo pode ser mais curto que
+    // VERIFY_DURATION e simplesmente fica parado no último frame (loop=false
+    // já garante isso) enquanto o HUD continua no tempo fixo. Só erro real
+    // de carregamento encerra a verificação antes da hora.
     video.addEventListener("error", onVerified); // não trava a experiência se o vídeo falhar
 
     function onVerified() {
