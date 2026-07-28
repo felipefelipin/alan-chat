@@ -15,7 +15,7 @@ const ASSETS_DIR = path.join(__dirname, "..", "public", "assets");
 process.on("unhandledRejection", (err) => console.error("unhandledRejection:", err));
 process.on("uncaughtException", (err) => console.error("uncaughtException:", err));
 
-// ── Cache de file_id — evita reupload do vídeo a cada clique em plano ──────
+// ── Cache de file_id — evita reupload da foto a cada clique em plano ──────
 const fileIdCache = new Map();
 async function loadFileCacheFromDB() {
   try {
@@ -28,11 +28,11 @@ async function saveFileIdToDB(filename, fileId) {
     await prisma.fileCache.upsert({ where: { filename }, update: { fileId }, create: { filename, fileId } });
   } catch (e) { console.error("[cache] erro ao salvar no banco:", e.message); }
 }
-async function sendCachedVideo(chatId, filename, opts = {}) {
+async function sendCachedPhoto(chatId, filename, opts = {}) {
   const cached = fileIdCache.get(filename);
-  if (cached) return bot.sendVideo(chatId, cached, opts);
-  const sent = await bot.sendVideo(chatId, fs.createReadStream(path.join(ASSETS_DIR, filename)), opts, { filename, contentType: "video/mp4" });
-  const fid = sent?.video?.file_id;
+  if (cached) return bot.sendPhoto(chatId, cached, opts);
+  const sent = await bot.sendPhoto(chatId, fs.createReadStream(path.join(ASSETS_DIR, filename)), opts, { filename, contentType: "image/jpeg" });
+  const fid = sent?.photo?.at(-1)?.file_id;
   if (fid) { fileIdCache.set(filename, fid); saveFileIdToDB(filename, fid); }
   return sent;
 }
@@ -128,12 +128,12 @@ async function createCheckoutAndSend(chatId, plano) {
   // alguns segundos, e isso não pode segurar a reação instantânea ao clique.
   const pitch = PLAN_PITCH[plano];
   if (pitch) {
-    // file_id cacheado (ver sendCachedVideo) — só faz upload real do arquivo
+    // file_id cacheado (ver sendCachedPhoto) — só faz upload real do arquivo
     // na primeira vez; depois disso o Telegram serve direto do CDN deles,
     // sem esperar upload nenhum.
     try {
-      await sendCachedVideo(chatId, "checkout-pitch-video.mp4");
-    } catch (e) { console.error("pitch video send error:", e.message); }
+      await sendCachedPhoto(chatId, "1fc8af10-6705-4b1f-9c51-f3f822a8c5bf.jpg");
+    } catch (e) { console.error("pitch photo send error:", e.message); }
     // Título em negrito (fora do bloco) + corpo em bloco de código —
     // Telegram não permite negrito DENTRO de um bloco de código, por isso
     // são duas faixas de formatação separadas na mesma mensagem.
