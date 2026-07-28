@@ -15,8 +15,30 @@ const ASSETS_DIR = path.join(__dirname, "..", "public", "assets");
 process.on("unhandledRejection", (err) => console.error("unhandledRejection:", err));
 process.on("uncaughtException", (err) => console.error("uncaughtException:", err));
 
+// ── Cache de file_id — evita reupload do vídeo a cada clique em plano ──────
+const fileIdCache = new Map();
+async function loadFileCacheFromDB() {
+  try {
+    const rows = await prisma.fileCache.findMany();
+    for (const row of rows) fileIdCache.set(row.filename, row.fileId);
+  } catch (e) { console.error("[cache] erro ao carregar do banco:", e.message); }
+}
+async function saveFileIdToDB(filename, fileId) {
+  try {
+    await prisma.fileCache.upsert({ where: { filename }, update: { fileId }, create: { filename, fileId } });
+  } catch (e) { console.error("[cache] erro ao salvar no banco:", e.message); }
+}
+async function sendCachedVideo(chatId, filename, opts = {}) {
+  const cached = fileIdCache.get(filename);
+  if (cached) return bot.sendVideo(chatId, cached, opts);
+  const sent = await bot.sendVideo(chatId, fs.createReadStream(path.join(ASSETS_DIR, filename)), opts, { filename, contentType: "video/mp4" });
+  const fid = sent?.video?.file_id;
+  if (fid) { fileIdCache.set(filename, fid); saveFileIdToDB(filename, fid); }
+  return sent;
+}
+loadFileCacheFromDB();
+
 const rand  = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 // helper: BullMQ nessa versão não aceita ":" em jobId
 const jid = (...parts) => parts.join("-");
@@ -106,13 +128,12 @@ async function createCheckoutAndSend(chatId, plano) {
   // alguns segundos, e isso não pode segurar a reação instantânea ao clique.
   const pitch = PLAN_PITCH[plano];
   if (pitch) {
-    // Upload direto do arquivo local (multipart), não a URL — pedir pro
-    // Telegram buscar a URL pública dava "wrong type of the web page
-    // content" (o fetch dele não reconhecia o conteúdo como foto válida).
+    // file_id cacheado (ver sendCachedVideo) — só faz upload real do arquivo
+    // na primeira vez; depois disso o Telegram serve direto do CDN deles,
+    // sem esperar upload nenhum.
     try {
-      await bot.sendVideo(chatId, fs.createReadStream(path.join(ASSETS_DIR, "checkout-pitch-video.mp4")));
+      await sendCachedVideo(chatId, "checkout-pitch-video.mp4");
     } catch (e) { console.error("pitch video send error:", e.message); }
-    await sleep(1000);
     // Título em negrito (fora do bloco) + corpo em bloco de código —
     // Telegram não permite negrito DENTRO de um bloco de código, por isso
     // são duas faixas de formatação separadas na mesma mensagem.
