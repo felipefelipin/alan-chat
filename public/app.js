@@ -1319,6 +1319,7 @@ function mountConnectionHUD(host) {
 // preto + spinner por ~3s, depois um fade antes de revelar a tela de
 // verificação. Timing fixo, coreografado por nós.
 function runInitialLoadingScreen() {
+  trackEvent("MINIAPP_LOADING_SCREEN");
   return new Promise((resolve) => {
     const screen = document.createElement("div");
     screen.className = "lsScreen";
@@ -1357,6 +1358,7 @@ function runInitialLoadingScreen() {
 // concluir, o HUD some e o vídeo fica congelado no último frame até o
 // usuário tocar em "Entrar no Chat" — só aí a Promise resolve.
 function runConnectionLoadingScreen() {
+  trackEvent("MINIAPP_CONNECTION_SCREEN");
   return new Promise((resolve) => {
     const FALLBACK_DURATION = 3000; // só usado se o vídeo falhar/sem metadata
 
@@ -1432,6 +1434,7 @@ function runConnectionLoadingScreen() {
     // mesma transição de opacidade já usada na entrada) — sem blackout/
     // spinner/shockwave/iris, mas mantém o som de confirmação.
     function onEnterTap() {
+      trackEvent("MINIAPP_CONNECTION_ENTER_TAP");
       _tryUnlockEntranceAudio(); // clique real e direto — necessário pro destravamento funcionar de fato
       hapticImpact("medium");
       lsPlaySuccessChime();
@@ -1917,6 +1920,7 @@ function mountConfettiBurst(host) {
 // resolve quando a tela termina sua própria saída). Reaproveita
 // mountParticleSystem verbatim; a saída é só um fade + som de confirmação.
 function runRouletteScreen() {
+  trackEvent("MINIAPP_ROULETTE_SCREEN");
   return new Promise((resolve) => {
     const screen = document.createElement("div");
     screen.className = "lsScreen";
@@ -1971,6 +1975,7 @@ function runRouletteScreen() {
     }
 
     function onSpinTap() {
+      trackEvent("MINIAPP_ROULETTE_SPIN1");
       _tryUnlockEntranceAudio(); // clique real e direto — necessário pro destravamento funcionar de fato
       spinBtn.disabled = true;
       spinBtn.classList.add("rwSpinBtn-disabled");
@@ -2024,6 +2029,7 @@ function runRouletteScreen() {
     }
 
     function onRetryTap() {
+      trackEvent("MINIAPP_ROULETTE_SPIN2");
       hapticImpact("medium");
 
       // some com o resultado da 1ª tentativa antes de girar de novo.
@@ -2050,6 +2056,7 @@ function runRouletteScreen() {
 
     // 2ª tentativa — sempre cai em 👑 PREMIUM.
     function onFinalSpinDone() {
+      trackEvent("MINIAPP_ROULETTE_WIN");
       lsPlayWinFanfare();
       hapticNotify("success");
       confetti = mountConfettiBurst(screen);
@@ -2079,6 +2086,7 @@ function runRouletteScreen() {
     // blackout/spinner/shockwave/iris, mas mantém o som de confirmação.
     // mountChat() já faz seu próprio fadeIn.
     function onEnterTap() {
+      trackEvent("MINIAPP_ROULETTE_ENTER_TAP");
       hapticImpact("medium");
       lsPlaySuccessChime();
       particles.stop();
@@ -2133,6 +2141,7 @@ const DISCOUNT_SEGMENTS = [
 ];
 
 function runDiscountRouletteScreen() {
+  trackEvent("MINIAPP_DISCOUNT_ROULETTE_SCREEN");
   return new Promise((resolve) => {
     const screen = document.createElement("div");
     screen.className = "lsScreen";
@@ -2174,6 +2183,7 @@ function runDiscountRouletteScreen() {
     let confetti = null;
 
     function onSpinTap() {
+      trackEvent("MINIAPP_DISCOUNT_ROULETTE_SPIN");
       spinBtn.disabled = true;
       spinBtn.classList.add("rwSpinBtn-disabled");
       stage.querySelector(".rwGlow")?.classList.add("rwGlow-spinning");
@@ -2239,6 +2249,7 @@ function runDiscountRouletteScreen() {
     // real pro checkout/Telegram (é aqui, e só aqui, que openCheckout roda —
     // nunca mais direto no clique de "DESBLOQUEAR ACESSO" do paywall).
     function onClaimTap() {
+      trackEvent("MINIAPP_DISCOUNT_ROULETTE_CLAIM");
       hapticImpact("medium");
       lsPlaySuccessChime();
       particles.stop();
@@ -2282,6 +2293,7 @@ function esPrefersReducedMotion() {
 }
 
 function runEntranceScreen() {
+  trackEvent("MINIAPP_ENTRANCE_SCREEN");
   return new Promise((resolve) => {
     const reduced = esPrefersReducedMotion();
     const scale = reduced ? ES_REDUCED_MOTION_SCALE : 1;
@@ -2424,6 +2436,7 @@ function runEntranceScreen() {
     // pro body não muda nada visualmente — só deixa ela livre pra continuar
     // visível por cima do chat recém-montado enquanto os dois se cruzam.
     async function onEnterTap() {
+      trackEvent("MINIAPP_ENTRANCE_CTA_TAP");
       ctaBtn.disabled = true;
       ctaBtn.classList.add("esCta-shine");
       hapticImpact("light");
@@ -3982,6 +3995,7 @@ function isNegative(text) {
 async function enterTeaseBuildup(text = null) {
   clearReengage();
   state.step = 2; saveState();
+  trackEvent("MINIAPP_STEP_TEASE_BUILDUP");
   await sleep(rand(2000, 3000));
   await gisaSendPhotoAway(ASSETS.teaseCallPhoto, "Foto Privada");
   await sleep(rand(1000, 1500));
@@ -3999,6 +4013,7 @@ async function enterTeaseBuildup(text = null) {
 async function enterCallReadyNow(replyText = null) {
   clearReengage();
   state.step = 5; saveState();
+  trackEvent("MINIAPP_STEP_CALL_READY");
   await sleep(3000);
   await gisaSay("tá bom amor, já vou ligar.", { delay: rand(1500, 2500), replyTo: replyText ? { side: "right", text: replyText } : null });
   await sleep(6000);
@@ -4013,6 +4028,7 @@ async function enterCallReadyNow(replyText = null) {
 async function enterDesireEscalation() {
   clearReengage();
   state.step = 4; saveState();
+  trackEvent("MINIAPP_STEP_DESIRE_ESCALATION");
   await sleep(rand(4000, 5000));
   await gisaSay("entra na chamada comigo. Quero sentir você me comendo com os olhos",  { delay: rand(4500, 6500) });
   await gisaSay("vai entrar ou vai ficar só se masturbando por fora como os outros?",  { delay: rand(4200, 6000), noSleep: true });
@@ -4021,6 +4037,7 @@ async function enterDesireEscalation() {
 async function enterCallConnecting(replyText = null) {
   clearReengage();
   state.step = 5; saveState();
+  trackEvent("MINIAPP_STEP_CALL_CONNECTING");
   await sleep(3000); // 3s de silêncio antes de aparecer "digitando..."
   // sem "delay" fixo aqui — usa o cálculo padrão de typingDelayFor(text) (ver
   // gisaSay), que dura proporcional ao tamanho da mensagem, pra ficar
@@ -4055,6 +4072,7 @@ async function enterCallConnecting(replyText = null) {
 }
 
 function showIncomingCall() {
+  trackEvent("MINIAPP_INCOMING_CALL_SHOWN");
   // Força fechar teclado antes de mostrar a tela de chamada
   FocusGateway.requestDismiss();
 
@@ -4144,6 +4162,7 @@ function showIncomingCall() {
 
 async function startFunnelCall() {
   state.step = 5; saveState();
+  trackEvent("MINIAPP_FUNNEL_CALL_STARTED");
 
   const callEl = document.createElement("div");
   callEl.id = "funnelCallScreen";
@@ -4373,6 +4392,7 @@ async function startFunnelCall() {
     addCallNotifBubble(elapsed);
 
     state.step = 6; saveState();
+    trackEvent("MINIAPP_CALL_ENDED");
     await doCallPaywall();
   };
 
@@ -4440,6 +4460,7 @@ function addCallNotifBubble(seconds) {
 }
 
 async function doCallPaywall() {
+  trackEvent("MINIAPP_PAYWALL_SEQUENCE_START");
   await sleep(3000);
   await gisaSay("tenho muita coisa pra eu te mostrar ainda... 😈", { delay: rand(3000, 4500) });
   await gisaSay("mas pra isso preciso q vc desbloquie o acesso, pra me ver bem putinha só pra vc.", { delay: rand(3000, 4500), noSleep: true });
@@ -4699,6 +4720,7 @@ async function startScript() {
   if (state.flags.startedChat) return;
   state.flags.startedChat = true;
   state.step = 1; saveState();
+  trackEvent("MINIAPP_CHAT_STARTED");
   _flowRunning = true;
   try {
     // Fica com "visto por último" por 5s (já aparece assim desde mountChat), depois online
@@ -4814,6 +4836,7 @@ function _dismissPaywall(overlay) {
 }
 
 function reopenPaywall() {
+  trackEvent("MINIAPP_PAYWALL_REOPEN");
   if (!_paywallOverlay) return;
   const overlay = _paywallOverlay;
   const sheet   = overlay.querySelector("#pwSheet");
@@ -4940,7 +4963,7 @@ function showCheckoutCta(opts = {}) {
         : () => { _dismissPaywall(overlay); runDiscountRouletteScreen(); };
     }
     const dismiss = document.getElementById("paywallDismiss");
-    if (dismiss) dismiss.onclick = () => _dismissPaywall(overlay);
+    if (dismiss) dismiss.onclick = () => { trackEvent("MINIAPP_PAYWALL_DISMISS"); _dismissPaywall(overlay); };
   }, 0);
 
   setTimeout(async () => {
