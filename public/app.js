@@ -94,7 +94,7 @@ function _tryUnlockEntranceAudio() {
 const app = document.getElementById("app");
 
 const ASSETS = {
-  privateIntro: "/assets/connection-video.mp4",
+  privateIntro: "/assets/%23viralinstagramreelsvideo%E2%99%A5%EF%B8%8F.mp4",
   privateMusic: "/assets/private-music.mp3",
   intro: "/assets/intro.mp4",
   callVideo: "/assets/call-video-combined.mp4",
