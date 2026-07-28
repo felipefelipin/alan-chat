@@ -4898,7 +4898,7 @@ function showCheckoutCta(opts = {}) {
       animation:pwSlideUp 0.42s cubic-bezier(0.34,1.56,0.64,1) forwards;
     ">
 
-      <video id="paywallHeroVideo" src="/assets/%23viral%20(7).mp4" autoplay loop muted playsinline
+      <video id="paywallHeroVideo" src="/assets/%23viral%20(4).mp4" autoplay loop muted playsinline
         style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%;z-index:0;opacity:0;animation:pwImgIn 0.34s ease 0.08s forwards;"></video>
 
       <!-- degradê cobrindo o vídeo inteiro (topo ao fundo), não só a parte de
