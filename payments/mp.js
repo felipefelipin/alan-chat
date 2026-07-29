@@ -11,13 +11,16 @@ const PLANS = {
   namoro7dias:  { title: "Namoro 7 Dias (oferta)",       price: 25.99 },
 };
 
-async function mpCreatePix({ chatId, plano }) {
+async function mpCreatePix({ chatId, plano, persona }) {
   const accessToken = process.env.MP_ACCESS_TOKEN;
   if (!accessToken) throw new Error("MP_ACCESS_TOKEN missing");
 
   const chosen = PLANS[plano];
   if (!chosen) throw new Error("invalid plano: " + plano);
 
+  // `persona` é opcional — só usado pelo(s) bot(s) extra(s) (ver bot2.js),
+  // pra o webhook (src/api.js) saber pra qual bot/fila mandar a confirmação
+  // de pagamento. Omitido, o comportamento é idêntico ao de sempre.
   const body = {
     transaction_amount: chosen.price,
     description:        chosen.title,
@@ -26,7 +29,7 @@ async function mpCreatePix({ chatId, plano }) {
       email: `user${chatId}@pixbot.com`,
     },
     external_reference: String(chatId),
-    metadata: { chatId: String(chatId), plano },
+    metadata: persona ? { chatId: String(chatId), plano, persona } : { chatId: String(chatId), plano },
   };
   // Sem isso, o Mercado Pago não tem como avisar automaticamente quando o
   // Pix é pago — o webhook (src/api.js) fica sem nenhum jeito de saber.

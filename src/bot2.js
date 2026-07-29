@@ -1,0 +1,380 @@
+// src/bot2.js — segundo bot/modelo, mesmo fluxo do bot.js. Cópia deliberada
+// (não import compartilhado) pra poder evoluir cada modelo sem risco de
+// quebrar a outra. DB_PREFIX isola os registros desse bot no mesmo banco
+// (mesmo chatId do Telegram pode, em tese, falar com os dois bots).
+require("dotenv").config();
+
+const fs = require("fs");
+const path = require("path");
+const TelegramBot = require("node-telegram-bot-api");
+const { PrismaClient } = require("@prisma/client");
+const { queue } = require("./queue2");
+const { mpCreatePix } = require("../payments/mp");
+
+const prisma = new PrismaClient();
+const bot = new TelegramBot(process.env.BOT_TOKEN2, { polling: true });
+const ASSETS_DIR = path.join(__dirname, "..", "public", "assets");
+const DB_PREFIX = "m2:";
+const dbId = (chatId) => DB_PREFIX + String(chatId);
+
+process.on("unhandledRejection", (err) => console.error("unhandledRejection:", err));
+process.on("uncaughtException", (err) => console.error("uncaughtException:", err));
+
+// ── Cache de file_id — evita reupload da foto a cada clique em plano ──────
+// file_id do Telegram é por bot — nunca reaproveitar o cache do bot1 aqui.
+const fileIdCache = new Map();
+async function loadFileCacheFromDB() {
+  try {
+    const rows = await prisma.fileCache.findMany({ where: { filename: { startsWith: DB_PREFIX } } });
+    for (const row of rows) fileIdCache.set(row.filename.slice(DB_PREFIX.length), row.fileId);
+  } catch (e) { console.error("[cache] erro ao carregar do banco:", e.message); }
+}
+async function saveFileIdToDB(filename, fileId) {
+  try {
+    const key = DB_PREFIX + filename;
+    await prisma.fileCache.upsert({ where: { filename: key }, update: { fileId }, create: { filename: key, fileId } });
+  } catch (e) { console.error("[cache] erro ao salvar no banco:", e.message); }
+}
+async function sendCachedPhoto(chatId, filename, opts = {}) {
+  const cached = fileIdCache.get(filename);
+  if (cached) return bot.sendPhoto(chatId, cached, opts);
+  const sent = await bot.sendPhoto(chatId, fs.createReadStream(path.join(ASSETS_DIR, filename)), opts, { filename, contentType: "image/jpeg" });
+  const fid = sent?.photo?.at(-1)?.file_id;
+  if (fid) { fileIdCache.set(filename, fid); saveFileIdToDB(filename, fid); }
+  return sent;
+}
+loadFileCacheFromDB();
+
+const rand  = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+// helper: BullMQ nessa versão não aceita ":" em jobId
+const jid = (...parts) => parts.join("-");
+
+async function upsertUser(chatId) {
+  return prisma.user.upsert({
+    where:  { id: dbId(chatId) },
+    update: { etapa: "engajado" },
+    create: { id: dbId(chatId), etapa: "engajado", pagou: false },
+  });
+}
+
+async function setEtapa(chatId, etapa) {
+  await prisma.user.update({ where: { id: dbId(chatId) }, data: { etapa } });
+}
+
+async function schedulePreNudge(chatId) {
+  const delay = rand(60_000, 120_000);
+  await queue.add(
+    "jobs",
+    { type: "PRE_NUDGE", chatId: String(chatId), data: {} },
+    { delay, jobId: jid("pre_nudge", chatId), removeOnComplete: true, removeOnFail: true }
+  );
+}
+
+async function cancelPreNudge(chatId) {
+  try {
+    const job = await queue.getJob(jid("pre_nudge", chatId));
+    if (job) await job.remove();
+  } catch {}
+}
+
+/**
+ * CHECKOUT PLANS (fallback via web_app_data)
+ */
+async function scheduleRemarketingJobs(chatId, etapa) {
+  const base = `rmkt-${etapa}-${chatId}`;
+  await queue.add("jobs",
+    { type: "REMARKETING", chatId: String(chatId), data: { stage: "10m", etapa } },
+    { delay: 10 * 60 * 1000, jobId: `${base}-10m`, removeOnComplete: true, removeOnFail: true }
+  );
+  await queue.add("jobs",
+    { type: "REMARKETING", chatId: String(chatId), data: { stage: "1h", etapa } },
+    { delay: 60 * 60 * 1000, jobId: `${base}-1h`, removeOnComplete: true, removeOnFail: true }
+  );
+  await queue.add("jobs",
+    { type: "REMARKETING", chatId: String(chatId), data: { stage: "24h", etapa } },
+    { delay: 24 * 60 * 60 * 1000, jobId: `${base}-24h`, removeOnComplete: true, removeOnFail: true }
+  );
+}
+
+async function sendPlans(chatId) {
+  await setEtapa(chatId, "checkout");
+  await queue.add("jobs",
+    { type: "SEND_PLANS", chatId: String(chatId), data: {} },
+    { removeOnComplete: true, removeOnFail: true }
+  );
+}
+
+// Texto explicando e "vendendo" cada plano, mandado logo antes do Pix —
+// reforça o valor bem na hora que a pessoa está prestes a pagar (reduz
+// desistência/arrependimento no último passo).
+const PLAN_PITCH = {
+  vip590: {
+    title: "🔥 VIP ETERNO — pra sempre, sem mensalidade",
+    body:
+      "Você paga uma vez só e o acesso é seu pro resto da vida: videochamada pelada comigo sempre que quiser, áudios gemendo bem baixinho no seu ouvido, fotos e vídeos bem íntimos, squirt ao vivo e todos os fetiches que te deixarem louco.\n\n" +
+      "Sem clube de assinatura, sem cobrança todo mês — R$ 5,90 uma única vez e você tem acesso vitalício a mim. Não existe forma mais barata de ter isso.",
+  },
+  videochamada: {
+    title: "📞 VIDEOCHAMADA PELADA — eu, ao vivo, só pra você",
+    body:
+      "Nada de foto ou vídeo gravado: é uma chamada de vídeo comigo, na hora, pelada, gemendo do jeito que você pedir. Você manda, eu obedeço — na câmera, ao vivo, sem cortes e sem vergonha nenhuma.\n\n" +
+      "É a experiência mais real que existe: a sensação de eu estar ali, bem na sua frente, só respondendo a você.",
+  },
+  namoro7dias: {
+    title: "💞 NAMORO 7 DIAS — sete dias sendo sua namorada de verdade",
+    body:
+      "Durante uma semana inteira eu sou só sua: bom dia todo dia, atenção o dia inteiro, conversa de namorados, carinho e a sensação de ter uma namorada gostosa e sempre disponível pra você — sem regras, só o gostoso de ter alguém sua.\n\n" +
+      "Não é só sexo, é ter uma namorada particular por 7 dias — a experiência mais completa que eu ofereço.",
+  },
+};
+
+async function createCheckoutAndSend(chatId, plano) {
+  // Foto + pitch caem IMEDIATAMENTE, antes de qualquer chamada de rede —
+  // gerar o Pix é uma chamada externa (Mercado Pago) que pode demorar
+  // alguns segundos, e isso não pode segurar a reação instantânea ao clique.
+  const pitch = PLAN_PITCH[plano];
+  if (pitch) {
+    // file_id cacheado (ver sendCachedPhoto) — só faz upload real do arquivo
+    // na primeira vez; depois disso o Telegram serve direto do CDN deles,
+    // sem esperar upload nenhum.
+    try {
+      await sendCachedPhoto(chatId, "1fc8af10-6705-4b1f-9c51-f3f822a8c5bf.jpg");
+    } catch (e) { console.error("pitch photo send error:", e.message); }
+    // Título em negrito (fora do bloco) + corpo em bloco de código —
+    // Telegram não permite negrito DENTRO de um bloco de código, por isso
+    // são duas faixas de formatação separadas na mesma mensagem.
+    await bot.sendMessage(chatId, `*${pitch.title}*\n\n\`\`\`\n${pitch.body}\n\`\`\``, { parse_mode: "Markdown" });
+  }
+
+  const { paymentId, pixCode, pixQrBase64, amount } = await mpCreatePix({ chatId, plano, persona: "m2" });
+
+  // save to DB without blocking the flow
+  prisma.payment.create({
+    data: { userId: dbId(chatId), plano, status: "pending", preferenceId: paymentId, initPoint: pixCode },
+  }).catch(e => console.error("payment save error:", e));
+
+  await setEtapa(chatId, "pagamento");
+
+  // resto cai tudo junto, sem demora — só o pitch acima tem timing próprio
+  await bot.sendMessage(chatId, "Perfeito! Seu pedido foi gerado com sucesso 🔥");
+  await bot.sendMessage(chatId, "Aqui está seu Pix para pagamento:");
+
+  if (pixQrBase64) {
+    const buf = Buffer.from(pixQrBase64, "base64");
+    const amountFmt = `R$ ${Number(amount).toFixed(2).replace(".", ",")}`;
+    await bot.sendPhoto(chatId, buf, {
+      caption: `💸 *${amountFmt}* — Escaneie o QR Code pelo app do seu banco`,
+      parse_mode: "Markdown",
+    });
+  }
+
+  if (pixCode) {
+    await bot.sendMessage(chatId, "Ou copie o código Pix abaixo:");
+    await bot.sendMessage(chatId,
+      `\`\`\`\n${pixCode}\n\`\`\``,
+      { parse_mode: "Markdown" }
+    );
+  }
+
+  const planNames = { mensal: "Acesso Mensal", vitalicio: "Acesso Vitalício", vip590: "VIP Eterno", videochamada: "Videochamada Pelada", namoro7dias: "Namoro 7 Dias" };
+  const planTitle = planNames[plano] ?? plano;
+  await bot.sendMessage(chatId, `Assim que o pagamento for confirmado, o link do *${planTitle}* cai aqui automaticamente 🔒✅`, { parse_mode: "Markdown" });
+
+  await scheduleRemarketingJobs(chatId, "pagamento");
+}
+
+// =============================================================================
+// Funil direto — Tela 1 (vídeo + mensagem + botão) → Tela 2 (vídeo + menu)
+// =============================================================================
+const START_MESSAGE = `Oi gostoso 😈
+<b>Bem-vindo ao meu cantinho mais safado no Telegram...</b>
+Aqui dentro eu solto tudo que no Instagram não deixam 🔥💦
+
+👇 <i>Clique abaixo e acessa todos meus conteúdinhos</i>`;
+
+async function runDirectFunnel(chatId) {
+  await queue.add("jobs",
+    { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "e08956fd-1903-4ef7-8a04-c01def4ad4a3.jpeg", caption: "", instant: true } },
+    { delay: 0, jobId: jid("start", chatId, 1), removeOnComplete: true, removeOnFail: true }
+  );
+
+  await queue.add("jobs",
+    { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "WhatsApp Image 2026-07-25 at 15.29.35.jpeg", caption: "", instant: true } },
+    { delay: 0, jobId: jid("start", chatId, 2), removeOnComplete: true, removeOnFail: true }
+  );
+
+  await queue.add("jobs",
+    { type: "SEND_MESSAGE", chatId: String(chatId), data: {
+      text: START_MESSAGE,
+      autoSplit: false,
+      noTyping: true,
+      extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
+        [{ text: "👉 CLIQUE PRA VER ESSA PUTA 😈", callback_data: "ver_conteudinhos", style: "success" }],
+      ]}},
+    }},
+    { delay: 0, jobId: jid("start", chatId, 3), removeOnComplete: true, removeOnFail: true }
+  );
+}
+
+// =============================================================================
+// /start — dispara o funil direto
+// =============================================================================
+bot.onText(/^\/start/, async (msg) => {
+  const chatId = msg.chat.id;
+  await upsertUser(chatId);
+  await cancelPreNudge(chatId);
+  await runDirectFunnel(chatId);
+});
+
+// =============================================================================
+// /kbtest — TEMPORÁRIO: abre a página isolada de teste do bug de teclado
+// como Mini App de verdade (Experimento 3 da investigação). Remover depois.
+// =============================================================================
+bot.onText(/^\/kbtest/, async (msg) => {
+  const chatId = msg.chat.id;
+  await bot.sendMessage(chatId, "Teste isolado de teclado 👇", {
+    reply_markup: { inline_keyboard: [
+      [{ text: "Abrir teste", web_app: { url: process.env.WEBAPP_URL + "/kbtest.html?v=" + Date.now() } }],
+    ]},
+  });
+});
+
+// =============================================================================
+// web_app_data — mini app envia action=checkout
+// =============================================================================
+bot.on("web_app_data", async (msg) => {
+  const chatId = msg.chat.id;
+  await cancelPreNudge(chatId);
+
+  let payload = null;
+  try { payload = JSON.parse(msg.web_app_data.data); }
+  catch { payload = { action: msg.web_app_data.data }; }
+
+  if (payload?.action === "checkout") {
+    await sendPlans(chatId);
+  }
+});
+
+// =============================================================================
+// Callbacks
+// =============================================================================
+bot.on("callback_query", async (q) => {
+  const chatId = q.message?.chat?.id;
+  const data   = q.data;
+  if (!chatId || !data) return;
+
+  try {
+    // ── Tela 2 — menu principal (Instagram / Chat + Ao Vivo / Ver Planos) ────
+    if (data === "ver_conteudinhos") {
+      await bot.answerCallbackQuery(q.id, { text: "😈" }).catch(() => {});
+      await queue.add("jobs",
+        { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "conteudinhos-video-muted.mp4", caption: "", instant: true } },
+        { delay: 0, jobId: jid("conteudinhos", chatId, 1), removeOnComplete: true, removeOnFail: true }
+      );
+      await queue.add("jobs",
+        { type: "SEND_MESSAGE", chatId: String(chatId), data: {
+          text: "Gostou do que viu? 😈 Tem muito mais te esperando, só escolher por onde entrar 👇",
+          noTyping: true,
+          extra: { reply_markup: { inline_keyboard: [
+            [{ text: "🔴 AO VIVO: ENTRAR NA CHAMADA GRÁTIS 😈", callback_data: "chamada_video",   style: "success" }],
+            [{ text: "📸 VEM ME VER NO INSTA 👀",         callback_data: "abrir_instagram", style: "primary" }],
+          ]}},
+        }},
+        { delay: 0, jobId: jid("conteudinhos", chatId, 2), removeOnComplete: true, removeOnFail: true }
+      );
+      return;
+    }
+
+    // ── Instagram (mini app dedicado) ────────────────────────────────────────
+    if (data === "abrir_instagram") {
+      await bot.answerCallbackQuery(q.id, { text: "😈" }).catch(() => {});
+      await queue.add("jobs",
+        { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "4294967613.jpeg", caption: "", instant: true } },
+        { delay: 0, jobId: jid("instagram", chatId, 1), removeOnComplete: true, removeOnFail: true }
+      );
+      await queue.add("jobs",
+        { type: "SEND_MESSAGE", chatId: String(chatId), data: {
+          text: "<b>VEM VER MEU INSTAGRAM SEUS SAFADOS 😈👇🏽</b>",
+          noTyping: true,
+          extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
+            [{ text: "😈 Espiar meu Insta", web_app: { url: process.env.WEBAPP_URL + "/instagram/?v=" + Date.now() }, style: "success" }],
+          ]}},
+        }},
+        { delay: 0, jobId: jid("instagram", chatId, 2), removeOnComplete: true, removeOnFail: true }
+      );
+      return;
+    }
+
+    // ── Ver planos ────────────────────────────────────────────────────────────
+    if (data === "ver_planos") {
+      await bot.answerCallbackQuery(q.id, { text: "👀" }).catch(() => {});
+      await cancelPreNudge(chatId);
+      await sendPlans(chatId);
+      return;
+    }
+
+    // ── Chamada de vídeo → libera botão do mini app ─────────────────────────
+    if (data === "chamada_video") {
+      await bot.answerCallbackQuery(q.id, { text: "😈" }).catch(() => {});
+      await queue.add("jobs",
+        { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "IMG_1298 (1).MOV", caption: "", instant: true } },
+        { delay: 0, jobId: jid("chamada_video", chatId, 1), removeOnComplete: true, removeOnFail: true }
+      );
+      await queue.add("jobs",
+        { type: "SEND_MESSAGE", chatId: String(chatId), data: {
+          text: "Isso que você viu é só o começo, meu amor 😈💦\n\nLá dentro eu fico totalmente pelada e sem limites pra você: chat bem safado, videochamada gemendo ao vivo, fotos íntimas e uma surpresa bem quente que só quem entra vai descobrir… 🎁\n\nÉ exclusivo, bem safadinho e tá disponível só agora.\n\nVem logo, tô molhadinha te esperando… 😘",
+          noTyping: true,
+        }},
+        { delay: 0, jobId: jid("chamada_video", chatId, 2), removeOnComplete: true, removeOnFail: true }
+      );
+      await queue.add("jobs",
+        { type: "SEND_MESSAGE", chatId: String(chatId), data: {
+          text: "<b>VEM QUE EU TÔ SOZINHA E SAFADA TE ESPERANDO 😈📹</b>",
+          noTyping: true,
+          extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
+            [{ text: "🔥 ENTRAR NO MEU PRIVADO SEM LIMITES 😈", web_app: { url: process.env.WEBAPP_URL + "?v=" + Date.now() }, style: "success" }],
+          ]}},
+        }},
+        { delay: 0, jobId: jid("chamada_video", chatId, 3), removeOnComplete: true, removeOnFail: true }
+      );
+      await setEtapa(chatId, "webapp_pending");
+      await schedulePreNudge(chatId);
+      return;
+    }
+
+    // ── webapp:later (original) ─────────────────────────────────────────────
+    if (data === "webapp:later") {
+      await bot.answerCallbackQuery(q.id, { text: "tá…" });
+      await setEtapa(chatId, "engajado");
+      await queue.add("jobs",
+        { type: "SEND_MESSAGE", chatId: String(chatId), data: { text: "tá… quando quiser, volta aqui.", autoSplit: true } },
+        { delay: 0, jobId: jid("webapp_later", chatId), removeOnComplete: true, removeOnFail: true }
+      );
+      return;
+    }
+
+    // ── Seleção de plano (original) ─────────────────────────────────────────
+    if (data.startsWith("plan:")) {
+      await bot.answerCallbackQuery(q.id).catch(() => {});
+      const plano = data.split(":")[1];
+      try {
+        await createCheckoutAndSend(chatId, plano);
+      } catch (e) {
+        // Botão de uma versão antiga do bot (plano que não existe mais) —
+        // em vez de deixar a pessoa num beco sem saída, manda os planos
+        // atuais de novo.
+        console.error("createCheckoutAndSend error:", e.message);
+        await bot.sendMessage(chatId, "Esse link expirou 🙈 aqui estão as opções atuais:");
+        await sendPlans(chatId);
+      }
+      return;
+    }
+
+  } catch (e) {
+    console.error("callback error:", e);
+    try { await bot.answerCallbackQuery(q.id, { text: "deu ruim aqui. tenta de novo." }); } catch {}
+  }
+});
+
+console.log("bot v4 (modelo2) rodando...");

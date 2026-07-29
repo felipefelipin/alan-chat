@@ -6,8 +6,10 @@
   "type": "commonjs",
   "scripts": {
     "bot": "node src/bot.js",
+    "bot2": "node src/bot2.js",
     "api": "node src/api.js",
     "worker": "node src/worker.js",
+    "worker2": "node src/worker2.js",
     "watch": "node scripts/watch-leads.js",
     "check-lead": "node scripts/check-lead.js",
     "db:up": "docker compose up -d",
