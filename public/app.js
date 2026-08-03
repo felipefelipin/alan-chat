@@ -139,6 +139,7 @@ const ASSET_OVERRIDES = {
     teasePhotoPrivada: "/assets/paywall-bg.mp4",
     callVideo: "/assets/call.mp4",
     lingerie: "/assets/lose-video.mp4",
+    avatar: "/assets/3b6ac693-0200-4f1b-ba86-96e415a7a067.jpg",
   },
 };
 if (ASSET_OVERRIDES[PERSONA]) Object.assign(ASSETS, ASSET_OVERRIDES[PERSONA]);
@@ -216,6 +217,10 @@ const CONTACT = {
   bio: "Aqui você faz o que quiser comigo... 🔥",
   title: "Gabriely Castro",
 };
+const CONTACT_OVERRIDES = {
+  m2: { name: "Alana Lemes", title: "Alana Lemes" },
+};
+if (CONTACT_OVERRIDES[PERSONA]) Object.assign(CONTACT, CONTACT_OVERRIDES[PERSONA]);
 
 const PERSIST_KEY = "gisa_webapp_state_v7";
 const CHECKOUT_URL = "https://t.me/gabrielycastroof_bot"; // fallback sem Telegram WebApp
