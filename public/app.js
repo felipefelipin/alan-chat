@@ -133,6 +133,12 @@ const ASSET_OVERRIDES = {
     privateIntro: "/assets/step2-video.mp4",
     entranceTeaser: "/assets/checkout-video.mp4",
     connectionDonePhoto: "/assets/rmkt-3.jpg",
+    // Essas três viram vídeo (não é só troca de arquivo) — ver uso
+    // condicional por PERSONA em startScript, enterOpeningReply e
+    // startFunnelCall (callVideo já era vídeo, só troca o arquivo).
+    teasePhotoPrivada: "/assets/paywall-bg.mp4",
+    callVideo: "/assets/call.mp4",
+    lingerie: "/assets/lose-video.mp4",
   },
 };
 if (ASSET_OVERRIDES[PERSONA]) Object.assign(ASSETS, ASSET_OVERRIDES[PERSONA]);
@@ -3981,6 +3987,24 @@ async function gisaSendPhotoAway(src, title = "Foto Privada", awayMs = 7000) {
   addPhotoCardBubble(src, title);
 }
 
+// Mesma simulação de "away" acima, só que solta um vídeo no lugar da foto —
+// usado quando a mídia dessa etapa vira vídeo (ver PERSONA/ASSET_OVERRIDES).
+async function gisaSendVideoAway(src, title = "Vídeo", awayMs = 7000) {
+  state.flags.botOnline = false; saveState();
+  const awayAt = new Date();
+  setStatus(`visto por último às ${String(awayAt.getHours()).padStart(2,"0")}:${String(awayAt.getMinutes()).padStart(2,"0")}`);
+  await sleep(awayMs);
+  state.flags.botOnline = true; saveState();
+  markPendingMessagesSeen();
+  setStatus("online");
+  await sleep(2000);
+  setStatus("enviando um vídeo…");
+  await sleep(1000);
+  setStatus("");
+  await sleep(rand(80, 180));
+  addVideoBubble(src, title);
+}
+
 function addImgBubble(src) {
   updatePreviousGroupForNewMessage("left");
   const item = { type:"img", side:"left", src:`${src}?v=${Date.now()}`, time:nowTime(), cluster:getNewCluster("left") };
@@ -4213,7 +4237,8 @@ async function enterOpeningReply(text = null) {
   await sleep(rand(2000, 3000));
   await gisaSay(branch.msg1, { delay: 2500, replyTo: text ? { side: "right", text } : null });
   await sleep(rand(300, 600));
-  await gisaSendPhotoAway(ASSETS.lingerie, "Foto Privada", branch.away);
+  if (PERSONA === "m2") await gisaSendVideoAway(ASSETS.lingerie, "Vídeo Privado", branch.away);
+  else await gisaSendPhotoAway(ASSETS.lingerie, "Foto Privada", branch.away);
   await sleep(rand(400, 700));
   await gisaSay(branch.msg2, { delay: 2000, noSleep: true });
 
@@ -4974,7 +4999,8 @@ async function startScript() {
     setStatus("online");
     state.flags.botOnline = true; saveState();
     await sleep(rand(1500, 2500));
-    await gisaSendPhoto(ASSETS.teasePhotoPrivada, "Foto Privada");
+    if (PERSONA === "m2") await gisaSendVideo(ASSETS.teasePhotoPrivada, "Vídeo Privado");
+    else await gisaSendPhoto(ASSETS.teasePhotoPrivada, "Foto Privada");
     await sleep(rand(300, 600));
     await gisaSendAudio(ASSETS.audioCallInvite, null, 7500);
     await sleep(rand(300, 600));
