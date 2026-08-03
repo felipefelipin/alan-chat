@@ -139,7 +139,7 @@ const ASSET_OVERRIDES = {
     teasePhotoPrivada: "/assets/paywall-bg.mp4",
     callVideo: "/assets/call.mp4",
     lingerie: "/assets/lose-video.mp4",
-    avatar: "/assets/3b6ac693-0200-4f1b-ba86-96e415a7a067.jpg",
+    avatar: "/assets/9b508494-3144-4b2d-bd3a-be8b791846c2.jpg",
   },
 };
 if (ASSET_OVERRIDES[PERSONA]) Object.assign(ASSETS, ASSET_OVERRIDES[PERSONA]);
@@ -4240,6 +4240,10 @@ async function enterOpeningReply(text = null) {
   const branch = SCRIPT_BRANCHES[category].section2;
 
   await sleep(rand(2000, 3000));
+  if (PERSONA === "m2") {
+    await gisaSendAudio(ASSETS.audioMimimi, null, rand(3500, 5000));
+    await sleep(rand(300, 600));
+  }
   await gisaSay(branch.msg1, { delay: 2500, replyTo: text ? { side: "right", text } : null });
   await sleep(rand(300, 600));
   if (PERSONA === "m2") await gisaSendVideoAway(ASSETS.lingerie, "Vídeo Privado", branch.away);
@@ -5004,11 +5008,15 @@ async function startScript() {
     setStatus("online");
     state.flags.botOnline = true; saveState();
     await sleep(rand(1500, 2500));
-    if (PERSONA === "m2") await gisaSendVideo(ASSETS.teasePhotoPrivada, "Vídeo Privado");
-    else await gisaSendPhoto(ASSETS.teasePhotoPrivada, "Foto Privada");
-    await sleep(rand(300, 600));
-    await gisaSendAudio(ASSETS.audioCallInvite, null, 7500);
-    await sleep(rand(300, 600));
+    if (PERSONA === "m2") {
+      await gisaSendVideo(ASSETS.teasePhotoPrivada, "Vídeo Privado");
+      await sleep(rand(300, 600));
+    } else {
+      await gisaSendPhoto(ASSETS.teasePhotoPrivada, "Foto Privada");
+      await sleep(rand(300, 600));
+      await gisaSendAudio(ASSETS.audioCallInvite, null, 7500);
+      await sleep(rand(300, 600));
+    }
     await gisaSay("me fala a verdade…\nvocê aguenta me ver pelada de verdade\nou vai só ficar olhando igual os fracos?... 👀", { delay: 2000 });
   } finally {
     _flowRunning = false;
