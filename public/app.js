@@ -160,6 +160,24 @@ function preloadMedia() {
   // aparece — sem preload, o <img> só começava a buscar nesse instante,
   // causando um delay visível antes de aparecer.
   try { new Image().src = ASSETS.connectionDonePhoto; } catch {}
+  // vídeo da entrada cinematográfica (pós-cortinas) — igual ao de cima,
+  // criado já no boot pra ter os ~30-40s de loading/roleta inteiros como
+  // folga de buffer. Sem isso, um arquivo grande (ex.: bot2) começava a
+  // baixar só no instante em que a cortina abre, com delay visível.
+  try {
+    const v2 = document.createElement("video");
+    v2.id = "esPreloadVideo";
+    v2.src = ASSETS.entranceTeaser;
+    v2.muted = true;
+    v2.loop = true;
+    v2.playsInline = true;
+    v2.setAttribute("playsinline", "");
+    v2.setAttribute("webkit-playsinline", "");
+    v2.preload = "auto";
+    v2.style.cssText = "position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none;";
+    document.body.appendChild(v2);
+    v2.load();
+  } catch {}
 }
 
 // Preload do vídeo principal da chamada — chamado quando a tela de "chamada
@@ -2342,8 +2360,6 @@ function runEntranceScreen() {
 
       <div class="esSilhouetteWrap">
         <div class="esGlow"></div>
-        <video class="esSilhouette" src="${ASSETS.entranceTeaser}" autoplay loop muted playsinline
-          webkit-playsinline aria-hidden="true"></video>
         <div class="esVignette"></div>
       </div>
 
@@ -2368,11 +2384,36 @@ function runEntranceScreen() {
     const soundBtn = screen.querySelector(".esSoundToggle");
     const ctaBtn = screen.querySelector(".esCta");
 
+    // Reaproveita o <video> que já vem baixando desde preloadMedia() (boot
+    // do app) — mesma técnica do mountBackgroundVideo/lsPreloadVideo. Sem
+    // isso, o vídeo só começava a buscar no instante em que a cortina abre,
+    // com delay visível (pior ainda em arquivos grandes, ex.: bot2).
+    const silhouetteWrap = screen.querySelector(".esSilhouetteWrap");
+    const vignetteEl = silhouetteWrap.querySelector(".esVignette");
+    const preloadedTeaser = document.getElementById("esPreloadVideo");
+    let teaserVideo;
+    if (preloadedTeaser && preloadedTeaser.getAttribute("src") === ASSETS.entranceTeaser) {
+      teaserVideo = preloadedTeaser;
+      teaserVideo.removeAttribute("id");
+      teaserVideo.style.cssText = "";
+    } else {
+      teaserVideo = document.createElement("video");
+      teaserVideo.src = ASSETS.entranceTeaser;
+      teaserVideo.muted = true;
+      teaserVideo.loop = true;
+      teaserVideo.playsInline = true;
+      teaserVideo.setAttribute("playsinline", "");
+      teaserVideo.setAttribute("webkit-playsinline", "");
+    }
+    teaserVideo.className = "esSilhouette";
+    teaserVideo.setAttribute("aria-hidden", "true");
+    silhouetteWrap.insertBefore(teaserVideo, vignetteEl);
+
     // autoplay+muted+playsinline no HTML já cobre a maioria dos casos, mas
     // alguns WebViews mobile só engatam de verdade com um .play() explícito
     // (mesmo padrão já usado em mountBackgroundVideo). loop nativo cuida do
     // resto — roda infinito até a tela ser removida no onEnterTap.
-    screen.querySelector(".esSilhouette")?.play().catch(() => {});
+    teaserVideo.play().catch(() => {});
 
     // Som começa LIGADO por padrão (diferente do resto do app onde já vinha
     // ligado desde o início) — a essa altura o usuário já tocou em GIRAR/
