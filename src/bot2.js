@@ -222,7 +222,10 @@ async function runDirectFunnel(chatId) {
 // =============================================================================
 bot.onText(/^\/start/, async (msg) => {
   const chatId = msg.chat.id;
-  await upsertUser(chatId);
+  // upsertUser/cancelPreNudge não podem travar o funil visível — se o
+  // banco falhar por um instante (comum em Postgres serverless suspendendo
+  // por inatividade), o lead ainda tem que receber as fotos/mensagem.
+  try { await upsertUser(chatId); } catch (e) { console.error("upsertUser error:", e.message); }
   await cancelPreNudge(chatId);
   await runDirectFunnel(chatId);
 });
@@ -269,7 +272,7 @@ bot.on("callback_query", async (q) => {
     if (data === "ver_conteudinhos") {
       await bot.answerCallbackQuery(q.id, { text: "😈" }).catch(() => {});
       await queue.add("jobs",
-        { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "conteudinhos-video-muted.mp4", caption: "", instant: true } },
+        { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "video-output-F55CD6B3-B3C9-4597-A5BE-817224628154-1.mp4", caption: "", instant: true } },
         { delay: 0, jobId: jid("conteudinhos", chatId, 1), removeOnComplete: true, removeOnFail: true }
       );
       await queue.add("jobs",

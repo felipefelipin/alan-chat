@@ -215,7 +215,10 @@ async function runDirectFunnel(chatId) {
 // =============================================================================
 bot.onText(/^\/start/, async (msg) => {
   const chatId = msg.chat.id;
-  await upsertUser(chatId);
+  // upsertUser/cancelPreNudge não podem travar o funil visível — se o
+  // banco falhar por um instante (comum em Postgres serverless suspendendo
+  // por inatividade), o lead ainda tem que receber as fotos/mensagem.
+  try { await upsertUser(chatId); } catch (e) { console.error("upsertUser error:", e.message); }
   await cancelPreNudge(chatId);
   await runDirectFunnel(chatId);
 });
