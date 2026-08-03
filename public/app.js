@@ -132,6 +132,7 @@ const ASSET_OVERRIDES = {
   m2: {
     privateIntro: "/assets/step2-video.mp4",
     entranceTeaser: "/assets/checkout-video.mp4",
+    connectionDonePhoto: "/assets/rmkt-3.jpg",
   },
 };
 if (ASSET_OVERRIDES[PERSONA]) Object.assign(ASSETS, ASSET_OVERRIDES[PERSONA]);
@@ -1192,7 +1193,10 @@ function mountBackgroundVideo(host, src) {
     video.preload = "auto";
   }
   video.className = "lsVideo";
-  video.loop = false;
+  // bot1: vídeo toca uma vez e congela no último frame, como se fosse foto
+  // (pedido assim de propósito). bot2 (persona=m2): roda em loop até a
+  // verificação terminar e o botão de brinde aparecer.
+  video.loop = PERSONA === "m2";
   host.appendChild(video); // appendChild move o elemento se já estava no body
   video.play().catch(() => {});
   return video;
