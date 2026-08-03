@@ -107,7 +107,11 @@ const ASSETS = {
   media2: "/assets/grid-2.jpg",
   media3: "/assets/grid-3.jpg",
   media4: "/assets/grid-4.jpg",
-  lingerie: "/assets/lingerie.jpg",
+  // "lingerie.jpg" nunca existiu de fato no projeto (chave criada apontando
+  // pra um arquivo que não estava na pasta assets) — por isso a Foto 2 do
+  // chat nunca aparecia. Usando uma foto real já existente como provisória
+  // até o Felipe trocar pela definitiva.
+  lingerie: "/assets/photo_5062262078608968721_w.jpg",
   teaseVideo: "/assets/IMG_7330.MP4",
   teasePhotoPrivada: "/assets/4294967637.jpeg",
   teaseCallPhoto: "/assets/1917bef0-5e63-4eb8-b52b-7e2a5abcedf0.png",
@@ -4911,6 +4915,7 @@ async function startScript() {
     await sleep(rand(4000, 5000));
     setStatus("online");
     state.flags.botOnline = true; saveState();
+    await sleep(rand(1500, 2500));
     await gisaSendPhoto(ASSETS.teasePhotoPrivada, "Foto Privada");
     await sleep(rand(300, 600));
     await gisaSendAudio(ASSETS.audioCallInvite, null, 7500);
