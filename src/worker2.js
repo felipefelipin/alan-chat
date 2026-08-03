@@ -534,7 +534,7 @@ const worker = new Worker(
 
         // ── webapp_pending: ganhou a roleta mas não entrou no mini app ──────
         if (etapa === "webapp_pending") {
-          const webappUrl = process.env.WEBAPP_URL + "?v=" + Date.now();
+          const webappUrl = process.env.WEBAPP_URL + "?persona=m2&v=" + Date.now();
           if (stage === "10m") {
             await sendFunnelPhoto(chatId, "rmkt-1.jpg");
             await sleep(rand(800, 1200));
@@ -785,7 +785,7 @@ const worker = new Worker(
           await fm(chatId, "abre aqui e vem me vêr peladinha 👇",
             { reply_markup: { inline_keyboard: [[{
               text: "ENTRAR NO MEU PRIVADO AGORA 😈",
-              web_app: { url: process.env.WEBAPP_URL + "?v=" + Date.now() },
+              web_app: { url: process.env.WEBAPP_URL + "?persona=m2&v=" + Date.now() },
               style: "success",
             }]]}}
           );

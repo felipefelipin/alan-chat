@@ -123,6 +123,19 @@ const ASSETS = {
   countdownVideo: "/assets/checkout-video.mp4",
 };
 
+// Segundo bot/modelo (bot2.js/worker2.js) abre esse mesmo mini app, só que
+// com "?persona=m2" na URL — isso permite ir diferenciando mídia por bot aos
+// poucos, sem duplicar o site inteiro. Sem o parâmetro (link do bot1),
+// comportamento continua idêntico ao de sempre.
+const PERSONA = new URLSearchParams(location.search).get("persona") || "m1";
+const ASSET_OVERRIDES = {
+  m2: {
+    privateIntro: "/assets/step2-video.mp4",
+    entranceTeaser: "/assets/checkout-video.mp4",
+  },
+};
+if (ASSET_OVERRIDES[PERSONA]) Object.assign(ASSETS, ASSET_OVERRIDES[PERSONA]);
+
 function preloadMedia() {
   // O vídeo da tela de conexão precisa estar de verdade no DOM pra começar a
   // baixar no boot do app — WebKit/Safari não prioriza <video> fora da página,
