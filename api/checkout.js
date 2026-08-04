@@ -34,9 +34,6 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    await sendWithTyping("mbb, por aqui não dá pra continuar infelizmente");
-    await sendWithTyping("vai aparecer um botão pra vc desbloquear oq vc quiser de mim, e o resto depende de vc");
-    await sendWithTyping("quer continuar beh? fala aí pra eu te mandar o acesso pra vc desbloquear");
     await sendWithTyping("Pronto meu bem, agora é só você escolher do jeito que vc quer continuar comigo");
     await sendWithTyping("Escolhe aí abaixo e vem terminar oq vc começou comigo safado 😈");
 
