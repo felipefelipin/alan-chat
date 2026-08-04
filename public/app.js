@@ -5217,10 +5217,18 @@ async function doCallPaywall() {
   // em paralelo com essas ainda rodando, misturando as mensagens.
   _flowRunning = true;
   try {
-    await sleep(3000);
-    await gisaSay("mbb, por aqui não dá pra continuar infelizmente", { delay: rand(3000, 4500) });
-    await gisaSay("vai aparecer um botão pra vc desbloquear oq vc quiser de mim, e o resto depende de vc", { delay: rand(3000, 4500), noSleep: true });
-    await gisaSay("quer continuar beh? fala aí pra eu te mandar o acesso pra vc desbloquear...", { delay: rand(3000, 4500), noSleep: true });
+    await sleep(rand(1000, 2000));
+    await gisaSay("mbb, por aqui não dá pra continuar infelizmente", {
+      noSleep: true, humanTyping: true, humanTypingMs: 7000,
+    });
+    await sleep(rand(1000, 2000));
+    await gisaSay("vai aparecer um botão pra vc desbloquear oq vc quiser de mim, e o resto depende de vc", {
+      noSleep: true, humanTyping: true, humanTypingMs: 10000,
+    });
+    await sleep(rand(1000, 2000));
+    await gisaSay("quer continuar beh? fala aí pra eu te mandar o acesso pra vc desbloquear...", {
+      noSleep: true, humanTyping: true, humanTypingMs: 6000,
+    });
   } finally {
     _flowRunning = false;
   }
