@@ -6571,7 +6571,7 @@ function runAgeGateScreen() {
         </div>
 
         <button type="button" id="agYesBtn" class="agBtn agBtnPrimary" style="
-          width:100%;max-width:300px;padding:18px 20px;border-radius:16px;border:none;
+          width:100%;max-width:300px;padding:18px 20px;box-sizing:border-box;border-radius:16px;border:none;
           background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 45%),linear-gradient(135deg,#f6ddaa 0%,#d6b07a 55%,#a97c3a 100%);
           color:#241804;font-size:16.5px;font-weight:900;letter-spacing:.3px;cursor:pointer;
           box-shadow:0 10px 30px rgba(214,176,122,.4),0 2px 10px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.35);
@@ -6582,7 +6582,7 @@ function runAgeGateScreen() {
         <button type="button" id="agNoBtn" class="agBtn agBtnSecondary" style="
           background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.15);border-radius:12px;
           color:rgba(255,255,255,.6);font-size:13.5px;font-weight:700;letter-spacing:.3px;
-          padding:13px 30px;cursor:pointer;
+          width:100%;max-width:300px;padding:18px 20px;box-sizing:border-box;cursor:pointer;
           opacity:0;animation:agFadeUp .5s ease .48s forwards;
         ">Não tenho 18 anos</button>
 
