@@ -18,7 +18,28 @@ module.exports = async function handler(req, res) {
   const id  = String(chatId);
   const WEBAPP_URL = process.env.WEBAPP_URL || "https://alana-chat.vercel.app";
 
+  // "digitando..." real do Telegram (sendChatAction) antes de cada
+  // mensagem — tempo proporcional ao tamanho do texto, igual o resto do
+  // funil já faz em worker.js. keepalive no fetch do mini app (ver
+  // openCheckout em app.js) permite essa função demorar um pouco sem
+  // travar nada visível pro lead.
+  function typingDelayFor(text) {
+    const len = String(text).length;
+    return Math.min(4000, Math.max(1200, len * 45));
+  }
+  async function sendWithTyping(text, extra) {
+    try { await bot.sendChatAction(id, "typing"); } catch {}
+    await new Promise((r) => setTimeout(r, typingDelayFor(text)));
+    await bot.sendMessage(id, text, extra);
+  }
+
   try {
+    await sendWithTyping("mbb, por aqui não dá pra continuar infelizmente");
+    await sendWithTyping("vai aparecer um botão pra vc desbloquear oq vc quiser de mim, e o resto depende de vc");
+    await sendWithTyping("quer continuar beh? fala aí pra eu te mandar o acesso pra vc desbloquear");
+    await sendWithTyping("Pronto meu bem, agora é só você escolher do jeito que vc quer continuar comigo");
+    await sendWithTyping("Escolhe aí abaixo e vem terminar oq vc começou comigo safado 😈");
+
     // foto opcional — falha não bloqueia a mensagem/botão
     try { await bot.sendPhoto(id, `${WEBAPP_URL}/assets/4294967658%20%281%29.jpeg`); } catch {}
 
