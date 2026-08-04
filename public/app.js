@@ -4921,7 +4921,9 @@ async function startScript() {
     if (PERSONA === "m2") {
       await gisaSay("oii beh, até que em fim vc chegou aq kkk", { noSleep: true, humanTyping: true });
       await sleep(rand(2000, 3000));
-      await gisaSay("poucos que conseguem chegar até aq", { noSleep: true, humanTyping: true });
+      await gisaSay("poucos que conseguem chegar até aqui", { noSleep: true, humanTyping: true });
+      await sleep(rand(2000, 3000));
+      await gisaSay("vc é sortudo kk 👀, mas me fale aqui", { noSleep: true, humanTyping: true });
       await sleep(rand(2000, 3000));
       await gisaSay("posso te enviar um vídeo? 😈", { noSleep: true, humanTyping: true });
     } else {
