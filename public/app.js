@@ -6288,16 +6288,15 @@ function runAgeGateScreen() {
     screen.querySelector("video")?.play().catch(() => {});
 
     const content = screen.querySelector("#agContent");
-    const badge   = screen.querySelector("#agBadge");
     const yesBtn  = screen.querySelector("#agYesBtn");
     const noBtn   = screen.querySelector("#agNoBtn");
 
-    function finalFadeOutAndResolve() {
+    function finalFadeOutAndResolve(safetyMs = 600) {
       screen.classList.remove("lsScreen-visible");
       let done = false;
       const cleanup = () => { if (done) return; done = true; screen.remove(); resolve(); };
       screen.addEventListener("transitionend", cleanup, { once: true });
-      setTimeout(cleanup, 600); // rede de segurança
+      setTimeout(cleanup, safetyMs); // rede de segurança
     }
 
     yesBtn.addEventListener("click", () => {
@@ -6308,22 +6307,11 @@ function runAgeGateScreen() {
       hapticNotify("success");
       agPlayUnlock();
 
-      // "libera": badge dá um pulso de escala + flash dourado varre a tela,
-      // só então some — mesma lógica de "conquista contida" do resgate
-      // premium, sem confete (aqui é confirmação, não prêmio).
-      badge.style.transition = "transform .4s cubic-bezier(.34,1.56,.64,1)";
-      badge.style.transform = "scale(1.22)";
-      yesBtn.style.transition = "opacity .2s ease";
-      yesBtn.style.opacity = "0";
-      noBtn.style.transition = "opacity .2s ease";
-      noBtn.style.opacity = "0";
-
-      const flash = document.createElement("div");
-      flash.style.cssText = "position:absolute;inset:0;background:radial-gradient(circle, rgba(246,221,170,.85), rgba(246,221,170,0) 65%);opacity:0;transition:opacity .35s ease;pointer-events:none;";
-      screen.appendChild(flash);
-      requestAnimationFrame(() => { flash.style.opacity = "1"; });
-
-      setTimeout(finalFadeOutAndResolve, 520);
+      // Saída exclusiva e contida: só um fade out mais lento/deliberado que
+      // o padrão do resto do app — sem pop de badge, sem flash. A discrição
+      // aqui é o que passa classe, não um efeito chamativo.
+      screen.style.transition = "opacity .9s ease, filter .9s ease";
+      finalFadeOutAndResolve(1000);
     }, { once: true });
 
     noBtn.addEventListener("click", () => {
