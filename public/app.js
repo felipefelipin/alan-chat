@@ -4262,6 +4262,12 @@ async function simulateHumanTyping(text) {
   }
 }
 
+// Guarda a última mensagem que ELE mandou pro lead (texto puro, não o HTML
+// já escapado/quebrado em <br/>) — usado só pra dar contexto no
+// MINIAPP_USER_REPLY (ver onSend), pra saber a QUE o lead tá respondendo
+// quando ele não usou o gesto de reply explícito (ver _replyTarget).
+let _lastGisaText = null;
+
 async function gisaSay(text, opts = {}) {
   if (opts.humanTyping) {
     await simulateHumanTyping(text);
@@ -4276,6 +4282,7 @@ async function gisaSay(text, opts = {}) {
   }
   setStatus(CONTACT.subtitle ?? "");
   addMsg("left", escapeHtml(text).replace(/\n/g,"<br/>"), opts.replyTo || null);
+  _lastGisaText = text;
   if (!opts.noSleep) await sleep(rand(320,760));
 }
 
@@ -4293,11 +4300,14 @@ function onSend() {
   const replyTo = _replyTarget;
   clearReplyTarget();
   addMsg("right", escapeHtml(text), replyTo);
-  // guarda o que o lead respondeu de verdade (e em qual passo do roteiro),
-  // pra dar visibilidade real de onde o script precisa de ajuste — antes
-  // disso, o texto do lead só existia no navegador dele, nunca chegava
-  // no banco (ver scripts/check-lead.js pra ler isso depois).
-  trackEvent("MINIAPP_USER_REPLY", { text, step: state.step });
+  // guarda o que o lead respondeu de verdade (e em qual passo do roteiro,
+  // e A QUE mensagem — reply explícito se ele usou o gesto de responder,
+  // senão a última coisa que ELE mandou antes disso), pra dar visibilidade
+  // real de onde o script precisa de ajuste — antes disso, o texto do lead
+  // só existia no navegador dele, nunca chegava no banco (ver
+  // scripts/check-lead.js pra ler isso depois).
+  const repliedTo = replyTo?.side === "left" ? replyTo.text : _lastGisaText;
+  trackEvent("MINIAPP_USER_REPLY", { text, step: state.step, repliedTo: repliedTo || null });
   handleUserText(text);
 }
 
@@ -6238,7 +6248,7 @@ function runAgeGateScreen() {
         .agBtnSecondary:active{background:rgba(255,255,255,.09) !important;border-color:rgba(255,255,255,.26) !important;}
       </style>
       <video src="/assets/paywall-bg.mp4" autoplay loop muted playsinline
-        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.5;z-index:0;"></video>
+        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.9;z-index:0;"></video>
       <div style="position:absolute;inset:0;z-index:0;background:radial-gradient(circle at 50% 26%,rgba(7,5,3,.6),rgba(4,2,1,.9) 82%);"></div>
       <div id="agContent" style="position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;transition:opacity .28s ease;
                   font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',system-ui,'Segoe UI',Roboto,Arial,sans-serif;">

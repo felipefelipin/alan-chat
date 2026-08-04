@@ -42,6 +42,9 @@ async function main() {
   for (const e of events) {
     if (e.type === "MINIAPP_USER_REPLY") {
       const step = e.payload?.step != null ? ` ${c.dim}(step ${e.payload.step})${c.reset}` : "";
+      if (e.payload?.repliedTo) {
+        console.log(`${c.dim}${fmtTime(e.createdAt)}${c.reset}  ${c.dim}respondendo a: "${e.payload.repliedTo}"${c.reset}`);
+      }
       console.log(`${c.dim}${fmtTime(e.createdAt)}${c.reset}  ${c.bold}${c.green}LEAD DISSE:${c.reset} "${e.payload?.text ?? ""}"${step}`);
       continue;
     }
@@ -53,7 +56,9 @@ async function main() {
   if (replies.length) {
     console.log(`\n${c.bold}${c.magenta}══ Só as respostas do lead (${replies.length}) ══${c.reset}`);
     for (const e of replies) {
-      console.log(`${c.dim}${fmtTime(e.createdAt)}${c.reset}  ${c.green}"${e.payload?.text ?? ""}"${c.reset}`);
+      const step = e.payload?.step != null ? ` ${c.dim}(step ${e.payload.step})${c.reset}` : "";
+      const ctx  = e.payload?.repliedTo ? `\n    ${c.dim}↳ respondendo a: "${e.payload.repliedTo}"${c.reset}` : "";
+      console.log(`${c.dim}${fmtTime(e.createdAt)}${c.reset}  ${c.green}"${e.payload?.text ?? ""}"${c.reset}${step}${ctx}`);
     }
   }
 

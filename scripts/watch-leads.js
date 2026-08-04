@@ -101,6 +101,15 @@ async function render() {
     lines.push(`${c.dim}(aguardando...)${c.reset}`);
   } else {
     for (const ev of recentEvents) {
+      // MINIAPP_USER_REPLY ganha formato próprio — o que interessa aqui é
+      // ler rápido o que o lead disse e A QUE mensagem ele respondeu, não
+      // decifrar um JSON inline.
+      if (ev.type === "MINIAPP_USER_REPLY") {
+        const step = ev.payload?.step != null ? ` ${c.dim}(step ${ev.payload.step})${c.reset}` : "";
+        const ctx  = ev.payload?.repliedTo ? ` ${c.dim}[resp. a: "${ev.payload.repliedTo}"]${c.reset}` : "";
+        lines.push(`${c.dim}${fmtTime(ev.createdAt)}${c.reset} ${c.bold}${c.green}${"LEAD DISSE".padEnd(24)}${c.reset} lead:${ev.userId} "${ev.payload?.text ?? ""}"${step}${ctx}`);
+        continue;
+      }
       const color = colorForEvent(ev.type);
       const hasPayload = ev.payload && Object.keys(ev.payload).length;
       const payload = hasPayload ? ` ${c.dim}${JSON.stringify(ev.payload)}${c.reset}` : "";
