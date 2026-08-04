@@ -300,6 +300,10 @@ bot.on("callback_query", async (q) => {
     if (data === "resgatar_premio") {
       await bot.answerCallbackQuery(q.id, { text: "🎁" }).catch(() => {});
       await queue.add("jobs",
+        { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "photo_5114199563341335699_w.jpg", caption: "", instant: true } },
+        { delay: 0, jobId: jid("resgatar", chatId, 1), removeOnComplete: true, removeOnFail: true }
+      );
+      await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
           text: "🎁 <b>LIBERADO: CHAMADA GRÁTIS AO VIVO</b>",
           noTyping: true,
@@ -307,7 +311,7 @@ bot.on("callback_query", async (q) => {
             [{ text: "🔴 AO VIVO: ENTRAR NA CHAMADA GRÁTIS 😈", callback_data: "chamada_video", style: "success" }],
           ]}},
         }},
-        { delay: 0, jobId: jid("resgatar", chatId, 1), removeOnComplete: true, removeOnFail: true }
+        { delay: 0, jobId: jid("resgatar", chatId, 2), removeOnComplete: true, removeOnFail: true }
       );
       return;
     }
