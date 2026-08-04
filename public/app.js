@@ -1012,6 +1012,101 @@ function esPlayRevealShimmer() {
   osc.stop(now + 1.05);
 }
 
+// ==================== SONS — CONFIRMAÇÃO DE IDADE ====================
+// Trio grave/sofisticado, deliberadamente distante do resto (chimes agudos
+// de loading/roleta) — aqui o registro é baixo, quase cerimonial, pra
+// combinar com "acesso restrito", não com "prêmio"/"notificação".
+
+// drone grave sustentado com um leve shimmer por cima, nascendo devagar —
+// toca (melhor esforço) assim que a tela de confirmação aparece. Como isso
+// acontece ANTES de qualquer gesto do usuário, o navegador pode bloquear o
+// autoplay; falha silenciosa igual o resto do engine, sem travar nada.
+function agPlayGateAmbient() {
+  const ctx = lsGetAudioCtx();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  const now = ctx.currentTime;
+  const drone = ctx.createOscillator();
+  const droneGain = ctx.createGain();
+  drone.type = "sine";
+  drone.frequency.setValueAtTime(80, now);
+  droneGain.gain.setValueAtTime(0.0001, now);
+  droneGain.gain.exponentialRampToValueAtTime(0.09, now + 0.7);
+  droneGain.gain.exponentialRampToValueAtTime(0.0001, now + 2.1);
+  drone.connect(droneGain).connect(ctx.destination);
+  drone.start(now);
+  drone.stop(now + 2.15);
+
+  const shimmer = ctx.createOscillator();
+  const shimmerGain = ctx.createGain();
+  shimmer.type = "sine";
+  shimmer.frequency.setValueAtTime(540, now + 0.3);
+  shimmer.frequency.exponentialRampToValueAtTime(720, now + 1.6);
+  shimmerGain.gain.setValueAtTime(0.0001, now + 0.3);
+  shimmerGain.gain.exponentialRampToValueAtTime(0.035, now + 0.9);
+  shimmerGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.9);
+  shimmer.connect(shimmerGain).connect(ctx.destination);
+  shimmer.start(now + 0.3);
+  shimmer.stop(now + 1.95);
+}
+
+// "thunk" mecânico curto (a tranca abrindo) seguido de uma resolução em duas
+// notas subindo — mais contido/adulto que lsPlaySuccessChime, sem soar como
+// vitória de jogo. Toca no clique de "SIM".
+function agPlayUnlock() {
+  const ctx = lsGetAudioCtx();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  const now = ctx.currentTime;
+  const thunk = ctx.createOscillator();
+  const thunkGain = ctx.createGain();
+  thunk.type = "triangle";
+  thunk.frequency.setValueAtTime(180, now);
+  thunk.frequency.exponentialRampToValueAtTime(60, now + 0.1);
+  thunkGain.gain.setValueAtTime(0.0001, now);
+  thunkGain.gain.exponentialRampToValueAtTime(0.22, now + 0.012);
+  thunkGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+  thunk.connect(thunkGain).connect(ctx.destination);
+  thunk.start(now);
+  thunk.stop(now + 0.15);
+
+  [392, 587].forEach((freq, i) => {
+    const t = now + 0.13 + i * 0.11;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.16, t + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.42);
+  });
+}
+
+// duas notas curtas e graves descendo — "negado", mas discreto e sério, sem
+// buzzer/alarme de erro barato. Toca no clique de "NÃO".
+function agPlayDenied() {
+  const ctx = lsGetAudioCtx();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  const now = ctx.currentTime;
+  [220, 165].forEach((freq, i) => {
+    const t = now + i * 0.17;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.14, t + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.32);
+  });
+}
+
 // "pop" de 2 notas subindo — estilo notificação de mensagem do WhatsApp,
 // curto e discreto. Só toca pra mensagens que chegam (lado esquerdo, dela);
 // mensagens que o próprio lead manda não tocam esse som, igual o WhatsApp.
@@ -6111,6 +6206,157 @@ async function endCall() {
   if (funnel) funnel.remove();
 }
 
+// ==================== CONFIRMAÇÃO DE IDADE (+18) ====================
+// Primeira coisa que o mini app mostra, antes até do loading inicial —
+// obrigatória em todo boot até o usuário confirmar "SIM" uma única vez.
+// Depois disso fica liberado pra sempre nesse device (gisa_age_confirmed),
+// igual o resto dos flags de sessão do app (gisa_checkout_done etc.) — não
+// reaparece a cada abertura, só enquanto não foi confirmado nenhuma vez.
+function closeMiniApp() {
+  try { if (tg?.close) tg.close(); } catch {}
+}
+
+function runAgeGateScreen() {
+  return new Promise((resolve) => {
+    if (localStorage.getItem("gisa_age_confirmed") === "1") { resolve(); return; }
+    trackEvent("MINIAPP_AGE_GATE_SHOWN");
+
+    const screen = document.createElement("div");
+    screen.className = "lsScreen";
+    screen.style.background = "radial-gradient(circle at 50% 32%, #171009 0%, #0a0705 55%, #050302 100%)";
+    document.body.appendChild(screen);
+
+    screen.innerHTML = `
+      <style>
+        @keyframes agPulse{0%,100%{box-shadow:0 0 30px rgba(214,176,122,.3),0 0 70px rgba(214,176,122,.14);}50%{box-shadow:0 0 52px rgba(214,176,122,.55),0 0 110px rgba(214,176,122,.26);}}
+        @keyframes agFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+        @keyframes agFadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+        .agBtn{-webkit-tap-highlight-color:transparent;transition:transform .15s ease,opacity .15s ease;}
+        .agBtn:active{transform:scale(.97);}
+      </style>
+      <div id="agContent" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;transition:opacity .28s ease;">
+
+        <div style="display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;
+                    background:rgba(214,176,122,.1);border:1px solid rgba(214,176,122,.35);margin-bottom:26px;
+                    opacity:0;animation:agFadeUp .5s ease .1s forwards;">
+          <span style="width:5px;height:5px;border-radius:50%;background:#d6b07a;"></span>
+          <span style="font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#e8cfa0;">Acesso Restrito</span>
+        </div>
+
+        <div id="agBadge" style="width:104px;height:104px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+                    background:radial-gradient(circle at 35% 30%,#2a1f10,#0d0a05 75%);
+                    border:1.5px solid rgba(214,176,122,.45);
+                    animation:agPulse 2.4s ease-in-out infinite, agFloat 3.6s ease-in-out infinite, agFadeUp .5s ease .18s both;
+                    margin-bottom:28px;">
+          <span style="font-size:30px;font-weight:900;letter-spacing:-.5px;color:#f2dcb0;">18+</span>
+        </div>
+
+        <div style="font-size:24px;font-weight:800;color:#fff;line-height:1.28;letter-spacing:-.3px;max-width:320px;margin-bottom:12px;
+                    opacity:0;animation:agFadeUp .5s ease .26s forwards;">
+          Isso aqui não é pra qualquer um
+        </div>
+
+        <div style="font-size:14.5px;color:rgba(255,255,255,.6);line-height:1.55;max-width:300px;margin-bottom:36px;
+                    opacity:0;animation:agFadeUp .5s ease .34s forwards;">
+          Conteúdo real, sem censura, exclusivo pra maiores de 18 anos. Confirma sua idade pra continuar.
+        </div>
+
+        <button type="button" id="agYesBtn" class="agBtn" style="
+          width:100%;max-width:300px;padding:18px 20px;border-radius:16px;border:none;
+          background:linear-gradient(135deg,#f6ddaa 0%,#d6b07a 55%,#a97c3a 100%);
+          color:#241804;font-size:16px;font-weight:900;letter-spacing:.2px;cursor:pointer;
+          box-shadow:0 8px 26px rgba(214,176,122,.35);margin-bottom:14px;
+          opacity:0;animation:agFadeUp .5s ease .42s forwards;
+        ">SIM, TENHO +18</button>
+
+        <button type="button" id="agNoBtn" class="agBtn" style="
+          background:none;border:none;color:rgba(255,255,255,.38);font-size:13.5px;font-weight:600;
+          padding:8px;cursor:pointer;opacity:0;animation:agFadeUp .5s ease .48s forwards;
+        ">Não tenho 18 anos</button>
+
+      </div>
+    `;
+
+    requestAnimationFrame(() => screen.classList.add("lsScreen-visible"));
+    agPlayGateAmbient(); // melhor esforço — sem gesto do usuário ainda, pode ser bloqueado pelo autoplay; falha silenciosa
+
+    const content = screen.querySelector("#agContent");
+    const badge   = screen.querySelector("#agBadge");
+    const yesBtn  = screen.querySelector("#agYesBtn");
+    const noBtn   = screen.querySelector("#agNoBtn");
+
+    function finalFadeOutAndResolve() {
+      screen.classList.remove("lsScreen-visible");
+      let done = false;
+      const cleanup = () => { if (done) return; done = true; screen.remove(); resolve(); };
+      screen.addEventListener("transitionend", cleanup, { once: true });
+      setTimeout(cleanup, 600); // rede de segurança
+    }
+
+    yesBtn.addEventListener("click", () => {
+      trackEvent("MINIAPP_AGE_GATE_YES");
+      try { localStorage.setItem("gisa_age_confirmed", "1"); } catch {}
+      yesBtn.disabled = true;
+      noBtn.disabled = true;
+      hapticNotify("success");
+      agPlayUnlock();
+
+      // "libera": badge dá um pulso de escala + flash dourado varre a tela,
+      // só então some — mesma lógica de "conquista contida" do resgate
+      // premium, sem confete (aqui é confirmação, não prêmio).
+      badge.style.transition = "transform .4s cubic-bezier(.34,1.56,.64,1)";
+      badge.style.transform = "scale(1.22)";
+      yesBtn.style.transition = "opacity .2s ease";
+      yesBtn.style.opacity = "0";
+      noBtn.style.transition = "opacity .2s ease";
+      noBtn.style.opacity = "0";
+
+      const flash = document.createElement("div");
+      flash.style.cssText = "position:absolute;inset:0;background:radial-gradient(circle, rgba(246,221,170,.85), rgba(246,221,170,0) 65%);opacity:0;transition:opacity .35s ease;pointer-events:none;";
+      screen.appendChild(flash);
+      requestAnimationFrame(() => { flash.style.opacity = "1"; });
+
+      setTimeout(finalFadeOutAndResolve, 520);
+    }, { once: true });
+
+    noBtn.addEventListener("click", () => {
+      trackEvent("MINIAPP_AGE_GATE_NO");
+      yesBtn.disabled = true;
+      noBtn.disabled = true;
+      hapticNotify("error");
+      agPlayDenied();
+
+      content.style.opacity = "0";
+      setTimeout(() => {
+        content.innerHTML = `
+          <div style="width:96px;height:96px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+                      background:radial-gradient(circle at 35% 30%,#1c1210,#0a0605 75%);
+                      border:1.5px solid rgba(255,255,255,.14);margin-bottom:26px;">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="11" width="14" height="9" rx="2"/>
+              <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+            </svg>
+          </div>
+          <div style="font-size:22px;font-weight:800;color:#fff;letter-spacing:-.3px;margin-bottom:12px;">Acesso Negado</div>
+          <div style="font-size:14px;color:rgba(255,255,255,.55);line-height:1.55;max-width:280px;margin-bottom:8px;">
+            Esse espaço é restrito a maiores de 18 anos. Por segurança, o acesso foi encerrado.
+          </div>
+          <div style="font-size:12px;color:rgba(255,255,255,.3);margin-bottom:30px;">Fechando automaticamente…</div>
+          <button type="button" id="agCloseBtn" class="agBtn" style="
+            padding:14px 32px;border-radius:14px;border:1px solid rgba(255,255,255,.18);
+            background:rgba(255,255,255,.05);color:rgba(255,255,255,.75);font-size:14px;font-weight:700;cursor:pointer;
+          ">Fechar</button>
+        `;
+        content.style.opacity = "1";
+        content.querySelector("#agCloseBtn")?.addEventListener("click", closeMiniApp, { once: true });
+        setTimeout(closeMiniApp, 4000);
+      }, 280);
+      // promessa nunca resolve — o mini app é encerrado, o fluxo normal
+      // (loading/roleta/chat) não deve rodar de jeito nenhum nesse caminho.
+    }, { once: true });
+  });
+}
+
 // ==================== INIT ====================
 preloadMedia();
 
@@ -6128,58 +6374,64 @@ const OWNER_CHAT_ID = "7808077251";
 const _currentChatId = String(tg?.initDataUnsafe?.user?.id ?? "");
 const FORCE_FRESH_START = _currentChatId === OWNER_CHAT_ID;
 
-if (FORCE_FRESH_START) {
-  // dono testando o roteiro — vê a introdução completa do zero (loading,
-  // verificação, roleta, cortina), igual um lead de verdade, mas pula o
-  // roteiro de chat inteiro e vai direto pra tela de "desbloquear acesso"
-  // logo depois da cortina — pra testar o resgate premium + roleta de
-  // desconto sem precisar refazer a conversa toda vez.
-  state.history           = [];
-  state.step              = 0;
-  state.flags.startedChat = false;
-  state.flags.routing     = false;
-  state.flags.entered     = false;
-  (async () => {
-    await runInitialLoadingScreen();
-    mountLiveSocialBadge();
-    await runConnectionLoadingScreen();
-    await runRouletteScreen();
-    unmountLiveSocialBadge();
-    await runEntranceScreen(); // já monta o chat internamente (crossfade), ver onEnterTap
-    insertSystemNotice(`As mensagens são protegidas com criptografia de ponta a ponta. Só você e ${CONTACT.name} podem lê-las.`);
-    await sleep(220);
-    showCheckoutCta({ skipRoulette: false });
-  })();
-} else if (localStorage.getItem("gisa_checkout_done") === "1") {
-  // já girou a roleta de desconto e chegou no checkout antes — reabrir vai
-  // direto pro botão de desbloquear, e ele já pula reto pro checkout, sem
-  // repetir a roleta de desconto.
-  mountChat();
-  setTimeout(() => showCheckoutCta({ skipRoulette: true }), 300);
-} else if (localStorage.getItem("gisa_paywall_reached") === "1") {
-  // chegou a ver "desbloquear acesso" mas não completou a roleta de
-  // desconto — reabrir vai direto pro botão, mas clicar nele ainda leva
-  // pra roleta de desconto normalmente (não pula pro checkout direto).
-  mountChat();
-  setTimeout(() => showCheckoutCta({ skipRoulette: false }), 300);
-} else {
-  state.history        = [];
-  state.step           = 0;
-  state.flags.startedChat = false;
-  state.flags.routing     = false;
-  state.flags.entered     = false;
-  (async () => {
-    await runInitialLoadingScreen();
-    mountLiveSocialBadge();
-    await runConnectionLoadingScreen();
-    await runRouletteScreen();
-    unmountLiveSocialBadge();
-    await runEntranceScreen(); // já monta o chat internamente (crossfade), ver onEnterTap
-    insertSystemNotice(`As mensagens são protegidas com criptografia de ponta a ponta. Só você e ${CONTACT.name} podem lê-las.`);
-    await sleep(220);
-    startScript().catch(e => { if (!(e instanceof FlowCancelledError)) console.error(e); });
-  })();
-}
+// Nada do fluxo normal roda antes da confirmação de idade — resolve na
+// hora se já foi confirmado antes (gisa_age_confirmed), senão só depois do
+// "SIM". Em "NÃO" a promise nunca resolve (mini app fecha), então nada
+// abaixo chega a executar.
+runAgeGateScreen().then(() => {
+  if (FORCE_FRESH_START) {
+    // dono testando o roteiro — vê a introdução completa do zero (loading,
+    // verificação, roleta, cortina), igual um lead de verdade, mas pula o
+    // roteiro de chat inteiro e vai direto pra tela de "desbloquear acesso"
+    // logo depois da cortina — pra testar o resgate premium + roleta de
+    // desconto sem precisar refazer a conversa toda vez.
+    state.history           = [];
+    state.step              = 0;
+    state.flags.startedChat = false;
+    state.flags.routing     = false;
+    state.flags.entered     = false;
+    (async () => {
+      await runInitialLoadingScreen();
+      mountLiveSocialBadge();
+      await runConnectionLoadingScreen();
+      await runRouletteScreen();
+      unmountLiveSocialBadge();
+      await runEntranceScreen(); // já monta o chat internamente (crossfade), ver onEnterTap
+      insertSystemNotice(`As mensagens são protegidas com criptografia de ponta a ponta. Só você e ${CONTACT.name} podem lê-las.`);
+      await sleep(220);
+      showCheckoutCta({ skipRoulette: false });
+    })();
+  } else if (localStorage.getItem("gisa_checkout_done") === "1") {
+    // já girou a roleta de desconto e chegou no checkout antes — reabrir vai
+    // direto pro botão de desbloquear, e ele já pula reto pro checkout, sem
+    // repetir a roleta de desconto.
+    mountChat();
+    setTimeout(() => showCheckoutCta({ skipRoulette: true }), 300);
+  } else if (localStorage.getItem("gisa_paywall_reached") === "1") {
+    // chegou a ver "desbloquear acesso" mas não completou a roleta de
+    // desconto — reabrir vai direto pro botão, mas clicar nele ainda leva
+    // pra roleta de desconto normalmente (não pula pro checkout direto).
+    mountChat();
+    setTimeout(() => showCheckoutCta({ skipRoulette: false }), 300);
+  } else {
+    state.history        = [];
+    state.step           = 0;
+    state.flags.startedChat = false;
+    state.flags.routing     = false;
+    state.flags.entered     = false;
+    (async () => {
+      await runInitialLoadingScreen();
+      mountLiveSocialBadge();
+      await runConnectionLoadingScreen();
+      await runRouletteScreen();
+      unmountLiveSocialBadge();
+      await runEntranceScreen(); // já monta o chat internamente (crossfade), ver onEnterTap
+      insertSystemNotice(`As mensagens são protegidas com criptografia de ponta a ponta. Só você e ${CONTACT.name} podem lê-las.`);
+      await sleep(220);
+      startScript().catch(e => { if (!(e instanceof FlowCancelledError)) console.error(e); });
+    })();
+  }
+});
 
 function pauseAllMedia() {
   try { if (state.music) { state.music.pause(); } } catch {}
