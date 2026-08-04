@@ -210,7 +210,7 @@ async function runDirectFunnel(chatId) {
       autoSplit: false,
       noTyping: true,
       extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
-        [{ text: "👉 CLIQUE PRA VER ESSA PUTA 😈", callback_data: "ver_conteudinhos", style: "success" }],
+        [{ text: "🎁 DESBLOQUEAR PRÊMIOS", callback_data: "ver_conteudinhos", style: "success" }],
       ]}},
     }},
     { delay: 0, jobId: jid("start", chatId, 3), removeOnComplete: true, removeOnFail: true }
@@ -275,16 +275,33 @@ bot.on("callback_query", async (q) => {
         { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "video-output-F55CD6B3-B3C9-4597-A5BE-817224628154-1.mp4", caption: "", instant: true } },
         { delay: 0, jobId: jid("conteudinhos", chatId, 1), removeOnComplete: true, removeOnFail: true }
       );
+      // reveal gamificado: prêmio "desbloqueado" (texto) -> instrução de
+      // resgate (texto) -> só depois o botão único aparece (1s de atraso
+      // de propósito, pra parecer que o prêmio tá sendo "liberado" de
+      // verdade, não só uma mensagem normal aparecendo)
       await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
-          text: "Gostou do que viu? 😈 Tem muito mais te esperando, só escolher por onde entrar 👇",
+          text: "🎁 PRÊMIO DESBLOQUEADO!\n\n🔓 LIBERADO: CHAMADA GRÁTIS AO VIVO 😈",
           noTyping: true,
-          extra: { reply_markup: { inline_keyboard: [
-            [{ text: "🔴 AO VIVO: ENTRAR NA CHAMADA GRÁTIS 😈", callback_data: "chamada_video",   style: "success" }],
-            [{ text: "📸 VEM ME VER NO INSTA 👀",         callback_data: "abrir_instagram", style: "primary" }],
-          ]}},
         }},
         { delay: 0, jobId: jid("conteudinhos", chatId, 2), removeOnComplete: true, removeOnFail: true }
+      );
+      await queue.add("jobs",
+        { type: "SEND_MESSAGE", chatId: String(chatId), data: {
+          text: "Clica aqui embaixo pra resgatar seu prêmio 👇",
+          noTyping: true,
+        }},
+        { delay: 0, jobId: jid("conteudinhos", chatId, 3), removeOnComplete: true, removeOnFail: true }
+      );
+      await queue.add("jobs",
+        { type: "SEND_MESSAGE", chatId: String(chatId), data: {
+          text: "🎁 Toque pra resgatar",
+          noTyping: true,
+          extra: { reply_markup: { inline_keyboard: [
+            [{ text: "🔴 AO VIVO: ENTRAR NA CHAMADA GRÁTIS 😈", callback_data: "chamada_video", style: "success" }],
+          ]}},
+        }},
+        { delay: 1000, jobId: jid("conteudinhos", chatId, 4), removeOnComplete: true, removeOnFail: true }
       );
       return;
     }

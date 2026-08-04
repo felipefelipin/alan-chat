@@ -6218,7 +6218,10 @@ function closeMiniApp() {
 
 function runAgeGateScreen() {
   return new Promise((resolve) => {
-    if (localStorage.getItem("gisa_age_confirmed") === "1") { resolve(); return; }
+    // dono testando o roteiro sempre vê essa tela de novo, mesmo já tendo
+    // confirmado antes — só pra ele revisar a seção até dar o ok; todo
+    // mundo continua com a persistência normal (uma vez só).
+    if (!FORCE_FRESH_START && localStorage.getItem("gisa_age_confirmed") === "1") { resolve(); return; }
     trackEvent("MINIAPP_AGE_GATE_SHOWN");
 
     const screen = document.createElement("div");
@@ -6234,7 +6237,10 @@ function runAgeGateScreen() {
         .agBtn{-webkit-tap-highlight-color:transparent;transition:transform .15s ease,opacity .15s ease;}
         .agBtn:active{transform:scale(.97);}
       </style>
-      <div id="agContent" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;transition:opacity .28s ease;">
+      <video src="/assets/paywall-bg.mp4" autoplay loop muted playsinline
+        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.24;z-index:0;"></video>
+      <div style="position:absolute;inset:0;z-index:0;background:radial-gradient(circle at 50% 30%,rgba(5,3,2,.4),rgba(5,3,2,.8) 78%);"></div>
+      <div id="agContent" style="position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;transition:opacity .28s ease;">
 
         <div style="display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;
                     background:rgba(214,176,122,.1);border:1px solid rgba(214,176,122,.35);margin-bottom:26px;
@@ -6279,6 +6285,7 @@ function runAgeGateScreen() {
 
     requestAnimationFrame(() => screen.classList.add("lsScreen-visible"));
     agPlayGateAmbient(); // melhor esforço — sem gesto do usuário ainda, pode ser bloqueado pelo autoplay; falha silenciosa
+    screen.querySelector("video")?.play().catch(() => {});
 
     const content = screen.querySelector("#agContent");
     const badge   = screen.querySelector("#agBadge");
