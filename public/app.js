@@ -4997,16 +4997,46 @@ async function startFunnelCall() {
   }, { passive: true });
   _fcTimer = setTimeout(_fcHide, 4000);
 
-  // readyState >= 3 (HAVE_FUTURE_DATA) = já tem o frame atual + pelo menos
-  // o próximo decodificados, o mesmo patamar que dispara o evento
-  // "canplay" — abaixo disso, play() ainda pode "engasgar" no primeiro
-  // frame. Graças ao preload desde showIncomingCall, isso normalmente já é
-  // verdade aqui, então essa promise resolve na hora (não é um delay novo,
-  // é uma checagem real que só espera de verdade se genuinamente precisar).
+  // readyState >= 4 (HAVE_ENOUGH_DATA, o mesmo patamar de "canplaythrough")
+  // é preferível — mais folga de buffer antes de dar play(), reduz chance
+  // de engasgar segundos depois de começar. Mas não trava esperando isso
+  // indefinidamente: em arquivo grande "canplaythrough" pode nunca disparar
+  // antes do download terminar, então aceita readyState >= 3/"canplay"
+  // (já é jogável sem travar no 1º frame) como critério suficiente também.
+  // Graças ao preload desde showIncomingCall, isso normalmente já está
+  // satisfeito aqui, então a promise resolve na hora (não é um delay novo).
   function videoReady(video) {
-    if (video.readyState >= 3) return Promise.resolve();
+    if (video.readyState >= 4) return Promise.resolve();
     return new Promise((resolve) => {
-      video.addEventListener("canplay", resolve, { once: true });
+      let resolved = false;
+      const done = () => { if (resolved) return; resolved = true; resolve(); };
+      video.addEventListener("canplaythrough", done, { once: true });
+      video.addEventListener("canplay", () => { if (video.readyState >= 3) done(); }, { once: true });
+    });
+  }
+
+  // Vigia travamentos DURANTE a reprodução (não só no início). "waiting"
+  // dispara quando o vídeo fica sem buffer suficiente e trava sozinho — o
+  // browser normalmente retoma assim que rebufferiza, mas em alguns casos
+  // (interrupção do SO, perda momentânea de foco, etc.) ele fica parado de
+  // vez. Se isso acontecer e a reprodução não voltar sozinha em ~1.5s,
+  // força um play() de novo. Nunca interfere com pausa intencional (fim de
+  // chamada) — checagem via `intentionalPause`.
+  let intentionalPause = false;
+  let stallTimer = null;
+  function armStallWatchdog(video) {
+    video.addEventListener("waiting", () => {
+      clearTimeout(stallTimer);
+      stallTimer = setTimeout(() => {
+        if (!intentionalPause && !video.ended && video.paused) video.play().catch(() => {});
+      }, 1500);
+    });
+    video.addEventListener("playing", () => clearTimeout(stallTimer));
+    // pausa que não fomos nós que pedimos (ex.: SO pausou por falta de
+    // buffer/memória) — retoma sozinho, exceto no encerramento real.
+    video.addEventListener("pause", () => {
+      if (intentionalPause || video.ended) return;
+      video.play().catch(() => {});
     });
   }
 
@@ -5048,6 +5078,7 @@ async function startFunnelCall() {
         vid.style.opacity = "1";
         const t = timerEl(); if (t) t.textContent = "0:00"; // sai de "Conectando..."
         startTimer();
+        armStallWatchdog(vid);
       });
     });
   };
@@ -5079,6 +5110,8 @@ async function startFunnelCall() {
     cleanup();
     callPlayEndTone();
 
+    intentionalPause = true;
+    clearTimeout(stallTimer);
     try { vid.pause(); vid.src = ""; } catch {}
 
     // ── "Chamada encerrada" overlay (estilo WhatsApp) ───────────────
