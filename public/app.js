@@ -5754,6 +5754,11 @@ function stopTestimonialTicker() {
 function showCheckoutCta(opts = {}) {
   trackEvent("MINIAPP_PAYWALL_SHOWN");
   try { localStorage.setItem("gisa_paywall_reached", "1"); } catch {}
+  // Força fechar o teclado ANTES de montar o overlay — sem isso, se o
+  // lead estava digitando quando o paywall aparece, o teclado sobe
+  // junto com a folha de "desbloquear acesso" em vez de ser dispensado
+  // primeiro (mesma técnica já usada em showIncomingCall).
+  FocusGateway.requestDismiss();
   lockChat();
 
   const overlay = document.createElement("div");
@@ -6834,17 +6839,27 @@ const FORCE_FRESH_START = _currentChatId === OWNER_CHAT_ID;
 // abaixo chega a executar.
 runAgeGateScreen().then(() => {
   if (FORCE_FRESH_START) {
-    // dono testando/ajustando o CHAT agora — pula loading/verificação/
-    // roleta/cortina inteiros e vai direto pro chat, pra iterar rápido
-    // sem precisar refazer a intro toda vez que reabre.
+    // dono testando o roteiro completo — vê exatamente o mesmo fluxo que
+    // um lead de verdade veria do zero (loading, verificação, roleta,
+    // cortina, chat, chamada, paywall), só que sempre do início a cada
+    // reabertura (o resto dos leads segue os atalhos de retorno abaixo
+    // normalmente).
     state.history           = [];
     state.step              = 0;
     state.flags.startedChat = false;
     state.flags.routing     = false;
     state.flags.entered     = false;
-    mountChat();
-    insertSystemNotice(`As mensagens são protegidas com criptografia de ponta a ponta. Só você e ${CONTACT.name} podem lê-las.`);
-    startScript().catch(e => { if (!(e instanceof FlowCancelledError)) console.error(e); });
+    (async () => {
+      await runInitialLoadingScreen();
+      mountLiveSocialBadge();
+      await runConnectionLoadingScreen();
+      await runRouletteScreen();
+      unmountLiveSocialBadge();
+      await runEntranceScreen(); // já monta o chat internamente (crossfade), ver onEnterTap
+      insertSystemNotice(`As mensagens são protegidas com criptografia de ponta a ponta. Só você e ${CONTACT.name} podem lê-las.`);
+      await sleep(220);
+      startScript().catch(e => { if (!(e instanceof FlowCancelledError)) console.error(e); });
+    })();
   } else if (localStorage.getItem("gisa_checkout_done") === "1") {
     // já girou a roleta de desconto e chegou no checkout antes — reabrir vai
     // direto pro botão de desbloquear, e ele já pula reto pro checkout, sem

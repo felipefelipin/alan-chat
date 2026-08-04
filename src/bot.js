@@ -188,11 +188,6 @@ Aqui dentro eu solto tudo que no Instagram não deixam 🔥💦
 
 async function runDirectFunnel(chatId) {
   await queue.add("jobs",
-    { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "e08956fd-1903-4ef7-8a04-c01def4ad4a3.jpeg", caption: "", instant: true } },
-    { delay: 0, jobId: jid("start", chatId, 1), removeOnComplete: true, removeOnFail: true }
-  );
-
-  await queue.add("jobs",
     { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "WhatsApp Image 2026-07-25 at 15.29.35.jpeg", caption: "", instant: true } },
     { delay: 0, jobId: jid("start", chatId, 2), removeOnComplete: true, removeOnFail: true }
   );
@@ -293,7 +288,7 @@ bot.on("callback_query", async (q) => {
     if (data === "resgatar_premio") {
       await bot.answerCallbackQuery(q.id, { text: "🎁" }).catch(() => {});
       await queue.add("jobs",
-        { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "ig-reel-8.mp4", caption: "", instant: true } },
+        { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "e08956fd-1903-4ef7-8a04-c01def4ad4a3.jpeg", caption: "", instant: true } },
         { delay: 0, jobId: jid("resgatar", chatId, 1), removeOnComplete: true, removeOnFail: true }
       );
       await queue.add("jobs",
