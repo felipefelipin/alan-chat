@@ -134,11 +134,11 @@ const ASSET_OVERRIDES = {
     entranceTeaser: "/assets/checkout-video.mp4",
     connectionDonePhoto: "/assets/rmkt-3.jpg",
     // Essas três viram vídeo (não é só troca de arquivo) — ver uso
-    // condicional por PERSONA em startScript, enterOpeningReply e
+    // condicional por PERSONA em startScript, enterTeaseBuildup e
     // startFunnelCall (callVideo já era vídeo, só troca o arquivo).
     teasePhotoPrivada: "/assets/paywall-bg.mp4",
     callVideo: "/assets/call.mp4",
-    lingerie: "/assets/lose-video.mp4",
+    teaseCallPhoto: "/assets/lose-video.mp4",
     avatar: "/assets/9b508494-3144-4b2d-bd3a-be8b791846c2.jpg",
   },
 };
@@ -236,12 +236,6 @@ const state = {
   music: null,
   introVidEl: null,
   history: [],
-  // categoria do lead (quente/curioso/timido/curto/frio) — classificada na
-  // 1ª resposta da abertura (ver classifyLeadReply) e reaproveitada em
-  // todas as ramificações seguintes do roteiro (seção 2, 3 e 5).
-  leadCategory: null,
-  // quantas vezes o lead já recusou a chamada de vídeo (ver showIncomingCall).
-  declineCount: 0,
   flags: {
     entered: false,
     audioEnabled: false,
@@ -257,8 +251,6 @@ const state = {
 function snapshotForSave() {
   return {
     step: state.step,
-    leadCategory: state.leadCategory,
-    declineCount: state.declineCount,
     flags: {
       entered: !!state.flags.entered,
       audioEnabled: !!state.flags.audioEnabled,
@@ -4091,116 +4083,10 @@ function clearReengage() {
   _sleepGen++; // cancel all pending sleeps in previous flows
 }
 
-// Classifica a resposta do lead à abertura em uma das 5 categorias do
-// roteiro (quente/curioso/timido/curto/frio) — a categoria fica travada em
-// state.leadCategory e reaproveitada em todas as ramificações seguintes
-// (seção 2, 3 e 5), não é reclassificada a cada mensagem.
-function classifyLeadReply(text) {
-  const t = String(text || "").toLowerCase();
-
-  const frioWords = [
-    "fake", "grátis", "gratis", "quantos anos", "otári", "prova que",
-    "é real", "e real", "golpe", "vc é real", "voce e real",
-  ];
-  if (frioWords.some((w) => t.includes(w))) return "frio";
-
-  const quenteWords = [
-    "goz", "buceta", "boceta", "xoxota", "xota", "pica", "pau", "rola",
-    "fode", "foder", "fuder", "duro", "arreg", "comer", "meter", "mete",
-    "chupa", "chupar", "socar", "penetr", "tesao", "tesão",
-  ];
-  if (quenteWords.some((w) => t.includes(w))) return "quente";
-
-  const timidoWords = [
-    "linda", "bonita", "gata", "maravilhosa", "fofa", "adoro", "tudo bem",
-    "oi ", "pode ser", "gostei da foto", "gostei de voce", "gostei de você",
-  ];
-  if (timidoWords.some((w) => t.includes(w))) return "timido";
-
-  const wordCount = t.trim().split(/\s+/).filter(Boolean).length;
-  const continueSignals = ["ver", "mostra", "continua", "mais", "como"];
-  if (wordCount <= 2 && !continueSignals.some((w) => t.includes(w))) return "curto";
-
-  return "curioso";
+function isNegative(text) {
+  return /\b(n[ãa]o|depois|agora n[ãa]o|talvez|espera|nope|nop)\b/i.test(text);
 }
 
-const SCRIPT_BRANCHES = {
-  quente: {
-    section2: {
-      msg1: "caralho…\ndo jeito que cê falou já me deixou molhada kkk",
-      away: 6500,
-      msg2: "olha o que você me fez vestir…\nagora fala direito o que cê quer que eu faça com ela",
-    },
-    section3: {
-      msg1: "porra… cê não tem freio nenhum né",
-      msg2: "agora me responde…\nprefere que eu continue te provocando\nou quer que eu te ligue agora pra cê me ver gozando de verdade?",
-    },
-    section5: {
-      msg1: "caralho…\nvocê me deixou encharcada",
-      msg2: "eu tenho coisas muito piores guardadas…\nquer que eu te mostre o resto agora?",
-    },
-  },
-  curioso: {
-    section2: {
-      msg1: "hmm… gostei da sua sinceridade",
-      away: 5500,
-      msg2: "olha o que eu acabei de colocar só pra você…\nquer que eu tire devagarzinho ou prefere que eu arranque?",
-    },
-    section3: {
-      msg1: "você tá me deixando com uma vontade…",
-      msg2: "fala pra mim…\nquer que eu te ligue e olhe nos seus olhos enquanto eu me mostro?",
-    },
-    section5: {
-      msg1: "nossa…\nvocê me deixou sem jeito",
-      msg2: "eu quase nunca faço chamada assim…\ntenho muito mais pra te mostrar\nquer ver o que eu não posto em lugar nenhum?",
-    },
-  },
-  timido: {
-    section2: {
-      msg1: "ai que fofo…\nmas eu não sou mocinha não viu",
-      away: 6000,
-      msg2: "olha isso…\nagora me fala a verdade\nvocê quer me ver sem nada?",
-    },
-    section3: {
-      msg1: "você é todo certinho…\nmas eu senti que cê quer",
-      msg2: "me deixa te ligar?\nquero ver sua cara quando eu tirar tudo",
-    },
-    section5: {
-      msg1: "você me deixou nervosa…\nde um jeito bom",
-      msg2: "eu tenho um lado bem mais safado que quase ninguém vê\nquer que eu te mostre?",
-    },
-  },
-  curto: {
-    section2: {
-      msg1: "só isso?\nfala direito pra mim",
-      away: 5000,
-      msg2: "você quer me ver pelada\nou tá só enrolando?",
-    },
-    section3: {
-      msg1: "cê é econômico com palavra né…",
-      msg2: "para de enrolar\nposso te ligar agora ou vai continuar só mandando \"sim\"?",
-    },
-    section5: {
-      msg1: "você me deixou assim e agora some?",
-      msg2: "eu tenho muito mais\nquer ver ou vai ficar só na vontade?",
-    },
-  },
-  frio: {
-    section2: {
-      msg1: "pode ficar tranquilo que eu não sou fake\nmas eu também não fico me exibindo de graça pra qualquer um",
-      away: 4000,
-      msg2: "quer ver de verdade\nou prefere ficar só imaginando?",
-    },
-    section3: {
-      msg1: "tudo bem\neu não fico insistindo",
-      msg2: "última chance de me ver de verdade\nposso te ligar ou prefere que eu passe pra outro?",
-    },
-    section5: {
-      msg1: "viu que não era fake?",
-      msg2: "eu tenho bem mais coisa…\nmas só mostro pra quem realmente entra\nquer o acesso ou prefere ficar de fora?",
-    },
-  },
-};
 
 // Cria um botão inline no chat (mesmo visual usado no resto do app) — a
 // única forma de avançar certos pontos do roteiro. Antes essa função era
@@ -4228,91 +4114,73 @@ function showAdvanceButton(label, onClick) {
   }, 0);
 }
 
-// SEÇÃO 2 — resposta à abertura. Classifica o lead uma única vez aqui;
-// as seções seguintes (3 e 5) só reaproveitam state.leadCategory.
-async function enterOpeningReply(text = null) {
+async function enterTeaseBuildup(text = null) {
   clearReengage();
-  const category = classifyLeadReply(text);
-  state.leadCategory = category;
   state.step = 2; saveState();
   trackEvent("MINIAPP_STEP_TEASE_BUILDUP");
-  trackEvent("MINIAPP_LEAD_CATEGORY_" + category.toUpperCase());
-  const branch = SCRIPT_BRANCHES[category].section2;
-
   await sleep(rand(2000, 3000));
   if (PERSONA === "m2") {
     await gisaSendAudio(ASSETS.audioMimimi, null, rand(3500, 5000));
     await sleep(rand(300, 600));
   }
-  await gisaSay(branch.msg1, { delay: 2500, replyTo: text ? { side: "right", text } : null });
-  await sleep(rand(300, 600));
-  if (PERSONA === "m2") await gisaSendVideoAway(ASSETS.lingerie, "Vídeo Privado", branch.away);
-  else await gisaSendPhotoAway(ASSETS.lingerie, "Foto Privada", branch.away);
-  await sleep(rand(400, 700));
-  await gisaSay(branch.msg2, { delay: 2000, noSleep: true });
-
-  // Seção 6 — "no meio da provocação (3min parado)"
-  state._t1 = setTimeout(async () => {
+  if (PERSONA === "m2") await gisaSendVideoAway(ASSETS.teaseCallPhoto, "Vídeo Privado");
+  else await gisaSendPhotoAway(ASSETS.teaseCallPhoto, "Foto Privada");
+  await sleep(rand(1000, 1500));
+  await gisaSay("vou te ligar rapidinho pra vc poder olhar nos olhos dessa putinha sfd \u{1F608}", { delay: rand(4000, 6000), replyTo: text ? { side: "right", text } : null });
+  await gisaSay("posso ligar pra vc agora sfd? \u{1F525}", { delay: rand(2500, 3500), noSleep: true });
+  showAdvanceButton("Quero ver tudo \u{1F608}", () => {
     if (state.step !== 2) return;
-    await gisaSay("ainda tá aí ou já bateu e dormiu?");
-  }, 3 * 60 * 1000);
-}
-
-// SEÇÃO 3 — rodada de provocação: vídeo + pergunta final + botão "Me liga
-// agora" (só aparece aqui, nunca antes). Reaproveita a categoria já travada.
-async function enterProvocationRound() {
-  clearReengage();
-  state.step = 3; saveState();
-  const category = state.leadCategory || "curioso";
-  const branch = SCRIPT_BRANCHES[category].section3;
-
-  await sleep(rand(1500, 2500));
-  await gisaSay(branch.msg1, { delay: 2000 });
-  await gisaSendVideo(ASSETS.teaseVideo, "Vídeo Privado");
-  await sleep(rand(400, 700));
-  await gisaSay(branch.msg2, { delay: 2000, noSleep: true });
-  showAdvanceButton("Me liga agora 🔥", () => {
-    if (state.step !== 3) return;
     _flowRunning = true;
-    enterCallReadyTransition().catch(() => {}).finally(() => { _flowRunning = false; });
+    enterCallReadyNow().catch(() => {}).finally(() => { _flowRunning = false; });
   });
-
-  // Seção 6 — "depois do vídeo (2min parado sem clicar no botão)"
-  state._t1 = setTimeout(async () => {
-    if (state.step !== 3) return;
-    await gisaSay("sumiu justo agora?\neu tava quase te mostrando tudo");
-  }, 2 * 60 * 1000);
 }
 
-// Transição curta entre o clique em "Me liga agora" (seção 3) e a chamada
-// tocando de fato — cai sozinha, sem esperar mais nenhuma resposta do lead.
-async function enterCallReadyTransition() {
+// Resposta a pergunta "posso ligar pra vc agora sfd?" - confirma e a
+// chamada cai sozinha 6s depois (sem esperar mais nenhuma mensagem do lead).
+async function enterCallReadyNow(replyText = null) {
   clearReengage();
   state.step = 5; saveState();
   trackEvent("MINIAPP_STEP_CALL_READY");
-  await sleep(rand(2000, 3000));
-  await gisaSay("tá bom amor, já vou ligar.", { delay: 3000 });
-  await sleep(rand(4000, 6000));
-  state.declineCount = 0; saveState();
+  await sleep(5000); // silencio antes de "digitando..." aparecer
+  await gisaSay("tá bom amor, já vou ligar.", { delay: 4000, replyTo: replyText ? { side: "right", text: replyText } : null });
+  await sleep(6000);
   showIncomingCall();
 }
 
-async function enterCallRetry() {
+// Depois que a pessoa responde a ultima mensagem do enterTeaseBuildup,
+// manda direto as mensagens 3 e 4 do convite (sem video, sem as mensagens
+// 1 e 2, sem botoes de escolha) - a resposta seguinte ja cai em
+// handleUserText/step 4, que decide sozinho (positivo ou negativo) e
+// sempre termina em enterCallConnecting().
+async function enterDesireEscalation() {
+  clearReengage();
+  state.step = 4; saveState();
+  trackEvent("MINIAPP_STEP_DESIRE_ESCALATION");
+  await sleep(rand(4000, 5000));
+  await gisaSay("entra na chamada comigo. Quero sentir você me comendo com os olhos",  { delay: rand(4500, 6500) });
+  await gisaSay("vai entrar ou vai ficar só se masturbando por fora como os outros?",  { delay: rand(4200, 6000), noSleep: true });
+}
+
+async function enterCallConnecting(replyText = null) {
   clearReengage();
   state.step = 5; saveState();
   trackEvent("MINIAPP_STEP_CALL_CONNECTING");
-  await gisaSay("vou te dar mais uma chance\nprepara", { delay: 2000 });
-  await sleep(rand(800, 1200));
-  await gisaSay("arrumando o brinquedinho…", { delay: 1500, noSleep: true });
-  await sleep(1000);
- 
+  await sleep(3000); // 3s de silencio antes de aparecer "digitando..."
+  // sem "delay" fixo aqui - usa o calculo padrao de typingDelayFor(text) (ver
+  // gisaSay), que dura proporcional ao tamanho da mensagem, pra ficar
+  // humanizado em vez de um tempo fixo arbitrario. Quebra de linha manual
+  // garante exatamente 2 linhas na bolha, nao importa a largura da tela.
+  await gisaSay("então já vou colocar o brinquedinho\ndentro da minha bucetinha e já te ligo \u{1F608}", {
+    noSleep: true,
+    replyTo: replyText ? { side: "right", text: replyText } : null,
+  });
 
-  // ela "sai pra se arrumar" — 2s depois da mensagem (não instantâneo) é
-  // que o status muda pra "visto por último"; fica fora por 8s. Qualquer
-  // mensagem que o lead mandar nesse meio-tempo fica marcada como não vista
-  // (tick cinza, ver addMsg/renderTicks), só virando "vista" (tick azul)
+  // ela "sai pra se arrumar" - 2s depois da mensagem (nao instantaneo) e
+  // que o status muda pra "visto por ultimo"; fica fora por 8s. Qualquer
+  // mensagem que o lead mandar nesse meio-tempo fica marcada como nao vista
+  // (tick cinza, ver addMsg/renderTicks), so virando "vista" (tick azul)
   // quando ela volta a ficar online. 2s depois de voltar online, "digitando..."
-  // reaparece por 3s fixos antes da próxima mensagem.
+  // reaparece por 3s fixos antes da proxima mensagem.
   await sleep(2000);
   state.flags.botOnline = false; saveState();
   const awayAt = new Date();
@@ -4324,12 +4192,11 @@ async function enterCallRetry() {
   setStatus("online");
   markPendingMessagesSeen();
 
-  await sleep(rand(1200, 1800));
-  await gisaSay("estou pronta já\nposso ligar de novo? 😈", { delay: 2000, noSleep: true });
-  await sleep(rand(2000, 3000));
-  showIncomingCall();
+  await sleep(2000);
+  await gisaSay("estou pronta já amor, posso ligar? \u{1F608}", { delay: 3000, noSleep: true });
+  // fluxo pausa aqui - a resposta do lead cai em handleUserText (state.step === 5),
+  // que aplica o mesmo tempo de espera de antes e mostra a chamada.
 }
-
 function showIncomingCall() {
   trackEvent("MINIAPP_INCOMING_CALL_SHOWN");
   // Força fechar teclado antes de mostrar a tela de chamada
@@ -4401,22 +4268,13 @@ function showIncomingCall() {
   document.getElementById("callDeclineBtn").onclick = () => {
     trackEvent("MINIAPP_CALL_DECLINE");
     stopRing(); el.remove();
-    state.declineCount = (state.declineCount || 0) + 1; saveState();
     (async () => {
-      await gisaSay("tá com medo de não aguentar? 🥵", { delay: rand(2000, 3000) });
-      if (state.declineCount >= 2) {
-        // 2ª recusa — não liga sozinha de novo, só com clique explícito.
-        await sleep(rand(1000, 2000));
-        await gisaSay("última vez\ndepois eu realmente passo pra outro", { delay: 2000, noSleep: true });
-        showAdvanceButton("Me liga agora (última chance)", () => {
-          if (state.step < 5) return;
-          showIncomingCall();
-        });
-        return;
-      }
+      await gisaSay("tá com medo de não aguentar? 🥵", { delay: rand(3000, 5000) });
       state._t1 = setTimeout(async () => {
-        await enterCallRetry();
-      }, rand(12000, 15000));
+        await gisaSay("vou te chamar de novo. Prepara.");
+        await sleep(800);
+        await enterCallConnecting();
+      }, 30 * 1000);
     })();
   };
 
@@ -4729,24 +4587,14 @@ function addCallNotifBubble(seconds) {
   addMsg("left", html);
 }
 
-// SEÇÃO 5 — pós-chamada, o momento mais crítico do funil. Reaproveita a
-// categoria travada desde a seção 2 (foto residual + 2 mensagens + botão
-// "Quero o acesso completo", que dispara a tela de checkout já existente).
 async function doCallPaywall() {
   trackEvent("MINIAPP_PAYWALL_SEQUENCE_START");
-  state.step = 6; saveState();
-  const category = state.leadCategory || "curioso";
-  const branch = SCRIPT_BRANCHES[category].section5;
-
-  await sleep(rand(2000, 3000));
-  await gisaSendPhoto(ASSETS.teaseCallPhoto, "Foto Privada");
-  await sleep(rand(400, 700));
-  await gisaSay(branch.msg1, { delay: 2500 });
-  await sleep(rand(300, 600));
-  await gisaSay(branch.msg2, { delay: 2500, noSleep: true });
-  showAdvanceButton("Quero o acesso completo 😈", () => {
-    showCheckoutCta();
-  });
+  await sleep(3000);
+  await gisaSay("tenho muita coisa pra eu te mostrar ainda... 😈", { delay: rand(3000, 4500) });
+  await gisaSay("mas pra isso preciso q vc desbloquie o acesso, pra me ver bem putinha só pra vc.", { delay: rand(3000, 4500), noSleep: true });
+  await gisaSay("vai cair agora ai pra vc desbloquear é só clicar e ir pro telegram que o resto só vai depender de vc 🥵🔥", { delay: rand(3500, 5000), noSleep: true });
+  await sleep(2000);
+  showCheckoutCta();
 }
 
 function lockChat() {
@@ -5017,7 +4865,7 @@ async function startScript() {
       await gisaSendAudio(ASSETS.audioCallInvite, null, 7500);
       await sleep(rand(300, 600));
     }
-    await gisaSay("me fala a verdade…\nvocê aguenta me ver pelada de verdade\nou vai só ficar olhando igual os fracos?... 👀", { delay: 2000 });
+    await gisaSay("me fala a verdade… você aguenta me ver pelada de verdade ou vai só ficar olhando como os fracos?... 👀", { delay: rand(8000, 11000) });
   } finally {
     _flowRunning = false;
   }
@@ -5042,12 +4890,40 @@ async function handleUserText(text) {
   // mais tempo depois disso; esse piso garante que NUNCA fica instantâneo.
   await sleep(rand(700, 1600));
   try {
-    // step 1 → abertura: 1ª resposta do lead classifica a categoria (ver
-    // classifyLeadReply/enterOpeningReply) e trava em state.leadCategory.
-    if (state.step === 1) { await enterOpeningReply(text); return; }
-    // step 2 → qualquer resposta avança pra rodada de provocação (seção 3),
-    // a categoria já foi travada na seção 2, não é reclassificada aqui.
-    if (state.step === 2) { await enterProvocationRound(); return; }
+    if (state.step === 1) { await enterTeaseBuildup(text); return; }
+    if (state.step === 2) {
+      if (isNegative(text)) {
+        await gisaSay("vou tirar mesmo assim… mas só porque você tá me deixando louca");
+        await sleep(800);
+      }
+      await enterCallReadyNow(text);
+      return;
+    }
+    if (state.step === 4) {
+      if (isNegative(text)) {
+        await gisaSay("para de frescura… é agora. Eu tô pelada e molhada te esperando.\nVocê pode sair quando quiser, mas eu sei que você não vai querer sair.");
+        state._t1 = setTimeout(async () => {
+          if (state.step !== 4) return;
+          await gisaSay("tá com medo de não aguentar? 🥵");
+          state._t2 = setTimeout(async () => {
+            if (state.step !== 4) return;
+            await gisaSay("vou te chamar agora. Entra logo, covarde gostoso.");
+            await sleep(800);
+            await enterCallConnecting();
+          }, 40 * 1000);
+        }, 2 * 60 * 1000);
+        return;
+      }
+      await enterCallConnecting(text);
+      return;
+    }
+    if (state.step === 5) {
+      // resposta a "estou pronta já amor, posso ligar?" — mesmo tempo que já
+      // existia entre a mensagem anterior cair e a chamada aparecer.
+      await sleep(8000);
+      showIncomingCall();
+      return;
+    }
   } catch(e) { if (!(e instanceof FlowCancelledError)) throw e; }
   finally { _flowRunning = false; }
 }
@@ -5226,16 +5102,16 @@ function showCheckoutCta(opts = {}) {
 
   setTimeout(async () => {
     if (state.step < 6) return;
-    await gisaSay("ainda tô aqui… molhada… esperando você decidir");
-  }, 45000);
+    await gisaSay("vai perder a chance de me ver gozando de verdade? Os outros não estão perdendo…");
+  }, 15000);
   setTimeout(async () => {
     if (state.step < 6) return;
-    await gisaSay("os que têm coragem já estão vendo tudo\nvocê vai ficar só imaginando?");
-  }, 3 * 60 * 1000);
+    await gisaSay("sumiu justo agora que eu tô pelada pra você? 😈");
+  }, rand(2 * 60 * 1000, 5 * 60 * 1000));
   setTimeout(async () => {
     if (state.step < 6) return;
-    await gisaSay("última chance real de me ver gozando só pra você hoje");
-  }, 12 * 60 * 1000);
+    await gisaSay("típico… fica só na vontade mesmo. Os machos de verdade já estão comigo agora.");
+  }, rand(10 * 60 * 1000, 20 * 60 * 1000));
 }
 
 // ==================== STORY VIDEO INIT ====================
