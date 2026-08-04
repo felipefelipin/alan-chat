@@ -1275,26 +1275,29 @@ function lsIcon(name) {
 // roleta sem precisar remontar. Alterna entre contador de espectadores e
 // feed de atividade — nunca os dois ao mesmo tempo, pra ficar discreto.
 const LS_SOCIAL_NAMES = ["Lucas", "Gabriel", "Matheus", "Rafael", "Bruno", "Diego", "Thiago", "Pedro", "Felipe", "João"];
+// Mesmos 3 planos que aparecem depois em SEND_PLANS (worker.js) — de
+// propósito. O lead vê esses nomes "sendo adquiridos" aqui, bem antes de
+// chegar na tela de planos de verdade; quando chegar lá, já não é a
+// primeira vez que ouviu falar de "VIP Eterno" etc. — familiaridade que
+// reduz fricção de decisão na hora H, em vez de um contador genérico solto.
+const LS_SOCIAL_PLANS = [
+  { verb: "acabou de garantir o", label: "VIP Eterno", emoji: "👑" },
+  { verb: "garantiu a", label: "Videochamada Pelada", emoji: "📞" },
+  { verb: "garantiu o", label: "Namoro 7 Dias", emoji: "💞" },
+];
 let _lsSocialInterval = null;
-// Números baixos de propósito — isso vende uma chamada de vídeo AO VIVO e
-// PESSOAL, não uma oferta de massa. Muita gente "vendo agora" ou "liberando
-// a chamada" ao mesmo tempo contradiz a exclusividade (não dá pra ela estar
-// numa chamada individual com dezenas de pessoas simultaneamente); poucas
-// pessoas reforça "seleto", não "vazio".
-let _lsSocialViewers = rand(2, 5);
+let _lsSocialViewers = rand(9, 17);
 
 function lsSocialNextLine() {
   const showCount = Math.random() < 0.5;
   if (showCount) {
     // flutua devagar (nunca pula demais de uma vez), fica mais "vivo"
-    _lsSocialViewers = Math.max(1, Math.min(6, _lsSocialViewers + rand(-1, 1)));
-    return `${_lsSocialViewers} pessoas vendo agora`;
+    _lsSocialViewers = Math.max(7, Math.min(20, _lsSocialViewers + rand(-2, 3)));
+    return `${_lsSocialViewers} pessoas vendo a oferta agora`;
   }
   const name = LS_SOCIAL_NAMES[Math.floor(Math.random() * LS_SOCIAL_NAMES.length)];
-  // "liberou a chamada" é o recurso escasso de verdade (tempo dela numa
-  // chamada 1:1) — precisa parecer raro, não algo em série o tempo todo.
-  const action = Math.random() < 0.8 ? "acabou de entrar" : "acabou de liberar a chamada";
-  return `${name} ${action}`;
+  const plan = LS_SOCIAL_PLANS[Math.floor(Math.random() * LS_SOCIAL_PLANS.length)];
+  return `${name} ${plan.verb} ${plan.label} ${plan.emoji}`;
 }
 
 function mountLiveSocialBadge() {
