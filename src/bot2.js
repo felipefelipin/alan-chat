@@ -300,9 +300,9 @@ bot.on("callback_query", async (q) => {
       );
       await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
-          text: "🎁 Toque pra resgatar",
+          text: "🎁 <b>TOQUE PRA RESGATAR</b>",
           noTyping: true,
-          extra: { reply_markup: { inline_keyboard: [
+          extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
             [{ text: "🔴 AO VIVO: ENTRAR NA CHAMADA GRÁTIS 😈", callback_data: "chamada_video", style: "success" }],
           ]}},
         }},
