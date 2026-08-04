@@ -185,6 +185,23 @@ function preloadMedia() {
     document.body.appendChild(v2);
     v2.load();
   } catch {}
+  // vídeo de fundo da confirmação de idade — é a PRIMEIRÍSSIMA tela do
+  // app, então sem preload ele só começava a baixar quando a tela já
+  // tinha acabado de montar, com delay/travada visível antes de tocar.
+  try {
+    const v3 = document.createElement("video");
+    v3.id = "agPreloadVideo";
+    v3.src = "/assets/paywall-bg.mp4";
+    v3.muted = true;
+    v3.loop = true;
+    v3.playsInline = true;
+    v3.setAttribute("playsinline", "");
+    v3.setAttribute("webkit-playsinline", "");
+    v3.preload = "auto";
+    v3.style.cssText = "position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none;";
+    document.body.appendChild(v3);
+    v3.load();
+  } catch {}
 }
 
 // Preload do vídeo principal da chamada — chamado quando a tela de "chamada
@@ -6285,8 +6302,6 @@ function runAgeGateScreen() {
         .agBtnPrimary:active{filter:brightness(.94);}
         .agBtnSecondary:active{background:rgba(255,255,255,.09) !important;border-color:rgba(255,255,255,.26) !important;}
       </style>
-      <video src="/assets/paywall-bg.mp4" autoplay loop muted playsinline
-        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.9;z-index:0;"></video>
       <div style="position:absolute;inset:0;z-index:0;background:radial-gradient(circle at 50% 26%,rgba(7,5,3,.6),rgba(4,2,1,.9) 82%);"></div>
       <div id="agContent" style="position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;transition:opacity .28s ease;
                   font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',system-ui,'Segoe UI',Roboto,Arial,sans-serif;">
@@ -6339,9 +6354,27 @@ function runAgeGateScreen() {
       </div>
     `;
 
+    // Reaproveita o <video> que já vem baixando desde preloadMedia() (boot
+    // do app) — zero delay, em vez de criar um elemento novo que começa a
+    // baixar (e só então toca) só agora, na hora de montar a tela (mesma
+    // técnica de mountBackgroundVideo/lsPreloadVideo).
+    const preloadedVideo = document.getElementById("agPreloadVideo");
+    const video = preloadedVideo || document.createElement("video");
+    if (!preloadedVideo) {
+      video.src = "/assets/paywall-bg.mp4";
+      video.muted = true;
+      video.loop = true;
+      video.playsInline = true;
+      video.setAttribute("playsinline", "");
+      video.setAttribute("webkit-playsinline", "");
+    }
+    video.removeAttribute("id");
+    video.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:1;z-index:0;";
+    screen.insertBefore(video, screen.firstChild);
+
     requestAnimationFrame(() => screen.classList.add("lsScreen-visible"));
     agPlayGateAmbient(); // melhor esforço — sem gesto do usuário ainda, pode ser bloqueado pelo autoplay; falha silenciosa
-    screen.querySelector("video")?.play().catch(() => {});
+    video.play().catch(() => {});
 
     const content = screen.querySelector("#agContent");
     const yesBtn  = screen.querySelector("#agYesBtn");
