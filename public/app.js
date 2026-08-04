@@ -6231,8 +6231,6 @@ function runAgeGateScreen() {
 
     screen.innerHTML = `
       <style>
-        @keyframes agPulse{0%,100%{box-shadow:0 0 30px rgba(214,176,122,.3),0 0 70px rgba(214,176,122,.14);}50%{box-shadow:0 0 52px rgba(214,176,122,.55),0 0 110px rgba(214,176,122,.26);}}
-        @keyframes agFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
         @keyframes agFadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
         .agBtn{-webkit-tap-highlight-color:transparent;transition:transform .14s ease,opacity .14s ease,filter .14s ease,background .14s ease;}
         .agBtn:active{transform:scale(.97);}
@@ -6240,7 +6238,7 @@ function runAgeGateScreen() {
         .agBtnSecondary:active{background:rgba(255,255,255,.09) !important;border-color:rgba(255,255,255,.26) !important;}
       </style>
       <video src="/assets/paywall-bg.mp4" autoplay loop muted playsinline
-        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.19;z-index:0;"></video>
+        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.5;z-index:0;"></video>
       <div style="position:absolute;inset:0;z-index:0;background:radial-gradient(circle at 50% 26%,rgba(7,5,3,.6),rgba(4,2,1,.9) 82%);"></div>
       <div id="agContent" style="position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;transition:opacity .28s ease;
                   font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',system-ui,'Segoe UI',Roboto,Arial,sans-serif;">
@@ -6254,11 +6252,12 @@ function runAgeGateScreen() {
         </div>
 
         <div id="agBadge" style="width:104px;height:104px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
-                    background:radial-gradient(circle at 35% 30%,#2a1f10,#0d0a05 75%);
-                    border:1.5px solid rgba(214,176,122,.5);
-                    animation:agPulse 2.4s ease-in-out infinite, agFloat 3.6s ease-in-out infinite, agFadeUp .5s ease .18s both;
+                    background:radial-gradient(circle at 35% 30%,#3a1212,#0d0505 75%);
+                    border:1.5px solid rgba(168,50,50,.55);
+                    box-shadow:0 0 40px rgba(168,50,50,.32),0 0 90px rgba(168,50,50,.15);
+                    animation:agFadeUp .5s ease .18s both;
                     margin-bottom:28px;">
-          <span style="font-size:30px;font-weight:900;letter-spacing:-.5px;color:#f6ddaa;text-shadow:0 1px 3px rgba(0,0,0,.5);">18+</span>
+          <span style="font-size:30px;font-weight:900;letter-spacing:-.5px;color:#e0716a;text-shadow:0 1px 3px rgba(0,0,0,.5);">18+</span>
         </div>
 
         <div style="font-size:26px;font-weight:800;color:#fff;line-height:1.26;letter-spacing:-.4px;max-width:320px;margin-bottom:13px;
