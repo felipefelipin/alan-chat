@@ -4844,6 +4844,37 @@ function showLiveCallCta() {
   });
 }
 
+// bot2 (persona m2): resposta a "posso te mandar um vídeo q tenho aq?" —
+// fica "visto por último" 7s, volta online e só aí manda o vídeo, seguido
+// da mesma pergunta que o bot1 já mandava nesse ponto. state.step continua
+// 1 (a próxima resposta do lead cai em enterTeaseBuildup normalmente).
+async function enterM2VideoDelivery(text) {
+  clearReengage();
+  await sleep(rand(400, 800));
+  state.flags.botOnline = false; saveState();
+  const awayAt = new Date();
+  setStatus(`visto por último às ${String(awayAt.getHours()).padStart(2,"0")}:${String(awayAt.getMinutes()).padStart(2,"0")}`);
+  await sleep(7000);
+  state.flags.botOnline = true; saveState();
+  markPendingMessagesSeen();
+  setStatus("online");
+  await sleep(rand(300, 600));
+  await gisaSendVideo(ASSETS.teasePhotoPrivada, "Vídeo Privado");
+  await sleep(rand(300, 600));
+  await gisaSay("me fala a verdade… você aguenta me ver pelada de verdade ou vai só ficar olhando como os fracos?... 👀", {
+    delay: rand(8000, 11000),
+    replyTo: text ? { side: "right", text } : null,
+  });
+  state._t1 = setTimeout(async () => {
+    if (state.step !== 1) return;
+    await gisaSay("tá aí ou já correu covarde? 👀");
+    state._t2 = setTimeout(async () => {
+      if (state.step !== 1) return;
+      await gisaSay("typical… entra, olha e some. Mas eu não sou pra qualquer um não, safado.");
+    }, 2 * 60 * 1000);
+  }, 2 * 60 * 1000);
+}
+
 async function startScript() {
   if (state.flags.startedChat) return;
   state.flags.startedChat = true;
@@ -4857,15 +4888,16 @@ async function startScript() {
     state.flags.botOnline = true; saveState();
     await sleep(rand(1500, 2500));
     if (PERSONA === "m2") {
-      await gisaSendVideo(ASSETS.teasePhotoPrivada, "Vídeo Privado");
-      await sleep(rand(300, 600));
+      await gisaSay("oii beh, até que em fim vc chegou aq kkk", { delay: rand(2000, 3000) });
+      await gisaSay("poucos que conseguem chegar até aq", { delay: rand(1800, 2600), noSleep: true });
+      await gisaSay("posso te mandar um vídeo q tenho aq? 😈", { delay: rand(1800, 2600), noSleep: true });
     } else {
       await gisaSendPhoto(ASSETS.teasePhotoPrivada, "Foto Privada");
       await sleep(rand(300, 600));
       await gisaSendAudio(ASSETS.audioCallInvite, null, 7500);
       await sleep(rand(300, 600));
+      await gisaSay("me fala a verdade… você aguenta me ver pelada de verdade ou vai só ficar olhando como os fracos?... 👀", { delay: rand(8000, 11000) });
     }
-    await gisaSay("me fala a verdade… você aguenta me ver pelada de verdade ou vai só ficar olhando como os fracos?... 👀", { delay: rand(8000, 11000) });
   } finally {
     _flowRunning = false;
   }
@@ -4890,7 +4922,15 @@ async function handleUserText(text) {
   // mais tempo depois disso; esse piso garante que NUNCA fica instantâneo.
   await sleep(rand(700, 1600));
   try {
-    if (state.step === 1) { await enterTeaseBuildup(text); return; }
+    if (state.step === 1) {
+      if (PERSONA === "m2" && !state.flags.m2VideoSent) {
+        state.flags.m2VideoSent = true; saveState();
+        await enterM2VideoDelivery(text);
+        return;
+      }
+      await enterTeaseBuildup(text);
+      return;
+    }
     if (state.step === 2) {
       if (isNegative(text)) {
         await gisaSay("vou tirar mesmo assim… mas só porque você tá me deixando louca");
