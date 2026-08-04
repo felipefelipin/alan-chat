@@ -341,7 +341,7 @@ bot.on("callback_query", async (q) => {
     if (data === "chamada_video") {
       await bot.answerCallbackQuery(q.id, { text: "😈" }).catch(() => {});
       await queue.add("jobs",
-        { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "ig-reel-8.mp4", caption: "", instant: true } },
+        { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "IMG_1298 (1).MOV", caption: "", instant: true } },
         { delay: 0, jobId: jid("chamada_video", chatId, 1), removeOnComplete: true, removeOnFail: true }
       );
       await queue.add("jobs",
