@@ -4450,26 +4450,50 @@ function typingDelayFor(text) {
 // texto (~90-140ms por caractere, contra ~28-50ms do modo padrão). Nunca
 // simula erro de digitação — só o RITMO humano, o texto final é sempre o
 // certo.
+// Simula "escreveu, parou, percebeu um erro, apagou e corrigiu" — só pelo
+// RITMO do indicador "digitando...", nunca mostrando texto parcial: é
+// assim que WhatsApp/Telegram funcionam de verdade (quem recebe nunca vê
+// as teclas da outra pessoa em tempo real, só o indicador). O realismo
+// inteiro mora no timing de cada fase, não em qualquer efeito visual novo:
+//
+//   Fase 1 (digita)  — 62-76% do tempo total, quase a frase inteira.
+//   Soluço (pausa)   — 250-450ms, curto e reflexo (percebeu o erro na
+//                      hora, não é uma pausa de "pensando o que dizer").
+//   Fase 2 (corrige) — o resto do tempo, bem mais curta que a fase 1
+//                      (apagar+reescrever um trecho é mais rápido que
+//                      escrever a frase toda), com uma micro-variação de
+//                      ritmo no meio (70-140ms) pra não soar uma rajada
+//                      perfeitamente lisa — é o instante entre "apagar" e
+//                      "reescrever", rápido demais pra ler como pausa nova.
 async function simulateHumanTyping(text) {
   const len = String(text).length;
   const totalMs = Math.min(14000, Math.max(2500, len * rand(90, 140)));
-  const burstCount = rand(2, 4);
-  let remaining = totalMs;
-  for (let i = 0; i < burstCount; i++) {
-    const isLast = i === burstCount - 1;
-    const burstMs = isLast ? Math.max(400, remaining) : Math.max(500, Math.round(remaining / (burstCount - i)));
-    setStatus("digitando…");
-    addTyping();
-    await sleep(burstMs);
-    removeTyping();
-    remaining -= burstMs;
-    if (!isLast) {
-      // pausa "pensando" — some tanto a bolha quanto o "digitando..." do
-      // cabeçalho, senão ficam fora de sincronia (bolha some, texto fica).
-      setStatus(CONTACT.subtitle ?? "");
-      await sleep(rand(500, 1400));
-    }
-  }
+
+  const phase1Ms = Math.max(600, Math.round(totalMs * (0.62 + Math.random() * 0.14)));
+  setStatus("digitando…");
+  addTyping();
+  await sleep(phase1Ms);
+  removeTyping();
+
+  setStatus(CONTACT.subtitle ?? "");
+  await sleep(rand(250, 450));
+
+  const remaining = Math.max(500, totalMs - phase1Ms);
+  const phase2Ms = Math.max(450, Math.round(remaining * (0.55 + Math.random() * 0.25)));
+  const microSplit = Math.round(phase2Ms * (0.35 + Math.random() * 0.2));
+
+  setStatus("digitando…");
+  addTyping();
+  await sleep(microSplit);
+  removeTyping();
+  await sleep(rand(70, 140));
+  setStatus("digitando…");
+  addTyping();
+  await sleep(Math.max(200, phase2Ms - microSplit));
+  removeTyping();
+
+  setStatus(CONTACT.subtitle ?? "");
+  await sleep(rand(90, 220));
 }
 
 // Guarda a última mensagem que ELE mandou pro lead (texto puro, não o HTML
