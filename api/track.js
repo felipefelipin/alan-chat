@@ -6,7 +6,7 @@ module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   if (req.method !== "POST") return res.status(405).end();
 
-  const { chatId, event } = req.body || {};
+  const { chatId, event, payload } = req.body || {};
   if (!chatId || !event) return res.status(400).json({ error: "missing params" });
 
   try {
@@ -18,7 +18,7 @@ module.exports = async function handler(req, res) {
     });
 
     await prisma.event.create({
-      data: { userId: String(chatId), type: event, payload: {} },
+      data: { userId: String(chatId), type: event, payload: payload ?? {} },
     });
 
     // Usuário realmente abriu o mini app principal — se ele ainda estava

@@ -40,8 +40,21 @@ async function main() {
 
   console.log(`\n${c.bold}${c.magenta}══ Linha do tempo (${events.length} eventos) ══${c.reset}`);
   for (const e of events) {
+    if (e.type === "MINIAPP_USER_REPLY") {
+      const step = e.payload?.step != null ? ` ${c.dim}(step ${e.payload.step})${c.reset}` : "";
+      console.log(`${c.dim}${fmtTime(e.createdAt)}${c.reset}  ${c.bold}${c.green}LEAD DISSE:${c.reset} "${e.payload?.text ?? ""}"${step}`);
+      continue;
+    }
     const payload = e.payload && Object.keys(e.payload).length ? ` ${c.dim}${JSON.stringify(e.payload)}${c.reset}` : "";
     console.log(`${c.dim}${fmtTime(e.createdAt)}${c.reset}  ${c.cyan}${e.type}${c.reset}${payload}`);
+  }
+
+  const replies = events.filter((e) => e.type === "MINIAPP_USER_REPLY");
+  if (replies.length) {
+    console.log(`\n${c.bold}${c.magenta}══ Só as respostas do lead (${replies.length}) ══${c.reset}`);
+    for (const e of replies) {
+      console.log(`${c.dim}${fmtTime(e.createdAt)}${c.reset}  ${c.green}"${e.payload?.text ?? ""}"${c.reset}`);
+    }
   }
 
   if (events.length) {

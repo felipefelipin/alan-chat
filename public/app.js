@@ -4071,6 +4071,11 @@ function onSend() {
   const replyTo = _replyTarget;
   clearReplyTarget();
   addMsg("right", escapeHtml(text), replyTo);
+  // guarda o que o lead respondeu de verdade (e em qual passo do roteiro),
+  // pra dar visibilidade real de onde o script precisa de ajuste — antes
+  // disso, o texto do lead só existia no navegador dele, nunca chegava
+  // no banco (ver scripts/check-lead.js pra ler isso depois).
+  trackEvent("MINIAPP_USER_REPLY", { text, step: state.step });
   handleUserText(text);
 }
 
@@ -4968,13 +4973,13 @@ async function handleUserText(text) {
   finally { _flowRunning = false; }
 }
 
-function trackEvent(event) {
+function trackEvent(event, payload) {
   const chatId = tg?.initDataUnsafe?.user?.id;
   if (!chatId) return;
   fetch("/api/track", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chatId: String(chatId), event }),
+    body: JSON.stringify({ chatId: String(chatId), event, payload }),
     keepalive: true,
   }).catch(() => {});
 }
