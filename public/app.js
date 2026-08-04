@@ -2255,6 +2255,98 @@ const DISCOUNT_SEGMENTS = [
     stops: [[0, "#2c0d12"], [1, "#170609"]], glow: "rgba(230,57,80,.5)" },
 ];
 
+// ==================== RESGATE DE RECURSO PREMIUM (pré-roleta de desconto) ====================
+// Etapa intermediária entre "DESBLOQUEAR ACESSO" e a roleta de desconto —
+// não é loading, é a sensação de estar abrindo um prêmio grande e raro
+// antes mesmo de girar. Ao clicar em "RESGATAR AGORA", o presente
+// "explode" em brilho/partículas e dissolve pra revelar a roleta por
+// baixo — rápido (~900ms) mas com peso emocional, sem quebrar o ritmo.
+function showPremiumRewardReveal() {
+  trackEvent("MINIAPP_PREMIUM_REWARD_SCREEN");
+  return new Promise((resolve) => {
+    const screen = document.createElement("div");
+    screen.className = "lsScreen";
+    screen.style.background = "#0a0604";
+    app.appendChild(screen);
+
+    screen.innerHTML = `
+      <style>
+        @keyframes prwPulse{0%,100%{box-shadow:0 0 40px rgba(246,221,170,.35),0 0 90px rgba(214,176,122,.18);}50%{box-shadow:0 0 70px rgba(246,221,170,.6),0 0 140px rgba(214,176,122,.32);}}
+        @keyframes prwFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+        @keyframes prwShine{0%{background-position:-200% center;}100%{background-position:200% center;}}
+        @keyframes prwBtnPop{0%{opacity:0;transform:translateY(14px) scale(.96);}100%{opacity:1;transform:translateY(0) scale(1);}}
+      </style>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;">
+        <div id="prwBox" style="
+          width:132px;height:132px;border-radius:32px;
+          display:flex;align-items:center;justify-content:center;font-size:64px;
+          background:radial-gradient(circle at 35% 30%, #3a2a12, #120c06 75%);
+          border:1.5px solid rgba(246,221,170,.4);
+          animation:prwPulse 2.1s ease-in-out infinite, prwFloat 3.2s ease-in-out infinite;
+          margin-bottom:26px;
+        ">🎁</div>
+
+        <div style="
+          font-size:26px;font-weight:900;letter-spacing:.5px;line-height:1.2;
+          background:linear-gradient(90deg,#f6ddaa 0%,#fff6e0 25%,#d6b07a 50%,#fff6e0 75%,#f6ddaa 100%);
+          background-size:220% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
+          animation:prwShine 3.2s linear infinite;
+          margin-bottom:10px;
+        ">🔒 RESGATAR RECURSO PREMIUM</div>
+
+        <div style="color:rgba(255,255,255,.62);font-size:14.5px;line-height:1.5;max-width:300px;margin-bottom:30px;">
+          Disponível apenas agora. Acesso liberado só pra você — ninguém mais vai ver isso.
+        </div>
+
+        <button type="button" id="prwClaimBtn" style="
+          width:100%;max-width:290px;padding:18px 20px;border-radius:18px;border:none;
+          background:linear-gradient(135deg,#f6ddaa 0%,#d6b07a 55%,#a97c3a 100%);
+          color:#1a1206;font-size:16px;font-weight:900;letter-spacing:.3px;
+          cursor:pointer;-webkit-tap-highlight-color:transparent;
+          box-shadow:0 6px 24px rgba(214,176,122,.4);
+          animation:prwBtnPop .4s cubic-bezier(.34,1.56,.64,1) .15s both;
+        ">🔓 RESGATAR AGORA</button>
+      </div>
+    `;
+
+    requestAnimationFrame(() => screen.classList.add("lsScreen-visible"));
+    lsPlaySuccessChime();
+    hapticImpact("light");
+
+    const btn = screen.querySelector("#prwClaimBtn");
+    const box = screen.querySelector("#prwBox");
+    let claimed = false;
+
+    btn.addEventListener("click", () => {
+      if (claimed) return;
+      claimed = true;
+      btn.disabled = true;
+      trackEvent("MINIAPP_PREMIUM_REWARD_CLAIM");
+      hapticNotify("success");
+      lsPlayWinFanfare();
+
+      // "abre" o presente: zoom + brilho intenso + partículas, tudo em cima
+      // do card atual, depois dissolve a tela inteira revelando a roleta.
+      box.style.transition = "transform .4s cubic-bezier(.34,1.56,.64,1)";
+      box.style.transform = "scale(1.35)";
+      btn.style.transition = "opacity .25s ease";
+      btn.style.opacity = "0";
+
+      const confetti = mountConfettiBurst(screen);
+      const flash = document.createElement("div");
+      flash.style.cssText = "position:absolute;inset:0;background:radial-gradient(circle, rgba(246,221,170,.9), rgba(246,221,170,0) 65%);opacity:0;transition:opacity .3s ease;";
+      screen.appendChild(flash);
+      requestAnimationFrame(() => { flash.style.opacity = "1"; });
+
+      setTimeout(() => {
+        screen.classList.remove("lsScreen-visible");
+        confetti?.stop();
+        setTimeout(() => { screen.remove(); resolve(); }, 420);
+      }, 480);
+    }, { once: true });
+  });
+}
+
 function runDiscountRouletteScreen() {
   trackEvent("MINIAPP_DISCOUNT_ROULETTE_SCREEN");
   return new Promise((resolve) => {
@@ -5235,7 +5327,7 @@ function showCheckoutCta(opts = {}) {
     if (btn) {
       btn.onclick = opts.skipRoulette
         ? () => { _dismissPaywall(overlay); openCheckout(); }
-        : () => { _dismissPaywall(overlay); runDiscountRouletteScreen(); };
+        : () => { _dismissPaywall(overlay); showPremiumRewardReveal().then(() => runDiscountRouletteScreen()); };
     }
     const dismiss = document.getElementById("paywallDismiss");
     if (dismiss) dismiss.onclick = () => { trackEvent("MINIAPP_PAYWALL_DISMISS"); _dismissPaywall(overlay); };
