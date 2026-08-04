@@ -6234,50 +6234,59 @@ function runAgeGateScreen() {
         @keyframes agPulse{0%,100%{box-shadow:0 0 30px rgba(214,176,122,.3),0 0 70px rgba(214,176,122,.14);}50%{box-shadow:0 0 52px rgba(214,176,122,.55),0 0 110px rgba(214,176,122,.26);}}
         @keyframes agFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
         @keyframes agFadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
-        .agBtn{-webkit-tap-highlight-color:transparent;transition:transform .15s ease,opacity .15s ease;}
+        .agBtn{-webkit-tap-highlight-color:transparent;transition:transform .14s ease,opacity .14s ease,filter .14s ease,background .14s ease;}
         .agBtn:active{transform:scale(.97);}
+        .agBtnPrimary:active{filter:brightness(.94);}
+        .agBtnSecondary:active{background:rgba(255,255,255,.09) !important;border-color:rgba(255,255,255,.26) !important;}
       </style>
       <video src="/assets/paywall-bg.mp4" autoplay loop muted playsinline
-        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.24;z-index:0;"></video>
-      <div style="position:absolute;inset:0;z-index:0;background:radial-gradient(circle at 50% 30%,rgba(5,3,2,.4),rgba(5,3,2,.8) 78%);"></div>
-      <div id="agContent" style="position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;transition:opacity .28s ease;">
+        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.19;z-index:0;"></video>
+      <div style="position:absolute;inset:0;z-index:0;background:radial-gradient(circle at 50% 26%,rgba(7,5,3,.6),rgba(4,2,1,.9) 82%);"></div>
+      <div id="agContent" style="position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;transition:opacity .28s ease;
+                  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',system-ui,'Segoe UI',Roboto,Arial,sans-serif;">
 
-        <div style="display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;
-                    background:rgba(214,176,122,.1);border:1px solid rgba(214,176,122,.35);margin-bottom:26px;
+        <div style="display:inline-flex;align-items:center;gap:11px;margin-bottom:30px;
                     opacity:0;animation:agFadeUp .5s ease .1s forwards;">
-          <span style="width:5px;height:5px;border-radius:50%;background:#d6b07a;"></span>
-          <span style="font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#e8cfa0;">Acesso Restrito</span>
+          <span style="width:22px;height:1px;background:linear-gradient(90deg,transparent,rgba(214,176,122,.75));"></span>
+          <span style="font-size:11.5px;font-weight:800;letter-spacing:2.6px;text-transform:uppercase;color:#f6ddaa;
+                      text-shadow:0 0 16px rgba(214,176,122,.6),0 1px 3px rgba(0,0,0,.7);">Acesso Restrito</span>
+          <span style="width:22px;height:1px;background:linear-gradient(90deg,rgba(214,176,122,.75),transparent);"></span>
         </div>
 
         <div id="agBadge" style="width:104px;height:104px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
                     background:radial-gradient(circle at 35% 30%,#2a1f10,#0d0a05 75%);
-                    border:1.5px solid rgba(214,176,122,.45);
+                    border:1.5px solid rgba(214,176,122,.5);
                     animation:agPulse 2.4s ease-in-out infinite, agFloat 3.6s ease-in-out infinite, agFadeUp .5s ease .18s both;
                     margin-bottom:28px;">
-          <span style="font-size:30px;font-weight:900;letter-spacing:-.5px;color:#f2dcb0;">18+</span>
+          <span style="font-size:30px;font-weight:900;letter-spacing:-.5px;color:#f6ddaa;text-shadow:0 1px 3px rgba(0,0,0,.5);">18+</span>
         </div>
 
-        <div style="font-size:24px;font-weight:800;color:#fff;line-height:1.28;letter-spacing:-.3px;max-width:320px;margin-bottom:12px;
+        <div style="font-size:26px;font-weight:800;color:#fff;line-height:1.26;letter-spacing:-.4px;max-width:320px;margin-bottom:13px;
+                    text-shadow:0 2px 14px rgba(0,0,0,.55);
                     opacity:0;animation:agFadeUp .5s ease .26s forwards;">
           Isso aqui não é pra qualquer um
         </div>
 
-        <div style="font-size:14.5px;color:rgba(255,255,255,.6);line-height:1.55;max-width:300px;margin-bottom:36px;
+        <div style="font-size:15px;font-weight:500;color:rgba(255,255,255,.7);line-height:1.6;max-width:300px;margin-bottom:38px;
+                    text-shadow:0 1px 6px rgba(0,0,0,.4);
                     opacity:0;animation:agFadeUp .5s ease .34s forwards;">
           Conteúdo real, sem censura, exclusivo pra maiores de 18 anos. Confirma sua idade pra continuar.
         </div>
 
-        <button type="button" id="agYesBtn" class="agBtn" style="
+        <button type="button" id="agYesBtn" class="agBtn agBtnPrimary" style="
           width:100%;max-width:300px;padding:18px 20px;border-radius:16px;border:none;
-          background:linear-gradient(135deg,#f6ddaa 0%,#d6b07a 55%,#a97c3a 100%);
-          color:#241804;font-size:16px;font-weight:900;letter-spacing:.2px;cursor:pointer;
-          box-shadow:0 8px 26px rgba(214,176,122,.35);margin-bottom:14px;
+          background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 45%),linear-gradient(135deg,#f6ddaa 0%,#d6b07a 55%,#a97c3a 100%);
+          color:#241804;font-size:16.5px;font-weight:900;letter-spacing:.3px;cursor:pointer;
+          box-shadow:0 10px 30px rgba(214,176,122,.4),0 2px 10px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.35);
+          margin-bottom:16px;
           opacity:0;animation:agFadeUp .5s ease .42s forwards;
         ">SIM, TENHO +18</button>
 
-        <button type="button" id="agNoBtn" class="agBtn" style="
-          background:none;border:none;color:rgba(255,255,255,.38);font-size:13.5px;font-weight:600;
-          padding:8px;cursor:pointer;opacity:0;animation:agFadeUp .5s ease .48s forwards;
+        <button type="button" id="agNoBtn" class="agBtn agBtnSecondary" style="
+          background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.15);border-radius:12px;
+          color:rgba(255,255,255,.6);font-size:13.5px;font-weight:700;letter-spacing:.3px;
+          padding:13px 30px;cursor:pointer;
+          opacity:0;animation:agFadeUp .5s ease .48s forwards;
         ">Não tenho 18 anos</button>
 
       </div>
