@@ -5143,6 +5143,56 @@ function reopenPaywall() {
   }));
 }
 
+// Depoimentos fake exibidos no paywall, logo acima do CTA — reforça "quem
+// comprou aprovou" bem no momento da decisão, sem citar a modelo (funciona
+// pros dois personas). Avatar é sempre iniciais, nunca foto real de
+// terceiros. Um card por vez, alternando sozinho — cabe no espaço apertado
+// da sheet mobile sem empurrar o botão pra fora da tela.
+const PW_TESTIMONIALS = [
+  { name: "Lucas M.",  hue: "#ff6b6b", text: "não tava esperando ser tão real assim, valeu cada centavo", time: "há 12 min", likes: 41 },
+  { name: "Rafael T.", hue: "#d6b07a", text: "melhor decisão que tomei essa semana, sério",                time: "há 34 min", likes: 27 },
+  { name: "Diego S.",  hue: "#4fc3f7", text: "achei que era só mais um perfil, mas é surreal ao vivo",     time: "há 51 min", likes: 63 },
+  { name: "Bruno C.",  hue: "#3ecf5c", text: "já indiquei pra 2 amigos, muito bom mesmo",                  time: "há 8 min",  likes: 19 },
+];
+let _pwTestiInterval = null;
+
+function _pwTestiCardHtml(t) {
+  const initial = t.name.charAt(0);
+  return `
+    <div style="width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+                background:${t.hue}2a;border:1px solid ${t.hue}55;color:${t.hue};font-size:13px;font-weight:800;">${initial}</div>
+    <div style="flex:1;min-width:0;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="color:#fff;font-size:12.5px;font-weight:700;">${t.name}</span>
+        <span style="color:#ffb300;font-size:10px;letter-spacing:1px;">★★★★★</span>
+      </div>
+      <div style="color:rgba(255,255,255,.68);font-size:12.5px;line-height:1.42;margin-top:2px;">${t.text}</div>
+      <div style="color:rgba(255,255,255,.32);font-size:10.5px;margin-top:5px;display:flex;gap:12px;">
+        <span>${t.time}</span><span>❤️ ${t.likes}</span>
+      </div>
+    </div>
+  `;
+}
+
+function mountTestimonialTicker(cardEl) {
+  if (!cardEl || _pwTestiInterval) return;
+  let idx = Math.floor(Math.random() * PW_TESTIMONIALS.length);
+  cardEl.innerHTML = _pwTestiCardHtml(PW_TESTIMONIALS[idx]);
+  _pwTestiInterval = setInterval(() => {
+    if (!cardEl.isConnected) return;
+    idx = (idx + 1) % PW_TESTIMONIALS.length;
+    cardEl.style.opacity = "0";
+    setTimeout(() => {
+      cardEl.innerHTML = _pwTestiCardHtml(PW_TESTIMONIALS[idx]);
+      cardEl.style.opacity = "1";
+    }, 240);
+  }, rand(4200, 5200));
+}
+
+function stopTestimonialTicker() {
+  if (_pwTestiInterval) { clearInterval(_pwTestiInterval); _pwTestiInterval = null; }
+}
+
 function showCheckoutCta(opts = {}) {
   trackEvent("MINIAPP_PAYWALL_SHOWN");
   try { localStorage.setItem("gisa_paywall_reached", "1"); } catch {}
@@ -5204,9 +5254,21 @@ function showCheckoutCta(opts = {}) {
             Desbloqueia e volta<br/>imediatamente pra chamada
           </div>
 
-          <div style="color:rgba(255,255,255,.58);font-size:15px;text-align:center;line-height:1.55;margin-bottom:32px;
+          <div style="color:rgba(255,255,255,.58);font-size:15px;text-align:center;line-height:1.55;margin-bottom:18px;
                       opacity:0;animation:pwFadeUp 0.26s ease 0.38s forwards;">
             Eu tô te esperando pelada e safada.
+          </div>
+
+          <div style="width:100%;margin-bottom:20px;opacity:0;animation:pwFadeUp 0.26s ease 0.42s forwards;">
+            <div style="font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+                        color:rgba(255,255,255,.34);margin-bottom:7px;padding-left:2px;">
+              Quem entrou não parou de elogiar
+            </div>
+            <div id="pwTestiCard" style="
+              display:flex;gap:10px;align-items:flex-start;
+              background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);
+              border-radius:14px;padding:12px 13px;transition:opacity .28s ease;
+            "></div>
           </div>
 
           <button id="goCheckoutBtn" style="
@@ -5235,6 +5297,7 @@ function showCheckoutCta(opts = {}) {
   requestAnimationFrame(() => requestAnimationFrame(() => {
     overlay.style.background = "rgba(0,0,0,0.72)";
   }));
+  mountTestimonialTicker(document.getElementById("pwTestiCard"));
 
   setTimeout(() => {
     const btn = document.getElementById("goCheckoutBtn");
@@ -5246,8 +5309,8 @@ function showCheckoutCta(opts = {}) {
     // de novo pra quem já pegou o desconto.
     if (btn) {
       btn.onclick = opts.skipRoulette
-        ? () => { _dismissPaywall(overlay); openCheckout(); }
-        : () => { _dismissPaywall(overlay); showPremiumRewardReveal().then(() => runDiscountRouletteScreen()); };
+        ? () => { stopTestimonialTicker(); _dismissPaywall(overlay); openCheckout(); }
+        : () => { stopTestimonialTicker(); _dismissPaywall(overlay); showPremiumRewardReveal().then(() => runDiscountRouletteScreen()); };
     }
     const dismiss = document.getElementById("paywallDismiss");
     if (dismiss) dismiss.onclick = () => { trackEvent("MINIAPP_PAYWALL_DISMISS"); _dismissPaywall(overlay); };
