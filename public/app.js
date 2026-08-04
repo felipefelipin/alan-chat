@@ -2382,10 +2382,20 @@ function showPremiumRewardReveal() {
       screen.appendChild(flash);
       requestAnimationFrame(() => { flash.style.opacity = "1"; });
 
+      // Resolve AQUI — ainda com `screen` 100% opaca e no DOM — em vez de
+      // esperar ela sumir (fade-out + remove) pra só então a roleta
+      // começar a existir. Antes disso, entre essa tela sumir e a roleta
+      // (que também nasce transparente e faz o próprio fade-in) ficar
+      // opaca, não havia NADA cobrindo o viewport por ~0.8-1s — janela
+      // exatamente onde o chat por baixo aparecia. Agora a roleta é
+      // criada (e empilha por cima, mesmo z-index mas appendChild depois)
+      // enquanto essa tela ainda está sólida servindo de "fundo de
+      // segurança"; só removemos essa tela bem depois, quando a roleta com
+      // certeza já terminou o próprio fade-in e está cobrindo tudo.
       setTimeout(() => {
-        screen.classList.remove("lsScreen-visible");
         confetti?.stop();
-        setTimeout(() => { screen.remove(); resolve(); }, 420);
+        resolve();
+        setTimeout(() => screen.remove(), 900);
       }, 480);
     }, { once: true });
   });
