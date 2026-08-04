@@ -363,7 +363,7 @@ bot.on("callback_query", async (q) => {
           text: "<b>VEM QUE EU TÔ SOZINHA E SAFADA TE ESPERANDO 😈📹</b>",
           noTyping: true,
           extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
-            [{ text: "🔥 ENTRAR NO MEU PRIVADO SEM LIMITES 😈", web_app: { url: process.env.WEBAPP_URL + "?persona=m2&v=" + Date.now() }, style: "success" }],
+            [{ text: "👉 CLIQUE E VEM ME VER PELADA 😈", web_app: { url: process.env.WEBAPP_URL + "?persona=m2&v=" + Date.now() }, style: "success" }],
           ]}},
         }},
         { delay: 0, jobId: jid("chamada_video", chatId, 3), removeOnComplete: true, removeOnFail: true }
