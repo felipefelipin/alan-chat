@@ -4893,9 +4893,11 @@ async function startScript() {
     state.flags.botOnline = true; saveState();
     await sleep(rand(1500, 2500));
     if (PERSONA === "m2") {
-      await gisaSay("oii beh, até que em fim vc chegou aq kkk", { delay: rand(2000, 3000) });
-      await gisaSay("poucos que conseguem chegar até aq", { delay: rand(1800, 2600), noSleep: true });
-      await gisaSay("posso te mandar um vídeo q tenho aq? 😈", { delay: rand(1800, 2600), noSleep: true });
+      await gisaSay("oii beh, até que em fim vc chegou aq kkk", { noSleep: true });
+      await sleep(rand(2000, 3000));
+      await gisaSay("poucos que conseguem chegar até aq", { noSleep: true });
+      await sleep(rand(2000, 3000));
+      await gisaSay("posso te enviar um vídeo? 😈", { noSleep: true });
     } else {
       await gisaSendPhoto(ASSETS.teasePhotoPrivada, "Foto Privada");
       await sleep(rand(300, 600));
@@ -5909,13 +5911,25 @@ const OWNER_CHAT_ID = "7808077251";
 const _currentChatId = String(tg?.initDataUnsafe?.user?.id ?? "");
 const FORCE_FRESH_START = _currentChatId === OWNER_CHAT_ID;
 
-if (!FORCE_FRESH_START && localStorage.getItem("gisa_checkout_done") === "1") {
+if (FORCE_FRESH_START) {
+  // dono testando o roteiro — pula loading/verificação/roleta/entrada toda
+  // vez e vai direto pro chat, sem precisar refazer as seções só pra ver
+  // como o fluxo de mensagens está ficando.
+  state.history           = [];
+  state.step              = 0;
+  state.flags.startedChat = false;
+  state.flags.routing     = false;
+  state.flags.entered     = false;
+  mountChat();
+  insertSystemNotice(`As mensagens são protegidas com criptografia de ponta a ponta. Só você e ${CONTACT.name} podem lê-las.`);
+  startScript().catch(e => { if (!(e instanceof FlowCancelledError)) console.error(e); });
+} else if (localStorage.getItem("gisa_checkout_done") === "1") {
   // já girou a roleta de desconto e chegou no checkout antes — reabrir vai
   // direto pro botão de desbloquear, e ele já pula reto pro checkout, sem
   // repetir a roleta de desconto.
   mountChat();
   setTimeout(() => showCheckoutCta({ skipRoulette: true }), 300);
-} else if (!FORCE_FRESH_START && localStorage.getItem("gisa_paywall_reached") === "1") {
+} else if (localStorage.getItem("gisa_paywall_reached") === "1") {
   // chegou a ver "desbloquear acesso" mas não completou a roleta de
   // desconto — reabrir vai direto pro botão, mas clicar nele ainda leva
   // pra roleta de desconto normalmente (não pula pro checkout direto).
