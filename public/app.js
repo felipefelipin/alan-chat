@@ -132,7 +132,7 @@ const ASSET_OVERRIDES = {
   m2: {
     privateIntro: "/assets/step2-video.mp4",
     entranceTeaser: "/assets/checkout-video.mp4",
-    connectionDonePhoto: "/assets/rmkt-3.jpg",
+    connectionDonePhoto: "/assets/9b508494-3144-4b2d-bd3a-be8b791846c2.jpg",
     // Essas três viram vídeo (não é só troca de arquivo) — ver uso
     // condicional por PERSONA em startScript, enterTeaseBuildup e
     // startFunnelCall (callVideo já era vídeo, só troca o arquivo).
@@ -1174,12 +1174,15 @@ function lsPlayLoadingPulse() {
   osc.stop(now + 0.6);
 }
 
+// Progressão narrativa proposital (não é só jargão técnico): verificação →
+// exclusividade → preparação do conteúdo → iminência da chamada. Mesmo
+// número de itens, mesma duração — só transforma tempo morto em desejo.
 const LS_STATUS_ITEMS = [
-  { icon: "shield", label: "Conexão criptografada" },
-  { icon: "server", label: "Servidor disponível" },
-  { icon: "sync",   label: "Sincronizando mensagens" },
-  { icon: "bolt",   label: "Estabelecendo conexão segura" },
-  { icon: "live",   label: "Preparando chat ao vivo" },
+  { icon: "shield", label: "Confirmando que você tem +18" },
+  { icon: "server", label: "Liberando seu acesso sem limites" },
+  { icon: "sync",   label: "Carregando conteúdo sem censura" },
+  { icon: "bolt",   label: "Deixando ela pronta e safada" },
+  { icon: "live",   label: "Iniciando chamada ao vivo agora" },
 ];
 
 function lsIcon(name) {
@@ -1191,6 +1194,64 @@ function lsIcon(name) {
     live: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/><path d="M7 9a7 7 0 0 0 0 6M17 9a7 7 0 0 1 0 6" stroke-linecap="round"/></svg>`,
   };
   return icons[name] || "";
+}
+
+// ==================== PROVA SOCIAL DISCRETA (verificação + roleta) ====================
+// Selo pequeno e contínuo por cima das telas já existentes — não é tela
+// nova, não adiciona 1 segundo ao funil. Fixado no body (não dentro da
+// .lsScreen atual) pra sobreviver à troca de tela entre verificação e
+// roleta sem precisar remontar. Alterna entre contador de espectadores e
+// feed de atividade — nunca os dois ao mesmo tempo, pra ficar discreto.
+const LS_SOCIAL_NAMES = ["Lucas", "Gabriel", "Matheus", "Rafael", "Bruno", "Diego", "Thiago", "Pedro", "Felipe", "João"];
+let _lsSocialInterval = null;
+let _lsSocialViewers = rand(11, 27);
+
+function lsSocialNextLine() {
+  const showCount = Math.random() < 0.5;
+  if (showCount) {
+    // flutua devagar (nunca pula demais de uma vez), fica mais "vivo"
+    _lsSocialViewers = Math.max(8, Math.min(34, _lsSocialViewers + rand(-2, 3)));
+    return `${_lsSocialViewers} pessoas vendo agora`;
+  }
+  const name = LS_SOCIAL_NAMES[Math.floor(Math.random() * LS_SOCIAL_NAMES.length)];
+  const action = Math.random() < 0.5 ? "acabou de entrar" : "acabou de liberar a chamada";
+  return `${name} ${action}`;
+}
+
+function mountLiveSocialBadge() {
+  if (document.getElementById("lsSocialBadge")) return;
+  const el = document.createElement("div");
+  el.id = "lsSocialBadge";
+  el.style.cssText = `
+    position:fixed;top:calc(env(safe-area-inset-top,20px) + 14px);left:50%;
+    transform:translateX(-50%);z-index:10050;display:flex;align-items:center;gap:7px;
+    background:rgba(10,10,14,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.09);border-radius:999px;padding:6px 13px;
+    font-size:11.5px;color:rgba(255,255,255,.78);pointer-events:none;
+    opacity:0;transition:opacity .4s ease;white-space:nowrap;
+  `;
+  el.innerHTML = `
+    <span style="width:6px;height:6px;border-radius:50%;background:#3ecf5c;flex-shrink:0;box-shadow:0 0 6px rgba(62,207,92,.8);"></span>
+    <span id="lsSocialText"></span>
+  `;
+  document.body.appendChild(el);
+  const textEl = () => document.getElementById("lsSocialText");
+  const tick = () => {
+    const t = textEl();
+    if (!t) return;
+    el.style.opacity = "0";
+    setTimeout(() => {
+      t.textContent = lsSocialNextLine();
+      el.style.opacity = "1";
+    }, 220);
+  };
+  tick();
+  _lsSocialInterval = setInterval(tick, rand(3500, 4500));
+}
+
+function unmountLiveSocialBadge() {
+  if (_lsSocialInterval) { clearInterval(_lsSocialInterval); _lsSocialInterval = null; }
+  document.getElementById("lsSocialBadge")?.remove();
 }
 
 // Layer 1 — vídeo de fundo em tela cheia, toca uma única vez e congela no
@@ -5976,8 +6037,10 @@ if (FORCE_FRESH_START) {
   state.flags.entered     = false;
   (async () => {
     await runInitialLoadingScreen();
+    mountLiveSocialBadge();
     await runConnectionLoadingScreen();
     await runRouletteScreen();
+    unmountLiveSocialBadge();
     await runEntranceScreen(); // já monta o chat internamente (crossfade), ver onEnterTap
     insertSystemNotice(`As mensagens são protegidas com criptografia de ponta a ponta. Só você e ${CONTACT.name} podem lê-las.`);
     await sleep(220);
