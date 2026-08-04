@@ -268,38 +268,39 @@ bot.on("callback_query", async (q) => {
         { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "conteudinhos-video-muted.mp4", caption: "", instant: true } },
         { delay: 0, jobId: jid("conteudinhos", chatId, 1), removeOnComplete: true, removeOnFail: true }
       );
-      // reveal gamificado: prêmio "desbloqueado" (texto) -> instrução de
-      // resgate (texto) -> só depois o botão único aparece (1s de atraso
-      // de propósito, pra parecer que o prêmio tá sendo "liberado" de
-      // verdade, não só uma mensagem normal aparecendo). O nome do prêmio
-      // vai em spoiler (tg-spoiler) — o lead precisa TOCAR pra revelar,
-      // tipo raspadinha, em vez de só ler; message_effect_id dispara o
-      // confete de tela cheia do Telegram na chegada da mensagem (sendHuman
-      // reenvia sem o efeito se o Telegram rejeitar o ID, nunca perde a msg).
+      // reveal gamificado em 2 cliques: primeiro só o convite pra resgatar
+      // (com botão) -> o prêmio de verdade ("LIBERADO...") só aparece
+      // quando o lead CLICA nesse botão (callback "resgatar_premio", logo
+      // abaixo). Nada de spoiler/delay artificial — o suspense agora é a
+      // ação real do usuário, não um timer.
       await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
-          text: "🎁 <b>PRÊMIO DESBLOQUEADO!</b>\n\n<tg-spoiler>🔓 LIBERADO: CHAMADA GRÁTIS AO VIVO 😈</tg-spoiler>",
+          text: "🎁 <b>CLIQUE ABAIXO PARA RESGATAR SEU PRÊMIO</b> 😈",
           noTyping: true,
-          extra: { parse_mode: "HTML", message_effect_id: "5046509860389126442" },
+          extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
+            [{ text: "🎁 RESGATAR PRÊMIO", callback_data: "resgatar_premio", style: "success" }],
+          ]}},
         }},
         { delay: 0, jobId: jid("conteudinhos", chatId, 2), removeOnComplete: true, removeOnFail: true }
       );
+      return;
+    }
+
+    // ── Reveal do prêmio — só dispara depois que o lead clica em
+    // "RESGATAR PRÊMIO" acima; message_effect_id dispara o confete de tela
+    // cheia do Telegram na chegada (sendHuman reenvia sem o efeito se o
+    // Telegram rejeitar o ID, nunca perde a mensagem por causa disso) ──────
+    if (data === "resgatar_premio") {
+      await bot.answerCallbackQuery(q.id, { text: "🎁" }).catch(() => {});
       await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
-          text: "Clica aqui embaixo pra resgatar seu prêmio 👇",
+          text: "🎁 <b>LIBERADO: CHAMADA GRÁTIS AO VIVO</b> 😈",
           noTyping: true,
-        }},
-        { delay: 0, jobId: jid("conteudinhos", chatId, 3), removeOnComplete: true, removeOnFail: true }
-      );
-      await queue.add("jobs",
-        { type: "SEND_MESSAGE", chatId: String(chatId), data: {
-          text: "🎁 <b>TOQUE PRA RESGATAR</b>",
-          noTyping: true,
-          extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
+          extra: { parse_mode: "HTML", message_effect_id: "5046509860389126442", reply_markup: { inline_keyboard: [
             [{ text: "🔴 AO VIVO: ENTRAR NA CHAMADA GRÁTIS 😈", callback_data: "chamada_video", style: "success" }],
           ]}},
         }},
-        { delay: 1000, jobId: jid("conteudinhos", chatId, 4), removeOnComplete: true, removeOnFail: true }
+        { delay: 0, jobId: jid("resgatar", chatId, 1), removeOnComplete: true, removeOnFail: true }
       );
       return;
     }
