@@ -4,10 +4,14 @@ const TelegramBot = require("node-telegram-bot-api");
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
 
-  const { chatId } = req.body || {};
+  const { chatId, persona } = req.body || {};
   if (!chatId) return res.status(400).json({ error: "missing chatId" });
 
-  const BOT_TOKEN = process.env.BOT_TOKEN;
+  // Sem isso, a mensagem de checkout do bot2 sempre saía pelo token do
+  // bot1 — e como os botões de plano (callback_data "plan:...") só são
+  // respondidos por quem os enviou, o clique também nunca chegava no
+  // bot2, ficava tudo preso no bot1.
+  const BOT_TOKEN = persona === "m2" ? process.env.BOT_TOKEN2 : process.env.BOT_TOKEN;
   if (!BOT_TOKEN) return res.status(500).json({ error: "no bot token" });
 
   const bot = new TelegramBot(BOT_TOKEN, { polling: false });
@@ -30,9 +34,9 @@ module.exports = async function handler(req, res) {
         parse_mode: "HTML",
         reply_markup: {
           inline_keyboard: [
-            [{ text: "👑 VIP ETERNO - R$5,90 - 40% OFF", callback_data: "plan:vip590", style: "success" }],
-            [{ text: "📞 VIDEOCHAMADA PELADA - R$14,90 - 40% OFF", callback_data: "plan:videochamada", style: "danger" }],
-            [{ text: "💞 NAMORO 7 DIAS - R$25,99 - 40% OFF", callback_data: "plan:namoro7dias", style: "primary" }],
+            [{ text: "👑 VIP ETERNO - R$5,90 - 25% OFF", callback_data: "plan:vip590", style: "success" }],
+            [{ text: "📞 VIDEOCHAMADA PELADA - R$14,90 - 25% OFF", callback_data: "plan:videochamada", style: "danger" }],
+            [{ text: "💞 NAMORO 7 DIAS - R$25,99 - 25% OFF", callback_data: "plan:namoro7dias", style: "primary" }],
           ],
         },
       }

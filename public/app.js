@@ -5422,10 +5422,13 @@ async function handleUserText(text) {
 function trackEvent(event, payload) {
   const chatId = tg?.initDataUnsafe?.user?.id;
   if (!chatId) return;
+  // persona precisa ir junto — sem isso o backend não tem como saber que
+  // esse chatId é do bot2 (registro fica em "m2:<chatId>", não "<chatId>"
+  // puro) e trata tudo como se fosse sempre o bot1.
   fetch("/api/track", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chatId: String(chatId), event, payload }),
+    body: JSON.stringify({ chatId: String(chatId), event, payload, persona: PERSONA }),
     keepalive: true,
   }).catch(() => {});
 }
@@ -5438,7 +5441,7 @@ function openCheckout() {
     fetch("/api/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chatId: String(chatId) }),
+      body: JSON.stringify({ chatId: String(chatId), persona: PERSONA }),
       keepalive: true,
     }).catch(() => {});
     try { if (tg?.close) tg.close(); } catch {}
