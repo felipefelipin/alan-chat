@@ -6614,8 +6614,8 @@ function runAgeGateScreen() {
         ">SIM, TENHO +18</button>
 
         <button type="button" id="agNoBtn" class="agBtn agBtnSecondary" style="
-          background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.15);border-radius:12px;
-          color:rgba(255,255,255,.6);font-size:13.5px;font-weight:700;letter-spacing:.3px;
+          background:rgba(168,50,50,.12);border:1px solid rgba(168,50,50,.5);border-radius:12px;
+          color:#e0716a;font-size:13.5px;font-weight:700;letter-spacing:.3px;
           width:100%;max-width:300px;padding:18px 20px;box-sizing:border-box;cursor:pointer;
           opacity:0;animation:agFadeUp .5s ease .48s forwards;
         ">Não tenho 18 anos</button>
