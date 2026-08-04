@@ -6098,17 +6098,27 @@ const _currentChatId = String(tg?.initDataUnsafe?.user?.id ?? "");
 const FORCE_FRESH_START = _currentChatId === OWNER_CHAT_ID;
 
 if (FORCE_FRESH_START) {
-  // dono testando o roteiro — pula loading/verificação/roleta/entrada toda
-  // vez e vai direto pro chat, sem precisar refazer as seções só pra ver
-  // como o fluxo de mensagens está ficando.
+  // dono testando o roteiro — vê a introdução completa do zero (loading,
+  // verificação, roleta, cortina), igual um lead de verdade, mas pula o
+  // roteiro de chat inteiro e vai direto pra tela de "desbloquear acesso"
+  // logo depois da cortina — pra testar o resgate premium + roleta de
+  // desconto sem precisar refazer a conversa toda vez.
   state.history           = [];
   state.step              = 0;
   state.flags.startedChat = false;
   state.flags.routing     = false;
   state.flags.entered     = false;
-  mountChat();
-  insertSystemNotice(`As mensagens são protegidas com criptografia de ponta a ponta. Só você e ${CONTACT.name} podem lê-las.`);
-  startScript().catch(e => { if (!(e instanceof FlowCancelledError)) console.error(e); });
+  (async () => {
+    await runInitialLoadingScreen();
+    mountLiveSocialBadge();
+    await runConnectionLoadingScreen();
+    await runRouletteScreen();
+    unmountLiveSocialBadge();
+    await runEntranceScreen(); // já monta o chat internamente (crossfade), ver onEnterTap
+    insertSystemNotice(`As mensagens são protegidas com criptografia de ponta a ponta. Só você e ${CONTACT.name} podem lê-las.`);
+    await sleep(220);
+    showCheckoutCta({ skipRoulette: false });
+  })();
 } else if (localStorage.getItem("gisa_checkout_done") === "1") {
   // já girou a roleta de desconto e chegou no checkout antes — reabrir vai
   // direto pro botão de desbloquear, e ele já pula reto pro checkout, sem
