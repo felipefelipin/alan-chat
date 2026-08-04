@@ -3934,18 +3934,24 @@ function renderRowHTML(item, animated = false) {
     </div>`;
 
   if (item.type === "video") {
-    const title = item.title || "Vídeo";
+    // title === "" (string vazia explícita, não undefined/null) esconde o
+    // cabeçalho inteiro — usado quando não pode ter nenhum texto por cima
+    // do vídeo. Qualquer chamada que não passa título nenhum continua
+    // caindo no default "Vídeo" de sempre.
+    const title = item.title === "" ? "" : (item.title || "Vídeo");
     const dur = item.duration || "0:00";
     return `
     <div class="msgRow ${sideClass} ${cluster}">
       <div class="bubble ${bubbleBase} bubble-videoCard ${anim}">
         <div class="videoCard">
+          ${title ? `
           <div class="videoCardHeader">
             <span class="videoCardTitle">${escapeHtml(title)}</span>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
               <path d="M6 9l6 6 6-6" stroke="rgba(255,255,255,.45)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
+          ` : ""}
           <div class="videoCardThumb">
             <video data-vdur${item.autoplay ? " data-autoplay" : ""} playsinline muted preload="auto" src="${item.src}"></video>
             ${item.autoplay ? "" : `<div class="videoCardPlay"><svg width="21" height="21" viewBox="0 0 24 24" fill="white"><polygon points="7,4 21,12 7,20"/></svg></div>`}
@@ -4465,9 +4471,9 @@ function typingDelayFor(text) {
 //                      ritmo no meio (70-140ms) pra não soar uma rajada
 //                      perfeitamente lisa — é o instante entre "apagar" e
 //                      "reescrever", rápido demais pra ler como pausa nova.
-async function simulateHumanTyping(text) {
+async function simulateHumanTyping(text, totalMsOverride) {
   const len = String(text).length;
-  const totalMs = Math.min(14000, Math.max(2500, len * rand(90, 140)));
+  const totalMs = totalMsOverride ?? Math.min(14000, Math.max(2500, len * rand(90, 140)));
 
   const phase1Ms = Math.max(600, Math.round(totalMs * (0.62 + Math.random() * 0.14)));
   setStatus("digitando…");
@@ -4504,7 +4510,7 @@ let _lastGisaText = null;
 
 async function gisaSay(text, opts = {}) {
   if (opts.humanTyping) {
-    await simulateHumanTyping(text);
+    await simulateHumanTyping(text, opts.humanTypingMs);
   } else {
     setStatus("digitando…"); addTyping();
     // O tempo de digitação nunca fica abaixo do que o tamanho do texto pede —
@@ -4591,21 +4597,30 @@ function showAdvanceButton(label, onClick) {
 // manda vídeo, m1 manda foto — mesma convenção já usada em enterTeaseBuildup).
 async function enterPeladaQuestion(text) {
   clearReengage();
-  await sleep(rand(700, 1200));
+  await sleep(3000); // 3s de silêncio antes do "digitando..." aparecer
   await gisaSay("pera aí kk, mas antes deixa eu te perguntar uma coisa", {
     noSleep: true,
+    humanTyping: true,
+    humanTypingMs: 7000, // 7s digitando (com o soluço de correção) antes de enviar
     replyTo: text ? { side: "right", text } : null,
   });
   await sleep(rand(300, 600));
   if (PERSONA === "m2") {
-    await gisaSendVideo(ASSETS.teasePhotoPrivada, "Vídeo Privado");
+    // vídeo sem nenhum texto por cima ("" explícito esconde o cabeçalho
+    // inteiro do card, ver renderItem/type==="video")
+    await gisaSendVideo(ASSETS.teaseCallPhoto, "");
+    await sleep(rand(300, 600));
+    await gisaSendAudio(ASSETS.audioMimimi, null, 7500);
   } else {
     await gisaSendPhoto(ASSETS.teasePhotoPrivada, "Foto Privada");
+    await sleep(rand(300, 600));
+    await gisaSendAudio(ASSETS.audioCallInvite, null, 7500);
   }
   await sleep(rand(300, 600));
-  await gisaSendAudio(ASSETS.audioCallInvite, null, 7500);
-  await sleep(rand(300, 600));
-  await gisaSay("me fala a verdade… você aguenta me ver pelada de verdade ou vai só ficar olhando como os fracos?... 👀", { delay: rand(8000, 11000) });
+  await gisaSay("me fala a verdade… você aguenta me ver pelada de verdade ou vai só ficar olhando como os fracos?... 👀", {
+    humanTyping: true,
+    humanTypingMs: rand(8000, 11000),
+  });
   state._t1 = setTimeout(async () => {
     if (state.step !== 1) return;
     await gisaSay("tá aí ou já correu covarde? 👀");

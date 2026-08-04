@@ -282,7 +282,7 @@ bot.on("callback_query", async (q) => {
       // ação real do usuário, não um timer.
       await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
-          text: "🎁 <b>CLIQUE ABAIXO PARA RESGATAR SEU PRÊMIO</b> 😈",
+          text: "🎁 <b>CLIQUE ABAIXO PARA RESGATAR SEU PRÊMIO</b> 😈👇",
           noTyping: true,
           extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
             [{ text: "🎁 RESGATAR PRÊMIO", callback_data: "resgatar_premio", style: "success" }],
@@ -300,7 +300,7 @@ bot.on("callback_query", async (q) => {
     if (data === "resgatar_premio") {
       await bot.answerCallbackQuery(q.id, { text: "🎁" }).catch(() => {});
       await queue.add("jobs",
-        { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "ig-reel-5.mp4", caption: "", instant: true } },
+        { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "photo_5114199563341335699_w.jpg", caption: "", instant: true } },
         { delay: 0, jobId: jid("resgatar", chatId, 1), removeOnComplete: true, removeOnFail: true }
       );
       await queue.add("jobs",
