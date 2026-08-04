@@ -278,11 +278,16 @@ bot.on("callback_query", async (q) => {
       // reveal gamificado: prêmio "desbloqueado" (texto) -> instrução de
       // resgate (texto) -> só depois o botão único aparece (1s de atraso
       // de propósito, pra parecer que o prêmio tá sendo "liberado" de
-      // verdade, não só uma mensagem normal aparecendo)
+      // verdade, não só uma mensagem normal aparecendo). O nome do prêmio
+      // vai em spoiler (tg-spoiler) — o lead precisa TOCAR pra revelar,
+      // tipo raspadinha, em vez de só ler; message_effect_id dispara o
+      // confete de tela cheia do Telegram na chegada da mensagem (sendHuman
+      // reenvia sem o efeito se o Telegram rejeitar o ID, nunca perde a msg).
       await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
-          text: "🎁 PRÊMIO DESBLOQUEADO!\n\n🔓 LIBERADO: CHAMADA GRÁTIS AO VIVO 😈",
+          text: "🎁 <b>PRÊMIO DESBLOQUEADO!</b>\n\n<tg-spoiler>🔓 LIBERADO: CHAMADA GRÁTIS AO VIVO 😈</tg-spoiler>",
           noTyping: true,
+          extra: { parse_mode: "HTML", message_effect_id: "5046509860389126442" },
         }},
         { delay: 0, jobId: jid("conteudinhos", chatId, 2), removeOnComplete: true, removeOnFail: true }
       );

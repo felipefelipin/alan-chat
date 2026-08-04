@@ -119,6 +119,23 @@ async function maybeHumanError(chatId, text) {
   return bot.sendMessage(chatId, t);
 }
 
+// message_effect_id (efeito de confete/etc na chegada da mensagem) usa um ID
+// fixo do Telegram que não temos como validar sem testar ao vivo — se o
+// Telegram rejeitar (Bad Request), reenvia sem o efeito em vez de perder a
+// mensagem inteira (ela é parte de sequência crítica do funil).
+async function sendMessageSafe(chatId, text, extra) {
+  try {
+    return await bot.sendMessage(chatId, text, extra || {});
+  } catch (e) {
+    if (extra?.message_effect_id) {
+      const { message_effect_id, ...rest } = extra;
+      console.error("sendMessage com message_effect_id falhou, reenviando sem efeito:", e.message);
+      return await bot.sendMessage(chatId, text, rest);
+    }
+    throw e;
+  }
+}
+
 async function sendHuman(chatId, text, extra = {}, opts = {}) {
   const { delayMs, autoSplit = false, echoWord, allowHumanError = false, noTyping = false } = opts;
 
@@ -137,7 +154,7 @@ async function sendHuman(chatId, text, extra = {}, opts = {}) {
       await typingBursts(chatId, jitter(rand(650, 1200)));
       await sleep(jitter(rand(80, 180)));
     }
-    await bot.sendMessage(chatId, " ", extra || {});
+    await sendMessageSafe(chatId, " ", extra);
     return;
   }
 
@@ -160,7 +177,7 @@ async function sendHuman(chatId, text, extra = {}, opts = {}) {
       }
     }
 
-    await bot.sendMessage(chatId, part, extra || {});
+    await sendMessageSafe(chatId, part, extra);
     if (i < parts.length - 1) await sleep(jitter(rand(420, 900)));
   }
 }
