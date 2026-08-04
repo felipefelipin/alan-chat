@@ -4997,15 +4997,29 @@ async function startFunnelCall() {
   }, { passive: true });
   _fcTimer = setTimeout(_fcHide, 4000);
 
-  // readyState >= 4 (HAVE_ENOUGH_DATA, o mesmo patamar de "canplaythrough")
-  // é preferível — mais folga de buffer antes de dar play(), reduz chance
-  // de engasgar segundos depois de começar. Mas não trava esperando isso
-  // indefinidamente: em arquivo grande "canplaythrough" pode nunca disparar
-  // antes do download terminar, então aceita readyState >= 3/"canplay"
-  // (já é jogável sem travar no 1º frame) como critério suficiente também.
-  // Graças ao preload desde showIncomingCall, isso normalmente já está
-  // satisfeito aqui, então a promise resolve na hora (não é um delay novo).
-  function videoReady(video) {
+  // Sequência de inicialização rigorosa, em ordem, sem pular etapa:
+  //   1) loadedmetadata (readyState >= 1 — HAVE_METADATA)
+  //   2) canplaythrough se disponível, senão canplay com readyState >= 3
+  //      (HAVE_FUTURE_DATA) — abaixo disso play() pode engasgar no 1º frame
+  //   3) currentTime = 0 (fora daqui, ver seekToStartAndPlay)
+  //   4) seeked (com timeout de segurança de 300ms)
+  //   5) checagem final de readyState >= 3 antes do play()
+  // Graças ao preload desde showIncomingCall, os passos 1-2 normalmente já
+  // estão satisfeitos aqui, então essas promises resolvem na hora — não é
+  // um delay novo, é uma checagem real que só espera de verdade se
+  // genuinamente precisar.
+  function waitLoadedMetadata(video) {
+    if (video.readyState >= 1) return Promise.resolve();
+    return new Promise((resolve) => video.addEventListener("loadedmetadata", resolve, { once: true }));
+  }
+
+  function waitCanPlay(video) {
+    // canplaythrough (readyState >= 4, HAVE_ENOUGH_DATA) é preferível —
+    // mais folga de buffer, reduz chance de engasgar segundos depois de
+    // começar. Mas não trava esperando isso indefinidamente: em arquivo
+    // grande "canplaythrough" pode nunca disparar antes do download
+    // terminar, então aceita canplay/readyState >= 3 (já é jogável sem
+    // travar no 1º frame) como critério suficiente também.
     if (video.readyState >= 4) return Promise.resolve();
     return new Promise((resolve) => {
       let resolved = false;
@@ -5013,6 +5027,10 @@ async function startFunnelCall() {
       video.addEventListener("canplaythrough", done, { once: true });
       video.addEventListener("canplay", () => { if (video.readyState >= 3) done(); }, { once: true });
     });
+  }
+
+  function videoReady(video) {
+    return waitLoadedMetadata(video).then(() => waitCanPlay(video));
   }
 
   // Vigia travamentos DURANTE a reprodução (não só no início). "waiting"
@@ -5059,12 +5077,19 @@ async function startFunnelCall() {
     function seekToStartAndPlay() {
       return new Promise((resolve) => {
         let done = false;
+        // Proteção extra: NUNCA chama play() com readyState < 3 — se o
+        // seek terminou mas o buffer ainda não tem o suficiente (raro,
+        // mas possível), espera canplay de verdade antes do play().
+        const doPlay = () => {
+          vid.play().catch(() => {}); // promise de play() sempre tratada, nunca falha silenciosa não-capturada
+          resolve();
+        };
         const finish = () => {
           if (done) return;
           done = true;
           vid.removeEventListener("seeked", finish);
-          vid.play().catch(() => {});
-          resolve();
+          if (vid.readyState >= 3) doPlay();
+          else vid.addEventListener("canplay", doPlay, { once: true });
         };
         vid.addEventListener("seeked", finish, { once: true });
         vid.currentTime = 0;
