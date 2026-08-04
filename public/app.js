@@ -4062,7 +4062,12 @@ async function simulateHumanTyping(text) {
     await sleep(burstMs);
     removeTyping();
     remaining -= burstMs;
-    if (!isLast) await sleep(rand(500, 1400)); // pausa "pensando" — indicador some
+    if (!isLast) {
+      // pausa "pensando" — some tanto a bolha quanto o "digitando..." do
+      // cabeçalho, senão ficam fora de sincronia (bolha some, texto fica).
+      setStatus(CONTACT.subtitle ?? "");
+      await sleep(rand(500, 1400));
+    }
   }
 }
 
