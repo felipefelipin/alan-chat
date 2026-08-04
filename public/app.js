@@ -2305,7 +2305,13 @@ function showPremiumRewardReveal() {
     const screen = document.createElement("div");
     screen.className = "lsScreen";
     screen.style.background = "#0a0604";
-    app.appendChild(screen);
+    // body, não #app — #app tem position:fixed + transform (stacking
+    // context próprio), então um z-index alto aqui dentro NUNCA compete de
+    // verdade com o overlay do paywall (z-index 9800, direto no body). Sem
+    // isso, a janela entre o paywall começar a fechar e essa tela terminar
+    // de aparecer deixava o chat por baixo piscar por um instante (mesmo
+    // problema já resolvido assim na roleta de desconto, ver comentário lá).
+    document.body.appendChild(screen);
 
     screen.innerHTML = `
       <style>
@@ -5463,7 +5469,19 @@ function showCheckoutCta(opts = {}) {
     if (btn) {
       btn.onclick = opts.skipRoulette
         ? () => { stopTestimonialTicker(); _dismissPaywall(overlay); openCheckout(); }
-        : () => { stopTestimonialTicker(); _dismissPaywall(overlay); showPremiumRewardReveal().then(() => runDiscountRouletteScreen()); };
+        : () => {
+            stopTestimonialTicker();
+            // Não usa _dismissPaywall aqui (slide+fade de ~340ms) — isso
+            // deixava o overlay transparente ANTES da tela de resgate
+            // terminar de aparecer por cima, abrindo uma janela onde o
+            // chat por baixo piscava. Em vez disso: monta a tela de
+            // resgate já (ela nasce opaca por cima, cobrindo tudo,
+            // paywall incluso) e só remove o paywall (sem animação —
+            // já tá coberto, invisível de qualquer jeito) depois que a
+            // tela de resgate certamente já terminou de aparecer.
+            showPremiumRewardReveal().then(() => runDiscountRouletteScreen());
+            setTimeout(() => overlay.remove(), 460);
+          };
     }
     const dismiss = document.getElementById("paywallDismiss");
     if (dismiss) dismiss.onclick = () => { trackEvent("MINIAPP_PAYWALL_DISMISS"); _dismissPaywall(overlay); };
