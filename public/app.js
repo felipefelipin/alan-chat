@@ -4043,15 +4043,41 @@ function typingDelayFor(text) {
   return Math.min(6200, rand(850,1450) + len * rand(28,50) + rand(220,920));
 }
 
+// Digitação em várias rajadas, com o "digitando…" sumindo e voltando entre
+// elas — como alguém pensando/pausando no meio da frase, não uma barra de
+// carregamento contínua. Duração total bem mais longa e proporcional ao
+// texto (~90-140ms por caractere, contra ~28-50ms do modo padrão). Nunca
+// simula erro de digitação — só o RITMO humano, o texto final é sempre o
+// certo.
+async function simulateHumanTyping(text) {
+  const len = String(text).length;
+  const totalMs = Math.min(14000, Math.max(2500, len * rand(90, 140)));
+  const burstCount = rand(2, 4);
+  let remaining = totalMs;
+  for (let i = 0; i < burstCount; i++) {
+    const isLast = i === burstCount - 1;
+    const burstMs = isLast ? Math.max(400, remaining) : Math.max(500, Math.round(remaining / (burstCount - i)));
+    setStatus("digitando…");
+    addTyping();
+    await sleep(burstMs);
+    removeTyping();
+    remaining -= burstMs;
+    if (!isLast) await sleep(rand(500, 1400)); // pausa "pensando" — indicador some
+  }
+}
+
 async function gisaSay(text, opts = {}) {
-  const status = "digitando…";
-  setStatus(status); addTyping();
-  // O tempo de digitação nunca fica abaixo do que o tamanho do texto pede —
-  // um "delay" fixo passado em opts vira só um PISO (útil pra pausas
-  // dramáticas propositalmente mais longas que o texto), nunca um teto que
-  // deixa uma mensagem longa parecer digitada instantaneamente.
-  await sleep(Math.max(opts.delay ?? 0, typingDelayFor(text)));
-  removeTyping(); await sleep(rand(90,220));
+  if (opts.humanTyping) {
+    await simulateHumanTyping(text);
+  } else {
+    setStatus("digitando…"); addTyping();
+    // O tempo de digitação nunca fica abaixo do que o tamanho do texto pede —
+    // um "delay" fixo passado em opts vira só um PISO (útil pra pausas
+    // dramáticas propositalmente mais longas que o texto), nunca um teto que
+    // deixa uma mensagem longa parecer digitada instantaneamente.
+    await sleep(Math.max(opts.delay ?? 0, typingDelayFor(text)));
+    removeTyping(); await sleep(rand(90,220));
+  }
   setStatus(CONTACT.subtitle ?? "");
   addMsg("left", escapeHtml(text).replace(/\n/g,"<br/>"), opts.replyTo || null);
   if (!opts.noSleep) await sleep(rand(320,760));
@@ -4893,11 +4919,11 @@ async function startScript() {
     state.flags.botOnline = true; saveState();
     await sleep(rand(1500, 2500));
     if (PERSONA === "m2") {
-      await gisaSay("oii beh, até que em fim vc chegou aq kkk", { noSleep: true });
+      await gisaSay("oii beh, até que em fim vc chegou aq kkk", { noSleep: true, humanTyping: true });
       await sleep(rand(2000, 3000));
-      await gisaSay("poucos que conseguem chegar até aq", { noSleep: true });
+      await gisaSay("poucos que conseguem chegar até aq", { noSleep: true, humanTyping: true });
       await sleep(rand(2000, 3000));
-      await gisaSay("posso te enviar um vídeo? 😈", { noSleep: true });
+      await gisaSay("posso te enviar um vídeo? 😈", { noSleep: true, humanTyping: true });
     } else {
       await gisaSendPhoto(ASSETS.teasePhotoPrivada, "Foto Privada");
       await sleep(rand(300, 600));
