@@ -1276,17 +1276,24 @@ function lsIcon(name) {
 // feed de atividade — nunca os dois ao mesmo tempo, pra ficar discreto.
 const LS_SOCIAL_NAMES = ["Lucas", "Gabriel", "Matheus", "Rafael", "Bruno", "Diego", "Thiago", "Pedro", "Felipe", "João"];
 let _lsSocialInterval = null;
-let _lsSocialViewers = rand(11, 27);
+// Números baixos de propósito — isso vende uma chamada de vídeo AO VIVO e
+// PESSOAL, não uma oferta de massa. Muita gente "vendo agora" ou "liberando
+// a chamada" ao mesmo tempo contradiz a exclusividade (não dá pra ela estar
+// numa chamada individual com dezenas de pessoas simultaneamente); poucas
+// pessoas reforça "seleto", não "vazio".
+let _lsSocialViewers = rand(2, 5);
 
 function lsSocialNextLine() {
   const showCount = Math.random() < 0.5;
   if (showCount) {
     // flutua devagar (nunca pula demais de uma vez), fica mais "vivo"
-    _lsSocialViewers = Math.max(8, Math.min(34, _lsSocialViewers + rand(-2, 3)));
+    _lsSocialViewers = Math.max(1, Math.min(6, _lsSocialViewers + rand(-1, 1)));
     return `${_lsSocialViewers} pessoas vendo agora`;
   }
   const name = LS_SOCIAL_NAMES[Math.floor(Math.random() * LS_SOCIAL_NAMES.length)];
-  const action = Math.random() < 0.5 ? "acabou de entrar" : "acabou de liberar a chamada";
+  // "liberou a chamada" é o recurso escasso de verdade (tempo dela numa
+  // chamada 1:1) — precisa parecer raro, não algo em série o tempo todo.
+  const action = Math.random() < 0.8 ? "acabou de entrar" : "acabou de liberar a chamada";
   return `${name} ${action}`;
 }
 
