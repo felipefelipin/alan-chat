@@ -4658,16 +4658,18 @@ async function enterCallIncomingSoon(text) {
   clearReengage();
   state.step = 5; saveState();
   trackEvent("MINIAPP_STEP_CALL_INCOMING_SOON");
-  await sleep(rand(1200, 2000));
-  await gisaSay("hm kk, vou pro banheiro rapidinho e já te ligo", {
+  await sleep(4000); // 4s antes de começar a digitar
+  await gisaSay("hm kk, então vou pro banheiro e já te ligo 😈", {
     noSleep: true,
+    humanTyping: true,
+    humanTypingMs: 7000, // 7s digitando (com o soluço de correção) antes de enviar
     replyTo: text ? { side: "right", text } : null,
   });
-  await sleep(1500);
+  await sleep(4000);
   state.flags.botOnline = false; saveState();
   const awayAt = new Date();
   setStatus(`visto por último às ${String(awayAt.getHours()).padStart(2,"0")}:${String(awayAt.getMinutes()).padStart(2,"0")}`);
-  await sleep(10000);
+  await sleep(15000);
   state.flags.botOnline = true; saveState();
   setStatus("online");
   markPendingMessagesSeen();
