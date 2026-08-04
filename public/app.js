@@ -2320,12 +2320,175 @@ const DISCOUNT_SEGMENTS = [
     stops: [[0, "#2c0d12"], [1, "#170609"]], glow: "rgba(230,57,80,.5)" },
 ];
 
+// Confete premium — usado SÓ no clique de "RESGATAR AGORA" (showPremium
+// RewardReveal), separado de propósito do mountConfettiBurst genérico
+// (esse continua intocado, ainda usado pelas duas roletas). Duas fases:
+// (1) explosão radial a partir do badge do presente — várias direções,
+// não só pra cima, física de "coisa realmente estourando"; (2) chuva
+// contínua caindo de cima, entrando aos poucos por ~1.1s, dando
+// profundidade/duração de celebração de verdade em vez de um burst único
+// e curto. Dois tipos de partícula (fitas + brilhos/sparkles com glow),
+// paleta dourada/marfim consistente com o resto do app (nada de
+// vermelho/azul/verde genérico de festa infantil). Cada partícula tem
+// vida própria (não um corte global único) e sway senoidal + "flip"
+// simulado (escala horizontal oscilando) pra imitar queda real de
+// confete, não retângulos girando de forma robótica.
+function mountPremiumConfettiBurst(host, originEl) {
+  const canvas = document.createElement("canvas");
+  canvas.className = "rwConfetti";
+  host.appendChild(canvas);
+  const ctx = canvas.getContext("2d");
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const GOLD = ["#f6ddaa", "#d6b07a", "#a97c3a", "#fff6e0", "#e8c088"];
+  const GRAVITY = 0.16;
+  const DRAG = 0.992;
+
+  let originX = W / 2, originY = H * 0.38;
+  try {
+    if (originEl) {
+      const r = originEl.getBoundingClientRect();
+      originX = r.left + r.width / 2;
+      originY = r.top + r.height / 2;
+    }
+  } catch {}
+
+  const pieces = [];
+
+  function spawnStrip(x, y, burst) {
+    const angle = burst ? Math.random() * Math.PI * 2 : -Math.PI / 2 + (Math.random() - 0.5) * 0.5;
+    const speed = burst ? 3.5 + Math.random() * 6 : 1.5 + Math.random() * 2;
+    pieces.push({
+      kind: "strip",
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - (burst ? 2 : 0),
+      w: 6 + Math.random() * 5,
+      h: 9 + Math.random() * 7,
+      rot: Math.random() * Math.PI * 2,
+      vr: (Math.random() - 0.5) * 0.25,
+      swayPhase: Math.random() * Math.PI * 2,
+      swaySpeed: 0.03 + Math.random() * 0.03,
+      color: GOLD[Math.floor(Math.random() * GOLD.length)],
+      born: performance.now(),
+      life: 1400 + Math.random() * 900,
+    });
+  }
+
+  function spawnSparkle(x, y) {
+    pieces.push({
+      kind: "sparkle",
+      x, y,
+      vx: (Math.random() - 0.5) * 1.2,
+      vy: 0.6 + Math.random() * 1.1,
+      r: 1.6 + Math.random() * 2.2,
+      twinklePhase: Math.random() * Math.PI * 2,
+      color: Math.random() < 0.5 ? "#fff6e0" : "#f6ddaa",
+      born: performance.now(),
+      life: 1100 + Math.random() * 700,
+    });
+  }
+
+  // Fase 1 — explosão radial imediata a partir do badge (a "abertura" do
+  // presente em si).
+  for (let i = 0; i < 40; i++) spawnStrip(originX, originY, true);
+  for (let i = 0; i < 16; i++) spawnSparkle(originX, originY);
+
+  // Fase 2 — chuva entrando aos poucos de cima, ~1.1s, dando duração e
+  // profundidade real à celebração (em vez de um burst único e curto).
+  const showerCount = 30;
+  const showerTimers = [];
+  for (let i = 0; i < showerCount; i++) {
+    showerTimers.push(setTimeout(() => {
+      spawnStrip(Math.random() * W, -20, false);
+      if (i % 3 === 0) spawnSparkle(Math.random() * W, -20);
+    }, (i / showerCount) * 1100));
+  }
+
+  let rafId = null;
+  let stopped = false;
+  const t0 = performance.now();
+
+  function frame(now) {
+    if (stopped) return;
+    ctx.clearRect(0, 0, W, H);
+    for (let i = pieces.length - 1; i >= 0; i--) {
+      const p = pieces[i];
+      const age = now - p.born;
+      if (age > p.life) { pieces.splice(i, 1); continue; }
+
+      p.vy += GRAVITY * (p.kind === "sparkle" ? 0.35 : 1); // sparkles flutuam mais devagar
+      p.vx *= DRAG; p.vy *= DRAG;
+      p.x += p.vx;
+      p.y += p.vy;
+
+      // fade-out suave (ease-out) só no terço final da vida de cada
+      // partícula — nunca um corte abrupto sincronizado globalmente.
+      const lifeP = age / p.life;
+      const fade = lifeP < 0.7 ? 1 : Math.max(0, 1 - Math.pow((lifeP - 0.7) / 0.3, 2));
+
+      ctx.save();
+      ctx.globalAlpha = fade;
+
+      if (p.kind === "strip") {
+        p.rot += p.vr;
+        p.swayPhase += p.swaySpeed;
+        const sway = Math.sin(p.swayPhase) * 0.6;
+        // "flip" simulado: achata a largura periodicamente, como se a
+        // fita estivesse virando de lado — muito mais orgânico que só
+        // rotacionar um retângulo plano.
+        const flip = Math.abs(Math.cos(p.rot * 1.3));
+        ctx.translate(p.x + sway, p.y);
+        ctx.rotate(p.rot);
+        ctx.scale(Math.max(0.18, flip), 1);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      } else {
+        const twinkle = 0.55 + 0.45 * Math.sin(p.twinklePhase + now * 0.006);
+        ctx.translate(p.x, p.y);
+        ctx.globalAlpha = fade * twinkle;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = p.color;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(0, 0, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    if (pieces.length > 0 || now - t0 < 1300) {
+      rafId = requestAnimationFrame(frame);
+    } else {
+      canvas.remove();
+    }
+  }
+  rafId = requestAnimationFrame(frame);
+
+  return {
+    stop() {
+      if (stopped) return;
+      stopped = true;
+      showerTimers.forEach(clearTimeout);
+      if (rafId) cancelAnimationFrame(rafId);
+      canvas.remove();
+    },
+  };
+}
+
 // ==================== RESGATE DE RECURSO PREMIUM (pré-roleta de desconto) ====================
 // Etapa intermediária entre "DESBLOQUEAR ACESSO" e a roleta de desconto —
 // não é loading, é a sensação de estar abrindo um prêmio grande e raro
 // antes mesmo de girar. Ao clicar em "RESGATAR AGORA", o presente
 // "explode" em brilho/partículas e dissolve pra revelar a roleta por
-// baixo — rápido (~900ms) mas com peso emocional, sem quebrar o ritmo.
+// baixo — a celebração de confete dura ~1.9s (era ~480ms cortado antes
+// do fim), com peso emocional real, sem atrasar demais o ritmo.
 function showPremiumRewardReveal() {
   trackEvent("MINIAPP_PREMIUM_REWARD_SCREEN");
   return new Promise((resolve) => {
@@ -2403,27 +2566,31 @@ function showPremiumRewardReveal() {
       btn.style.transition = "opacity .25s ease";
       btn.style.opacity = "0";
 
-      const confetti = mountConfettiBurst(screen);
+      const confetti = mountPremiumConfettiBurst(screen, box);
       const flash = document.createElement("div");
       flash.style.cssText = "position:absolute;inset:0;background:radial-gradient(circle, rgba(246,221,170,.9), rgba(246,221,170,0) 65%);opacity:0;transition:opacity .3s ease;";
       screen.appendChild(flash);
       requestAnimationFrame(() => { flash.style.opacity = "1"; });
+      // flash é só o estouro inicial — some de novo logo, não fica uma
+      // luz branca acesa parada por cima da celebração inteira.
+      setTimeout(() => { flash.style.opacity = "0"; }, 260);
 
-      // Resolve AQUI — ainda com `screen` 100% opaca e no DOM — em vez de
-      // esperar ela sumir (fade-out + remove) pra só então a roleta
-      // começar a existir. Antes disso, entre essa tela sumir e a roleta
-      // (que também nasce transparente e faz o próprio fade-in) ficar
-      // opaca, não havia NADA cobrindo o viewport por ~0.8-1s — janela
-      // exatamente onde o chat por baixo aparecia. Agora a roleta é
-      // criada (e empilha por cima, mesmo z-index mas appendChild depois)
-      // enquanto essa tela ainda está sólida servindo de "fundo de
-      // segurança"; só removemos essa tela bem depois, quando a roleta com
-      // certeza já terminou o próprio fade-in e está cobrindo tudo.
+      // Resolve só depois da celebração de confete render (~1.7s) — ainda
+      // com `screen` 100% opaca e no DOM, em vez de esperar ela sumir
+      // (fade-out + remove) pra só então a roleta começar a existir. Antes
+      // disso, entre essa tela sumir e a roleta (que também nasce
+      // transparente e faz o próprio fade-in) ficar opaca, não havia NADA
+      // cobrindo o viewport por ~0.8-1s — janela exatamente onde o chat
+      // por baixo aparecia. Agora a roleta é criada (e empilha por cima,
+      // mesmo z-index mas appendChild depois) enquanto essa tela ainda
+      // está sólida servindo de "fundo de segurança"; só removemos essa
+      // tela bem depois, quando a roleta com certeza já terminou o
+      // próprio fade-in e está cobrindo tudo.
       setTimeout(() => {
         confetti?.stop();
         resolve();
         setTimeout(() => screen.remove(), 900);
-      }, 480);
+      }, 1700);
     }, { once: true });
   });
 }
