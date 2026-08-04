@@ -5021,16 +5021,34 @@ async function startFunnelCall() {
     // reproduzir. Sem essa garantia, o vídeo aparecia mas ficava
     // "congelado" nos primeiros instantes enquanto ainda bufferizava/
     // decodificava.
+    // Seek é ASSÍNCRONO (dispara "seeking" e só confirma de verdade no
+    // "seeked", que pode levar alguns frames pra decodificar até a posição
+    // pedida) — chamar play() logo depois de setar currentTime, sem
+    // esperar o "seeked", é a causa real do vídeo começar ~1s adiantado
+    // (o play() pegava o vídeo ainda no meio do seek, não no frame 0).
+    function seekToStartAndPlay() {
+      return new Promise((resolve) => {
+        let done = false;
+        const finish = () => {
+          if (done) return;
+          done = true;
+          vid.removeEventListener("seeked", finish);
+          vid.play().catch(() => {});
+          resolve();
+        };
+        vid.addEventListener("seeked", finish, { once: true });
+        vid.currentTime = 0;
+        // já estava em 0 (não dispara "seeked" de novo) — rede de segurança
+        setTimeout(finish, 300);
+      });
+    }
+
     Promise.all([minBlackScreen, videoReady(vid)]).then(() => {
-      // currentTime só é zerado AQUI, depois que o vídeo já confirmou ter
-      // dado (readyState/canplay) — setar antes disso (enquanto ele ainda
-      // estava bufferizando desde o preload) não "colava" de verdade em
-      // alguns browsers, e o vídeo acabava começando ~1s adiantado.
-      vid.currentTime = 0;
-      vid.play().catch(() => {});
-      vid.style.opacity = "1";
-      const t = timerEl(); if (t) t.textContent = "0:00"; // sai de "Conectando..."
-      startTimer();
+      seekToStartAndPlay().then(() => {
+        vid.style.opacity = "1";
+        const t = timerEl(); if (t) t.textContent = "0:00"; // sai de "Conectando..."
+        startTimer();
+      });
     });
   };
 
