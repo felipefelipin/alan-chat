@@ -4561,6 +4561,61 @@ function showAdvanceButton(label, onClick) {
   }, 0);
 }
 
+// Fluxo curto da persona padrão (m1): resposta à saudação ("oi amor, td
+// bem? já posso te ligar?") dispara isso — pergunta se aguenta ver pelada,
+// com foto+áudio, exatamente como já existia antes, só que agora depois
+// da resposta do lead em vez de já cair de cara no início do chat.
+// PERSONA "m2" nunca passa por aqui (usa enterM2VideoDelivery + o
+// enterTeaseBuildup normal, intocados).
+async function enterPeladaQuestion(text) {
+  clearReengage();
+  await sleep(rand(700, 1200));
+  await gisaSay("pera aí kk, mas antes deixa eu te perguntar uma coisa", {
+    noSleep: true,
+    replyTo: text ? { side: "right", text } : null,
+  });
+  await sleep(rand(300, 600));
+  await gisaSendPhoto(ASSETS.teasePhotoPrivada, "Foto Privada");
+  await sleep(rand(300, 600));
+  await gisaSendAudio(ASSETS.audioCallInvite, null, 7500);
+  await sleep(rand(300, 600));
+  await gisaSay("me fala a verdade… você aguenta me ver pelada de verdade ou vai só ficar olhando como os fracos?... 👀", { delay: rand(8000, 11000) });
+  state._t1 = setTimeout(async () => {
+    if (state.step !== 1) return;
+    await gisaSay("tá aí ou já correu covarde? 👀");
+    state._t2 = setTimeout(async () => {
+      if (state.step !== 1) return;
+      await gisaSay("typical… entra, olha e some. Mas eu não sou pra qualquer um não, safado.");
+    }, 2 * 60 * 1000);
+  }, 2 * 60 * 1000);
+}
+
+// Resposta à pergunta "aguenta me ver pelada" (persona padrão, m1) — vai
+// direto pro "saio e já ligo" em vez do buildup antigo (enterTeaseBuildup/
+// enterDesireEscalation/enterCallConnecting, esses continuam existindo só
+// pra m2). Mensagem -> "visto por último" -> 10s -> online -> 4s -> chamada
+// direto, sem mais nenhuma pergunta no meio.
+async function enterCallIncomingSoon(text) {
+  clearReengage();
+  state.step = 5; saveState();
+  trackEvent("MINIAPP_STEP_CALL_INCOMING_SOON");
+  await sleep(rand(1200, 2000));
+  await gisaSay("hm kk, vou pro banheiro rapidinho e já te ligo", {
+    noSleep: true,
+    replyTo: text ? { side: "right", text } : null,
+  });
+  await sleep(1500);
+  state.flags.botOnline = false; saveState();
+  const awayAt = new Date();
+  setStatus(`visto por último às ${String(awayAt.getHours()).padStart(2,"0")}:${String(awayAt.getMinutes()).padStart(2,"0")}`);
+  await sleep(10000);
+  state.flags.botOnline = true; saveState();
+  setStatus("online");
+  markPendingMessagesSeen();
+  await sleep(4000);
+  showIncomingCall();
+}
+
 async function enterTeaseBuildup(text = null) {
   clearReengage();
   state.step = 2; saveState();
@@ -5343,11 +5398,9 @@ async function startScript() {
       await sleep(rand(2000, 3000));
       await gisaSay("posso te enviar um vídeo? 😈", { noSleep: true, humanTyping: true });
     } else {
-      await gisaSendPhoto(ASSETS.teasePhotoPrivada, "Foto Privada");
-      await sleep(rand(300, 600));
-      await gisaSendAudio(ASSETS.audioCallInvite, null, 7500);
-      await sleep(rand(300, 600));
-      await gisaSay("me fala a verdade… você aguenta me ver pelada de verdade ou vai só ficar olhando como os fracos?... 👀", { delay: rand(8000, 11000) });
+      // fluxo curto: só a saudação aqui — a resposta do lead é quem
+      // dispara o resto (ver handleUserText/enterPeladaQuestion).
+      await gisaSay("oi amor, td bem? já posso te ligar?");
     }
   } finally {
     _flowRunning = false;
@@ -5374,12 +5427,24 @@ async function handleUserText(text) {
   await sleep(rand(700, 1600));
   try {
     if (state.step === 1) {
-      if (PERSONA === "m2" && !state.flags.m2VideoSent) {
-        state.flags.m2VideoSent = true; saveState();
-        await enterM2VideoDelivery(text);
+      if (PERSONA === "m2") {
+        if (!state.flags.m2VideoSent) {
+          state.flags.m2VideoSent = true; saveState();
+          await enterM2VideoDelivery(text);
+          return;
+        }
+        await enterTeaseBuildup(text);
         return;
       }
-      await enterTeaseBuildup(text);
+      // persona padrão (m1) — fluxo curto: saudação -> pergunta "aguenta
+      // me ver pelada" -> "já vou ligar" -> chamada (sem enterTeaseBuildup/
+      // enterDesireEscalation/enterCallConnecting, esses ficam só pra m2).
+      if (!state.flags.peladaQuestionSent) {
+        state.flags.peladaQuestionSent = true; saveState();
+        await enterPeladaQuestion(text);
+        return;
+      }
+      await enterCallIncomingSoon(text);
       return;
     }
     if (state.step === 2) {
