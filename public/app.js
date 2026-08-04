@@ -972,29 +972,6 @@ function lsPlayWinFanfare() {
   });
 }
 
-// duas notas curtas e descendentes — som de "quase..." (1ª tentativa,
-// sem prêmio), deliberadamente mais discreto/menos dramático que uma
-// derrota "de verdade", já que o usuário ainda tem a 2ª chance garantida.
-function rwPlayLossThud() {
-  const ctx = lsGetAudioCtx();
-  if (!ctx) return;
-  if (ctx.state === "suspended") ctx.resume().catch(() => {});
-  const now = ctx.currentTime;
-  [392, 293].forEach((freq, i) => {
-    const t = now + i * 0.13;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(freq, t);
-    gain.gain.setValueAtTime(0.0001, t);
-    gain.gain.exponentialRampToValueAtTime(0.15, t + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(t);
-    osc.stop(t + 0.3);
-  });
-}
-
 // "whoosh" grave e descendente — usado quando as cortinas abrem.
 function esPlayWhoosh() {
   const ctx = lsGetAudioCtx();
@@ -1764,8 +1741,8 @@ function drawWheel(ctx, size, rotationDeg, fillStyles, fonts, pulseAlpha, segmen
 // sensação de "quase caiu no prêmio anterior". Quando omitido, o código
 // roda exatamente pelo branch de sempre (linha por linha idêntico ao antes),
 // então a roleta original não é afetada em nada por essa opção existir.
-function spinWheel(draw, finalRotationDeg, onTick, suspense) {
-  const T_SPIN = 4100;
+function spinWheel(draw, finalRotationDeg, onTick, suspense, spinMs = 4100) {
+  const T_SPIN = spinMs;
   const OVERSHOOT_DEG = 18;
   const overshootRotation = finalRotationDeg + OVERSHOOT_DEG;
 
@@ -1946,9 +1923,9 @@ function mountRouletteWheel(host, segments, goldScale = 1) {
   startIdlePulse();
 
   return {
-    spin(finalRotationDeg, onTick, suspense) {
+    spin(finalRotationDeg, onTick, suspense, spinMs) {
       stopIdlePulse();
-      const { promise, cancel } = spinWheel(draw, finalRotationDeg, onTick, suspense);
+      const { promise, cancel } = spinWheel(draw, finalRotationDeg, onTick, suspense, spinMs);
       activeCancel = cancel;
       return promise.finally(() => { activeCancel = null; });
     },
@@ -2068,9 +2045,6 @@ function runRouletteScreen() {
 
     let confetti = null;
 
-    // Giro compartilhado pelas duas tentativas — só muda o índice-alvo e o
-    // callback de conclusão. Nada na física/tick/haptic do giro em si muda
-    // entre a 1ª e a 2ª tentativa.
     function runSpin(targetIndex, onDone) {
       stage.querySelector(".rwGlow")?.classList.add("rwGlow-spinning");
       hapticImpact("medium");
@@ -2086,76 +2060,21 @@ function runRouletteScreen() {
         lastTickAt = t;
         lsPlaySpinTick();
         hapticImpact("light");
-      }).then(onDone);
+      }, false, 2600).then(onDone); // giro mais rápido (2.6s) que o padrão de 4.1s — sem suspense real, não precisa de tanto tempo
     }
 
+    // Giro único e direto pro prêmio — sem "quase perdeu" encenado. Um
+    // "quase" que sempre acontece do mesmo jeito não é sorte real, e pra
+    // quem já viu esse tipo de funil isso lê como manipulado, não como
+    // suspense. Corta o tempo pela metade de quebra.
     function onSpinTap() {
       trackEvent("MINIAPP_ROULETTE_SPIN1");
       _tryUnlockEntranceAudio(); // clique real e direto — necessário pro destravamento funcionar de fato
       spinBtn.disabled = true;
       spinBtn.classList.add("rwSpinBtn-disabled");
-      runSpin(RW_LOSE_INDEX, onFirstSpinDone);
-    }
-    spinBtn.addEventListener("click", onSpinTap, { once: true });
-
-    // tremor curto na roleta — vende o "quase" sem tocar na física do giro.
-    function triggerNearMissShake() {
-      const wrap = screen.querySelector(".rwWheelWrap");
-      if (!wrap) return;
-      wrap.classList.add("rwWheelWrap-shake");
-      setTimeout(() => wrap.classList.remove("rwWheelWrap-shake"), 420);
-    }
-
-    // flash vermelho breve — mesma técnica do flash dourado da vitória,
-    // recolorido, um elemento descartável que se auto-remove.
-    function triggerNearMissFlash() {
-      const flash = document.createElement("div");
-      flash.className = "rwLossFlash";
-      screen.appendChild(flash);
-      setTimeout(() => flash.remove(), 600);
-    }
-
-    // 1ª tentativa — sempre cai em ❌ TENTE DE NOVO. Sem confete, feedback
-    // mais contido (vibração de erro, thud curto, tremor+flash vermelho).
-    function onFirstSpinDone() {
-      hapticNotify("error");
-      rwPlayLossThud();
-      triggerNearMissShake();
-      triggerNearMissFlash();
-
-      spinBtn.classList.add("rwSpinBtn-hidden");
-      setTimeout(() => spinBtn.remove(), 450);
-
-      actionArea.insertAdjacentHTML("beforeend", `
-        <div class="rwResult">
-          <div class="rwResultTitle">❌ QUASE...</div>
-          <div class="rwResultSub">Você passou muito perto do prêmio máximo.<br>Mas você ainda possui <strong>UMA</strong> última tentativa exclusiva.</div>
-        </div>
-      `);
-      requestAnimationFrame(() => actionArea.querySelector(".rwResult")?.classList.add("rwResult-visible"));
-
-      // sem botão de fechar — só o próprio CTA avança o fluxo.
-      setTimeout(() => {
-        actionArea.insertAdjacentHTML("beforeend", `<button type="button" class="rwEnterBtn">🔄 TENTAR NOVAMENTE</button>`);
-        const retryBtn = actionArea.querySelector(".rwEnterBtn");
-        requestAnimationFrame(() => retryBtn.classList.add("rwEnterBtn-visible"));
-        retryBtn.addEventListener("click", onRetryTap, { once: true });
-      }, 400);
-    }
-
-    function onRetryTap() {
-      trackEvent("MINIAPP_ROULETTE_SPIN2");
-      hapticImpact("medium");
-
-      // some com o resultado da 1ª tentativa antes de girar de novo.
-      const prevResult = actionArea.querySelector(".rwResult");
-      const prevBtn = actionArea.querySelector(".rwEnterBtn");
-      prevResult?.classList.remove("rwResult-visible");
-      prevBtn?.classList.remove("rwEnterBtn-visible");
-      setTimeout(() => { prevResult?.remove(); prevBtn?.remove(); }, 350);
-
       runSpin(RW_WIN_INDEX, onFinalSpinDone);
     }
+    spinBtn.addEventListener("click", onSpinTap, { once: true });
 
     // efeitos exclusivos da vitória: glow dourado intensificado + flash
     // suave + escurecimento leve do fundo, além do confete/fanfarra já
@@ -2169,7 +2088,7 @@ function runRouletteScreen() {
       setTimeout(() => flash.remove(), 650);
     }
 
-    // 2ª tentativa — sempre cai em 👑 PREMIUM.
+    // Giro único, sempre cai em 👑 PREMIUM.
     function onFinalSpinDone() {
       trackEvent("MINIAPP_ROULETTE_WIN");
       lsPlayWinFanfare();
@@ -2177,10 +2096,13 @@ function runRouletteScreen() {
       confetti = mountConfettiBurst(screen);
       triggerWinFlash();
 
+      spinBtn.classList.add("rwSpinBtn-hidden");
+      setTimeout(() => spinBtn.remove(), 450);
+
       actionArea.insertAdjacentHTML("beforeend", `
         <div class="rwResult">
           <div class="rwResultTitle">👑 ACESSO PREMIUM LIBERADO</div>
-          <div class="rwResultSub">Parabéns! Seu acesso foi validado com sucesso. Todos os recursos Premium foram desbloqueados.</div>
+          <div class="rwResultSub">Aaah, você mereceu 😈 acesso premium liberado — agora é só entrar.</div>
         </div>
       `);
       requestAnimationFrame(() => actionArea.querySelector(".rwResult")?.classList.add("rwResult-visible"));
