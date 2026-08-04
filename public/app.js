@@ -4598,24 +4598,42 @@ function showAdvanceButton(label, onClick) {
 async function enterPeladaQuestion(text) {
   clearReengage();
   await sleep(3000); // 3s de silêncio antes do "digitando..." aparecer
-  await gisaSay("pera aí kk, mas antes deixa eu te perguntar uma coisa", {
+  await gisaSay("pera aí kk, mas antes deixa eu te mostrar uma coisa", {
     noSleep: true,
     humanTyping: true,
     humanTypingMs: 7000, // 7s digitando (com o soluço de correção) antes de enviar
     replyTo: text ? { side: "right", text } : null,
   });
-  await sleep(rand(300, 600));
+
+  // 1s -> "visto por último" -> 4s -> "online" -> 2s -> "enviando..." (a
+  // mídia em si já tem seu próprio delay interno de gisaSendVideo/Photo).
+  await sleep(1000);
+  state.flags.botOnline = false; saveState();
+  const awayAt = new Date();
+  setStatus(`visto por último às ${String(awayAt.getHours()).padStart(2,"0")}:${String(awayAt.getMinutes()).padStart(2,"0")}`);
+  await sleep(4000);
+  state.flags.botOnline = true; saveState();
+  setStatus("online");
+  markPendingMessagesSeen();
+  await sleep(2000);
+
   if (PERSONA === "m2") {
     // vídeo sem nenhum texto por cima ("" explícito esconde o cabeçalho
     // inteiro do card, ver renderItem/type==="video")
     await gisaSendVideo(ASSETS.teaseCallPhoto, "");
-    await sleep(rand(300, 600));
-    await gisaSendAudio(ASSETS.audioMimimi, null, 7500);
   } else {
     await gisaSendPhoto(ASSETS.teasePhotoPrivada, "Foto Privada");
-    await sleep(rand(300, 600));
-    await gisaSendAudio(ASSETS.audioCallInvite, null, 7500);
   }
+
+  // 3s depois da mídia -> "gravando áudio..." -> dura exatamente 3s -> cai
+  // o áudio -> segue o fluxo normal.
+  await sleep(3000);
+  if (PERSONA === "m2") {
+    await gisaSendAudio(ASSETS.audioMimimi, null, 3000);
+  } else {
+    await gisaSendAudio(ASSETS.audioCallInvite, null, 3000);
+  }
+
   await sleep(rand(300, 600));
   await gisaSay("me fala a verdade… você aguenta me ver pelada de verdade ou vai só ficar olhando como os fracos?... 👀", {
     humanTyping: true,
