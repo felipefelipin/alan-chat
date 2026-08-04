@@ -5137,9 +5137,8 @@ async function startFunnelCall() {
     // bubble WhatsApp de ligação de vídeo no chat
     addCallNotifBubble(elapsed);
 
-    state.step = 6; saveState();
     trackEvent("MINIAPP_CALL_ENDED");
-    await doCallPaywall();
+    await doCallPaywall(); // é quem gerencia state.step daqui pra frente (aguarda resposta antes de travar o chat)
   };
 
   // Botão encerrar
@@ -5207,11 +5206,42 @@ function addCallNotifBubble(seconds) {
 
 async function doCallPaywall() {
   trackEvent("MINIAPP_PAYWALL_SEQUENCE_START");
+  // 5.5 (não é um dos steps inteiros usados em handleUserText) — passa no
+  // guard "state.step >= 6" (chat travado só depois do paywall) mas não
+  // colide com nenhum case existente, então a resposta do lead cai certinho
+  // no novo branch abaixo em vez de ser ignorada ou cair no handler errado.
+  state.step = 5.5; saveState();
+  // _flowRunning trava handleUserText enquanto essas 3 mensagens ainda
+  // estão sendo "digitadas" — sem isso, uma resposta rápida demais do
+  // lead (antes da última mensagem cair) despacharia pra enterUnlockOffer
+  // em paralelo com essas ainda rodando, misturando as mensagens.
+  _flowRunning = true;
+  try {
+    await sleep(3000);
+    await gisaSay("mbb, por aqui não dá pra continuar infelizmente", { delay: rand(3000, 4500) });
+    await gisaSay("vai aparecer um botão pra vc desbloquear oq vc quiser de mim, e o resto depende de vc", { delay: rand(3000, 4500), noSleep: true });
+    await gisaSay("quer continuar beh? fala aí pra eu te mandar o acesso pra vc desbloquear...", { delay: rand(3000, 4500), noSleep: true });
+  } finally {
+    _flowRunning = false;
+  }
+}
+
+// Resposta a "quer continuar beh?" — última troca de texto antes da tela
+// de desbloquear acesso. Mensagem -> 3s -> "visto por último" -> 5s ->
+// tela de checkout aparece direto (sem voltar "online" antes, igual pedido).
+async function enterUnlockOffer(text) {
+  clearReengage();
+  state.step = 6; saveState(); // só agora trava o resto do chat de vez
+  trackEvent("MINIAPP_PAYWALL_UNLOCK_OFFER_REPLY");
+  await gisaSay("tá bom, saindo aqq, me encontre do outro lado, é só clicar pra desbloquear 😈", {
+    noSleep: true,
+    replyTo: text ? { side: "right", text } : null,
+  });
   await sleep(3000);
-  await gisaSay("tenho muita coisa pra eu te mostrar ainda... 😈", { delay: rand(3000, 4500) });
-  await gisaSay("mas pra isso preciso q vc desbloquie o acesso, pra me ver bem putinha só pra vc.", { delay: rand(3000, 4500), noSleep: true });
-  await gisaSay("vai cair agora ai pra vc desbloquear é só clicar e ir pro telegram que o resto só vai depender de vc 🥵🔥", { delay: rand(3500, 5000), noSleep: true });
-  await sleep(2000);
+  state.flags.botOnline = false; saveState();
+  const awayAt = new Date();
+  setStatus(`visto por último às ${String(awayAt.getHours()).padStart(2,"0")}:${String(awayAt.getMinutes()).padStart(2,"0")}`);
+  await sleep(5000);
   showCheckoutCta();
 }
 
@@ -5545,6 +5575,11 @@ async function handleUserText(text) {
       // existia entre a mensagem anterior cair e a chamada aparecer.
       await sleep(8000);
       showIncomingCall();
+      return;
+    }
+    if (state.step === 5.5) {
+      // resposta a "quer continuar beh?" (doCallPaywall, pós-chamada)
+      await enterUnlockOffer(text);
       return;
     }
   } catch(e) { if (!(e instanceof FlowCancelledError)) throw e; }
