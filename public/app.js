@@ -2060,13 +2060,14 @@ function runRouletteScreen() {
         lastTickAt = t;
         lsPlaySpinTick();
         hapticImpact("light");
-      }, false, 2600).then(onDone); // giro mais rápido (2.6s) que o padrão de 4.1s — sem suspense real, não precisa de tanto tempo
+      }, true, 2600).then(onDone); // 2.6s (mais rápido que o padrão 4.1s) + suspense=true: desacelera e "hesita" na borda antes de cair — sem trocar de segmento, só física
     }
 
-    // Giro único e direto pro prêmio — sem "quase perdeu" encenado. Um
-    // "quase" que sempre acontece do mesmo jeito não é sorte real, e pra
-    // quem já viu esse tipo de funil isso lê como manipulado, não como
-    // suspense. Corta o tempo pela metade de quebra.
+    // Giro único e direto pro prêmio — sem "quase perdeu" encenado (nunca
+    // passa por um segmento errado nem força um segundo giro). O `true` no
+    // spin acima é só a desaceleração/hesitação genuína na borda final do
+    // MESMO segmento vencedor — dá a sensação de "vai ou não vai" sem
+    // simular um resultado falso.
     function onSpinTap() {
       trackEvent("MINIAPP_ROULETTE_SPIN1");
       _tryUnlockEntranceAudio(); // clique real e direto — necessário pro destravamento funcionar de fato
@@ -5147,28 +5148,40 @@ function reopenPaywall() {
 // comprou aprovou" bem no momento da decisão, sem citar a modelo (funciona
 // pros dois personas). Avatar é sempre iniciais, nunca foto real de
 // terceiros. Um card por vez, alternando sozinho — cabe no espaço apertado
-// da sheet mobile sem empurrar o botão pra fora da tela.
+// da sheet mobile sem empurrar o botão pra fora da tela. 4 arquétipos de
+// tom (direto / impressionado / "viciado" / surpreso com a qualidade) pra
+// não soar como o mesmo texto reciclado 4x.
 const PW_TESTIMONIALS = [
-  { name: "Lucas M.",  hue: "#ff6b6b", text: "não tava esperando ser tão real assim, valeu cada centavo", time: "há 12 min", likes: 41 },
-  { name: "Rafael T.", hue: "#d6b07a", text: "melhor decisão que tomei essa semana, sério",                time: "há 34 min", likes: 27 },
-  { name: "Diego S.",  hue: "#4fc3f7", text: "achei que era só mais um perfil, mas é surreal ao vivo",     time: "há 51 min", likes: 63 },
-  { name: "Bruno C.",  hue: "#3ecf5c", text: "já indiquei pra 2 amigos, muito bom mesmo",                  time: "há 8 min",  likes: 19 },
+  { name: "Rafael M.", hue: "#ff7a59", text: "Entrei e já tava rolando na hora, sem enrolação. Foi exatamente o que eu queria.", time: "há 3 min",  likes: 34 },
+  { name: "Lucas B.",  hue: "#4fc3f7", text: "Não esperava que a câmera fosse tão nítida assim, parece que ela tá do meu lado.", time: "há 8 min",  likes: 21 },
+  { name: "Thiago R.", hue: "#a78bfa", text: "Terceira vez que entro essa semana, não consigo ficar de fora. Vício mesmo.",      time: "há 15 min", likes: 58 },
+  { name: "Bruno F.",  hue: "#d6b07a", text: "Achei que ia travar ou atrasar, mas rodou liso do início ao fim. Surpreendeu.",     time: "há 22 min", likes: 16 },
 ];
 let _pwTestiInterval = null;
 
-function _pwTestiCardHtml(t) {
+function _pwTestiCardHtml(t, idx) {
   const initial = t.name.charAt(0);
+  const dots = PW_TESTIMONIALS.map((_, i) => `
+    <span style="width:${i === idx ? 10 : 4}px;height:4px;border-radius:2px;
+                 background:${i === idx ? "rgba(214,176,122,.85)" : "rgba(255,255,255,.16)"};
+                 transition:width .25s ease,background .25s ease;"></span>
+  `).join("");
   return `
-    <div style="width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
-                background:${t.hue}2a;border:1px solid ${t.hue}55;color:${t.hue};font-size:13px;font-weight:800;">${initial}</div>
+    <div style="width:40px;height:40px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+                background:${t.hue}22;border:1px solid ${t.hue}4d;box-shadow:0 0 0 3px ${t.hue}0f;
+                color:${t.hue};font-size:14.5px;font-weight:800;">${initial}</div>
     <div style="flex:1;min-width:0;">
-      <div style="display:flex;align-items:center;gap:6px;">
-        <span style="color:#fff;font-size:12.5px;font-weight:700;">${t.name}</span>
-        <span style="color:#ffb300;font-size:10px;letter-spacing:1px;">★★★★★</span>
+      <div style="display:flex;align-items:center;gap:7px;">
+        <span style="color:#fff;font-size:13.5px;font-weight:700;letter-spacing:-.1px;">${t.name}</span>
+        <span style="color:#ffcf4d;font-size:11px;letter-spacing:1.5px;text-shadow:0 0 8px rgba(255,193,77,.55);">★★★★★</span>
       </div>
-      <div style="color:rgba(255,255,255,.68);font-size:12.5px;line-height:1.42;margin-top:2px;">${t.text}</div>
-      <div style="color:rgba(255,255,255,.32);font-size:10.5px;margin-top:5px;display:flex;gap:12px;">
-        <span>${t.time}</span><span>❤️ ${t.likes}</span>
+      <div style="color:rgba(255,255,255,.76);font-size:13.5px;font-weight:450;line-height:1.44;margin-top:4px;
+                  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${t.text}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
+        <div style="color:rgba(255,255,255,.36);font-size:11px;display:flex;gap:10px;align-items:center;">
+          <span>${t.time}</span><span style="opacity:.7;">·</span><span>♡ ${t.likes}</span>
+        </div>
+        <div style="display:flex;gap:3px;align-items:center;">${dots}</div>
       </div>
     </div>
   `;
@@ -5177,16 +5190,22 @@ function _pwTestiCardHtml(t) {
 function mountTestimonialTicker(cardEl) {
   if (!cardEl || _pwTestiInterval) return;
   let idx = Math.floor(Math.random() * PW_TESTIMONIALS.length);
-  cardEl.innerHTML = _pwTestiCardHtml(PW_TESTIMONIALS[idx]);
+  cardEl.style.transition = "opacity .3s ease, transform .3s ease";
+  cardEl.innerHTML = _pwTestiCardHtml(PW_TESTIMONIALS[idx], idx);
   _pwTestiInterval = setInterval(() => {
     if (!cardEl.isConnected) return;
     idx = (idx + 1) % PW_TESTIMONIALS.length;
     cardEl.style.opacity = "0";
+    cardEl.style.transform = "translateY(-6px)";
     setTimeout(() => {
-      cardEl.innerHTML = _pwTestiCardHtml(PW_TESTIMONIALS[idx]);
-      cardEl.style.opacity = "1";
-    }, 240);
-  }, rand(4200, 5200));
+      cardEl.innerHTML = _pwTestiCardHtml(PW_TESTIMONIALS[idx], idx);
+      cardEl.style.transform = "translateY(6px)";
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        cardEl.style.opacity = "1";
+        cardEl.style.transform = "translateY(0)";
+      }));
+    }, 280);
+  }, rand(4400, 4700));
 }
 
 function stopTestimonialTicker() {
@@ -5260,14 +5279,16 @@ function showCheckoutCta(opts = {}) {
           </div>
 
           <div style="width:100%;margin-bottom:20px;opacity:0;animation:pwFadeUp 0.26s ease 0.42s forwards;">
-            <div style="font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
-                        color:rgba(255,255,255,.34);margin-bottom:7px;padding-left:2px;">
-              Quem entrou não parou de elogiar
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:9px;padding-left:2px;">
+              <span style="width:4px;height:4px;border-radius:50%;background:#d6b07a;flex-shrink:0;"></span>
+              <span style="font-size:10.5px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;
+                          color:rgba(255,255,255,.4);">Quem entrou não parou de elogiar</span>
             </div>
             <div id="pwTestiCard" style="
-              display:flex;gap:10px;align-items:flex-start;
-              background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);
-              border-radius:14px;padding:12px 13px;transition:opacity .28s ease;
+              display:flex;gap:11px;align-items:flex-start;
+              background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.025));
+              border:1px solid rgba(214,176,122,.16);box-shadow:0 4px 18px rgba(0,0,0,.22);
+              border-radius:13px;padding:14px 15px;
             "></div>
           </div>
 
