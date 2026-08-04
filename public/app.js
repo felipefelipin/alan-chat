@@ -5188,17 +5188,18 @@ function _pwTestiCardHtml(t, idx) {
   `).join("");
   return `
     <div style="width:40px;height:40px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
-                background:${t.hue}22;border:1px solid ${t.hue}4d;box-shadow:0 0 0 3px ${t.hue}0f;
-                color:${t.hue};font-size:14.5px;font-weight:800;">${initial}</div>
+                background:${t.hue}2e;border:1px solid ${t.hue}66;box-shadow:0 0 0 3px ${t.hue}14;
+                color:${t.hue};font-size:14.5px;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,.5);">${initial}</div>
     <div style="flex:1;min-width:0;">
       <div style="display:flex;align-items:center;gap:7px;">
-        <span style="color:#fff;font-size:13.5px;font-weight:700;letter-spacing:-.1px;">${t.name}</span>
-        <span style="color:#ffcf4d;font-size:11px;letter-spacing:1.5px;text-shadow:0 0 8px rgba(255,193,77,.55);">★★★★★</span>
+        <span style="color:#ffffff;font-size:14.5px;font-weight:800;letter-spacing:-.1px;text-shadow:0 1px 3px rgba(0,0,0,.55);">${t.name}</span>
+        <span style="color:#ffd35c;font-size:11.5px;letter-spacing:1.5px;text-shadow:0 0 9px rgba(255,193,77,.7),0 1px 2px rgba(0,0,0,.5);">★★★★★</span>
       </div>
-      <div style="color:rgba(255,255,255,.76);font-size:13.5px;font-weight:450;line-height:1.44;margin-top:4px;
+      <div style="color:rgba(255,255,255,.92);font-size:14px;font-weight:500;line-height:1.5;margin-top:5px;
+                  text-shadow:0 1px 3px rgba(0,0,0,.5);
                   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${t.text}</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
-        <div style="color:rgba(255,255,255,.36);font-size:11px;display:flex;gap:10px;align-items:center;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:9px;">
+        <div style="color:rgba(255,255,255,.58);font-size:11px;font-weight:600;display:flex;gap:10px;align-items:center;text-shadow:0 1px 2px rgba(0,0,0,.5);">
           <span>${t.time}</span><span style="opacity:.7;">·</span><span>♡ ${t.likes}</span>
         </div>
         <div style="display:flex;gap:3px;align-items:center;">${dots}</div>
@@ -5299,15 +5300,21 @@ function showCheckoutCta(opts = {}) {
           </div>
 
           <div style="width:100%;margin-bottom:20px;opacity:0;animation:pwFadeUp 0.26s ease 0.42s forwards;">
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:9px;padding-left:2px;">
-              <span style="width:4px;height:4px;border-radius:50%;background:#d6b07a;flex-shrink:0;"></span>
-              <span style="font-size:10.5px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;
-                          color:rgba(255,255,255,.4);">Quem entrou não parou de elogiar</span>
+            <div style="display:inline-flex;align-items:center;gap:6px;margin-bottom:9px;margin-left:2px;
+                        background:rgba(10,7,4,.6);border:1px solid rgba(214,176,122,.4);
+                        border-radius:20px;padding:5px 12px 5px 10px;
+                        -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);">
+              <span style="width:5px;height:5px;border-radius:50%;background:#ffcf4d;flex-shrink:0;
+                          box-shadow:0 0 6px rgba(255,207,77,.8);"></span>
+              <span style="font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
+                          color:#fdf0da;text-shadow:0 1px 2px rgba(0,0,0,.6);">Quem entrou não parou de elogiar</span>
             </div>
             <div id="pwTestiCard" style="
               display:flex;gap:11px;align-items:flex-start;
-              background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.025));
-              border:1px solid rgba(214,176,122,.16);box-shadow:0 4px 18px rgba(0,0,0,.22);
+              background:linear-gradient(165deg,rgba(14,11,8,.78),rgba(8,6,5,.86));
+              -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+              border:1px solid rgba(214,176,122,.28);
+              box-shadow:0 8px 26px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.05);
               border-radius:13px;padding:14px 15px;
             "></div>
           </div>
