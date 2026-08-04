@@ -294,7 +294,7 @@ bot.on("callback_query", async (q) => {
       await bot.answerCallbackQuery(q.id, { text: "🎁" }).catch(() => {});
       await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
-          text: "🎁 <b>LIBERADO: CHAMADA GRÁTIS AO VIVO</b> 😈",
+          text: "🎁 <b>LIBERADO: CHAMADA GRÁTIS AO VIVO</b>",
           noTyping: true,
           extra: { parse_mode: "HTML", message_effect_id: "5046509860389126442", reply_markup: { inline_keyboard: [
             [{ text: "🔴 AO VIVO: ENTRAR NA CHAMADA GRÁTIS 😈", callback_data: "chamada_video", style: "success" }],
