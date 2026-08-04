@@ -6638,7 +6638,7 @@ function runAgeGateScreen() {
       video.setAttribute("webkit-playsinline", "");
     }
     video.removeAttribute("id");
-    video.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:1;z-index:0;";
+    video.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:1;filter:brightness(1.7);z-index:0;";
     screen.insertBefore(video, screen.firstChild);
 
     requestAnimationFrame(() => screen.classList.add("lsScreen-visible"));
@@ -6742,6 +6742,7 @@ runAgeGateScreen().then(() => {
     state.flags.routing     = false;
     state.flags.entered     = false;
     mountChat();
+    insertSystemNotice(`As mensagens são protegidas com criptografia de ponta a ponta. Só você e ${CONTACT.name} podem lê-las.`);
     startScript().catch(e => { if (!(e instanceof FlowCancelledError)) console.error(e); });
   } else if (localStorage.getItem("gisa_checkout_done") === "1") {
     // já girou a roleta de desconto e chegou no checkout antes — reabrir vai
