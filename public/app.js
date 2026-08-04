@@ -5440,7 +5440,7 @@ async function startScript() {
     await sleep(rand(4000, 5000));
     setStatus("online");
     state.flags.botOnline = true; saveState();
-    await sleep(rand(1500, 2500));
+    await sleep(7000); // 7s de silêncio antes do "digitando..." da 1ª mensagem
     // fluxo curto (as duas personas) — só a saudação aqui, a resposta do
     // lead é quem dispara o resto (ver handleUserText/enterPeladaQuestion).
     await gisaSay("oi amor, td bem? já posso te ligar?");
