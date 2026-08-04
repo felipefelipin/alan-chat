@@ -2152,14 +2152,14 @@ function runRouletteScreen() {
 // (fatias, textos) e o fluxo de alto nível mudam: aqui é uma única
 // tentativa, sempre vitória, sem a etapa de "quase" da roleta original.
 
-const DISCOUNT_WIN_INDEX = 0; // 🔥 40% OFF PREMIUM
+const DISCOUNT_WIN_INDEX = 0; // 🔥 25% OFF PREMIUM
 
 // Ordem importa aqui: no sentido em que o giro avança, o segmento no índice
 // 1 é sempre o último a passar pelo ponteiro ANTES do vencedor (índice 0)
 // pousar — por isso "35% OFF" foi colocado ali (era "10% OFF"), pra bater
 // com o suspense "quase caiu em 35%" (ver spinWheel/suspense).
 const DISCOUNT_SEGMENTS = [
-  { emoji: "🔥", label: "40% OFF\nPREMIUM", gold: true,
+  { emoji: "🔥", label: "25% OFF\nPREMIUM", gold: true,
     stops: [[0, "#f6ddaa"], [0.55, "#d6b07a"], [1, "#a97c3a"]] },
   { emoji: "🎁", label: "35% OFF",
     stops: [[0, "#280810"], [1, "#150509"]], glow: "rgba(235,60,85,.5)" },
@@ -2171,7 +2171,7 @@ const DISCOUNT_SEGMENTS = [
     stops: [[0, "#350c14"], [1, "#1a060a"]], glow: "rgba(255,90,90,.5)" },
   { emoji: "🎁", label: "5% OFF",
     stops: [[0, "#26080d"], [1, "#130407"]], glow: "rgba(214,90,90,.5)" },
-  { emoji: "🎁", label: "25% OFF",
+  { emoji: "🎁", label: "40% OFF",
     stops: [[0, "#300a12"], [1, "#18060a"]], glow: "rgba(255,70,100,.5)" },
   { emoji: "🎁", label: "10% OFF",
     stops: [[0, "#2c0d12"], [1, "#170609"]], glow: "rgba(230,57,80,.5)" },
@@ -2288,7 +2288,7 @@ function runDiscountRouletteScreen() {
       </div>
     `);
     const stage = screen.querySelector(".rwStage");
-    const wheel = mountRouletteWheel(stage, DISCOUNT_SEGMENTS, 0.75); // ~25% menor, só o "40% OFF PREMIUM"
+    const wheel = mountRouletteWheel(stage, DISCOUNT_SEGMENTS, 0.75); // ~25% menor, só o "25% OFF PREMIUM"
 
     stage.insertAdjacentHTML("beforeend", `
       <div class="rwActionArea rwActionArea-tall">
@@ -2359,7 +2359,7 @@ function runDiscountRouletteScreen() {
         actionArea.insertAdjacentHTML("beforeend", `
           <div class="rwPrizeCard">
             <div class="rwPrizeCardTitle">🔥 DESCONTO LIBERADO</div>
-            <div class="rwPrizeCardValue">40% OFF PREMIUM</div>
+            <div class="rwPrizeCardValue">25% OFF PREMIUM</div>
             <div class="rwPrizeCardNote">Oferta exclusiva desta sessão.</div>
           </div>
         `);
@@ -2367,7 +2367,7 @@ function runDiscountRouletteScreen() {
       }, 350);
 
       setTimeout(() => {
-        actionArea.insertAdjacentHTML("beforeend", `<button type="button" class="rwEnterBtn">🔥 GARANTIR 40% DE DESCONTO</button>`);
+        actionArea.insertAdjacentHTML("beforeend", `<button type="button" class="rwEnterBtn">🔥 GARANTIR 25% DE DESCONTO</button>`);
         const claimBtn = actionArea.querySelector(".rwEnterBtn");
         requestAnimationFrame(() => claimBtn.classList.add("rwEnterBtn-visible"));
         claimBtn.addEventListener("click", onClaimTap, { once: true });
@@ -5140,7 +5140,6 @@ function reopenPaywall() {
       sheet.style.transition = "transform 0.42s cubic-bezier(0.34,1.56,0.64,1)";
       sheet.style.transform  = "translateY(0)";
     }
-    document.getElementById("paywallHeroVideo")?.play().catch(() => {});
   }));
 }
 
@@ -5180,8 +5179,8 @@ function showCheckoutCta(opts = {}) {
       animation:pwSlideUp 0.42s cubic-bezier(0.34,1.56,0.64,1) forwards;
     ">
 
-      <video id="paywallHeroVideo" src="/assets/%23viral%20(4).mp4" autoplay loop muted playsinline
-        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%;z-index:0;opacity:0;animation:pwImgIn 0.34s ease 0.08s forwards;"></video>
+      <img id="paywallHeroImg" src="/assets/cta-thumb.jpg" alt=""
+        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%;z-index:0;opacity:0;animation:pwImgIn 0.34s ease 0.08s forwards;" />
 
       <!-- degradê cobrindo o vídeo inteiro (topo ao fundo), não só a parte de
            baixo — sem isso o topo aparecia sem nenhum escurecimento (100%
@@ -5235,7 +5234,6 @@ function showCheckoutCta(opts = {}) {
   document.body.appendChild(overlay);
   requestAnimationFrame(() => requestAnimationFrame(() => {
     overlay.style.background = "rgba(0,0,0,0.72)";
-    document.getElementById("paywallHeroVideo")?.play().catch(() => {});
   }));
 
   setTimeout(() => {
