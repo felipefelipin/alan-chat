@@ -4585,12 +4585,10 @@ function showAdvanceButton(label, onClick) {
   }, 0);
 }
 
-// Fluxo curto da persona padrão (m1): resposta à saudação ("oi amor, td
-// bem? já posso te ligar?") dispara isso — pergunta se aguenta ver pelada,
-// com foto+áudio, exatamente como já existia antes, só que agora depois
-// da resposta do lead em vez de já cair de cara no início do chat.
-// PERSONA "m2" nunca passa por aqui (usa enterM2VideoDelivery + o
-// enterTeaseBuildup normal, intocados).
+// Fluxo curto (as duas personas): resposta à saudação ("oi amor, td bem?
+// já posso te ligar?") dispara isso — pergunta se aguenta ver pelada, com
+// foto/vídeo+áudio. Único ponto persona-específico é o tipo de mídia (m2
+// manda vídeo, m1 manda foto — mesma convenção já usada em enterTeaseBuildup).
 async function enterPeladaQuestion(text) {
   clearReengage();
   await sleep(rand(700, 1200));
@@ -4599,7 +4597,11 @@ async function enterPeladaQuestion(text) {
     replyTo: text ? { side: "right", text } : null,
   });
   await sleep(rand(300, 600));
-  await gisaSendPhoto(ASSETS.teasePhotoPrivada, "Foto Privada");
+  if (PERSONA === "m2") {
+    await gisaSendVideo(ASSETS.teasePhotoPrivada, "Vídeo Privado");
+  } else {
+    await gisaSendPhoto(ASSETS.teasePhotoPrivada, "Foto Privada");
+  }
   await sleep(rand(300, 600));
   await gisaSendAudio(ASSETS.audioCallInvite, null, 7500);
   await sleep(rand(300, 600));
@@ -5370,37 +5372,6 @@ function showLiveCallCta() {
   });
 }
 
-// bot2 (persona m2): resposta a "posso te mandar um vídeo q tenho aq?" —
-// fica "visto por último" 7s, volta online e só aí manda o vídeo, seguido
-// da mesma pergunta que o bot1 já mandava nesse ponto. state.step continua
-// 1 (a próxima resposta do lead cai em enterTeaseBuildup normalmente).
-async function enterM2VideoDelivery(text) {
-  clearReengage();
-  await sleep(rand(400, 800));
-  state.flags.botOnline = false; saveState();
-  const awayAt = new Date();
-  setStatus(`visto por último às ${String(awayAt.getHours()).padStart(2,"0")}:${String(awayAt.getMinutes()).padStart(2,"0")}`);
-  await sleep(7000);
-  state.flags.botOnline = true; saveState();
-  markPendingMessagesSeen();
-  setStatus("online");
-  await sleep(rand(300, 600));
-  await gisaSendVideo(ASSETS.teasePhotoPrivada, "Vídeo Privado");
-  await sleep(rand(300, 600));
-  await gisaSay("me fala a verdade… você aguenta me ver pelada de verdade ou vai só ficar olhando como os fracos?... 👀", {
-    delay: rand(8000, 11000),
-    replyTo: text ? { side: "right", text } : null,
-  });
-  state._t1 = setTimeout(async () => {
-    if (state.step !== 1) return;
-    await gisaSay("tá aí ou já correu covarde? 👀");
-    state._t2 = setTimeout(async () => {
-      if (state.step !== 1) return;
-      await gisaSay("typical… entra, olha e some. Mas eu não sou pra qualquer um não, safado.");
-    }, 2 * 60 * 1000);
-  }, 2 * 60 * 1000);
-}
-
 async function startScript() {
   if (state.flags.startedChat) return;
   state.flags.startedChat = true;
@@ -5413,19 +5384,9 @@ async function startScript() {
     setStatus("online");
     state.flags.botOnline = true; saveState();
     await sleep(rand(1500, 2500));
-    if (PERSONA === "m2") {
-      await gisaSay("oii beh, até que em fim vc chegou aq kkk", { noSleep: true, humanTyping: true });
-      await sleep(rand(2000, 3000));
-      await gisaSay("poucos que conseguem chegar até aqui", { noSleep: true, humanTyping: true });
-      await sleep(rand(2000, 3000));
-      await gisaSay("vc é sortudo kk 👀, mas me fale aqui", { noSleep: true, humanTyping: true });
-      await sleep(rand(2000, 3000));
-      await gisaSay("posso te enviar um vídeo? 😈", { noSleep: true, humanTyping: true });
-    } else {
-      // fluxo curto: só a saudação aqui — a resposta do lead é quem
-      // dispara o resto (ver handleUserText/enterPeladaQuestion).
-      await gisaSay("oi amor, td bem? já posso te ligar?");
-    }
+    // fluxo curto (as duas personas) — só a saudação aqui, a resposta do
+    // lead é quem dispara o resto (ver handleUserText/enterPeladaQuestion).
+    await gisaSay("oi amor, td bem? já posso te ligar?");
   } finally {
     _flowRunning = false;
   }
@@ -5451,18 +5412,10 @@ async function handleUserText(text) {
   await sleep(rand(700, 1600));
   try {
     if (state.step === 1) {
-      if (PERSONA === "m2") {
-        if (!state.flags.m2VideoSent) {
-          state.flags.m2VideoSent = true; saveState();
-          await enterM2VideoDelivery(text);
-          return;
-        }
-        await enterTeaseBuildup(text);
-        return;
-      }
-      // persona padrão (m1) — fluxo curto: saudação -> pergunta "aguenta
-      // me ver pelada" -> "já vou ligar" -> chamada (sem enterTeaseBuildup/
-      // enterDesireEscalation/enterCallConnecting, esses ficam só pra m2).
+      // fluxo curto (as duas personas): saudação -> pergunta "aguenta me
+      // ver pelada" -> "já vou ligar" -> chamada. enterTeaseBuildup/
+      // enterDesireEscalation/enterCallConnecting não são mais usados por
+      // nenhuma persona (ficam definidos, mas fora do fluxo).
       if (!state.flags.peladaQuestionSent) {
         state.flags.peladaQuestionSent = true; saveState();
         await enterPeladaQuestion(text);
