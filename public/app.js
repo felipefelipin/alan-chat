@@ -5012,7 +5012,6 @@ async function startFunnelCall() {
 
   const startMainVideo = () => {
     vid.pause();
-    vid.currentTime = 0;
 
     const minBlackScreen = new Promise((resolve) => setTimeout(resolve, 3500));
     // 3.5s de tela preta com "Conectando..." — dá tempo de parecer que a
@@ -5023,6 +5022,11 @@ async function startFunnelCall() {
     // "congelado" nos primeiros instantes enquanto ainda bufferizava/
     // decodificava.
     Promise.all([minBlackScreen, videoReady(vid)]).then(() => {
+      // currentTime só é zerado AQUI, depois que o vídeo já confirmou ter
+      // dado (readyState/canplay) — setar antes disso (enquanto ele ainda
+      // estava bufferizando desde o preload) não "colava" de verdade em
+      // alguns browsers, e o vídeo acabava começando ~1s adiantado.
+      vid.currentTime = 0;
       vid.play().catch(() => {});
       vid.style.opacity = "1";
       const t = timerEl(); if (t) t.textContent = "0:00"; // sai de "Conectando..."
