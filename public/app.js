@@ -1737,29 +1737,35 @@ function drawWheel(ctx, size, rotationDeg, fillStyles, fonts, pulseAlpha, segmen
 // jogada pro background não gera drift (só "pula" pra frente ao voltar).
 //
 // `suspense` (opcional, default false/undefined) liga um perfil alternativo
-// só pro trecho final — usado apenas pela roleta de desconto, pra dar a
+// só pro trecho final — usado pela roleta de desconto (`true`), pra dar a
 // sensação de "quase caiu no prêmio anterior". Quando omitido, o código
 // roda exatamente pelo branch de sempre (linha por linha idêntico ao antes),
 // então a roleta original não é afetada em nada por essa opção existir.
+// `"casino"` liga a variante mais dramática (roleta premium): mesma forma
+// de 3 fases, só que a fase A usa easeOutQuint (cauda mais longa/lenta no
+// fim, em vez de easeOutQuart) e as fases B/C são um pouco mais longas —
+// pensado pra rodar com spinMs bem maior (~5.5-6s) e parecer que "quase
+// passou" antes de cair, em vez do arrasto mais curto da roleta de desconto.
 function spinWheel(draw, finalRotationDeg, onTick, suspense, spinMs = 4100) {
   const T_SPIN = spinMs;
   const OVERSHOOT_DEG = 18;
   const overshootRotation = finalRotationDeg + OVERSHOOT_DEG;
+  const cinematic = suspense === "casino";
 
   // Fases do modo suspense (só calculadas se pedido): decelera quase até
   // parar um pouco ANTES da divisória com o segmento anterior, atravessa
-  // essa divisória bem devagar (400-700ms — aqui 550+550ms de arrasto e
-  // acomodação), depois avança o resto até o centro do vencedor com um
-  // pequeno overshoot proporcional + acomodação amortecida (mesmo espírito
-  // do branch normal, só que numa janela de tempo/distância bem menor).
-  // Duração total do giro (T_SPIN) não muda em nenhum dos dois modos.
+  // essa divisória bem devagar (400-700ms, ou mais no modo "casino"),
+  // depois avança o resto até o centro do vencedor com um pequeno
+  // overshoot proporcional + acomodação amortecida (mesmo espírito do
+  // branch normal, só que numa janela de tempo/distância bem menor).
+  // Duração total do giro (T_SPIN) não muda em nenhum dos modos.
   let preBoundary, postBoundary, phaseATime, phaseBTime, phaseCTime;
   if (suspense) {
     const boundaryR = finalRotationDeg - RW_SEG_ANGLE_DEG / 2;
     preBoundary = boundaryR - RW_SEG_ANGLE_DEG * 0.05;  // ainda dentro do segmento anterior, quase na borda
     postBoundary = boundaryR + RW_SEG_ANGLE_DEG * 0.15; // já um pouco dentro do segmento vencedor
-    phaseBTime = 550; // dentro do pedido de 400-700ms
-    phaseCTime = 550;
+    phaseBTime = cinematic ? 650 : 550;
+    phaseCTime = cinematic ? 600 : 550;
     phaseATime = T_SPIN - phaseBTime - phaseCTime;
   }
 
@@ -1778,10 +1784,16 @@ function spinWheel(draw, finalRotationDeg, onTick, suspense, spinMs = 4100) {
 
       if (suspense) {
         if (elapsed < phaseATime) {
-          // fase A — igual ao giro normal (easeOutQuart), só que o alvo
-          // aqui é "quase a borda" em vez do overshoot de sempre.
+          // fase A — easeOutQuart (giro normal) ou easeOutQuint no modo
+          // "casino": velocidade máxima já no frame 0 (sem rampa de subida,
+          // "começa rápido e com força"), depois desacelera de forma longa
+          // e progressiva — com spinMs maior isso é o que faz a roleta
+          // passar várias vezes por perto do prêmio em alta velocidade
+          // antes de perceptivelmente desacelerar nos ~2s finais da fase.
+          // O alvo aqui é "quase a borda", não o overshoot de sempre.
           const q = elapsed / phaseATime;
-          const eased = 1 - Math.pow(1 - q, 4);
+          const power = cinematic ? 5 : 4;
+          const eased = 1 - Math.pow(1 - q, power);
           rotation = eased * preBoundary;
         } else if (elapsed < phaseATime + phaseBTime) {
           // fase B — o suspense em si: atravessa a divisória bem devagar,
@@ -2060,14 +2072,14 @@ function runRouletteScreen() {
         lastTickAt = t;
         lsPlaySpinTick();
         hapticImpact("light");
-      }, true, 2600).then(onDone); // 2.6s (mais rápido que o padrão 4.1s) + suspense=true: desacelera e "hesita" na borda antes de cair — sem trocar de segmento, só física
+      }, "casino", 5800).then(onDone); // ~5.8s, modo "casino": começa forte, desaceleração longa (passa várias vezes perto do prêmio), hesita na borda final e só então cai — sem nunca trocar de segmento
     }
 
     // Giro único e direto pro prêmio — sem "quase perdeu" encenado (nunca
-    // passa por um segmento errado nem força um segundo giro). O `true` no
-    // spin acima é só a desaceleração/hesitação genuína na borda final do
-    // MESMO segmento vencedor — dá a sensação de "vai ou não vai" sem
-    // simular um resultado falso.
+    // passa por um segmento errado nem força um segundo giro). O modo
+    // "casino" no spin acima é só desaceleração/hesitação genuína na borda
+    // final do MESMO segmento vencedor — dá a sensação de "vai ou não vai"
+    // sem simular um resultado falso.
     function onSpinTap() {
       trackEvent("MINIAPP_ROULETTE_SPIN1");
       _tryUnlockEntranceAudio(); // clique real e direto — necessário pro destravamento funcionar de fato
@@ -2078,11 +2090,14 @@ function runRouletteScreen() {
     spinBtn.addEventListener("click", onSpinTap, { once: true });
 
     // efeitos exclusivos da vitória: glow dourado intensificado + flash
-    // suave + escurecimento leve do fundo, além do confete/fanfarra já
-    // existentes.
+    // suave + escurecimento leve do fundo + pequeno "impacto" na própria
+    // roda (pop de escala, não é o shake lateral da tentativa sem prêmio),
+    // além do confete/fanfarra já existentes — tudo disparado no exato
+    // instante em que o giro conclui, sincronizado com o som de vitória.
     function triggerWinFlash() {
       screen.querySelector(".rwBg")?.classList.add("rwBg-dim");
       stage.querySelector(".rwGlow")?.classList.add("rwGlow-winPulse");
+      stage.querySelector(".rwWheelWrap")?.classList.add("rwWheelWrap-winPop");
       const flash = document.createElement("div");
       flash.className = "rwWinFlash";
       screen.appendChild(flash);
@@ -2153,15 +2168,20 @@ function runRouletteScreen() {
 // (fatias, textos) e o fluxo de alto nível mudam: aqui é uma única
 // tentativa, sempre vitória, sem a etapa de "quase" da roleta original.
 
-const DISCOUNT_WIN_INDEX = 0; // 🔥 25% OFF PREMIUM
+const DISCOUNT_WIN_INDEX = 0; // 25% OFF — sempre o valor sorteado, NÃO é o segmento dourado/"premium"
 
 // Ordem importa aqui: no sentido em que o giro avança, o segmento no índice
 // 1 é sempre o último a passar pelo ponteiro ANTES do vencedor (índice 0)
 // pousar — por isso "35% OFF" foi colocado ali (era "10% OFF"), pra bater
 // com o suspense "quase caiu em 35%" (ver spinWheel/suspense).
+//
+// O segmento dourado/"PREMIUM" (índice 6, "40% OFF") é só isca visual —
+// chama atenção na roda parada, mas o giro NUNCA para nele. `gold`/
+// `goldScale` (mountRouletteWheel) controlam só a aparência do segmento,
+// são independentes de DISCOUNT_WIN_INDEX.
 const DISCOUNT_SEGMENTS = [
-  { emoji: "🔥", label: "25% OFF\nPREMIUM", gold: true,
-    stops: [[0, "#f6ddaa"], [0.55, "#d6b07a"], [1, "#a97c3a"]] },
+  { emoji: "🎁", label: "25% OFF",
+    stops: [[0, "#300a12"], [1, "#18060a"]], glow: "rgba(255,70,100,.5)" },
   { emoji: "🎁", label: "35% OFF",
     stops: [[0, "#280810"], [1, "#150509"]], glow: "rgba(235,60,85,.5)" },
   { emoji: "🎁", label: "20% OFF",
@@ -2172,8 +2192,8 @@ const DISCOUNT_SEGMENTS = [
     stops: [[0, "#350c14"], [1, "#1a060a"]], glow: "rgba(255,90,90,.5)" },
   { emoji: "🎁", label: "5% OFF",
     stops: [[0, "#26080d"], [1, "#130407"]], glow: "rgba(214,90,90,.5)" },
-  { emoji: "🎁", label: "40% OFF",
-    stops: [[0, "#300a12"], [1, "#18060a"]], glow: "rgba(255,70,100,.5)" },
+  { emoji: "🔥", label: "40% OFF\nPREMIUM", gold: true,
+    stops: [[0, "#f6ddaa"], [0.55, "#d6b07a"], [1, "#a97c3a"]] },
   { emoji: "🎁", label: "10% OFF",
     stops: [[0, "#2c0d12"], [1, "#170609"]], glow: "rgba(230,57,80,.5)" },
 ];
@@ -2289,7 +2309,7 @@ function runDiscountRouletteScreen() {
       </div>
     `);
     const stage = screen.querySelector(".rwStage");
-    const wheel = mountRouletteWheel(stage, DISCOUNT_SEGMENTS, 0.75); // ~25% menor, só o "25% OFF PREMIUM"
+    const wheel = mountRouletteWheel(stage, DISCOUNT_SEGMENTS, 0.75); // ~25% menor, só o segmento dourado "40% OFF PREMIUM" (isca visual, giro nunca para nele)
 
     stage.insertAdjacentHTML("beforeend", `
       <div class="rwActionArea rwActionArea-tall">
@@ -2360,7 +2380,7 @@ function runDiscountRouletteScreen() {
         actionArea.insertAdjacentHTML("beforeend", `
           <div class="rwPrizeCard">
             <div class="rwPrizeCardTitle">🔥 DESCONTO LIBERADO</div>
-            <div class="rwPrizeCardValue">25% OFF PREMIUM</div>
+            <div class="rwPrizeCardValue">25% OFF</div>
             <div class="rwPrizeCardNote">Oferta exclusiva desta sessão.</div>
           </div>
         `);

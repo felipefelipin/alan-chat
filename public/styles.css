@@ -1405,6 +1405,16 @@ body{
 }
 .rwWheelWrap-shake{ animation:rwShake .4s ease; }
 
+/* "impacto" da roda ao cair no prêmio — pop de escala curto, distinto do
+   shake lateral acima (aquele é só pra "sem prêmio"); sincronizado com o
+   flash dourado + fanfarra no instante exato em que o giro conclui */
+@keyframes rwWinPop{
+  0%{ transform:scale(1); }
+  35%{ transform:scale(1.045); }
+  100%{ transform:scale(1); }
+}
+.rwWheelWrap-winPop{ animation:rwWinPop .5s cubic-bezier(.34,1.56,.64,1); }
+
 /* flash vermelho breve (quase ganhou) e dourado (vitória) — elementos
    descartáveis, inseridos e removidos via JS, nunca ficam no DOM parado */
 @keyframes rwFlashPulseRed{
