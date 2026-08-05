@@ -144,6 +144,10 @@ const ASSET_OVERRIDES = {
 };
 if (ASSET_OVERRIDES[PERSONA]) Object.assign(ASSETS, ASSET_OVERRIDES[PERSONA]);
 
+// Vídeo de fundo da tela de confirmação de idade — persona-específico de
+// propósito (bot1 usa ig-reel-2.mp4, bot2 continua com intro-video.mp4).
+const AGE_GATE_VIDEO = PERSONA === "m2" ? "/assets/intro-video.mp4" : "/assets/ig-reel-2.mp4";
+
 function preloadMedia() {
   // O vídeo da tela de conexão precisa estar de verdade no DOM pra começar a
   // baixar no boot do app — WebKit/Safari não prioriza <video> fora da página,
@@ -191,7 +195,7 @@ function preloadMedia() {
   try {
     const v3 = document.createElement("video");
     v3.id = "agPreloadVideo";
-    v3.src = "/assets/intro-video.mp4";
+    v3.src = AGE_GATE_VIDEO;
     v3.muted = true;
     v3.loop = true;
     v3.playsInline = true;
@@ -6753,7 +6757,7 @@ function runAgeGateScreen() {
     const preloadedVideo = document.getElementById("agPreloadVideo");
     const video = preloadedVideo || document.createElement("video");
     if (!preloadedVideo) {
-      video.src = "/assets/intro-video.mp4";
+      video.src = AGE_GATE_VIDEO;
       video.muted = true;
       video.loop = true;
       video.playsInline = true;
