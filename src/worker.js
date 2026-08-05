@@ -497,7 +497,7 @@ const worker = new Worker(
         await sendFunnelPhoto(chatId, "photo_5102783828031376538_y.jpg");
 
         await bot.sendMessage(chatId,
-          "Acabei de me mostrar <b>peladinha</b> pra você… e eu vi no seu olhar que você ficou <b>duro pra caralho</b>. 😈\n" +
+          "Eu vi no seu olhar que você ficou <b>duro pra caralho</b>. 😈\n" +
           "<b>Agora eu quero mais.</b>\n" +
           "Quero te ver me <b>fudendo com os olhos</b>, querendo me ouvir <b>gemer</b>, me ver <b>gozando e squirtando</b> só pra você. 💦\n" +
           "No meu <b>Espaço VIP</b> eu fico completamente à sua disposição:\n" +
@@ -505,7 +505,7 @@ const worker = new Worker(
           "áudios bem <b>putinha</b> no seu ouvido,\n" +
           "fotos e vídeos íntimos que <b>ninguém mais vê</b>…\n" +
           "e todos os fetiches que te deixarem <b>doidinho</b>. 🔥\n" +
-          "Sou <b>novinha</b>, carioca, carinhosa e <b>extremamente safada</b>.\n" +
+          "Sou <b>novinha</b>, carinhosa e <b>extremamente safada</b>.\n" +
           "Sem frescura.\n" +
           "<b>Sem limite.</b>\n" +
           "<b>Clica agora</b> e vem me comer do jeito que você sempre sonhou. 😈💋💋",

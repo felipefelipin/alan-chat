@@ -47,22 +47,37 @@ module.exports = async function handler(req, res) {
     const checkoutPhoto = persona === "m2" ? "photo_4961127246739475602_y.jpg" : "4294967658 (1).jpeg";
     try { await bot.sendPhoto(id, `${WEBAPP_URL}/assets/${encodeURIComponent(checkoutPhoto)}`); } catch {}
 
+    // Texto persona-específico: bot1 tem a versão mais curta (sem a
+    // abertura "Acabei de me mostrar peladinha..." e sem "carioca," na
+    // lista); bot2 mantém o texto original.
+    const pitchText = persona === "m2"
+      ? "Acabei de me mostrar <b>peladinha</b> pra você… e eu vi no seu olhar que você ficou <b>duro pra caralho</b>. 😈\n" +
+        "<b>Agora eu quero mais.</b>\n" +
+        "Quero te ver me <b>fudendo com os olhos</b>, querendo me ouvir <b>gemer</b>, me ver <b>gozando e squirtando</b> só pra você. 💦\n" +
+        "No meu <b>Espaço VIP</b> eu fico completamente à sua disposição:\n" +
+        "<b>videochamada pelada</b> na hora que você quiser,\n" +
+        "áudios bem <b>putinha</b> no seu ouvido,\n" +
+        "fotos e vídeos íntimos que <b>ninguém mais vê</b>…\n" +
+        "e todos os fetiches que te deixarem <b>doidinho</b>. 🔥\n" +
+        "Sou <b>novinha</b>, carioca, carinhosa e <b>extremamente safada</b>.\n" +
+        "Sem frescura.\n" +
+        "<b>Sem limite.</b>\n" +
+        "<b>Clica agora</b> e vem me comer do jeito que você sempre sonhou. 😈💋💋"
+      : "Eu vi no seu olhar que você ficou <b>duro pra caralho</b>. 😈\n" +
+        "<b>Agora eu quero mais.</b>\n" +
+        "Quero te ver me <b>fudendo com os olhos</b>, querendo me ouvir <b>gemer</b>, me ver <b>gozando e squirtando</b> só pra você. 💦\n" +
+        "No meu <b>Espaço VIP</b> eu fico completamente à sua disposição:\n" +
+        "<b>videochamada pelada</b> na hora que você quiser,\n" +
+        "áudios bem <b>putinha</b> no seu ouvido,\n" +
+        "fotos e vídeos íntimos que <b>ninguém mais vê</b>…\n" +
+        "e todos os fetiches que te deixarem <b>doidinho</b>. 🔥\n" +
+        "Sou <b>novinha</b>, carinhosa e <b>extremamente safada</b>.\n" +
+        "Sem frescura.\n" +
+        "<b>Sem limite.</b>\n" +
+        "<b>Clica agora</b> e vem me comer do jeito que você sempre sonhou. 😈💋💋";
+
     await wait(1000);
-    await bot.sendMessage(id,
-      "Acabei de me mostrar <b>peladinha</b> pra você… e eu vi no seu olhar que você ficou <b>duro pra caralho</b>. 😈\n" +
-      "<b>Agora eu quero mais.</b>\n" +
-      "Quero te ver me <b>fudendo com os olhos</b>, querendo me ouvir <b>gemer</b>, me ver <b>gozando e squirtando</b> só pra você. 💦\n" +
-      "No meu <b>Espaço VIP</b> eu fico completamente à sua disposição:\n" +
-      "<b>videochamada pelada</b> na hora que você quiser,\n" +
-      "áudios bem <b>putinha</b> no seu ouvido,\n" +
-      "fotos e vídeos íntimos que <b>ninguém mais vê</b>…\n" +
-      "e todos os fetiches que te deixarem <b>doidinho</b>. 🔥\n" +
-      "Sou <b>novinha</b>, carioca, carinhosa e <b>extremamente safada</b>.\n" +
-      "Sem frescura.\n" +
-      "<b>Sem limite.</b>\n" +
-      "<b>Clica agora</b> e vem me comer do jeito que você sempre sonhou. 😈💋💋",
-      { parse_mode: "HTML" }
-    );
+    await bot.sendMessage(id, pitchText, { parse_mode: "HTML" });
 
     await wait(1000);
     await bot.sendMessage(id, "👇", {
