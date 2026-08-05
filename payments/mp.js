@@ -6,9 +6,9 @@ const crypto = require("crypto");
 const PLANS = {
   mensal:       { title: "Acesso Mensal",    price: 24.90 },
   vitalicio:    { title: "Acesso Vitalício", price: 34.90 },
-  vip590:       { title: "VIP Eterno (oferta)",         price: 5.90  },
-  videochamada: { title: "Videochamada Pelada (oferta)", price: 14.90 },
-  namoro7dias:  { title: "Namoro 7 Dias (oferta)",       price: 25.99 },
+  vip590:       { title: "VIP Eterno (oferta)",         price: 14.80 },
+  videochamada: { title: "Videochamada Pelada (oferta)", price: 24.90 },
+  namoro7dias:  { title: "Namoro 3 Dias (oferta)",       price: 39.80 },
 };
 
 async function mpCreatePix({ chatId, plano, persona }) {

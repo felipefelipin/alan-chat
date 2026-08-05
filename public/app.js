@@ -1304,7 +1304,7 @@ const LS_SOCIAL_NAMES = ["Lucas", "Gabriel", "Matheus", "Rafael", "Bruno", "Dieg
 const LS_SOCIAL_PLANS = [
   { verb: "acabou de garantir o", label: "VIP Eterno", emoji: "👑" },
   { verb: "garantiu a", label: "Videochamada Pelada", emoji: "📞" },
-  { verb: "garantiu o", label: "Namoro 7 Dias", emoji: "💞" },
+  { verb: "garantiu o", label: "Namoro 3 Dias", emoji: "💞" },
 ];
 let _lsSocialInterval = null;
 let _lsSocialViewers = rand(9, 17);

@@ -113,19 +113,19 @@ const PLAN_PITCH = {
     title: "🔥 VIP ETERNO — pra sempre, sem mensalidade",
     body:
       "Você paga uma vez só e o acesso é seu pro resto da vida: videochamada pelada comigo sempre que quiser, áudios gemendo bem baixinho no seu ouvido, fotos e vídeos bem íntimos, squirt ao vivo e todos os fetiches que te deixarem louco.\n\n" +
-      "Sem clube de assinatura, sem cobrança todo mês — R$ 5,90 uma única vez e você tem acesso vitalício a mim. Não existe forma mais barata de ter isso.",
+      "Sem clube de assinatura, sem cobrança todo mês — R$ 14,80 uma única vez e você tem acesso vitalício a mim. Não existe forma mais barata de ter isso.",
   },
   videochamada: {
     title: "📞 VIDEOCHAMADA PELADA — eu, ao vivo, só pra você",
     body:
-      "Nada de foto ou vídeo gravado: é uma chamada de vídeo comigo, na hora, pelada, gemendo do jeito que você pedir. Você manda, eu obedeço — na câmera, ao vivo, sem cortes e sem vergonha nenhuma.\n\n" +
+      "Nada de foto: É uma chamada de vídeo comigo, na hora, pelada, gemendo do jeito que você pedir. Você manda, eu obedeço — na câmera, ao vivo, sem cortes e sem vergonha nenhuma. Serei sua por 30 minutos fazendo tudinho que você pedir... 😈\n\n" +
       "É a experiência mais real que existe: a sensação de eu estar ali, bem na sua frente, só respondendo a você.",
   },
   namoro7dias: {
-    title: "💞 NAMORO 7 DIAS — sete dias sendo sua namorada de verdade",
+    title: "💞 NAMORO 3 DIAS — três dias sendo sua namorada de verdade",
     body:
-      "Durante uma semana inteira eu sou só sua: bom dia todo dia, atenção o dia inteiro, conversa de namorados, carinho e a sensação de ter uma namorada gostosa e sempre disponível pra você — sem regras, só o gostoso de ter alguém sua.\n\n" +
-      "Não é só sexo, é ter uma namorada particular por 7 dias — a experiência mais completa que eu ofereço.",
+      "Durante três dias inteiros eu sou só sua: bom dia todo dia, atenção o dia inteiro, conversa de namorados, carinho e a sensação de ter uma namorada gostosa e sempre disponível pra você — sem regras, só o gostoso de ter alguém sua.\n\n" +
+      "Não é só sexo, é ter uma namorada particular por 3 dias — a experiência mais completa que eu ofereço.",
   },
 };
 
@@ -139,7 +139,7 @@ async function createCheckoutAndSend(chatId, plano) {
     // na primeira vez; depois disso o Telegram serve direto do CDN deles,
     // sem esperar upload nenhum.
     try {
-      await sendCachedPhoto(chatId, "1fc8af10-6705-4b1f-9c51-f3f822a8c5bf.jpg");
+      await sendCachedPhoto(chatId, "photo_4956633959328582625_y (1).jpg");
     } catch (e) { console.error("pitch photo send error:", e.message); }
     // Título em negrito (fora do bloco) + corpo em bloco de código —
     // Telegram não permite negrito DENTRO de um bloco de código, por isso
@@ -177,7 +177,7 @@ async function createCheckoutAndSend(chatId, plano) {
     );
   }
 
-  const planNames = { mensal: "Acesso Mensal", vitalicio: "Acesso Vitalício", vip590: "VIP Eterno", videochamada: "Videochamada Pelada", namoro7dias: "Namoro 7 Dias" };
+  const planNames = { mensal: "Acesso Mensal", vitalicio: "Acesso Vitalício", vip590: "VIP Eterno", videochamada: "Videochamada Pelada", namoro7dias: "Namoro 3 Dias" };
   const planTitle = planNames[plano] ?? plano;
   await bot.sendMessage(chatId, `Assim que o pagamento for confirmado, o link do *${planTitle}* cai aqui automaticamente 🔒✅`, { parse_mode: "Markdown" });
 
