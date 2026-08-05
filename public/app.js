@@ -3992,17 +3992,22 @@ function renderRowHTML(item, animated = false) {
     </div>`;
 
   if (item.type === "photo") {
-    const title = item.title || "Foto Privada";
+    // title === "" (string vazia explícita) esconde o cabeçalho inteiro —
+    // mesma convenção do type==="video" acima. Chamada sem título nenhum
+    // continua caindo no default "Foto Privada" de sempre.
+    const title = item.title === "" ? "" : (item.title || "Foto Privada");
     return `
     <div class="msgRow ${sideClass} ${cluster}">
       <div class="bubble ${bubbleBase} bubble-videoCard ${anim}">
         <div class="videoCard">
+          ${title ? `
           <div class="videoCardHeader">
             <span class="videoCardTitle">${escapeHtml(title)}</span>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
               <path d="M6 9l6 6 6-6" stroke="rgba(255,255,255,.45)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
+          ` : ""}
           <div class="videoCardThumb" data-photo-src="${item.src}">
             <img src="${item.src}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'" />
           </div>
@@ -4626,16 +4631,17 @@ async function enterPeladaQuestion(text) {
     // inteiro do card, ver renderItem/type==="video")
     await gisaSendVideo(ASSETS.teaseCallPhoto, "");
   } else {
-    await gisaSendPhoto(ASSETS.teasePhotoPrivada, "Foto Privada");
+    // sem legenda por cima da foto (mesma ideia do vídeo do bot2 acima)
+    await gisaSendPhoto(ASSETS.teasePhotoPrivada, "");
   }
 
-  // 3s depois da mídia -> "gravando áudio..." -> dura exatamente 3s -> cai
+  // 3s depois da mídia -> "gravando áudio..." -> dura exatamente Xs -> cai
   // o áudio -> segue o fluxo normal.
   await sleep(3000);
   if (PERSONA === "m2") {
-    await gisaSendAudio(ASSETS.audioMimimi, null, 8000);
+    await gisaSendAudio(ASSETS.audioMimimi, null, 3000);
   } else {
-    await gisaSendAudio(ASSETS.audioCallInvite, null, 3000);
+    await gisaSendAudio(ASSETS.audioCallInvite, null, 8000);
   }
 
   await sleep(rand(300, 600));
@@ -4663,7 +4669,7 @@ async function enterCallIncomingSoon(text) {
   state.step = 5; saveState();
   trackEvent("MINIAPP_STEP_CALL_INCOMING_SOON");
   await sleep(4000); // 4s antes de começar a digitar
-  await gisaSay(PERSONA === "m2" ? "hm kk, então vou pro meu quarto, já te ligo 😈" : "hm kk, então vou pro banheiro e já te ligo 😈", {
+  await gisaSay(PERSONA === "m2" ? "hm kk, então vou pro banheiro e já te ligo 😈" : "hm kk, então vou pro meu quarto, já te ligo 😈", {
     noSleep: true,
     humanTyping: true,
     humanTypingMs: 7000, // 7s digitando (com o soluço de correção) antes de enviar
@@ -6861,33 +6867,33 @@ const OWNER_CHAT_ID = "7808077251";
 const _currentChatId = String(tg?.initDataUnsafe?.user?.id ?? "");
 const FORCE_FRESH_START = _currentChatId === OWNER_CHAT_ID;
 
-// Nada do fluxo normal roda antes da confirmação de idade — resolve na
-// hora se já foi confirmado antes (gisa_age_confirmed), senão só depois do
-// "SIM". Em "NÃO" a promise nunca resolve (mini app fecha), então nada
-// abaixo chega a executar.
-runAgeGateScreen().then(() => {
+// Tela de carregamento (spinner preto) roda ANTES da confirmação de idade,
+// pros dois bots — depois dela é que a confirmação de idade aparece
+// (resolve na hora se já foi confirmado antes, gisa_age_confirmed, senão
+// só depois do "SIM"; em "NÃO" a promise nunca resolve e o mini app fecha,
+// então nada abaixo chega a executar).
+(async () => {
+  await runInitialLoadingScreen();
+  await runAgeGateScreen();
+
   if (FORCE_FRESH_START) {
     // dono testando o roteiro completo — vê exatamente o mesmo fluxo que
-    // um lead de verdade veria do zero (loading, verificação, roleta,
-    // cortina, chat, chamada, paywall), só que sempre do início a cada
-    // reabertura (o resto dos leads segue os atalhos de retorno abaixo
-    // normalmente).
+    // um lead de verdade veria do zero (verificação, roleta, cortina,
+    // chat, chamada, paywall), só que sempre do início a cada reabertura
+    // (o resto dos leads segue os atalhos de retorno abaixo normalmente).
     state.history           = [];
     state.step              = 0;
     state.flags.startedChat = false;
     state.flags.routing     = false;
     state.flags.entered     = false;
-    (async () => {
-      await runInitialLoadingScreen();
-      mountLiveSocialBadge();
-      await runConnectionLoadingScreen();
-      await runRouletteScreen();
-      unmountLiveSocialBadge();
-      await runEntranceScreen(); // já monta o chat internamente (crossfade), ver onEnterTap
-      insertSystemNotice(`As mensagens são protegidas com criptografia de ponta a ponta. Só você e ${CONTACT.name} podem lê-las.`);
-      await sleep(220);
-      startScript().catch(e => { if (!(e instanceof FlowCancelledError)) console.error(e); });
-    })();
+    mountLiveSocialBadge();
+    await runConnectionLoadingScreen();
+    await runRouletteScreen();
+    unmountLiveSocialBadge();
+    await runEntranceScreen(); // já monta o chat internamente (crossfade), ver onEnterTap
+    insertSystemNotice(`As mensagens são protegidas com criptografia de ponta a ponta. Só você e ${CONTACT.name} podem lê-las.`);
+    await sleep(220);
+    startScript().catch(e => { if (!(e instanceof FlowCancelledError)) console.error(e); });
   } else if (localStorage.getItem("gisa_checkout_done") === "1") {
     // já girou a roleta de desconto e chegou no checkout antes — reabrir vai
     // direto pro botão de desbloquear, e ele já pula reto pro checkout, sem
@@ -6906,19 +6912,16 @@ runAgeGateScreen().then(() => {
     state.flags.startedChat = false;
     state.flags.routing     = false;
     state.flags.entered     = false;
-    (async () => {
-      await runInitialLoadingScreen();
-      mountLiveSocialBadge();
-      await runConnectionLoadingScreen();
-      await runRouletteScreen();
-      unmountLiveSocialBadge();
-      await runEntranceScreen(); // já monta o chat internamente (crossfade), ver onEnterTap
-      insertSystemNotice(`As mensagens são protegidas com criptografia de ponta a ponta. Só você e ${CONTACT.name} podem lê-las.`);
-      await sleep(220);
-      startScript().catch(e => { if (!(e instanceof FlowCancelledError)) console.error(e); });
-    })();
+    mountLiveSocialBadge();
+    await runConnectionLoadingScreen();
+    await runRouletteScreen();
+    unmountLiveSocialBadge();
+    await runEntranceScreen(); // já monta o chat internamente (crossfade), ver onEnterTap
+    insertSystemNotice(`As mensagens são protegidas com criptografia de ponta a ponta. Só você e ${CONTACT.name} podem lê-las.`);
+    await sleep(220);
+    startScript().catch(e => { if (!(e instanceof FlowCancelledError)) console.error(e); });
   }
-});
+})();
 
 function pauseAllMedia() {
   try { if (state.music) { state.music.pause(); } } catch {}
