@@ -5273,6 +5273,8 @@ async function enterUnlockOffer(text) {
   await sleep(4000); // 4s de silêncio antes do "digitando..." aparecer
   await gisaSay("tá bom, saindo aqq, me encontre do outro lado, é só clicar pra desbloquear 😈", {
     noSleep: true,
+    humanTyping: true,
+    humanTypingMs: 10000,
     replyTo: text ? { side: "right", text } : null,
   });
   await sleep(3000);
