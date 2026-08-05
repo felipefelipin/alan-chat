@@ -502,13 +502,18 @@ const worker = new Worker(
         await sendFunnelPhoto(chatId, "photo_5102783828031376538_y.jpg");
 
         await bot.sendMessage(chatId,
-          "Se você está aqui… é porque acabou de me ver peladinha e eu sei que você gostou bastante 😈💗\n\n" +
-          "Como recompensa por ter sido tão safadinho comigo, te dei um presentão:\n\n" +
-          "<b>Acesso vitalício ao meu Espaço VIP por apenas R$ 5,90</b>\n\n" +
-          "Lá dentro sou toda sua… sem limites e sem frescura. Videochamada pelada quando quiser, áudios gemendo no seu ouvido, fotos e vídeos bem íntimos, squirt ao vivo e todos os fetiches que te deixarem louquinho.\n\n" +
-          "Sou uma novinha carioca carinhosa, safada e sempre molhadinha… viciada em dar prazer e receber carinho de um homem que sabe o que quer.\n\n" +
-          "Vem pra cá, meu amor… quero continuar te mostrando meu lado mais quente e safado 💦\n\n" +
-          "<b>Clica agora e entra no meu mundinho particular</b> 😘",
+          "Acabei de me mostrar <b>peladinha</b> pra você… e eu vi no seu olhar que você ficou <b>duro pra caralho</b>. 😈\n" +
+          "<b>Agora eu quero mais.</b>\n" +
+          "Quero te ver me <b>fudendo com os olhos</b>, querendo me ouvir <b>gemer</b>, me ver <b>gozando e squirtando</b> só pra você. 💦\n" +
+          "No meu <b>Espaço VIP</b> eu fico completamente à sua disposição:\n" +
+          "<b>videochamada pelada</b> na hora que você quiser,\n" +
+          "áudios bem <b>putinha</b> no seu ouvido,\n" +
+          "fotos e vídeos íntimos que <b>ninguém mais vê</b>…\n" +
+          "e todos os fetiches que te deixarem <b>doidinho</b>. 🔥\n" +
+          "Sou <b>novinha</b>, carioca, carinhosa e <b>extremamente safada</b>.\n" +
+          "Sem frescura.\n" +
+          "<b>Sem limite.</b>\n" +
+          "<b>Clica agora</b> e vem me comer do jeito que você sempre sonhou. 😈💋💋",
           {
             parse_mode: "HTML",
             reply_markup: {
