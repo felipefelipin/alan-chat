@@ -6689,13 +6689,29 @@ function runAgeGateScreen() {
           <span style="width:22px;height:1px;background:linear-gradient(90deg,rgba(214,176,122,.75),transparent);"></span>
         </div>
 
-        <div id="agBadge" style="width:104px;height:104px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
-                    background:radial-gradient(circle at 35% 30%,#3a1212,#0d0505 75%);
-                    border:1.5px solid rgba(168,50,50,.55);
-                    box-shadow:0 0 40px rgba(168,50,50,.32),0 0 90px rgba(168,50,50,.15);
+        <div id="agBadge" style="width:104px;height:104px;border-radius:50%;flex-shrink:0;box-sizing:border-box;
+                    padding:5px;display:flex;align-items:center;justify-content:center;
+                    background:linear-gradient(150deg,#8a2e29 0%,#3a0e0b 45%,#5c1815 65%,#210503 100%);
+                    box-shadow:
+                      0 14px 26px rgba(0,0,0,.55),
+                      0 4px 10px rgba(0,0,0,.4),
+                      inset 0 1px 1px rgba(255,255,255,.1),
+                      inset 0 -1px 2px rgba(0,0,0,.5);
                     animation:agFadeUp .5s ease .18s both;
                     margin-bottom:28px;">
-          <span style="font-size:30px;font-weight:900;letter-spacing:-.5px;color:#e0716a;text-shadow:0 1px 3px rgba(0,0,0,.5);">18+</span>
+          <div style="position:relative;width:100%;height:100%;border-radius:50%;overflow:hidden;
+                      background:radial-gradient(circle at 33% 27%, #ea655d 0%, #c23a33 30%, #841e1a 60%, #430d0b 100%);
+                      box-shadow:
+                        inset 0 3px 5px rgba(255,255,255,.4),
+                        inset 0 -9px 16px rgba(0,0,0,.6),
+                        inset 0 0 0 1px rgba(255,160,150,.2);
+                      display:flex;align-items:center;justify-content:center;">
+            <div style="position:absolute;top:11%;left:16%;width:40%;height:30%;border-radius:50%;
+                        background:radial-gradient(ellipse at center, rgba(255,255,255,.6), rgba(255,255,255,0) 72%);
+                        transform:rotate(-18deg);pointer-events:none;"></div>
+            <span style="position:relative;z-index:1;font-size:29px;font-weight:900;letter-spacing:-.5px;
+                        color:#fff6f2;text-shadow:0 1px 2px rgba(0,0,0,.65),0 -1px 0 rgba(0,0,0,.3);">18+</span>
+          </div>
         </div>
 
         <div style="font-size:26px;font-weight:800;color:#fff;line-height:1.26;letter-spacing:-.4px;max-width:320px;margin-bottom:13px;
