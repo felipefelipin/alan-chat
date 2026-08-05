@@ -27,19 +27,25 @@ module.exports = async function handler(req, res) {
     const len = String(text).length;
     return Math.min(4000, Math.max(1200, len * 45));
   }
-  async function sendWithTyping(text, extra) {
+  async function sendWithTyping(text, extra, msOverride) {
     try { await bot.sendChatAction(id, "typing"); } catch {}
-    await new Promise((r) => setTimeout(r, typingDelayFor(text)));
+    await new Promise((r) => setTimeout(r, msOverride ?? typingDelayFor(text)));
     await bot.sendMessage(id, text, extra);
   }
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
   try {
     await sendWithTyping("Pronto meu bem, agora é só você escolher do jeito que vc quer continuar comigo");
-    await sendWithTyping("Escolhe aí abaixo e vem terminar oq vc começou comigo safado 😈");
+    // "digitando" fixo em 7s nessa (em vez do cálculo automático por
+    // tamanho do texto) — pedido explícito, pra dar mais peso antes da
+    // foto/planos caírem.
+    await sendWithTyping("Escolhe aí abaixo e vem terminar oq vc começou comigo safado 😈", undefined, 7000);
 
-    // foto opcional — falha não bloqueia a mensagem/botão
+    await wait(2000);
+    // foto opcional — falha não bloqueia o resto da sequência
     try { await bot.sendPhoto(id, `${WEBAPP_URL}/assets/4294967658%20%281%29.jpeg`); } catch {}
 
+    await wait(1000);
     await bot.sendMessage(id,
       "Se você está aqui… é porque acabou de me ver peladinha e eu sei que você gostou bastante 😈💗\n\n" +
       "Como recompensa por ter sido tão safadinho comigo, te dei um presentão:\n\n" +
@@ -48,17 +54,19 @@ module.exports = async function handler(req, res) {
       "Sou uma novinha carioca carinhosa, safada e sempre molhadinha… viciada em dar prazer e receber carinho de um homem que sabe o que quer.\n\n" +
       "Vem pra cá, meu amor… quero continuar te mostrando meu lado mais quente e safado 💦\n\n" +
       "<b>Clica agora e entra no meu mundinho particular</b> 😘",
-      {
-        parse_mode: "HTML",
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: "👑 VIP ETERNO - R$5,90 - 25% OFF", callback_data: "plan:vip590", style: "success" }],
-            [{ text: "📞 VIDEOCHAMADA PELADA - R$14,90 - 25% OFF", callback_data: "plan:videochamada", style: "danger" }],
-            [{ text: "💞 NAMORO 7 DIAS - R$25,99 - 25% OFF", callback_data: "plan:namoro7dias", style: "primary" }],
-          ],
-        },
-      }
+      { parse_mode: "HTML" }
     );
+
+    await wait(1000);
+    await bot.sendMessage(id, "👇", {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "👑 VIP ETERNO - R$5,90 - 25% OFF", callback_data: "plan:vip590", style: "success" }],
+          [{ text: "📞 VIDEOCHAMADA PELADA - R$14,90 - 25% OFF", callback_data: "plan:videochamada", style: "danger" }],
+          [{ text: "💞 NAMORO 7 DIAS - R$25,99 - 25% OFF", callback_data: "plan:namoro7dias", style: "primary" }],
+        ],
+      },
+    });
 
     res.json({ ok: true });
   } catch (e) {

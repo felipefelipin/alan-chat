@@ -5247,11 +5247,11 @@ async function doCallPaywall() {
       noSleep: true, humanTyping: true, humanTypingMs: 7000,
     });
     await sleep(rand(1000, 2000));
-    await gisaSay("vai aparecer um botão pra vc desbloquear oq vc quiser de mim, e o resto depende de vc", {
+    await gisaSay("vai aparecer pra vc desbloquear o acesso, e lá vc vai poder ter tudo oq quiser de mim...", {
       noSleep: true, humanTyping: true, humanTypingMs: 10000,
     });
     await sleep(rand(1000, 2000));
-    await gisaSay("quer continuar beh? fala aí pra eu te mandar o acesso pra vc desbloquear...", {
+    await gisaSay("quer continuar beh? me fala aí vai safado, pra eu te mandar o acesso pra vc desbloquear... 😈", {
       noSleep: true, humanTyping: true, humanTypingMs: 6000,
     });
   } finally {
@@ -5266,6 +5266,7 @@ async function enterUnlockOffer(text) {
   clearReengage();
   state.step = 6; saveState(); // só agora trava o resto do chat de vez
   trackEvent("MINIAPP_PAYWALL_UNLOCK_OFFER_REPLY");
+  await sleep(4000); // 4s de silêncio antes do "digitando..." aparecer
   await gisaSay("tá bom, saindo aqq, me encontre do outro lado, é só clicar pra desbloquear 😈", {
     noSleep: true,
     replyTo: text ? { side: "right", text } : null,
