@@ -388,6 +388,10 @@ bot.on("callback_query", async (q) => {
     if (data.startsWith("plan:")) {
       await bot.answerCallbackQuery(q.id).catch(() => {});
       const plano = data.split(":")[1];
+      // Sem isso, o clique num plano só aparecia no watch-leads.js
+      // indiretamente (etapa virando "pagamento") — nenhuma linha própria
+      // no feed de eventos, diferente de tudo mais que o painel mostra.
+      prisma.event.create({ data: { userId: dbId(chatId), type: "PLAN_CLICK", payload: { plano } } }).catch(() => {});
       try {
         await createCheckoutAndSend(chatId, plano);
       } catch (e) {

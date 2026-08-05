@@ -37,7 +37,7 @@ function fmtAgo(d) {
 }
 
 function colorForEvent(type) {
-  if (type.includes("PAYMENT")) return c.green;
+  if (type.includes("PAYMENT") || type === "PLAN_CLICK") return c.green;
   if (type.includes("REMARKETING") || type.includes("NUDGE")) return c.yellow;
   if (type.includes("MINIAPP")) return c.cyan;
   return c.dim;
