@@ -42,8 +42,10 @@ module.exports = async function handler(req, res) {
     await sendWithTyping("Escolhe aí abaixo e vem terminar oq vc começou comigo safado 😈", undefined, 7000);
 
     await wait(2000);
-    // foto opcional — falha não bloqueia o resto da sequência
-    try { await bot.sendPhoto(id, `${WEBAPP_URL}/assets/4294967658%20%281%29.jpeg`); } catch {}
+    // foto opcional — falha não bloqueia o resto da sequência. Persona-
+    // específica: bot2 usa a própria foto, bot1 mantém a de sempre.
+    const checkoutPhoto = persona === "m2" ? "photo_4961127246739475602_y.jpg" : "4294967658 (1).jpeg";
+    try { await bot.sendPhoto(id, `${WEBAPP_URL}/assets/${encodeURIComponent(checkoutPhoto)}`); } catch {}
 
     await wait(1000);
     await bot.sendMessage(id,
