@@ -191,7 +191,7 @@ function preloadMedia() {
   try {
     const v3 = document.createElement("video");
     v3.id = "agPreloadVideo";
-    v3.src = "/assets/paywall-bg.mp4";
+    v3.src = "/assets/intro-video.mp4";
     v3.muted = true;
     v3.loop = true;
     v3.playsInline = true;
@@ -6752,7 +6752,7 @@ function runAgeGateScreen() {
     const preloadedVideo = document.getElementById("agPreloadVideo");
     const video = preloadedVideo || document.createElement("video");
     if (!preloadedVideo) {
-      video.src = "/assets/paywall-bg.mp4";
+      video.src = "/assets/intro-video.mp4";
       video.muted = true;
       video.loop = true;
       video.playsInline = true;
