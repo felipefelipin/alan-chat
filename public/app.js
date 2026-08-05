@@ -4633,7 +4633,7 @@ async function enterPeladaQuestion(text) {
   // o áudio -> segue o fluxo normal.
   await sleep(3000);
   if (PERSONA === "m2") {
-    await gisaSendAudio(ASSETS.audioMimimi, null, 3000);
+    await gisaSendAudio(ASSETS.audioMimimi, null, 8000);
   } else {
     await gisaSendAudio(ASSETS.audioCallInvite, null, 3000);
   }
@@ -4663,7 +4663,7 @@ async function enterCallIncomingSoon(text) {
   state.step = 5; saveState();
   trackEvent("MINIAPP_STEP_CALL_INCOMING_SOON");
   await sleep(4000); // 4s antes de começar a digitar
-  await gisaSay("hm kk, então vou pro banheiro e já te ligo 😈", {
+  await gisaSay(PERSONA === "m2" ? "hm kk, então vou pro meu quarto, já te ligo 😈" : "hm kk, então vou pro banheiro e já te ligo 😈", {
     noSleep: true,
     humanTyping: true,
     humanTypingMs: 7000, // 7s digitando (com o soluço de correção) antes de enviar
@@ -5678,6 +5678,7 @@ function reopenPaywall() {
   }
   overlay.style.background = "rgba(0,0,0,0)";
   document.body.appendChild(overlay);
+  document.getElementById("paywallHero")?.play?.().catch(() => {}); // no-op se for <img> (bot2)
   requestAnimationFrame(() => requestAnimationFrame(() => {
     overlay.style.background = "rgba(0,0,0,0.72)";
     if (sheet) {
@@ -5797,8 +5798,11 @@ function showCheckoutCta(opts = {}) {
       animation:pwSlideUp 0.42s cubic-bezier(0.34,1.56,0.64,1) forwards;
     ">
 
-      <img id="paywallHeroImg" src="/assets/cta-thumb.jpg" alt=""
-        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%;z-index:0;opacity:0;animation:pwImgIn 0.34s ease 0.08s forwards;" />
+      ${PERSONA === "m2"
+        ? `<img id="paywallHero" src="/assets/cta-thumb.jpg" alt=""
+             style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%;z-index:0;opacity:0;animation:pwImgIn 0.34s ease 0.08s forwards;" />`
+        : `<video id="paywallHero" src="/assets/IMG_1298%20%281%29.MOV" autoplay loop muted playsinline
+             style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%;z-index:0;opacity:0;animation:pwImgIn 0.34s ease 0.08s forwards;"></video>`}
 
       <!-- degradê cobrindo o vídeo inteiro (topo ao fundo), não só a parte de
            baixo — sem isso o topo aparecia sem nenhum escurecimento (100%
@@ -5870,6 +5874,7 @@ function showCheckoutCta(opts = {}) {
   `;
 
   document.body.appendChild(overlay);
+  document.getElementById("paywallHero")?.play?.().catch(() => {}); // no-op se for <img> (bot2)
   requestAnimationFrame(() => requestAnimationFrame(() => {
     overlay.style.background = "rgba(0,0,0,0.72)";
   }));
