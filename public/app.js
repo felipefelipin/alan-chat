@@ -8,10 +8,19 @@ if (tg) {
   // tracking de abertura
   const _trackChatId = tg?.initDataUnsafe?.user?.id;
   if (_trackChatId) {
+    // persona precisa ir junto — sem isso o bot2 grava esse evento no
+    // registro sem prefixo "m2:" (do bot1), e o backend nunca tira o lead
+    // de "webapp_pending" pra "miniapp_aberto" (ver api/track.js), fazendo
+    // o PRE_NUDGE ("Entra logo seu gostoso...") disparar mesmo pra quem já
+    // clicou e abriu o mini app.
     fetch("/api/track", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chatId: String(_trackChatId), event: "MINIAPP_OPEN" }),
+      body: JSON.stringify({
+        chatId: String(_trackChatId),
+        event: "MINIAPP_OPEN",
+        persona: new URLSearchParams(location.search).get("persona") || "m1",
+      }),
       keepalive: true,
     }).catch(() => {});
   }
