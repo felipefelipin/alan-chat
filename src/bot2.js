@@ -282,13 +282,22 @@ bot.on("callback_query", async (q) => {
       // ação real do usuário, não um timer.
       await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
-          text: "🎁 <b>CLIQUE ABAIXO PARA RESGATAR SEU PRÊMIO</b> 😈👇",
+          text: "🎁 <b>CLIQUE ABAIXO PARA RESGATAR SEU PRÊMIO</b> 😈",
+          noTyping: true,
+        }},
+        { delay: 0, jobId: jid("conteudinhos", chatId, 2), removeOnComplete: true, removeOnFail: true }
+      );
+      // seta separada do texto, igual a do checkout — cai como uma
+      // mensagem própria, só com ela é que vem o botão junto.
+      await queue.add("jobs",
+        { type: "SEND_MESSAGE", chatId: String(chatId), data: {
+          text: "👇",
           noTyping: true,
           extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
             [{ text: "🎁 RESGATAR PRÊMIO", callback_data: "resgatar_premio", style: "success" }],
           ]}},
         }},
-        { delay: 0, jobId: jid("conteudinhos", chatId, 2), removeOnComplete: true, removeOnFail: true }
+        { delay: 800, jobId: jid("conteudinhos", chatId, 3), removeOnComplete: true, removeOnFail: true }
       );
       return;
     }
