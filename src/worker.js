@@ -514,8 +514,8 @@ const worker = new Worker(
             reply_markup: {
               inline_keyboard: [
                 [{ text: "👑 VIP ETERNO - R$14,80 - 25% OFF", callback_data: "plan:vip590", style: "success" }],
-                [{ text: "📞 VIDEOCHAMADA PELADA - R$24,90 - 25% OFF", callback_data: "plan:videochamada", style: "danger" }],
-                [{ text: "💞 NAMORO 3 DIAS - R$39,80 - 25% OFF", callback_data: "plan:namoro7dias", style: "primary" }],
+                [{ text: "📞 VIDEOCHAMADA PELADA - R$24,90 - 25% OFF", callback_data: "plan:videochamada", style: "primary" }],
+                [{ text: "💞 NAMORO 3 DIAS - R$39,80 - 25% OFF", callback_data: "plan:namoro7dias", style: "danger" }],
               ],
             },
           }
