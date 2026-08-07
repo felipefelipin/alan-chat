@@ -284,6 +284,7 @@ bot.on("callback_query", async (q) => {
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
           text: "🎁 <b>CLIQUE ABAIXO PARA RESGATAR SEU PRÊMIO</b> 😈",
           noTyping: true,
+          extra: { parse_mode: "HTML" },
         }},
         { delay: 0, jobId: jid("conteudinhos", chatId, 2), removeOnComplete: true, removeOnFail: true }
       );
