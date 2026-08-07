@@ -6871,6 +6871,10 @@ try {
 } catch {}
 
 loadState();
+// precisa ser lido AQUI, logo após loadState() — o branch "else" mais
+// abaixo zera state.flags.startedChat pra começar do zero, então esse
+// valor tem que ser guardado antes disso acontecer.
+const _resumeMidChat = !!state.flags.startedChat;
 
 const OWNER_CHAT_ID = "7808077251";
 const _currentChatId = String(tg?.initDataUnsafe?.user?.id ?? "");
@@ -6915,6 +6919,11 @@ const FORCE_FRESH_START = _currentChatId === OWNER_CHAT_ID;
     // pra roleta de desconto normalmente (não pula pro checkout direto).
     mountChat();
     setTimeout(() => showCheckoutCta({ skipRoulette: false }), 300);
+  } else if (_resumeMidChat) {
+    // já tinha entrado no chat e fechou/reabriu no meio da conversa (sem
+    // chegar no paywall) — volta direto pro ponto onde parou, com o
+    // histórico intacto, sem repetir conexão/roleta/tela de entrada.
+    mountChat();
   } else {
     state.history        = [];
     state.step           = 0;
