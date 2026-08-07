@@ -282,7 +282,7 @@ bot.on("callback_query", async (q) => {
           text: "👇",
           noTyping: true,
           extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
-            [{ text: "🎁 RESGATAR PRÊMIO", callback_data: "resgatar_premio", style: "success" }],
+            [{ text: "🎁 RESGATAR SEU PRÊMIO", callback_data: "resgatar_premio", style: "success" }],
           ]}},
         }},
         { delay: 800, jobId: jid("conteudinhos", chatId, 3), removeOnComplete: true, removeOnFail: true }
