@@ -18,30 +18,9 @@ module.exports = async function handler(req, res) {
   const id  = String(chatId);
   const WEBAPP_URL = process.env.WEBAPP_URL || "https://alana-chat.vercel.app";
 
-  // "digitando..." real do Telegram (sendChatAction) antes de cada
-  // mensagem — tempo proporcional ao tamanho do texto, igual o resto do
-  // funil já faz em worker.js. keepalive no fetch do mini app (ver
-  // openCheckout em app.js) permite essa função demorar um pouco sem
-  // travar nada visível pro lead.
-  function typingDelayFor(text) {
-    const len = String(text).length;
-    return Math.min(4000, Math.max(1200, len * 45));
-  }
-  async function sendWithTyping(text, extra, msOverride) {
-    try { await bot.sendChatAction(id, "typing"); } catch {}
-    await new Promise((r) => setTimeout(r, msOverride ?? typingDelayFor(text)));
-    await bot.sendMessage(id, text, extra);
-  }
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
   try {
-    await sendWithTyping("Pronto meu bem, agora é só você escolher do jeito que vc quer continuar comigo");
-    // "digitando" fixo em 7s nessa (em vez do cálculo automático por
-    // tamanho do texto) — pedido explícito, pra dar mais peso antes da
-    // foto/planos caírem.
-    await sendWithTyping("Escolhe aí abaixo e vem terminar oq vc começou comigo safado 😈", undefined, 7000);
-
-    await wait(2000);
     // foto opcional — falha não bloqueia o resto da sequência. Persona-
     // específica: bot2 usa a própria foto, bot1 mantém a de sempre.
     const checkoutPhoto = persona === "m2" ? "photo_4961127246739475602_y.jpg" : "4294967658 (1).jpeg";
