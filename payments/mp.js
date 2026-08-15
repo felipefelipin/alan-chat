@@ -9,6 +9,10 @@ const PLANS = {
   vip590:       { title: "VIP Eterno (oferta)",         price: 14.80 },
   videochamada: { title: "Videochamada Pelada (oferta)", price: 24.90 },
   namoro7dias:  { title: "Namoro 3 Dias (oferta)",       price: 39.80 },
+  // upsell pós-pagamento — grupo VIP privado, oferecido só depois que um
+  // dos planos acima já foi pago de verdade (ver POST_PAYMENT em worker.js).
+  grupoVip:          { title: "Grupo VIP Privado",         price: 9.90 },
+  grupoVipDownsell:  { title: "Grupo VIP Privado (oferta)", price: 4.90 },
 };
 
 async function mpCreatePix({ chatId, plano, persona }) {

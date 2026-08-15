@@ -177,6 +177,34 @@ async function createCheckoutAndSend(chatId, plano) {
   await scheduleRemarketingJobs(chatId, "pagamento");
 }
 
+// upsell pós-pagamento (grupo VIP privado) — Pix simples, sem foto/pitch,
+// a oferta em si já foi feita antes pelo worker.js (POST_PAYMENT).
+async function createGrupoVipCheckoutAndSend(chatId, plano) {
+  const { paymentId, pixCode, pixQrBase64, amount } = await mpCreatePix({ chatId, plano });
+
+  prisma.payment.create({
+    data: { userId: String(chatId), plano, status: "pending", preferenceId: paymentId, initPoint: pixCode },
+  }).catch(e => console.error("payment save error:", e));
+
+  await bot.sendMessage(chatId, "Perfeito! Seu Pix tá aqui 🔥");
+
+  if (pixQrBase64) {
+    const buf = Buffer.from(pixQrBase64, "base64");
+    const amountFmt = `R$ ${Number(amount).toFixed(2).replace(".", ",")}`;
+    await bot.sendPhoto(chatId, buf, {
+      caption: `💸 *${amountFmt}* — Escaneie o QR Code pelo app do seu banco`,
+      parse_mode: "Markdown",
+    });
+  }
+
+  if (pixCode) {
+    await bot.sendMessage(chatId, "Ou copie o código Pix abaixo:");
+    await bot.sendMessage(chatId, `\`\`\`\n${pixCode}\n\`\`\``, { parse_mode: "Markdown" });
+  }
+
+  await bot.sendMessage(chatId, "Assim que cair eu já te mando o link de acesso ao grupo 🔒", { parse_mode: "Markdown" });
+}
+
 // =============================================================================
 // Funil direto — Tela 1 (vídeo + mensagem + botão) → Tela 2 (vídeo + menu)
 // =============================================================================
@@ -400,6 +428,41 @@ bot.on("callback_query", async (q) => {
         await bot.sendMessage(chatId, "Esse link expirou 🙈 aqui estão as opções atuais:");
         await sendPlans(chatId);
       }
+      return;
+    }
+
+    // ── Upsell pós-pagamento: grupo VIP privado ─────────────────────────────
+    if (data === "grupo_vip_yes") {
+      await bot.answerCallbackQuery(q.id, { text: "🔒" }).catch(() => {});
+      try {
+        await createGrupoVipCheckoutAndSend(chatId, "grupoVip");
+      } catch (e) { console.error("createGrupoVipCheckoutAndSend error:", e.message); }
+      return;
+    }
+
+    if (data === "grupo_vip_no") {
+      await bot.answerCallbackQuery(q.id).catch(() => {});
+      // downsell único, sem insistir depois — quem recusar de novo segue o
+      // funil normal, sem mais nada sobre isso.
+      await bot.sendMessage(chatId, "Sem crise 😈 Última chamada: consigo te colocar por R$4,90 só agora", {
+        reply_markup: { inline_keyboard: [
+          [{ text: "Quero por R$4,90", callback_data: "grupo_vip_downsell_yes", style: "success" }],
+          [{ text: "Não, obrigado", callback_data: "grupo_vip_no_final" }],
+        ]},
+      });
+      return;
+    }
+
+    if (data === "grupo_vip_downsell_yes") {
+      await bot.answerCallbackQuery(q.id, { text: "🔒" }).catch(() => {});
+      try {
+        await createGrupoVipCheckoutAndSend(chatId, "grupoVipDownsell");
+      } catch (e) { console.error("createGrupoVipCheckoutAndSend error:", e.message); }
+      return;
+    }
+
+    if (data === "grupo_vip_no_final") {
+      await bot.answerCallbackQuery(q.id, { text: "tranquilo 🔥" }).catch(() => {});
       return;
     }
 

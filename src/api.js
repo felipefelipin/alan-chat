@@ -78,17 +78,28 @@ app.post("/webhook", async (req, res) => {
     });
 
     if (status === "approved") {
-      // marca user como pago/etapa
-      await prisma.user.update({
-        where: { id: dbUserId },
-        data: { pagou: true, etapa: "pagamento" }, // ou "pos_pagamento" direto se preferir
-      });
+      // upsell pós-pagamento (grupo VIP privado) é uma compra separada da
+      // do pack original — o lead já está com pagou:true/etapa correta de
+      // antes, então não sobrescreve isso aqui, só entrega o link.
+      const isGrupoVip = plano === "grupoVip" || plano === "grupoVipDownsell";
+
+      if (!isGrupoVip) {
+        // marca user como pago/etapa
+        await prisma.user.update({
+          where: { id: dbUserId },
+          data: { pagou: true, etapa: "pagamento" }, // ou "pos_pagamento" direto se preferir
+        });
+      }
 
       // job pós pagamento — chatId aqui continua o número real do Telegram
       // (nunca prefixado), é o que o bot usa pra mandar a mensagem de verdade.
       await targetQueue.add(
         "jobs",
-        { type: "POST_PAYMENT", chatId: String(chatId), data: { paymentId } },
+        {
+          type: isGrupoVip ? "POST_PAYMENT_GRUPO_VIP" : "POST_PAYMENT",
+          chatId: String(chatId),
+          data: { paymentId },
+        },
         { jobId: `post_payment:${persona || "m1"}:${chatId}:${paymentId}`, removeOnComplete: true }
       );
     }
