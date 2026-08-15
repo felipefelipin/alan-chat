@@ -631,50 +631,6 @@ const worker = new Worker(
         await sendHuman(chatId, "eu vou continuar de onde parei…", {}, { autoSplit: true });
 
         await logEventSafe(chatId, "POST_PAYMENT_DELIVERED", {});
-
-        // upsell opcional do grupo VIP — só oferece, não bloqueia nada do
-        // que já foi entregue acima. Quem recusar segue o funil normal.
-        await sleep(rand(2000, 3000));
-        await bot.sendMessage(chatId,
-          "Ei, separei uma coisa a mais pra você 👀 Tenho um grupo privado só de gente de confiança, onde eu solto tudo sem filtro e ninguém fica sabendo quem é quem — total anonimato."
-        ).catch(() => {});
-        await sleep(1200);
-        await bot.sendMessage(chatId,
-          "Por R$9,90 eu já te coloco lá dentro agora 🔥", {
-            reply_markup: { inline_keyboard: [
-              [{ text: "🔒 Quero entrar", callback_data: "grupo_vip_yes", style: "success" }],
-              [{ text: "Não, deixa assim", callback_data: "grupo_vip_no" }],
-            ]},
-          }
-        ).catch(() => {});
-
-        await logEventSafe(chatId, "GRUPO_VIP_OFFER_SENT", {});
-        return;
-      }
-
-      if (type === "POST_PAYMENT_GRUPO_VIP") {
-        const GROUP_CHAT_ID2 = process.env.GROUP_CHAT_ID2;
-        if (!GROUP_CHAT_ID2) {
-          // grupo ainda não configurado — não trava a venda, só avisa o
-          // lead e deixa registrado pra convite manual até o env var
-          // GROUP_CHAT_ID2 ser configurado.
-          console.warn(`[grupo-vip] GROUP_CHAT_ID2 não configurado — convidar manualmente: chatId ${chatId}`);
-          await bot.sendMessage(chatId, "Já tô te colocando lá dentro, só um instante 🔥").catch(() => {});
-          await logEventSafe(chatId, "GRUPO_VIP_MANUAL_FALLBACK", {});
-          return;
-        }
-
-        try {
-          const invite = await bot.createChatInviteLink(GROUP_CHAT_ID2, { member_limit: 1 });
-          await bot.sendMessage(chatId,
-            `Prontinho, seu acesso liberado 😈 Esse link é de uso único, só pra você:\n${invite.invite_link}`
-          );
-          await logEventSafe(chatId, "GRUPO_VIP_DELIVERED", {});
-        } catch (e) {
-          console.error("[grupo-vip] erro ao gerar convite:", e.message);
-          await bot.sendMessage(chatId, "Já tô te colocando lá dentro, só um instante 🔥").catch(() => {});
-          await logEventSafe(chatId, "GRUPO_VIP_DELIVERY_ERROR", { error: e.message });
-        }
         return;
       }
 
