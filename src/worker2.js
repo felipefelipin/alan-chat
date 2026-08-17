@@ -543,6 +543,19 @@ const worker = new Worker(
         return;
       }
 
+      if (type === "PRE_NUDGE_2") {
+        const user = await prisma.user.findUnique({ where: { id: dbId(chatId) } });
+        if (!user) return;
+        if (user.pagou) return;
+        if (user.etapa !== "webapp_pending") return;
+
+        await sendHuman(chatId, "Ainda tô aqui esperando você 🥺", {}, { autoSplit: true });
+        await sendHuman(chatId, "clica no botão ali em cima, prometo que vale a pena 😈🔥", {}, { autoSplit: true });
+
+        await logEventSafe(chatId, "PRE_NUDGE_2_SENT", {});
+        return;
+      }
+
       if (type === "REMARKETING") {
         const user = await prisma.user.findUnique({ where: { id: dbId(chatId) } });
         if (!user) return;

@@ -62,12 +62,25 @@ async function schedulePreNudge(chatId) {
     { type: "PRE_NUDGE", chatId: String(chatId), data: {} },
     { delay, jobId: jid("pre_nudge", chatId), removeOnComplete: true, removeOnFail: true }
   );
+  // segundo lembrete, mais tarde e com texto diferente — mesmo guard de
+  // etapa do primeiro (só dispara se ainda estiver "webapp_pending"),
+  // então não precisa de cancelamento extra além do que já existe.
+  const delay2 = rand(600_000, 900_000); // 10-15min
+  await queue.add(
+    "jobs",
+    { type: "PRE_NUDGE_2", chatId: String(chatId), data: {} },
+    { delay: delay2, jobId: jid("pre_nudge_2", chatId), removeOnComplete: true, removeOnFail: true }
+  );
 }
 
 async function cancelPreNudge(chatId) {
   try {
     const job = await queue.getJob(jid("pre_nudge", chatId));
     if (job) await job.remove();
+  } catch {}
+  try {
+    const job2 = await queue.getJob(jid("pre_nudge_2", chatId));
+    if (job2) await job2.remove();
   } catch {}
 }
 
@@ -276,7 +289,7 @@ bot.on("callback_query", async (q) => {
       );
       await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
-          text: "<b>VEM QUE EU TÔ SOZINHA E SAFADA TE ESPERANDO 😈📹</b>",
+          text: "<b>VEM QUE EU TÔ SOZINHA E SAFADA TE ESPERANDO 😈📹</b>\nÉ rapidinho, abre na hora, sem precisar baixar nada 🔓",
           noTyping: true,
           extra: { parse_mode: "HTML", message_effect_id: "5046509860389126442", reply_markup: { inline_keyboard: [
             [{ text: "👉 CLIQUE E VEM ME VER AO VIVO 😈", web_app: { url: process.env.WEBAPP_URL + "?v=" + Date.now() }, style: "success" }],
