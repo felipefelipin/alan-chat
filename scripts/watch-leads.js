@@ -110,6 +110,16 @@ async function render() {
         lines.push(`${c.dim}${fmtTime(ev.createdAt)}${c.reset} ${c.bold}${c.green}${"LEAD DISSE".padEnd(24)}${c.reset} lead:${ev.userId} "${ev.payload?.text ?? ""}"${step}${ctx}`);
         continue;
       }
+      // SEND_START_SCREEN também ganha formato próprio — lista foto(s)/vídeo
+      // enviados em vez de despejar o JSON bruto do payload.
+      if (ev.type === "SEND_START_SCREEN") {
+        const items = [
+          ...(Array.isArray(ev.payload?.photos) ? ev.payload.photos.map((f) => `foto: ${f}`) : []),
+          ...(ev.payload?.video ? [`vídeo: ${ev.payload.video}`] : []),
+        ].join(", ");
+        lines.push(`${c.dim}${fmtTime(ev.createdAt)}${c.reset} ${c.cyan}${"TELA 1 ENVIADA".padEnd(24)}${c.reset} lead:${ev.userId} ${c.dim}${items}${c.reset}`);
+        continue;
+      }
       const color = colorForEvent(ev.type);
       const hasPayload = ev.payload && Object.keys(ev.payload).length;
       const payload = hasPayload ? ` ${c.dim}${JSON.stringify(ev.payload)}${c.reset}` : "";
