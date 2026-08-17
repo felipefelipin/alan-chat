@@ -210,7 +210,7 @@ async function runDirectFunnel(chatId) {
       autoSplit: false,
       noTyping: true,
       extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
-        [{ text: "🔴 AO VIVO: ENTRAR NA CHAMADA GRÁTIS 😈", callback_data: "ver_conteudinhos", style: "success" }],
+        [{ text: "🔴 ESTOU AO VIVO: CLIQUE PRA ME VER 😈", callback_data: "ver_conteudinhos", style: "success" }],
       ]}},
     }},
     { delay: 0, jobId: jid("start", chatId, 3), removeOnComplete: true, removeOnFail: true }
