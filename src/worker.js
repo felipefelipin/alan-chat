@@ -405,20 +405,21 @@ const worker = new Worker(
       console.log("JOB:", type, chatId);
 
       if (type === "SEND_START_SCREEN") {
-        // Tela 1 do /start — foto(s)/vídeo + texto disparados em paralelo,
-        // não em série, pra não somar a latência de cada chamada da API do
-        // Telegram (ver runDirectFunnel em bot.js).
+        // Tela 1 do /start — foto(s)/vídeo em paralelo entre si (evita
+        // somar a latência de cada upload), mas o texto/botão só dispara
+        // DEPOIS que a mídia terminar — sem isso o convite podia chegar
+        // antes do vídeo/foto, ficando fora de ordem.
         const { photos = [], video, text, buttons } = data || {};
-        const tasks = [];
-        for (const file of photos) tasks.push(sendFunnelPhoto(chatId, file));
-        if (video) tasks.push(sendFunnelVideo(chatId, video));
+        const mediaTasks = [];
+        for (const file of photos) mediaTasks.push(sendFunnelPhoto(chatId, file));
+        if (video) mediaTasks.push(sendFunnelVideo(chatId, video));
+        await Promise.all(mediaTasks);
         if (text) {
-          tasks.push(sendMessageSafe(chatId, text, {
+          await sendMessageSafe(chatId, text, {
             parse_mode: "HTML",
             reply_markup: buttons ? { inline_keyboard: buttons } : undefined,
-          }));
+          });
         }
-        await Promise.all(tasks);
         await logEventSafe(chatId, "SEND_START_SCREEN", { photos, video: video || null });
         return;
       }
