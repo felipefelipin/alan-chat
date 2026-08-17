@@ -197,7 +197,7 @@ const START_MESSAGE = `Oi gostoso 😈
 <b>Bem-vindo ao meu cantinho mais safado no Telegram...</b>
 Aqui dentro eu solto tudo que no Instagram não deixam 🔥💦
 
-👇 <i>CLIQUE ABAIXO E VEM ME VER AO VIVO NESSE EXATO MOMENTO 👇</i>`;
+👇 <i>Clique abaixo e acessa todos meus conteúdinhos</i>`;
 
 async function runDirectFunnel(chatId) {
   // Um único job que dispara foto(s) + texto em PARALELO (Promise.all no
@@ -210,7 +210,7 @@ async function runDirectFunnel(chatId) {
       photos: ["WhatsApp Image 2026-07-25 at 15.29.35.jpeg"],
       text: START_MESSAGE,
       buttons: [
-        [{ text: "🔴 ESTOU AO VIVO: CLIQUE PRA ME VER 😈", callback_data: "ver_conteudinhos", style: "success" }],
+        [{ text: "🎁 DESBLOQUEAR PRÊMIOS", callback_data: "ver_conteudinhos", style: "success" }],
       ],
     }},
     { delay: 0, jobId: jid("start", chatId, 1), removeOnComplete: true, removeOnFail: true }
@@ -268,12 +268,66 @@ bot.on("callback_query", async (q) => {
   if (!chatId || !data) return;
 
   try {
-    // ── Tela 2 — direto pro passo final (vídeo + botão do mini app) ──────────
-    // Antes esse clique levava a mais 2 etapas intermediárias (resgatar
-    // prêmio -> liberado chamada ao vivo) antes do botão que abre o mini
-    // app de verdade — muitos leads paravam logo no primeiro clique, então
-    // agora esse botão já pula direto pro conteúdo final.
+    // ── Tela 2 — menu principal (Instagram / Chat + Ao Vivo / Ver Planos) ────
     if (data === "ver_conteudinhos") {
+      await bot.answerCallbackQuery(q.id, { text: "😈" }).catch(() => {});
+      await queue.add("jobs",
+        { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "conteudinhos-video-muted.mp4", caption: "", instant: true } },
+        { delay: 0, jobId: jid("conteudinhos", chatId, 1), removeOnComplete: true, removeOnFail: true }
+      );
+      // reveal gamificado em 2 cliques: primeiro só o convite pra resgatar
+      // (com botão) -> o prêmio de verdade ("LIBERADO...") só aparece
+      // quando o lead CLICA nesse botão (callback "resgatar_premio", logo
+      // abaixo). Nada de spoiler/delay artificial — o suspense agora é a
+      // ação real do usuário, não um timer.
+      await queue.add("jobs",
+        { type: "SEND_MESSAGE", chatId: String(chatId), data: {
+          text: "🎁 <b>CLIQUE ABAIXO PARA RESGATAR SEU PRÊMIO</b> 😈",
+          noTyping: true,
+          extra: { parse_mode: "HTML" },
+        }},
+        { delay: 0, jobId: jid("conteudinhos", chatId, 2), removeOnComplete: true, removeOnFail: true }
+      );
+      // seta separada do texto, igual a do checkout — cai como uma
+      // mensagem própria, só com ela é que vem o botão junto.
+      await queue.add("jobs",
+        { type: "SEND_MESSAGE", chatId: String(chatId), data: {
+          text: "👇",
+          noTyping: true,
+          extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
+            [{ text: "🎁 RESGATAR SEU PRÊMIO", callback_data: "resgatar_premio", style: "success" }],
+          ]}},
+        }},
+        { delay: 800, jobId: jid("conteudinhos", chatId, 3), removeOnComplete: true, removeOnFail: true }
+      );
+      return;
+    }
+
+    // ── Reveal do prêmio — só dispara depois que o lead clica em
+    // "RESGATAR PRÊMIO" acima; message_effect_id dispara o confete de tela
+    // cheia do Telegram na chegada (sendHuman reenvia sem o efeito se o
+    // Telegram rejeitar o ID, nunca perde a mensagem por causa disso) ──────
+    if (data === "resgatar_premio") {
+      await bot.answerCallbackQuery(q.id, { text: "🎁" }).catch(() => {});
+      await queue.add("jobs",
+        { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "e08956fd-1903-4ef7-8a04-c01def4ad4a3.jpeg", caption: "", instant: true } },
+        { delay: 0, jobId: jid("resgatar", chatId, 1), removeOnComplete: true, removeOnFail: true }
+      );
+      await queue.add("jobs",
+        { type: "SEND_MESSAGE", chatId: String(chatId), data: {
+          text: "🎁 <b>LIBERADO: CHAMADA GRÁTIS AO VIVO</b>\n\n👇 Clique abaixo e vem me ver peladinha 🔥",
+          noTyping: true,
+          extra: { parse_mode: "HTML", message_effect_id: "5046509860389126442", reply_markup: { inline_keyboard: [
+            [{ text: "🔴 AO VIVO: ENTRAR NA CHAMADA GRÁTIS 😈", callback_data: "chamada_video", style: "success" }],
+          ]}},
+        }},
+        { delay: 0, jobId: jid("resgatar", chatId, 2), removeOnComplete: true, removeOnFail: true }
+      );
+      return;
+    }
+
+    // ── Chamada de vídeo → libera botão do mini app ─────────────────────────
+    if (data === "chamada_video") {
       await bot.answerCallbackQuery(q.id, { text: "😈" }).catch(() => {});
       await queue.add("jobs",
         { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "IMG_1298 (1).MOV", caption: "", instant: true } },
