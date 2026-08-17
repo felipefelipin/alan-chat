@@ -191,7 +191,7 @@ const START_MESSAGE = `Oi gostoso 😈
 <b>Bem-vindo ao meu cantinho mais safado no Telegram...</b>
 Aqui dentro eu solto tudo que no Instagram não deixam 🔥💦
 
-👇 <i>Clique abaixo e acessa todos meus conteúdinhos</i>`;
+👇 <i>CLIQUE ABAIXO E VEM ME VER AO VIVO NESSE EXATO MOMENTO</i>`;
 
 async function runDirectFunnel(chatId) {
   await queue.add("jobs",
