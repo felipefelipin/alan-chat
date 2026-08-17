@@ -200,7 +200,7 @@ async function runDirectFunnel(chatId) {
   );
 
   await queue.add("jobs",
-    { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "photo_5030853648493251700_w.jpg", caption: "", instant: true } },
+    { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "WhatsApp Video 2026-08-17 at 09.56.34.mp4", caption: "", instant: true } },
     { delay: 0, jobId: jid("start", chatId, 2), removeOnComplete: true, removeOnFail: true }
   );
 
