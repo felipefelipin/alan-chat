@@ -6792,7 +6792,17 @@ function runAgeGateScreen() {
 
     requestAnimationFrame(() => screen.classList.add("lsScreen-visible"));
     agPlayGateAmbient(); // melhor esforço — sem gesto do usuário ainda, pode ser bloqueado pelo autoplay; falha silenciosa
-    video.play().catch(() => {});
+    // Sem isso, play() podia disparar antes do vídeo ter buffer suficiente
+    // (readyState baixo) — o browser começa a tocar, trava alguns frames
+    // até rebufferizar, e dá a sensação de "travando pra começar". HAVE_
+    // FUTURE_DATA (3) é o mínimo seguro pra tocar sem engasgo imediato.
+    if (video.readyState >= 3) {
+      video.play().catch(() => {});
+    } else {
+      const onReady = () => { video.play().catch(() => {}); };
+      video.addEventListener("canplay", onReady, { once: true });
+      setTimeout(() => { video.removeEventListener("canplay", onReady); video.play().catch(() => {}); }, 2500);
+    }
 
     const content = screen.querySelector("#agContent");
     const yesBtn  = screen.querySelector("#agYesBtn");
