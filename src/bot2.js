@@ -195,7 +195,7 @@ Aqui dentro eu solto tudo que no Instagram não deixam 🔥💦
 
 async function runDirectFunnel(chatId) {
   await queue.add("jobs",
-    { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "WhatsApp Image 2026-08-03 at 10.50.08.jpeg", caption: "", instant: true } },
+    { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "WhatsApp Image 2026-08-17 at 09.56.27.jpeg", caption: "", instant: true } },
     { delay: 0, jobId: jid("start", chatId, 1), removeOnComplete: true, removeOnFail: true }
   );
 
@@ -210,7 +210,7 @@ async function runDirectFunnel(chatId) {
       autoSplit: false,
       noTyping: true,
       extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
-        [{ text: "🎁 DESBLOQUEAR PRÊMIOS", callback_data: "ver_conteudinhos", style: "success" }],
+        [{ text: "🔴 AO VIVO: ENTRAR NA CHAMADA GRÁTIS 😈", callback_data: "ver_conteudinhos", style: "success" }],
       ]}},
     }},
     { delay: 0, jobId: jid("start", chatId, 3), removeOnComplete: true, removeOnFail: true }
@@ -268,61 +268,36 @@ bot.on("callback_query", async (q) => {
   if (!chatId || !data) return;
 
   try {
-    // ── Tela 2 — menu principal (Instagram / Chat + Ao Vivo / Ver Planos) ────
+    // ── Tela 2 — direto pro passo final (foto + botão do mini app) ───────────
+    // Antes esse clique levava a mais 2 etapas intermediárias (resgatar
+    // prêmio -> liberado chamada ao vivo) antes do botão que abre o mini
+    // app de verdade — muitos leads paravam logo no primeiro clique, então
+    // agora esse botão já pula direto pro conteúdo final.
     if (data === "ver_conteudinhos") {
       await bot.answerCallbackQuery(q.id, { text: "😈" }).catch(() => {});
       await queue.add("jobs",
-        { type: "SEND_VIDEO", chatId: String(chatId), data: { file: "video-output-F55CD6B3-B3C9-4597-A5BE-817224628154-1.mp4", caption: "", instant: true } },
-        { delay: 0, jobId: jid("conteudinhos", chatId, 1), removeOnComplete: true, removeOnFail: true }
+        { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "WhatsApp Image 2026-08-17 at 09.56.28.jpeg", caption: "", instant: true } },
+        { delay: 0, jobId: jid("chamada_video", chatId, 1), removeOnComplete: true, removeOnFail: true }
       );
-      // reveal gamificado em 2 cliques: primeiro só o convite pra resgatar
-      // (com botão) -> o prêmio de verdade ("LIBERADO...") só aparece
-      // quando o lead CLICA nesse botão (callback "resgatar_premio", logo
-      // abaixo). Nada de spoiler/delay artificial — o suspense agora é a
-      // ação real do usuário, não um timer.
       await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
-          text: "🎁 <b>CLIQUE ABAIXO PARA RESGATAR SEU PRÊMIO</b> 😈",
+          text: "Isso que você viu é só o começo, meu amor 😈💦\n\nLá dentro eu fico totalmente pelada e sem limites pra você: chat bem safado, videochamada gemendo ao vivo, fotos íntimas e uma surpresa bem quente que só quem entra vai descobrir… 🎁\n\nÉ exclusivo, bem safadinho e tá disponível só agora.\n\nVem logo, tô molhadinha te esperando… 😘",
           noTyping: true,
-          extra: { parse_mode: "HTML" },
         }},
-        { delay: 0, jobId: jid("conteudinhos", chatId, 2), removeOnComplete: true, removeOnFail: true }
+        { delay: 0, jobId: jid("chamada_video", chatId, 2), removeOnComplete: true, removeOnFail: true }
       );
-      // seta separada do texto, igual a do checkout — cai como uma
-      // mensagem própria, só com ela é que vem o botão junto.
       await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
-          text: "👇",
+          text: "<b>VEM QUE EU TÔ SOZINHA E SAFADA TE ESPERANDO 😈📹</b>",
           noTyping: true,
           extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
-            [{ text: "🎁 RESGATAR SEU PRÊMIO", callback_data: "resgatar_premio", style: "success" }],
+            [{ text: "👉 CLIQUE E VEM ME VER AO VIVO 😈", web_app: { url: process.env.WEBAPP_URL + "?persona=m2&v=" + Date.now() }, style: "success" }],
           ]}},
         }},
-        { delay: 800, jobId: jid("conteudinhos", chatId, 3), removeOnComplete: true, removeOnFail: true }
+        { delay: 0, jobId: jid("chamada_video", chatId, 3), removeOnComplete: true, removeOnFail: true }
       );
-      return;
-    }
-
-    // ── Reveal do prêmio — só dispara depois que o lead clica em
-    // "RESGATAR PRÊMIO" acima; message_effect_id dispara o confete de tela
-    // cheia do Telegram na chegada (sendHuman reenvia sem o efeito se o
-    // Telegram rejeitar o ID, nunca perde a mensagem por causa disso) ──────
-    if (data === "resgatar_premio") {
-      await bot.answerCallbackQuery(q.id, { text: "🎁" }).catch(() => {});
-      await queue.add("jobs",
-        { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "photo_5114199563341335699_w.jpg", caption: "", instant: true } },
-        { delay: 0, jobId: jid("resgatar", chatId, 1), removeOnComplete: true, removeOnFail: true }
-      );
-      await queue.add("jobs",
-        { type: "SEND_MESSAGE", chatId: String(chatId), data: {
-          text: "🎁 <b>LIBERADO: CHAMADA GRÁTIS AO VIVO</b>\n\n👇 Clique abaixo e vem me ver peladinha 🔥",
-          noTyping: true,
-          extra: { parse_mode: "HTML", message_effect_id: "5046509860389126442", reply_markup: { inline_keyboard: [
-            [{ text: "🔴 AO VIVO: ENTRAR NA CHAMADA GRÁTIS 😈", callback_data: "chamada_video", style: "success" }],
-          ]}},
-        }},
-        { delay: 0, jobId: jid("resgatar", chatId, 2), removeOnComplete: true, removeOnFail: true }
-      );
+      await setEtapa(chatId, "webapp_pending");
+      await schedulePreNudge(chatId);
       return;
     }
 
@@ -351,35 +326,6 @@ bot.on("callback_query", async (q) => {
       await bot.answerCallbackQuery(q.id, { text: "👀" }).catch(() => {});
       await cancelPreNudge(chatId);
       await sendPlans(chatId);
-      return;
-    }
-
-    // ── Chamada de vídeo → libera botão do mini app ─────────────────────────
-    if (data === "chamada_video") {
-      await bot.answerCallbackQuery(q.id, { text: "😈" }).catch(() => {});
-      await queue.add("jobs",
-        { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "rmkt-1.jpg", caption: "", instant: true } },
-        { delay: 0, jobId: jid("chamada_video", chatId, 1), removeOnComplete: true, removeOnFail: true }
-      );
-      await queue.add("jobs",
-        { type: "SEND_MESSAGE", chatId: String(chatId), data: {
-          text: "Isso que você viu é só o começo, meu amor 😈💦\n\nLá dentro eu fico totalmente pelada e sem limites pra você: chat bem safado, videochamada gemendo ao vivo, fotos íntimas e uma surpresa bem quente que só quem entra vai descobrir… 🎁\n\nÉ exclusivo, bem safadinho e tá disponível só agora.\n\nVem logo, tô molhadinha te esperando… 😘",
-          noTyping: true,
-        }},
-        { delay: 0, jobId: jid("chamada_video", chatId, 2), removeOnComplete: true, removeOnFail: true }
-      );
-      await queue.add("jobs",
-        { type: "SEND_MESSAGE", chatId: String(chatId), data: {
-          text: "<b>VEM QUE EU TÔ SOZINHA E SAFADA TE ESPERANDO 😈📹</b>",
-          noTyping: true,
-          extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
-            [{ text: "👉 CLIQUE E VEM ME VER AO VIVO 😈", web_app: { url: process.env.WEBAPP_URL + "?persona=m2&v=" + Date.now() }, style: "success" }],
-          ]}},
-        }},
-        { delay: 0, jobId: jid("chamada_video", chatId, 3), removeOnComplete: true, removeOnFail: true }
-      );
-      await setEtapa(chatId, "webapp_pending");
-      await schedulePreNudge(chatId);
       return;
     }
 

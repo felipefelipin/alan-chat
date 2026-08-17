@@ -147,7 +147,7 @@ const ASSET_OVERRIDES = {
     // startFunnelCall (callVideo já era vídeo, só troca o arquivo).
     teasePhotoPrivada: "/assets/paywall-bg.mp4",
     callVideo: "/assets/call.mp4",
-    teaseCallPhoto: "/assets/lose-video.mp4",
+    teaseCallPhoto: "/assets/WhatsApp Video 2026-08-17 at 09.57.52.mp4",
     avatar: "/assets/9b508494-3144-4b2d-bd3a-be8b791846c2.jpg",
   },
 };
