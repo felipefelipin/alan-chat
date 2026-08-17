@@ -343,14 +343,7 @@ bot.on("callback_query", async (q) => {
       );
       await queue.add("jobs",
         { type: "SEND_MESSAGE", chatId: String(chatId), data: {
-          text: "Isso que você viu é só o começo, meu amor 😈💦\n\nLá dentro eu fico totalmente pelada e sem limites pra você: chat bem safado, videochamada gemendo ao vivo, fotos íntimas e uma surpresa bem quente que só quem entra vai descobrir… 🎁\n\nÉ exclusivo, bem safadinho e tá disponível só agora.\n\nVem logo, tô molhadinha te esperando… 😘",
-          noTyping: true,
-        }},
-        { delay: 0, jobId: jid("chamada_video", chatId, 2), removeOnComplete: true, removeOnFail: true }
-      );
-      await queue.add("jobs",
-        { type: "SEND_MESSAGE", chatId: String(chatId), data: {
-          text: "<b>VEM QUE EU TÔ SOZINHA E SAFADA TE ESPERANDO 😈📹</b>\nÉ rapidinho, abre na hora, sem precisar baixar nada 🔓",
+          text: "<b>VEM QUE EU TÔ SOZINHA E SAFADA TE ESPERANDO 😈📹</b>",
           noTyping: true,
           extra: { parse_mode: "HTML", message_effect_id: "5046509860389126442", reply_markup: { inline_keyboard: [
             [{ text: "👉 CLIQUE E VEM ME VER AO VIVO 😈", web_app: { url: process.env.WEBAPP_URL + "?persona=m2&v=" + Date.now() }, style: "success" }],
