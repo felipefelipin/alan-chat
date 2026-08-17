@@ -200,21 +200,20 @@ Aqui dentro eu solto tudo que no Instagram não deixam 🔥💦
 👇 <i>CLIQUE ABAIXO E VEM ME VER AO VIVO NESSE EXATO MOMENTO 👇</i>`;
 
 async function runDirectFunnel(chatId) {
+  // Um único job que dispara foto(s) + texto em PARALELO (Promise.all no
+  // worker), em vez de 2-3 jobs separados presos no lock-por-chat (que
+  // força série pra garantir ordem) — cada chamada real à API do Telegram
+  // leva uns 700ms-2s, então em série o total somava até uns 5s. Aqui o
+  // tempo total vira o do item mais lento, não a soma de todos.
   await queue.add("jobs",
-    { type: "SEND_PHOTO", chatId: String(chatId), data: { file: "WhatsApp Image 2026-07-25 at 15.29.35.jpeg", caption: "", instant: true } },
-    { delay: 0, jobId: jid("start", chatId, 2), removeOnComplete: true, removeOnFail: true }
-  );
-
-  await queue.add("jobs",
-    { type: "SEND_MESSAGE", chatId: String(chatId), data: {
+    { type: "SEND_START_SCREEN", chatId: String(chatId), data: {
+      photos: ["WhatsApp Image 2026-07-25 at 15.29.35.jpeg"],
       text: START_MESSAGE,
-      autoSplit: false,
-      noTyping: true,
-      extra: { parse_mode: "HTML", reply_markup: { inline_keyboard: [
+      buttons: [
         [{ text: "🔴 ESTOU AO VIVO: CLIQUE PRA ME VER 😈", callback_data: "ver_conteudinhos", style: "success" }],
-      ]}},
+      ],
     }},
-    { delay: 0, jobId: jid("start", chatId, 3), removeOnComplete: true, removeOnFail: true }
+    { delay: 0, jobId: jid("start", chatId, 1), removeOnComplete: true, removeOnFail: true }
   );
 }
 
